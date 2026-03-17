@@ -1,0 +1,25 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+  ignore = "if [ -z \"$CACHED_COMMIT\" ]; then exit 1; fi; git diff --quiet $CACHED_COMMIT HEAD -- src/ public/ next.config.mjs package.json package-lock.json netlify.toml brik-bds/"
+
+[build.environment]
+  NODE_VERSION = "20"
+  GIT_SUBMODULES = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# ── Staging (branch deploys) ────────────────────────────────────────
+# main     → renew-pms.netlify.app  (production, custom domain TBD)
+# staging  → staging--renew-pms.netlify.app
+# PR #N    → deploy-preview-N--renew-pms.netlify.app
+
+[context.staging]
+  command = "npm run build"
+
+[context.staging.environment]
+  NEXT_PUBLIC_SITE_URL = "https://staging--renew-pms.netlify.app"
+
+[context.deploy-preview]
+  command = "npm run build"
