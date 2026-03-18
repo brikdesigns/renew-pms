@@ -1,10 +1,17 @@
 -- Renew PMS — Initial Schema
 -- Multi-tenant dental practice management + training platform
 --
--- Tables: profiles, practices, practice_members, patients, tasks,
---         training_modules, training_progress, schedule, email_log
+-- Tables: profiles, practices, practice_members, tasks, training_modules,
+--         training_progress, email_log
 -- Auth: Row-Level Security with practice-scoped isolation
 -- Roles: platform_admin, practice_admin, staff
+--
+-- Integrations planned:
+--   - Trainual: people-sync + assignment/completion status (API: people management only,
+--               cannot read content). Used to drive employee_status and personalized workflows.
+--   - Google Drive: file/doc source of truth for the practice
+--
+-- Reseller-ready: practices.reseller_id is nullable for future white-label/reseller model
 
 -- ============================================
 -- 1. PROFILES (extends Supabase auth.users)
@@ -54,6 +61,8 @@ create policy "profiles_admin_manage" on public.profiles
 -- ============================================
 create table public.practices (
   id uuid primary key default gen_random_uuid(),
+  -- Future reseller/white-label support (nullable until needed)
+  reseller_id uuid null,
   name text not null,
   slug text unique not null,
   address_line1 text,
@@ -68,6 +77,9 @@ create table public.practices (
   npi_number text,
   tax_id text,
   status text not null default 'active' check (status in ('active', 'inactive', 'suspended')),
+  -- Integration config stored here (e.g. trainual_api_key, gdrive_folder_id)
+  -- Never expose service-role to client — read via server-side API routes only
+  integrations jsonb not null default '{}',
   settings jsonb not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -83,6 +95,12 @@ create table public.practice_members (
   practice_id uuid not null references public.practices(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
   role text not null default 'staff' check (role in ('owner', 'admin', 'manager', 'staff', 'viewer')),
+  -- Employee lifecycle status — used to personalize task workflows
+  -- new: recently onboarded, maturing: progressing, active: fully ramped
+  employee_status text not null default 'new' check (employee_status in ('new', 'maturing', 'active')),
+  -- Trainual integration: links this member to their Trainual person record
+  -- Populated during Trainual sync; used to pull training completion + assignments
+  trainual_user_id text null,
   is_active boolean not null default true,
   joined_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
