@@ -2,6 +2,74 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Button } from '@bds/components';
+import { TextInput } from '@bds/components';
+import { color, font, gap, space, border, shadow } from '@/lib/tokens';
+import type { CSSProperties } from 'react';
+
+// ─── Layout ──────────────────────────────────────────────────────────────────
+
+const pageStyle: CSSProperties = {
+  minHeight: '100dvh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: color.page.secondary,
+  padding: space.lg,
+};
+
+const cardStyle: CSSProperties = {
+  width: '100%',
+  maxWidth: '400px',
+  backgroundColor: color.background.primary,
+  borderRadius: border.radius.lg,
+  boxShadow: shadow.md,
+  padding: space.huge,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: gap.xl,
+};
+
+const headerStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: gap.sm,
+  textAlign: 'center',
+};
+
+const logoStyle: CSSProperties = {
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.medium,
+  fontWeight: font.weight.semibold,
+  color: color.text.primary,
+  margin: 0,
+  letterSpacing: '-0.02em',
+};
+
+const taglineStyle: CSSProperties = {
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.muted,
+  margin: 0,
+};
+
+const formStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: gap.lg,
+};
+
+const errorStyle: CSSProperties = {
+  backgroundColor: color.surface.negative,
+  color: color.text.negative,
+  borderRadius: border.radius.md,
+  padding: `${space.sm} ${space.md}`,
+  fontSize: font.size.body.sm,
+  fontFamily: font.family.body,
+  lineHeight: '1.5',
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,75 +83,70 @@ export default function LoginPage() {
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (authError) {
+      setError('Invalid email or password. Please try again.');
       setLoading(false);
       return;
     }
 
-    // Redirect handled by middleware
-    window.location.href = '/dashboard';
+    // Role-aware redirect
+    const role = data.user?.user_metadata?.role;
+    if (role === 'platform_admin') {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Renew PMS
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
+    <div style={pageStyle}>
+      <div style={cardStyle}>
+        <div style={headerStyle}>
+          <p style={logoStyle}>Renew PMS</p>
+          <p style={taglineStyle}>Sign in to your practice</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <button
+
+        <form style={formStyle} onSubmit={handleLogin}>
+          {error && <div style={errorStyle}>{error}</div>}
+
+          <TextInput
+            label="Email address"
+            type="email"
+            placeholder="you@yourpractice.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            size="md"
+            fullWidth
+            required
+            autoComplete="email"
+          />
+
+          <TextInput
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            size="md"
+            fullWidth
+            required
+            autoComplete="current-password"
+          />
+
+          <Button
             type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={loading}
           >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
+            Sign in
+          </Button>
         </form>
       </div>
     </div>

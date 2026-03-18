@@ -28,8 +28,8 @@ const nextConfig = {
   },
   turbopack: {
     resolveAlias: {
-      '@bds/components': path.resolve(__dirname, 'brik-bds/components'),
-      '@bds/tokens': path.resolve(__dirname, 'brik-bds/tokens'),
+      '@bds/components': './brik-bds/components',
+      '@bds/tokens': './brik-bds/tokens',
     },
   },
   webpack: (config) => {
