@@ -34,10 +34,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === '/login';
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
+  const isApiDebug = pathname.startsWith('/api/debug');
+  const isPublicRoute = pathname === '/login' || pathname === '/' || isApiDebug;
 
   // Redirect unauthenticated users to login
-  if (!user && isProtectedRoute) {
+  if (!user && !isPublicRoute) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);

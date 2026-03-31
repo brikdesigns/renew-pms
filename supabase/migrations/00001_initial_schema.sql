@@ -67,10 +67,21 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
+-- Helper to read own role without triggering RLS recursion on profiles
+create or replace function public.get_my_system_role()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select system_role::text from public.profiles where id = auth.uid()
+$$;
+
 create policy "profiles_select" on public.profiles
   for select using (
     auth.uid() = id
-    or (select system_role from public.profiles where id = auth.uid()) = 'platform_admin'
+    or public.get_my_system_role() = 'platform_admin'
   );
 
 create policy "profiles_update_own" on public.profiles

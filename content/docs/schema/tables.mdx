@@ -1,0 +1,130 @@
+---
+title: Database Tables
+description: Complete table reference for the Renew PMS schema.
+---
+
+## Core tables
+
+### profiles
+
+Extends Supabase `auth.users`. One row per user across all practices.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid (PK) | References `auth.users(id)` |
+| `system_role` | text | `platform_admin`, `practice_admin`, `staff` |
+| `first_name` | text | |
+| `last_name` | text | |
+| `full_name` | text | Generated column (`first_name + last_name`) |
+| `email` | text | Not null |
+| `phone` | text | |
+| `avatar_url` | text | |
+| `invited_at` | timestamptz | |
+| `invited_by` | uuid | FK → `auth.users` |
+| `last_login_at` | timestamptz | |
+| `is_active` | boolean | Default `true` |
+
+### practices
+
+The tenant — a dental practice.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid (PK) | |
+| `reseller_id` | uuid | Nullable — future white-label |
+| `name` | text | |
+| `slug` | text | Unique |
+| `address_*` | text | Full address fields |
+| `npi_number` | text | National Provider Identifier |
+| `tax_id` | text | |
+| `status` | text | `active`, `inactive`, `suspended` |
+| `integrations` | jsonb | Per-practice API config (server-side only) |
+| `settings` | jsonb | Practice preferences |
+
+### practice_members
+
+User ↔ practice join table. A user can belong to multiple practices.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid (PK) | |
+| `practice_id` | uuid | FK → practices |
+| `user_id` | uuid | FK → profiles |
+| `practice_role_id` | uuid | FK → practice_role_types |
+| `employee_status` | text | `new`, `maturing`, `active` |
+| `shift` | text | Nullable: `opening`, `closing`, `evening`, `full_day` |
+| `trainual_user_id` | text | Nullable — Trainual person ID |
+| `is_active` | boolean | |
+
+## Reference tables (user-renameable)
+
+These are seeded with dental defaults via `seed_practice_defaults()`. Practice admins can rename, reorder, or add values. **Never hardcode these in app logic.**
+
+### departments
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid (PK) | |
+| `practice_id` | uuid | FK → practices |
+| `name` | text | Unique per practice |
+| `color` | text | Color key for UI tokens (e.g. `"blue"`, `"green"`) — see [Design Tokens](/docs/architecture/design-tokens) |
+| `sort_order` | integer | Display ordering |
+| `is_active` | boolean | |
+
+Seeded defaults: Clinical, Front Desk, Engineering, HR, Administration, Sterilization, Global
+
+### practice_role_types
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid (PK) | |
+| `practice_id` | uuid | FK → practices |
+| `department_id` | uuid | FK → departments (nullable, `on delete set null`) |
+| `name` | text | Unique per practice |
+| `is_default` | boolean | Seeded default — can rename, can't delete |
+| `is_active` | boolean | |
+| `sort_order` | integer | |
+
+The `department_id` FK is the key relationship that drives UI color: role → department → `color` key → BDS tokens. See [Design Tokens](/docs/architecture/design-tokens#color-derivation-chain) for details.
+
+### Other reference tables
+
+| Table | Key columns | Seeded defaults |
+|-------|------------|-----------------|
+| `task_types` | name, is_default | Checklist, Procedure, Compliance, Skill Training, Onboarding, Request |
+| `task_categories` | name, is_default | Cleaning, Equipment, Maintenance, Compliance/Safety, etc. |
+| `compliance_types` | name, description, is_default | OSHA, HIPAA, Infection Control, Radiation Safety, etc. |
+| `equipment_categories` | name | Dental Chair, Autoclave, X-Ray Machine, Handpieces, etc. |
+| `supply_categories` | name, department_id | Instruments, PPE, Disposables, Autoclave Bags, etc. |
+
+## Location tables
+
+| Table | Key columns | Notes |
+|-------|------------|-------|
+| `offices` | name, address_*, is_primary | Physical buildings |
+| `rooms` | name, room_type, office_id, is_custom | Spaces within offices |
+
+## Asset tables
+
+| Table | Key columns | Notes |
+|-------|------------|-------|
+| `equipment` | name, manufacturer, model, serial_number, status | Full lifecycle tracking with maintenance dates |
+
+## Work tables
+
+| Table | Key columns | Notes |
+|-------|------------|-------|
+| `tasks` | title, status, priority, frequency, assigned_to | Core workflow unit — see [Enums](/docs/schema/enums) for status values |
+
+## Training tables
+
+| Table | Key columns | Notes |
+|-------|------------|-------|
+| `training_modules` | title, category, difficulty, status | Global or practice-scoped |
+| `training_progress` | user_id, module_id, status, score | Per-user completion tracking |
+
+## System tables
+
+| Table | Key columns | Notes |
+|-------|------------|-------|
+| `email_log` | to_email, subject, template, status, resend_id | Platform admin only |

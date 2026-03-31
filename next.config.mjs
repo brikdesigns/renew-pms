@@ -1,3 +1,4 @@
+import { createMDX } from 'fumadocs-mdx/next';
 import { withSentryConfig } from '@sentry/nextjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -42,9 +43,13 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  silent: !process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: false,
-  disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
-  disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
-});
+const withMDX = createMDX();
+
+export default withMDX(
+  withSentryConfig(nextConfig, {
+    silent: !process.env.SENTRY_AUTH_TOKEN,
+    widenClientFileUpload: false,
+    disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+    disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+  })
+);

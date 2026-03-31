@@ -1,0 +1,4 @@
+{
+  "title": "Settings",
+  "pages": ["index", "organization", "users", "roles", "departments", "templates"]
+}

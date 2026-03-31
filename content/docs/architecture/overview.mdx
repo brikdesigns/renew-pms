@@ -1,0 +1,63 @@
+---
+title: Architecture Overview
+description: Multi-tenancy model, data isolation, and provisioning flow.
+---
+
+## Multi-tenancy
+
+Practices are isolated via the `practice_members` join table and Row Level Security (RLS) on every table. A user sees only data belonging to practices they are a member of.
+
+The helper function `user_practice_ids(uid)` returns all practice IDs for a given user and is used in every RLS policy:
+
+```sql
+create or replace function public.user_practice_ids(uid uuid)
+returns setof uuid
+language sql
+security definer
+stable
+as $$
+  select practice_id from public.practice_members
+  where user_id = uid and is_active = true;
+$$;
+```
+
+### RLS pattern
+
+Every practice-scoped table follows this pattern:
+
+```sql
+-- Read: members of the practice + platform admins
+create policy "table_select" on public.some_table
+  for select using (
+    practice_id in (select public.user_practice_ids(auth.uid()))
+    or public.get_my_system_role() = 'platform_admin'
+  );
+
+-- Write: practice admins + platform admins
+create policy "table_admin_manage" on public.some_table
+  for all using (
+    practice_id in (select public.user_practice_ids(auth.uid()))
+    and public.get_my_system_role() in ('platform_admin', 'practice_admin')
+  );
+```
+
+**Important:** RLS policies must never subquery their own table — this causes infinite recursion. Always use `SECURITY DEFINER` helper functions.
+
+## Provisioning
+
+When Brik provisions a new practice, the `seed_practice_defaults(practice_id, office_id)` function seeds all reference tables with dental-specific defaults:
+
+- Departments (Clinical, Front Desk, Engineering, HR, etc.)
+- Practice role types (Owner, Office Manager, Dental Hygienist, etc.)
+- Rooms (Lobby, Operatory, Sterilization Room, etc.)
+- Equipment categories (Dental Chair, Autoclave, X-Ray Machine, etc.)
+- Supply categories (Instruments, PPE, Disposables, etc.)
+- Task types (Checklist, Procedure, Compliance, etc.)
+- Task categories (Cleaning, Equipment, Maintenance, etc.)
+- Compliance types (OSHA, HIPAA, Infection Control, etc.)
+
+All seeded values are renameable by practice admins. App logic never hardcodes reference table values.
+
+## Reseller-ready
+
+`practices.reseller_id` is nullable — reserved for a future white-label/reseller pivot. No reseller logic is implemented in V1.

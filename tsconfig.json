@@ -24,7 +24,8 @@
       "@bds/components": ["./brik-bds/components"],
       "@bds/components/*": ["./brik-bds/components/*"],
       "@bds/tokens": ["./brik-bds/tokens"],
-      "@bds/tokens/*": ["./brik-bds/tokens/*"]
+      "@bds/tokens/*": ["./brik-bds/tokens/*"],
+      "collections/*": ["./.source/*"]
     }
   },
   "include": [
@@ -34,7 +35,8 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "brik-bds/**/*.ts",
-    "brik-bds/**/*.tsx"
+    "brik-bds/**/*.tsx",
+    ".source/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -42,6 +44,7 @@
     "brik-bds/**/*.stories.ts",
     "brik-bds/**/*.stories.tsx",
     "brik-bds/.storybook",
-    "brik-bds/vite.config*.ts"
+    "brik-bds/vite.config*.ts",
+    "brik-bds/tools"
   ]
 }

@@ -94,13 +94,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Role-aware redirect
-    const role = data.user?.user_metadata?.role;
-    if (role === 'platform_admin') {
-      window.location.href = '/admin';
-    } else {
-      window.location.href = '/dashboard';
-    }
+    window.location.href = '/dashboard';
   };
 
   return (

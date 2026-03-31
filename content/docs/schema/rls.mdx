@@ -1,0 +1,105 @@
+---
+title: Row Level Security
+description: RLS policies, helper functions, and common patterns.
+---
+
+Every table in Renew PMS has RLS enabled. Data isolation is enforced at the database level — the app never filters by practice in application code.
+
+## Helper functions
+
+### get_my_system_role()
+
+Returns the current user's system role without triggering RLS recursion on the `profiles` table.
+
+```sql
+create or replace function public.get_my_system_role()
+returns text
+language sql stable security definer
+set search_path = ''
+as $$
+  select system_role::text from public.profiles where id = auth.uid()
+$$;
+```
+
+### user_practice_ids(uid)
+
+Returns all practice IDs the user is an active member of.
+
+```sql
+create or replace function public.user_practice_ids(uid uuid)
+returns setof uuid
+language sql security definer stable
+as $$
+  select practice_id from public.practice_members
+  where user_id = uid and is_active = true;
+$$;
+```
+
+## Policy patterns
+
+### Practice-scoped read (most tables)
+
+Members of the practice can read. Platform admins can read everything.
+
+```sql
+create policy "table_select" on public.some_table
+  for select using (
+    practice_id in (select public.user_practice_ids(auth.uid()))
+    or public.get_my_system_role() = 'platform_admin'
+  );
+```
+
+### Admin-only write
+
+Practice admins and platform admins can insert/update/delete.
+
+```sql
+create policy "table_admin_manage" on public.some_table
+  for all using (
+    practice_id in (select public.user_practice_ids(auth.uid()))
+    and public.get_my_system_role() in ('platform_admin', 'practice_admin')
+  );
+```
+
+### Member write (tasks, equipment)
+
+Any practice member can create records. Useful for tasks and equipment.
+
+```sql
+create policy "table_member_insert" on public.some_table
+  for insert with check (
+    practice_id in (select public.user_practice_ids(auth.uid()))
+  );
+```
+
+### Own-record access (profiles, training_progress)
+
+Users can read/update their own records.
+
+```sql
+create policy "table_own_update" on public.some_table
+  for update using (user_id = auth.uid());
+```
+
+## Critical rule: no self-referencing subqueries
+
+**RLS policies must never subquery their own table.** This causes infinite recursion because PostgreSQL checks the policy on the subquery too.
+
+Bad:
+```sql
+-- DO NOT DO THIS — infinite recursion
+create policy "profiles_select" on public.profiles
+  for select using (
+    (select system_role from public.profiles where id = auth.uid()) = 'platform_admin'
+  );
+```
+
+Good:
+```sql
+-- Use a SECURITY DEFINER function instead
+create policy "profiles_select" on public.profiles
+  for select using (
+    auth.uid() = id
+    or public.get_my_system_role() = 'platform_admin'
+  );
+```

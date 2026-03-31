@@ -1,0 +1,69 @@
+---
+title: Role Model
+description: Two-layer role system — system roles (permissions) vs practice roles (job function).
+---
+
+Renew uses two distinct role layers. Keep them separate in your mental model.
+
+## System role — what you can DO
+
+Stored on `profiles.system_role`. Controls permissions and data access.
+
+| Role | Access |
+|------|--------|
+| `platform_admin` | Brik staff. Full access across all practices. |
+| `practice_admin` | Manages their practice. Invites staff, configures settings. |
+| `staff` | Standard team member. Scoped to their practice data. |
+
+System role is an **enum** — app logic depends on these values. Not user-renameable.
+
+## Practice role — what you ARE
+
+Stored via `practice_members.practice_role_id` → `practice_role_types`. Represents job function/title.
+
+Default seeded roles:
+
+| Role | Department |
+|------|-----------|
+| Owner | Clinical |
+| Office Manager | Administration |
+| Dental Hygienist | Clinical |
+| Dental Assistant | Clinical |
+| Receptionist | Front Desk |
+| Treatment Coordinator | Front Desk |
+| Insurance Coordinator | Front Desk |
+| Engineer | Engineering |
+| Inventory Manager | Engineering |
+| Manager | Global |
+| Admin | Global |
+| Staff | Global |
+
+Practice roles live in a **reference table** — practice admins can rename, add, or deactivate them. Never hardcode role type values in app logic.
+
+### Role → department → color
+
+Each role has a `department_id` FK pointing to `departments`. The department's `color` column (e.g. `"blue"`, `"green"`) drives UI color throughout the app:
+
+- **Role card avatars** use the department's light color as the background
+- **User card avatars** inherit color through: `practice_members.practice_role_id` → `practice_role_types.department_id` → `departments.color`
+- **Department tags** on user cards use the same light + text token pair
+
+This is a single FK chain — changing a department's color automatically updates every role and user that belongs to it. See [Design Tokens](/docs/architecture/design-tokens) for the full color derivation chain and token reference.
+
+## Employee status
+
+Stored on `practice_members.employee_status`. Drives Trainual sync and task personalization.
+
+| Status | Meaning |
+|--------|---------|
+| `new` | Recently onboarded |
+| `maturing` | Progressing through training |
+| `active` | Fully ramped |
+
+This is an **enum** — app logic depends on these values.
+
+## Shift (optional)
+
+Stored on `practice_members.shift`. Not all practices use shift-based scheduling.
+
+Values: `opening`, `closing`, `evening`, `full_day` (nullable)

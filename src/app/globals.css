@@ -1,14 +1,48 @@
 /* BDS token layer — must come first */
-@import '../../brik-bds/tokens/fonts.css';
-@import '../../brik-bds/tokens/figma-tokens.css';
+@import '../../brik-bds/tokens/fonts.css' layer(base);
+@import '../../brik-bds/tokens/figma-tokens.css' layer(base);
+/* Renew Dental brand override — after BDS so it wins */
+@import '../styles/theme-renew.css' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-renew-primary: #642f6c;
+  --color-renew-primary-light: #ba9cc5;
+  --color-renew-gold: #cfa553;
+  --color-renew-warm-bg: #f8f6f9;
+  --color-renew-surface: #f2f2f2;
+  --color-renew-border: #d7d7d7;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border-muted, currentcolor);
+  }
+}
 
 :root {
   --background: var(--page-primary);
   --foreground: var(--text-primary);
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 body {
@@ -17,4 +51,86 @@ body {
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Board overrides (neutral column backgrounds) ── */
+.bds-board-column .bds-avatar {
+  background-color: var(--dept-avatar-bg, var(--background-brand-primary));
+  color: var(--dept-avatar-color, var(--text-inverse));
+}
+
+.bds-board-column .bds-board-header__name {
+  color: var(--text-primary);
+}
+
+.bds-board-column .bds-board-header__subtitle {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Renew button system (with interaction states) ── */
+@layer components {
+  .renew-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--space-1300, 50px);
+    padding-inline: var(--padding-xl);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-family-label);
+    font-size: var(--body-md);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+
+  .renew-btn:focus-visible {
+    outline: 2px solid var(--state-focus);
+    outline-offset: 2px;
+  }
+
+  .renew-btn:disabled {
+    opacity: var(--state-disabled-opacity);
+    cursor: not-allowed;
+  }
+
+  /* ── Primary (brand fill) ── */
+  .renew-btn--primary {
+    background-color: var(--background-brand-primary);
+    color: var(--text-on-color-dark);
+  }
+
+  .renew-btn--primary:hover:not(:disabled) {
+    background-color: var(--background-brand-primary-hover);
+  }
+
+  .renew-btn--primary:active:not(:disabled) {
+    background-color: var(--background-brand-primary-pressed);
+  }
+
+  /* ── Ghost (transparent) ── */
+  .renew-btn--ghost {
+    background-color: transparent;
+    color: var(--text-primary);
+  }
+
+  .renew-btn--ghost:hover:not(:disabled) {
+    background-color: var(--surface-secondary);
+  }
+
+  .renew-btn--ghost:active:not(:disabled) {
+    background-color: var(--surface-muted);
+  }
 }

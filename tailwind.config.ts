@@ -4,6 +4,8 @@ const config: Config = {
   content: [
     './src/**/*.{js,ts,jsx,tsx,mdx}',
     './brik-bds/components/**/*.{js,ts,jsx,tsx}',
+    './content/**/*.mdx',
+    './mdx-components.tsx',
   ],
   theme: {
     extend: {

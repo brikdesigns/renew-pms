@@ -39,12 +39,17 @@ export interface AuthUser {
   user: User;
   profile: {
     id: string;
-    role: SystemRole;
+    system_role: SystemRole;
     first_name: string | null;
     last_name: string | null;
     full_name: string | null;
     email: string | null;
   };
+  /** Practice membership context (null if user has no practice membership) */
+  membership: {
+    department: string | null;
+    practice_role: string | null;
+  } | null;
 }
 
 /**
@@ -53,21 +58,49 @@ export interface AuthUser {
  */
 export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser | null> {
   const client = supabase ?? await createClient();
-  const { data: { user } } = await client.auth.getUser();
+  const { data: { user }, error: userError } = await client.auth.getUser();
 
-  if (!user) return null;
+  if (!user) {
+    console.error('[getAuthUser] No user from getUser():', userError?.message);
+    return null;
+  }
 
-  const { data: profile } = await client
+  const { data: profile, error: profileError } = await client
     .from('profiles')
-    .select('id, role, first_name, last_name, full_name, email')
+    .select('id, system_role, first_name, last_name, full_name, email')
     .eq('id', user.id)
     .single();
 
-  if (!profile) return null;
+  if (!profile) {
+    console.error('[getAuthUser] No profile for user:', user.id, profileError?.message);
+    return null;
+  }
+
+  // Fetch practice membership with department (via role → department FK chain)
+  const { data: memberRow } = await client
+    .from('practice_members')
+    .select('practice_role_types(name, departments(name))')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+
+  // Supabase returns nested FK joins as objects (single) or arrays (many).
+  // practice_role_types is a single FK, departments is a single FK off that.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const roleType = memberRow?.practice_role_types as any as
+    | { name: string; departments: { name: string } | null }
+    | null;
 
   return {
     user,
     profile: profile as AuthUser['profile'],
+    membership: memberRow
+      ? {
+          department: roleType?.departments?.name ?? null,
+          practice_role: roleType?.name ?? null,
+        }
+      : null,
   };
 }
 
@@ -89,7 +122,7 @@ export async function requirePlatformAdmin(supabase?: SupabaseClient): Promise<A
   const result = await requireAuth(supabase);
   if (result instanceof NextResponse) return result;
 
-  if (result.profile.role !== 'platform_admin') {
+  if (result.profile.system_role !== 'platform_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return result;
@@ -102,7 +135,7 @@ export async function requirePracticeAdmin(supabase?: SupabaseClient): Promise<A
   const result = await requireAuth(supabase);
   if (result instanceof NextResponse) return result;
 
-  if (!['platform_admin', 'practice_admin'].includes(result.profile.role)) {
+  if (!['platform_admin', 'practice_admin'].includes(result.profile.system_role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return result;
@@ -112,7 +145,7 @@ export async function requirePracticeAdmin(supabase?: SupabaseClient): Promise<A
  * Check if an AuthUser is a platform admin.
  */
 export function isPlatformAdmin(authUser: AuthUser): boolean {
-  return authUser.profile.role === 'platform_admin';
+  return authUser.profile.system_role === 'platform_admin';
 }
 
 /**
