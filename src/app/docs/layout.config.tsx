@@ -10,5 +10,5 @@ export const baseOptions: BaseLayoutProps = {
       url: '/guide',
     },
   ],
-  disableThemeSwitch: true,
+  themeSwitch: { enabled: false },
 };

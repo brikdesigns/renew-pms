@@ -10,5 +10,5 @@ export const baseOptions: BaseLayoutProps = {
       url: '/docs',
     },
   ],
-  disableThemeSwitch: true,
+  themeSwitch: { enabled: false },
 };
