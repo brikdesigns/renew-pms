@@ -9,6 +9,7 @@ import { Badge } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
+import { label as labelStyle } from '@/lib/styles';
 import type { CSSProperties } from 'react';
 
 // ─── Mock data (aggregated from tasks + training pages) ──────────────────────
@@ -58,10 +59,10 @@ const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string }> = {
-  critical: { status: 'error', label: 'Critical' },
-  warning: { status: 'warning', label: 'Medium' },
-  info: { status: 'info', label: 'Low' },
+const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
+  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
+  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
+  info:     { status: 'info',    label: 'Low',       icon: icon.priorityInfo },
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -253,11 +254,11 @@ export default function DashboardPage() {
             </Link>
           </div>
           <ul style={listStyle}>
-            {OVERDUE_TASKS.slice(0, 5).map((task) => {
+            {OVERDUE_TASKS.map((task) => {
               const pri = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.info;
               const deptColors = getDepartmentColors(task.dept);
               return (
-                <li key={task.id} style={listItemStyle}>
+                <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{task.title}</div>
@@ -265,18 +266,13 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
-                    <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>
-                    <Badge status={pri.status} size="xs" variant="dark">{pri.label}</Badge>
+                    <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
+                    <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} title={pri.label} style={{ flexShrink: 0 }} />
                   </div>
                 </li>
               );
             })}
           </ul>
-          {OVERDUE_TASKS.length > 5 && (
-            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.xs, color: color.text.muted }}>
-              +{OVERDUE_TASKS.length - 5} more overdue
-            </span>
-          )}
         </div>
 
         {/* ── Card 2: Today's Progress ── */}
@@ -296,15 +292,15 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', gap: gap.lg }}>
                 <div>
-                  <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
+                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
                   <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remaining</div>
+                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Remaining</div>
                   <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overdue</div>
+                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
                   <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
                 </div>
               </div>
@@ -312,9 +308,7 @@ export default function DashboardPage() {
           </div>
           {/* Department bar chart */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md, marginTop: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              By Department
-            </span>
+            <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>By Department</span>
             {DEPT_COMPLETION.map((d) => (
               <DeptBar key={d.dept} dept={d.dept} completed={d.completed} total={d.total} />
             ))}

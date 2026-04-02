@@ -225,15 +225,8 @@ export default function TasksPage() {
             />
             {/* Overdue partition */}
             {overdueTasks.length > 0 && (
-              <div style={{
-                backgroundColor: color.surface.warning,
-                borderRadius: border.radius.md,
-                padding: space.sm,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: gap.sm,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs, paddingInline: space.sm }}>
                   <Dot status="error" size="sm" pulse />
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.negative }}>Overdue</span>
                 </div>
@@ -265,17 +258,18 @@ export default function TasksPage() {
                         room: task.room,
                         equipment: task.equipment,
                       })}
-                      style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
+                      style={{ backgroundColor: color.surface.warning, boxShadow: shadow.sm, cursor: 'pointer' }}
                       tags={
                         <>
-                          <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>
-                          <Tag size="sm">{task.freq}</Tag>
+                          <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
+                          <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
                           <Badge
                             status="warning"
                             size="xs"
                             variant="dark"
-                            icon={<Icon icon={icon.warning} />}
+                            icon={<Icon icon={icon.overdue} />}
                             title="Overdue"
+                            style={{ flexShrink: 0 }}
                           />
                         </>
                       }
@@ -286,6 +280,7 @@ export default function TasksPage() {
                           variant="dark"
                           icon={<Icon icon={pri.icon} />}
                           title={pri.label}
+                          style={{ flexShrink: 0 }}
                         />
                       }
                     />
@@ -325,8 +320,8 @@ export default function TasksPage() {
                   style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
                   tags={
                     <>
-                      <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>
-                      <Tag size="sm">{task.freq}</Tag>
+                      <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
+                      <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
                     </>
                   }
                   trailingTag={
@@ -345,6 +340,7 @@ export default function TasksPage() {
                         variant="dark"
                         icon={<Icon icon={pri.icon} />}
                         title={pri.label}
+                        style={{ flexShrink: 0 }}
                       />
                     )
                   }

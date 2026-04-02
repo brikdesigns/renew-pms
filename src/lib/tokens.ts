@@ -37,21 +37,35 @@ export const font = {
    *
    * Figma style        → Token                    → Resolved (Base)
    * ─────────────────────────────────────────────────────────────────
+   * ── Body (font-family-body · Avenir) ─────────────────────────────────────
    * body/tiny           → --body-tiny              → 10.26px
    * body/xs             → --body-xs                → 11.54px
    * body/sm (14/150)    → --body-sm                → 14px
-   * body/md (16/150)    → --body-md                → 16px
+   * body/md (16/150)    → --body-md                → 16px  ← font-size/100
    * body/lg (18/150)    → --body-lg                → 18px
    * body/xl (20/150)    → --body-xl                → 20px
+   *
+   * ── Label (font-family-label · Avenir) ────────────────────────────────────
    * label/sm            → --label-sm               → 14px
    * label/md            → --label-md               → 16px
    * label/lg            → --label-lg               → 18px
    * label/xl            → --label-xl               → 20px
-   * subtitle/md         → label-sm + weight 600 + uppercase (composite)
-   * heading/tiny        → --heading-tiny           → 16px
-   * heading/small       → --heading-sm             → 20px
-   * heading/medium      → --heading-md             → 25.3px
-   * heading/large       → --heading-lg             → 32px
+   *
+   * ── Subtitle (font-family-label · Avenir, small caps context) ─────────────
+   * subtitle/sm         → --subtitle-sm            → 10.26px  (font-size/25)
+   * subtitle/md         → --subtitle-md            → 11.54px  (font-size/50)
+   * subtitle/lg         → --subtitle-lg            → 16px     (font-size/100)
+   *
+   * ── Heading (font-family-heading · Century Schoolbook) ────────────────────
+   * NOTE: Heading scale starts at font-size/200 (18px). font-size/100 (16px)
+   *       is body/label territory — there is NO heading at 16px.
+   * heading/xs  (tiny)  → --heading-tiny           → 18px   (font-size/200)
+   * heading/sm          → --heading-sm             → 20px   (font-size/300)
+   * heading/md          → --heading-md             → 22.5px (font-size/400)
+   * heading/lg          → --heading-lg             → 28.5px (font-size/600)
+   * heading/xl          → --heading-xl             → 32px   (font-size/700)
+   * heading/xxl         → --heading-xxl            → 36px   (font-size/800)
+   * heading/huge        → --heading-huge           → 40.5px (font-size/900)
    */
   size: {
     body: {
@@ -63,19 +77,26 @@ export const font = {
       xl: 'var(--body-xl)',
     },
     label: {
-      sm: 'var(--label-sm)',
-      md: 'var(--label-md)',
-      lg: 'var(--label-lg)',
-      xl: 'var(--label-xl)',
+      sm: 'var(--label-sm)',   // 14px
+      md: 'var(--label-md)',   // 16px
+      lg: 'var(--label-lg)',   // 18px
+      xl: 'var(--label-xl)',   // 20px
+    },
+    /** Subtitle sizes — smaller caps labels (font-family-label, no weight emphasis) */
+    subtitle: {
+      sm: 'var(--subtitle-sm)',  // 10.26px
+      md: 'var(--subtitle-md)',  // 11.54px
+      lg: 'var(--subtitle-lg)',  // 16px
     },
     heading: {
+      /** 18px (font-size/200) — smallest heading; do NOT use font-size/100 (16px) for headings */
       tiny: 'var(--heading-tiny)',
-      small: 'var(--heading-sm)',
-      medium: 'var(--heading-md)',
-      large: 'var(--heading-lg)',
-      xLarge: 'var(--heading-xl)',
-      xxLarge: 'var(--heading-xxl)',
-      xxxLarge: 'var(--heading-huge)',
+      small: 'var(--heading-sm)',    // 20px
+      medium: 'var(--heading-md)',   // 22.5px
+      large: 'var(--heading-lg)',    // 28.5px
+      xLarge: 'var(--heading-xl)',   // 32px
+      xxLarge: 'var(--heading-xxl)', // 36px
+      xxxLarge: 'var(--heading-huge)', // 40.5px
     },
     icon: {
       sm: 'var(--icon-sm)',

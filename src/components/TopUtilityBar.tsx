@@ -54,8 +54,7 @@ const labelStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.xs,
   fontWeight: 600,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
+  textTransform: 'capitalize' as const,
   color: color.text.secondary,
   lineHeight: font.lineHeight.tight,
 };

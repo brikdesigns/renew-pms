@@ -170,11 +170,11 @@ export function TrainingCard({ member }: { member: TrainingMember }) {
       {/* Bottom row: type + dept tags | progress bar */}
       <div style={bottomRowStyle}>
         <div style={tagGroupStyle}>
-          <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
-            {typeTag.label}
-          </Tag>
           <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
             {member.department}
+          </Tag>
+          <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
+            {typeTag.label}
           </Tag>
         </div>
         {member.hasTrainingDue ? (

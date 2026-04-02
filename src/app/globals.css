@@ -53,12 +53,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Label casing — token-driven via --text-transform-label in theme-renew.css ── */
+/* ── Tags and Badges: uppercase is a UI convention (not a Figma type style) ── */
 .bds-tag,
-.bds-badge,
+.bds-badge {
+  text-transform: uppercase;
+}
+
+/* ── Board subtitles: token-driven casing + fix BDS Board.css body→label font ── */
 .bds-board-header__subtitle,
 .bds-board-card__subtitle {
   text-transform: var(--text-transform-label);
+  font-family: var(--font-family-label);
 }
 
 /* ── Board overrides (neutral column backgrounds) ── */
@@ -67,6 +72,8 @@ body {
   color: var(--dept-avatar-color, var(--text-inverse));
 }
 
+/* Board header name + subtitle: font-family semantics are now correct in BDS.
+ * Only color/opacity overrides needed here for Renew's neutral-column layout. */
 .bds-board-column .bds-board-header__name {
   color: var(--text-primary);
 }
@@ -74,6 +81,16 @@ body {
 .bds-board-column .bds-board-header__subtitle {
   color: var(--text-secondary);
   opacity: 1;
+}
+
+/* ── Sheet: top-align close button with heading ── */
+.bds-sheet__header,
+.bds-sheet__header-top {
+  align-items: flex-start;
+}
+
+.bds-sheet__close {
+  padding-top: 0;
 }
 
 @keyframes toast-slide-in {

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
+import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
 import { font, color, motion } from '@/lib/tokens';
@@ -45,13 +46,6 @@ const logoStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const diamondStyle: CSSProperties = {
-  width: '29px',
-  height: '29px',
-  backgroundColor: color.background.inverse,
-  borderRadius: '4px',
-  transform: 'rotate(45deg)',
-};
 
 const navGroupStyle: CSSProperties = {
   display: 'flex',
@@ -134,9 +128,9 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   return (
     <aside style={sidebarStyle}>
       <div style={topGroupStyle}>
-        {/* Diamond logo */}
+        {/* Logomark */}
         <div style={logoStyle}>
-          <div style={diamondStyle} />
+          <Logomark size={40} />
         </div>
 
         {/* Nav icons */}
