@@ -164,6 +164,10 @@
   --color-department-teal-light: #d4f0ec;
   --color-department-teal-text: #1f4a44;
 
+  /* ── Tooltip (uses BDS --tooltip-background / --tooltip-text tokens) ── */
+  --tooltip-background: #464050;  /* colors/dark-purple from Figma primitives */
+  --tooltip-text: #ffffff;
+
   /* ── Interaction state tokens (Layer 2 — from Figma state group) ── */
   --state-hover-overlay: rgba(0, 0, 0, 0.0004);     /* Figma: state/hover-overlay */
   --state-pressed-overlay: rgba(0, 0, 0, 0.0008);   /* Figma: state/pressed-overlay */

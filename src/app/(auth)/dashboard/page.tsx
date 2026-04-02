@@ -4,8 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag } from '@bds/components';
-import { Badge } from '@bds/components';
+import { Tag, Badge, Tooltip } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
@@ -267,7 +266,9 @@ export default function DashboardPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
                     <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-                    <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} title={pri.label} style={{ flexShrink: 0 }} />
+                    <Tooltip content={pri.label} placement="top">
+                      <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} style={{ flexShrink: 0 }} />
+                    </Tooltip>
                   </div>
                 </li>
               );

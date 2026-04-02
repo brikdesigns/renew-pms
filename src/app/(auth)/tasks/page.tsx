@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
-import { Tag, Badge, Dot, AnimatedIcon } from '@bds/components';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip } from '@bds/components';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -263,25 +263,27 @@ export default function TasksPage() {
                         <>
                           <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
                           <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
-                          <Badge
-                            status="warning"
-                            size="xs"
-                            variant="dark"
-                            icon={<Icon icon={icon.overdue} />}
-                            title="Overdue"
-                            style={{ flexShrink: 0 }}
-                          />
+                          <Tooltip content="Overdue" placement="top">
+                            <Badge
+                              status="warning"
+                              size="xs"
+                              variant="dark"
+                              icon={<Icon icon={icon.overdue} />}
+                              style={{ flexShrink: 0 }}
+                            />
+                          </Tooltip>
                         </>
                       }
                       trailingTag={
-                        <Badge
-                          status={pri.status}
-                          size="xs"
-                          variant="dark"
-                          icon={<Icon icon={pri.icon} />}
-                          title={pri.label}
-                          style={{ flexShrink: 0 }}
-                        />
+                        <Tooltip content={pri.label} placement="top">
+                          <Badge
+                            status={pri.status}
+                            size="xs"
+                            variant="dark"
+                            icon={<Icon icon={pri.icon} />}
+                            style={{ flexShrink: 0 }}
+                          />
+                        </Tooltip>
                       }
                     />
                   );
@@ -334,14 +336,15 @@ export default function TasksPage() {
                         label="Completed"
                       />
                     ) : (
-                      <Badge
-                        status={pri.status}
-                        size="xs"
-                        variant="dark"
-                        icon={<Icon icon={pri.icon} />}
-                        title={pri.label}
-                        style={{ flexShrink: 0 }}
-                      />
+                      <Tooltip content={pri.label} placement="top">
+                        <Badge
+                          status={pri.status}
+                          size="xs"
+                          variant="dark"
+                          icon={<Icon icon={pri.icon} />}
+                          style={{ flexShrink: 0 }}
+                        />
+                      </Tooltip>
                     )
                   }
                 />
