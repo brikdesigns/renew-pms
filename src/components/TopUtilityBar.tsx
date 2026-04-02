@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 import type { CSSProperties } from 'react';
+import { font, color, gap, space, border } from '@/lib/tokens';
 import { UserAvatar } from '@/components/UserAvatar';
 
 // ─── Route label mapping ─────────────────────────────────────────────────────
@@ -32,9 +34,9 @@ const barStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  paddingInline: '32px',
-  backgroundColor: 'var(--surface-primary)',
-  borderBottom: '1px solid var(--border-muted)',
+  paddingInline: space.xl,
+  backgroundColor: color.surface.primary,
+  borderBottom: `1px solid ${color.border.muted}`,
   flexShrink: 0,
   boxSizing: 'border-box',
   position: 'sticky',
@@ -45,31 +47,31 @@ const barStyle: CSSProperties = {
 const leftStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '2px',
+  gap: gap.tiny,
 };
 
 const labelStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-label)',
-  fontSize: '11px',
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
   fontWeight: 600,
   letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-secondary)',
-  lineHeight: 1,
+  color: color.text.secondary,
+  lineHeight: font.lineHeight.tight,
 };
 
 const greetingStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-label)',
-  fontSize: '20px',
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xl,
   fontWeight: 700,
-  color: 'var(--text-primary)',
-  lineHeight: 1.2,
+  color: color.text.primary,
+  lineHeight: font.lineHeight.snug,
 };
 
 const rightStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
+  gap: space.sm,
 };
 
 const bellStyle: CSSProperties = {
@@ -78,8 +80,8 @@ const bellStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '10px',
-  backgroundColor: 'var(--surface-secondary)',
+  borderRadius: border.radius.md,
+  backgroundColor: color.surface.secondary,
   flexShrink: 0,
   border: 'none',
   cursor: 'pointer',
@@ -113,11 +115,11 @@ export function TopUtilityBar({ userInitials, userName, userFullName, userDepart
         <span style={greetingStyle}>{greeting}, {displayName}</span>
       </div>
       <div style={rightStyle}>
-        <a href="/guide" style={bellStyle} aria-label="Help & User Guide">
-          <FontAwesomeIcon icon={faCircleQuestion} style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 300 }} />
-        </a>
+        <Link href="/guide" style={bellStyle} aria-label="Help & User Guide">
+          <FontAwesomeIcon icon={faCircleQuestion} style={{ fontSize: font.size.body.md, color: color.text.primary, fontWeight: 300 }} />
+        </Link>
         <button style={bellStyle} aria-label="Notifications">
-          <FontAwesomeIcon icon={faBell} style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 300 }} />
+          <FontAwesomeIcon icon={faBell} style={{ fontSize: font.size.body.md, color: color.text.primary, fontWeight: 300 }} />
         </button>
         <UserAvatar
           name={userFullName ?? userName ?? '?'}

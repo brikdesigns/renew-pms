@@ -4,6 +4,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Sheet, TextInput, TextArea, Select, Switch } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
+import { color, font, gap, space, border } from '@/lib/tokens';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -175,7 +176,7 @@ const EMPTY_FORM: TemplateFormData = {
 
 const formRowStyle: React.CSSProperties = {
   display: 'flex',
-  gap: 'var(--gap-lg)',
+  gap: gap.lg,
   width: '100%',
 };
 
@@ -187,32 +188,32 @@ const formRowHalf: React.CSSProperties = {
 const taskListStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--gap-md)',
+  gap: gap.md,
 };
 
 const taskItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 'var(--gap-md)',
-  padding: 'var(--padding-sm) var(--padding-md)',
-  borderRadius: 'var(--border-radius-sm)',
-  border: 'var(--border-width-sm) solid var(--border-muted)',
-  backgroundColor: 'var(--surface-primary)',
+  gap: gap.md,
+  padding: `${space.sm} ${space.md}`,
+  borderRadius: border.radius.sm,
+  border: `${border.width.sm} solid ${color.border.muted}`,
+  backgroundColor: color.surface.primary,
 };
 
 const taskRemoveStyle: React.CSSProperties = {
   background: 'none',
   border: 'none',
   cursor: 'pointer',
-  color: 'var(--text-muted)',
-  fontSize: 'var(--body-sm)',
-  padding: 'var(--padding-xs)',
+  color: color.text.muted,
+  fontSize: font.size.body.sm,
+  padding: space.xs,
   marginLeft: 'auto',
 };
 
 const addTaskRowStyle: React.CSSProperties = {
   display: 'flex',
-  gap: 'var(--gap-md)',
+  gap: gap.md,
   alignItems: 'flex-end',
 };
 
@@ -438,7 +439,7 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
   const tasksContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>{form.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}</h3>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--body-sm)', margin: '0 0 var(--gap-lg) 0' }}>
+      <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: `0 0 ${gap.lg} 0` }}>
         {form.type === 'procedure'
           ? 'Add steps in order. Steps will be enforced sequentially.'
           : `Add items that will appear when this ${typeLabel.toLowerCase()} is assigned.`}
@@ -467,8 +468,8 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
           className="renew-btn renew-btn--primary"
           style={{
             height: '36px',
-            fontSize: 'var(--body-sm)',
-            padding: '0 var(--padding-md)',
+            fontSize: font.size.body.sm,
+            padding: `0 ${space.md}`,
           }}
         >
           Add
@@ -476,13 +477,13 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
       </div>
 
       {tasks.length > 0 && (
-        <div style={{ ...taskListStyle, marginTop: 'var(--gap-lg)' }}>
+        <div style={{ ...taskListStyle, marginTop: gap.lg }}>
           {tasks.map((task, idx) => (
             <div key={task.id} style={taskItemStyle}>
-              <span style={{ color: 'var(--text-muted)', fontSize: 'var(--body-sm)', minWidth: '24px' }}>
+              <span style={{ color: color.text.muted, fontSize: font.size.body.sm, minWidth: '24px' }}>
                 {idx + 1}.
               </span>
-              <span style={{ color: 'var(--text-primary)', fontSize: 'var(--body-sm)', flex: 1 }}>
+              <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
                 {task.label}
               </span>
               <button
@@ -501,9 +502,9 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
       {tasks.length === 0 && (
         <div style={{
           textAlign: 'center',
-          padding: 'var(--padding-xl)',
-          color: 'var(--text-muted)',
-          fontSize: 'var(--body-sm)',
+          padding: space.xl,
+          color: color.text.muted,
+          fontSize: font.size.body.sm,
         }}>
           No items added yet. Add items above to build the {typeLabel.toLowerCase()}.
         </div>

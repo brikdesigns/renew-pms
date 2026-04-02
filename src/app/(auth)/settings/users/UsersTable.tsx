@@ -4,19 +4,17 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
-import { Tag } from '@bds/components/ui/Tag';
+import { Badge } from '@bds/components';
+import { Tag } from '@bds/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
+import { color, font, space, gap, border } from '@/lib/tokens';
 
-// ─── Design tokens ───────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-const BRAND_PRIMARY = 'var(--background-brand-primary)';
+const TEXT_PRIMARY = color.text.primary;
+const TEXT_SECONDARY = color.text.secondary;
 
 // ─── Local type ──────────────────────────────────────────────────────────────
 
@@ -42,9 +40,9 @@ const SYSTEM_ROLE_LABELS: Record<string, string> = {
 };
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: 'var(--color-department-blue)',  color: 'var(--text-on-color-dark)', label: 'New Hire' },
-  maturing: { bg: 'var(--color-department-gold)',  color: 'var(--text-on-color-dark)', label: 'Maturing' },
-  active:   { bg: 'var(--color-department-green)', color: 'var(--text-on-color-dark)', label: 'Active' },
+  new:      { bg: color.department.blue.base,   color: color.text.onColorDark, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base,   color: color.text.onColorDark, label: 'Maturing' },
+  active:   { bg: color.department.green.base,  color: color.text.onColorDark, label: 'Active' },
 };
 
 // Seed data — realistic dental practice team
@@ -63,38 +61,38 @@ const SEED_USERS: UserRow[] = [
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: '32px' };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: '16px 0', borderBottom: '1px solid var(--border-muted)',
+  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
 };
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px' };
+const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)', fontSize: '16px', fontWeight: 600, color: TEXT_PRIMARY, margin: 0,
+  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 500,
-  color: TEXT_SECONDARY, backgroundColor: 'var(--surface-secondary)', padding: '2px 8px', borderRadius: '4px',
+  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  height: '36px', paddingInline: '14px', borderRadius: '8px',
-  backgroundColor: BRAND_PRIMARY, color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 700,
+  height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
+  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
+  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: 'var(--border-radius-md)',
-  backgroundColor: BRAND_PRIMARY, color: 'var(--text-on-color-dark)',
-  border: 'none', cursor: 'pointer', fontSize: 'var(--body-sm)',
+  width: '36px', height: '36px', borderRadius: border.radius.md,
+  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
+  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
 };
-const actionBtnGroup: CSSProperties = { display: 'flex', gap: '8px', justifyContent: 'flex-end' };
-const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', flexShrink: 0 };
+const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
+const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 const statusWrap: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: '6px',
-  fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 500,
+  display: 'inline-flex', alignItems: 'center', gap: gap.sm,
+  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
 };
 
 // Avatar rendering moved to shared UserAvatar component
@@ -186,27 +184,27 @@ export function UsersTable() {
                     <div style={nameWrap}>
                       <UserAvatar name={fullName} department={u.department} size="sm" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 500, color: TEXT_PRIMARY, fontSize: 'var(--body-md)', lineHeight: 1.2 }}>
+                        <span style={{ fontWeight: 500, color: color.text.primary, fontSize: font.size.body.md, lineHeight: font.lineHeight.snug }}>
                           {u.first_name} {u.last_name}
                         </span>
-                        <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY, lineHeight: 1.2 }}>
+                        <span style={{ fontSize: font.size.body.sm, color: color.text.secondary, lineHeight: font.lineHeight.snug }}>
                           {u.email}
                         </span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                       {u.practice_role || '—'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                       {u.department || '—'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                       {SYSTEM_ROLE_LABELS[u.system_role] ?? u.system_role}
                     </span>
                   </TableCell>

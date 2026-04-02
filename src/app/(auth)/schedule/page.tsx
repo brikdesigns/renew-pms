@@ -2,6 +2,7 @@
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons';
+import { color, font, gap, space } from '@/lib/tokens';
 
 const emptyStateStyle: React.CSSProperties = {
   display: 'flex',
@@ -9,31 +10,31 @@ const emptyStateStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   flex: 1,
-  gap: 'var(--gap-lg)',
-  padding: 'var(--padding-xl)',
+  gap: gap.lg,
+  padding: space.xl,
   minHeight: '60vh',
 };
 
 const iconStyle: React.CSSProperties = {
-  fontSize: '48px',
-  color: 'var(--text-muted)',
+  fontSize: font.size.heading.xLarge,
+  color: color.text.muted,
 };
 
 const headingStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-family-heading)',
-  fontSize: 'var(--heading-md)',
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.medium,
   fontWeight: 700,
-  color: 'var(--text-primary)',
+  color: color.text.primary,
   margin: 0,
 };
 
 const descStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-md)',
-  color: 'var(--text-secondary)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.md,
+  color: color.text.secondary,
   textAlign: 'center',
   maxWidth: '400px',
-  lineHeight: 'var(--font-line-height-normal)',
+  lineHeight: font.lineHeight.normal,
 };
 
 export default function SchedulePage() {
@@ -42,7 +43,7 @@ export default function SchedulePage() {
       <FontAwesomeIcon icon={faCalendarDays} style={iconStyle as React.CSSProperties & Record<string, string>} />
       <h1 style={headingStyle}>Schedule</h1>
       <p style={descStyle}>
-        Staff scheduling is coming soon. You'll be able to manage shifts, view daily coverage, and coordinate team availability here.
+        Staff scheduling is coming soon. You&apos;ll be able to manage shifts, view daily coverage, and coordinate team availability here.
       </p>
     </div>
   );

@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCircleCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { Tag } from '@bds/components/ui/Tag';
-import { Badge } from '@bds/components/ui/Badge';
+import { Tag } from '@bds/components';
+import { Badge } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
@@ -52,8 +52,8 @@ const TODAY_PCT = Math.round((TODAY_COMPLETED / TODAY_TOTAL) * 100);
 // ─── Employee type tags (shared) ─────────────────────────────────────────────
 
 const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: 'var(--color-department-blue)',  color: 'var(--text-on-color-dark)', label: 'New Hire' },
-  maturing: { bg: 'var(--color-department-gold)',  color: 'var(--text-on-color-dark)', label: 'Maturing' },
+  new:      { bg: color.department.blue.base, color: color.text.onColorDark, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base, color: color.text.onColorDark, label: 'Maturing' },
 };
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ const cardStyle: CSSProperties = {
   padding: space.lg,
   display: 'flex',
   flexDirection: 'column',
-  gap: '16px',
+  gap: gap.lg,
 };
 
 const cardHeaderStyle: CSSProperties = {
@@ -125,13 +125,13 @@ const cardLinkStyle: CSSProperties = {
   textDecoration: 'none',
   display: 'flex',
   alignItems: 'center',
-  gap: '4px',
+  gap: gap.xs,
 };
 
 const listStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
+  gap: gap.md,
   margin: 0,
   padding: 0,
   listStyle: 'none',
@@ -141,15 +141,15 @@ const listItemStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '10px 12px',
+  padding: `${space.xs} ${space.sm}`,
   borderRadius: border.radius.md,
-  backgroundColor: 'var(--surface-secondary)',
+  backgroundColor: color.surface.secondary,
 };
 
 const listItemLeftStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '10px',
+  gap: gap.md,
   minWidth: 0,
   flex: 1,
 };
@@ -189,7 +189,7 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
       <text x="50%" y="50%" textAnchor="middle" dy="0.35em"
-        style={{ fontFamily: 'var(--font-family-heading)', fontSize: '28px', fontWeight: 700, fill: 'var(--text-primary)' }}>
+        style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: 700, fill: color.text.primary }}>
         {pct}%
       </text>
     </svg>
@@ -203,12 +203,12 @@ function DeptBar({ dept, completed, total }: { dept: string; completed: number; 
   const deptColors = getDepartmentColors(dept);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
       <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
-      <div style={{ flex: 1, height: '20px', borderRadius: '4px', backgroundColor: 'var(--background-muted)', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: '4px', backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
+      <div style={{ flex: 1, height: '20px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
       </div>
       <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
         {completed}/{total}
@@ -221,8 +221,8 @@ function DeptBar({ dept, completed, total }: { dept: string; completed: number; 
 
 function MiniProgress({ pct }: { pct: number }) {
   return (
-    <div style={{ width: '80px', height: '6px', borderRadius: '3px', backgroundColor: 'var(--background-muted)', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: '3px', backgroundColor: 'var(--background-brand-primary)' }} />
+    <div style={{ width: '80px', height: '6px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: color.background.brandPrimary }} />
     </div>
   );
 }
@@ -234,22 +234,22 @@ export default function DashboardPage() {
     <div style={pageStyle}>
       <div>
         <h1 style={greetingStyle}>Dashboard</h1>
-        <p style={subtitleStyle}>Here's what needs your attention today.</p>
+        <p style={subtitleStyle}>Here&apos;s what needs your attention today.</p>
       </div>
 
       <div style={gridStyle}>
         {/* ── Card 1: Overdue Tasks ── */}
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FontAwesomeIcon icon={faTriangleExclamation} style={{ color: 'var(--color-department-red)', fontSize: '16px' } as CSSProperties & Record<string, string>} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
+              <FontAwesomeIcon icon={faTriangleExclamation} style={{ color: color.department.red.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Overdue Tasks</h2>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, backgroundColor: 'var(--surface-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {OVERDUE_TASKS.length}
               </span>
             </div>
             <Link href="/tasks" style={cardLinkStyle}>
-              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: '10px' }} />
+              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: font.size.body.xs }} />
             </Link>
           </div>
           <ul style={listStyle}>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                       <div style={listItemSubStyle}>{task.assignee}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
                     <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>
                     <Badge status={pri.status} size="xs" variant="dark">{pri.label}</Badge>
                   </div>
@@ -282,22 +282,22 @@ export default function DashboardPage() {
         {/* ── Card 2: Today's Progress ── */}
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FontAwesomeIcon icon={faCircleCheck} style={{ color: 'var(--color-department-green)', fontSize: '16px' } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>Today's Progress</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
+              <FontAwesomeIcon icon={faCircleCheck} style={{ color: color.department.green.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <h2 style={cardTitleStyle}>Today&apos;s Progress</h2>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: space.huge }}>
             <ProgressRing pct={TODAY_PCT} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: space.sm, flex: 1 }}>
               <div>
-                <span style={{ fontFamily: font.family.heading, fontSize: '32px', fontWeight: 700, color: color.text.primary }}>{TODAY_COMPLETED}</span>
+                <span style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.text.primary }}>{TODAY_COMPLETED}</span>
                 <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}> / {TODAY_TOTAL} tasks</span>
               </div>
-              <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: gap.lg }}>
                 <div>
                   <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
-                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: 'var(--color-department-green)' }}>{TODAY_COMPLETED}</div>
+                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
                 </div>
                 <div>
                   <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remaining</div>
@@ -305,13 +305,13 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <div style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overdue</div>
-                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: 'var(--color-department-red)' }}>{OVERDUE_TASKS.length}</div>
+                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
                 </div>
               </div>
             </div>
           </div>
           {/* Department bar chart */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md, marginTop: gap.md }}>
             <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               By Department
             </span>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
           <div style={cardHeaderStyle}>
             <h2 style={cardTitleStyle}>Onboarding Status</h2>
             <Link href="/training" style={cardLinkStyle}>
-              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: '10px' }} />
+              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: font.size.body.xs }} />
             </Link>
           </div>
           <ul style={listStyle}>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                       <div style={listItemSubStyle}>{m.role}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
                     <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, whiteSpace: 'nowrap' }}>
                       {m.completed}/{m.total}
