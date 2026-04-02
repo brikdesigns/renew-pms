@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
 import { Tag, Badge, Dot, AnimatedIcon } from '@bds/components';
 import checkCompleteAnimation from '@/animations/check-complete.json';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
@@ -118,11 +118,11 @@ const MOCK_BOARD: { person: { name: string; subtitle: string; department: string
   },
 ];
 
-const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string }> = {
-  critical: { status: 'error', label: 'Critical' },
-  error: { status: 'error', label: 'High' },
-  warning: { status: 'warning', label: 'Medium' },
-  info: { status: 'info', label: 'Low' },
+const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string; icon: string }> = {
+  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
+  error:    { status: 'error',   label: 'High',     icon: icon.priorityHigh },
+  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
+  info:     { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
 };
 
 // Map filter labels back to task data values
@@ -274,7 +274,7 @@ export default function TasksPage() {
                             status="warning"
                             size="xs"
                             variant="dark"
-                            icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
+                            icon={<Icon icon={icon.warning} />}
                             title="Overdue"
                           />
                         </>
@@ -284,7 +284,7 @@ export default function TasksPage() {
                           status={pri.status}
                           size="xs"
                           variant="dark"
-                          icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
+                          icon={<Icon icon={pri.icon} />}
                           title={pri.label}
                         />
                       }
@@ -343,7 +343,7 @@ export default function TasksPage() {
                         status={pri.status}
                         size="xs"
                         variant="dark"
-                        icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
+                        icon={<Icon icon={pri.icon} />}
                         title={pri.label}
                       />
                     )

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, gap, space, border } from '@/lib/tokens';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -116,10 +116,10 @@ export function TopUtilityBar({ userInitials, userName, userFullName, userDepart
       </div>
       <div style={rightStyle}>
         <Link href="/guide" style={bellStyle} aria-label="Help & User Guide">
-          <FontAwesomeIcon icon={faCircleQuestion} style={{ fontSize: font.size.body.md, color: color.text.primary, fontWeight: 300 }} />
+          <Icon icon={icon.help} style={{ fontSize: font.size.body.md, color: color.text.primary }} />
         </Link>
         <button style={bellStyle} aria-label="Notifications">
-          <FontAwesomeIcon icon={faBell} style={{ fontSize: font.size.body.md, color: color.text.primary, fontWeight: 300 }} />
+          <Icon icon={icon.bell} style={{ fontSize: font.size.body.md, color: color.text.primary }} />
         </button>
         <UserAvatar
           name={userFullName ?? userName ?? '?'}

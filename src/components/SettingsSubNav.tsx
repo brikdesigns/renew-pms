@@ -2,18 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-  faUser,
-  faBuilding,
-  faClipboardList,
-  faBoxArchive,
-  faUsers,
-  faUserShield,
-  faUserPlus,
-  faWarehouse,
-} from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, border } from '@/lib/tokens';
 
@@ -80,20 +70,20 @@ const iconStyle: CSSProperties = {
 
 export interface SettingsNavItem {
   href: string;
-  icon: IconDefinition;
+  icon: string;
   label: string;
   adminOnly: boolean;
 }
 
 export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
-  { href: '/settings/account', icon: faUser, label: 'Account', adminOnly: false },
-  { href: '/settings/organization', icon: faBuilding, label: 'Organization', adminOnly: true },
-  { href: '/settings/templates', icon: faClipboardList, label: 'Templates', adminOnly: true },
-  { href: '/settings/departments', icon: faBoxArchive, label: 'Departments', adminOnly: true },
-  { href: '/settings/teams', icon: faUsers, label: 'Teams', adminOnly: true },
-  { href: '/settings/roles', icon: faUserShield, label: 'Roles', adminOnly: true },
-  { href: '/settings/users', icon: faUserPlus, label: 'Users', adminOnly: true },
-  { href: '/settings/inventory', icon: faWarehouse, label: 'Inventory', adminOnly: true },
+  { href: '/settings/account',      icon: icon.profile,      label: 'Account',      adminOnly: false },
+  { href: '/settings/organization', icon: icon.organization, label: 'Organization', adminOnly: true },
+  { href: '/settings/templates',    icon: icon.roles,        label: 'Templates',    adminOnly: true },
+  { href: '/settings/departments',  icon: icon.inventory,    label: 'Departments',  adminOnly: true },
+  { href: '/settings/teams',        icon: icon.teams,        label: 'Teams',        adminOnly: true },
+  { href: '/settings/roles',        icon: icon.permissions,  label: 'Roles',        adminOnly: true },
+  { href: '/settings/users',        icon: icon.invite,       label: 'Users',        adminOnly: true },
+  { href: '/settings/inventory',    icon: icon.rooms,        label: 'Inventory',    adminOnly: true },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -118,7 +108,7 @@ export function SettingsSubNav({ userRole = 'staff' }: SettingsSubNavProps) {
           return (
             <Link key={item.href} href={item.href} style={menuItemStyle(active)}>
               <span style={iconStyle}>
-                <FontAwesomeIcon icon={item.icon} />
+                <Icon icon={item.icon} />
               </span>
               {item.label}
             </Link>

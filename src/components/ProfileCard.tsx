@@ -90,6 +90,7 @@ const subtitleStyle: CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  textTransform: 'capitalize',
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

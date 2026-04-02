@@ -53,6 +53,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Subtitle casing ── */
+.bds-board-header__subtitle,
+.bds-board-card__subtitle {
+  text-transform: capitalize;
+}
+
 /* ── Board overrides (neutral column backgrounds) ── */
 .bds-board-column .bds-avatar {
   background-color: var(--dept-avatar-bg, var(--background-brand-primary));

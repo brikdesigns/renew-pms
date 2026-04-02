@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation, faCircleCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { Tag } from '@bds/components';
 import { Badge } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -242,14 +242,14 @@ export default function DashboardPage() {
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-              <FontAwesomeIcon icon={faTriangleExclamation} style={{ color: color.department.red.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <Icon icon={icon.priorityCritical} style={{ color: color.department.red.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Overdue Tasks</h2>
               <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {OVERDUE_TASKS.length}
               </span>
             </div>
             <Link href="/tasks" style={cardLinkStyle}>
-              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: font.size.body.xs }} />
+              View All <Icon icon={icon.arrowRight} style={{ fontSize: font.size.body.xs }} />
             </Link>
           </div>
           <ul style={listStyle}>
@@ -283,7 +283,7 @@ export default function DashboardPage() {
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-              <FontAwesomeIcon icon={faCircleCheck} style={{ color: color.department.green.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <Icon icon={icon.circleCheck} style={{ color: color.department.green.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Today&apos;s Progress</h2>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
           <div style={cardHeaderStyle}>
             <h2 style={cardTitleStyle}>Onboarding Status</h2>
             <Link href="/training" style={cardLinkStyle}>
-              View All <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: font.size.body.xs }} />
+              View All <Icon icon={icon.arrowRight} style={{ fontSize: font.size.body.xs }} />
             </Link>
           </div>
           <ul style={listStyle}>

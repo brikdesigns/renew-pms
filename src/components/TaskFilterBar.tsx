@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
@@ -222,7 +222,7 @@ export function TaskFilterBar({
           onClick={handlePrev}
           aria-label="Previous day"
         >
-          <FontAwesomeIcon icon={faChevronLeft} />
+          <Icon icon={icon.chevronLeft} />
         </button>
         <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
         <button
@@ -231,7 +231,7 @@ export function TaskFilterBar({
           onClick={handleNext}
           aria-label="Next day"
         >
-          <FontAwesomeIcon icon={faChevronRight} />
+          <Icon icon={icon.chevronRight} />
         </button>
       </div>
 
