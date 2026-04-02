@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
 import { RootProvider } from 'fumadocs-ui/provider/next';
-import { config } from '@fortawesome/fontawesome-svg-core';
-import '@fortawesome/fontawesome-svg-core/styles.css';
 import './globals.css';
-
-// Prevent FA from injecting its own <style> tag at runtime (causes FOUC)
-config.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: 'Renew PMS',

@@ -57,6 +57,15 @@ export const icon = {
   priorityWarning:  'ph:warning-fill',
   priorityInfo:     'ph:info',
 
+  // Task / template types
+  typeChecklist:     'ph:list-checks',
+  typeProcedure:     'ph:clipboard-text',
+  typeCompliance:    'ph:shield-check',
+  typeRequest:       'ph:handshake',
+  typeOnboarding:    'ph:graduation-cap',
+  typeSkillTraining: 'ph:target',
+  chevronDown:       'ph:caret-down',
+
   // Room types (dental practice)
   roomLobby:          'ph:door-open',
   roomFrontOffice:    'ph:desktop',

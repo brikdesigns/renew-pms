@@ -27,6 +27,11 @@ export const font = {
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
 
+  /** Label casing — applied to Tags, Badges, subtitles. Controlled by --text-transform-label in theme-renew.css */
+  transform: {
+    label: 'var(--text-transform-label)' as 'uppercase' | 'lowercase' | 'capitalize' | 'none',
+  },
+
   /**
    * Font sizes — maps to Figma typography styles
    *

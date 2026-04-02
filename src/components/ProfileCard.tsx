@@ -90,7 +90,7 @@ const subtitleStyle: CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-  textTransform: 'uppercase',
+  textTransform: font.transform.label,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

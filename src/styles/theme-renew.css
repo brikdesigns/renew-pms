@@ -123,6 +123,9 @@
   --font-family-body: 'Avenir', 'Avenir Next', system-ui, sans-serif;
   --font-family-label: 'Avenir', 'Avenir Next', system-ui, sans-serif;
 
+  /* ── Label casing — controls text-transform on Tags, Badges, subtitles ── */
+  --text-transform-label: uppercase;
+
   /* ── System / status colors (from Figma color scales) ── */
   --color-system-green: #6b9e78;         /* green/light [base] */
   --color-system-green-light: #97bea0;   /* green/lighter */

@@ -53,10 +53,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Subtitle casing ── */
+/* ── Label casing — token-driven via --text-transform-label in theme-renew.css ── */
+.bds-tag,
+.bds-badge,
 .bds-board-header__subtitle,
 .bds-board-card__subtitle {
-  text-transform: uppercase;
+  text-transform: var(--text-transform-label);
 }
 
 /* ── Board overrides (neutral column backgrounds) ── */

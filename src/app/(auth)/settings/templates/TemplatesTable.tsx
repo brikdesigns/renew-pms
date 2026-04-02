@@ -9,19 +9,8 @@ import {
   TableHead,
   TableCell,
 } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faListCheck,
-  faClipboardList,
-  faShieldHalved,
-  faHandHoldingHand,
-  faUserGraduate,
-  faBullseye,
-  faEye,
-  faPenToSquare,
-  faChevronDown,
-} from '@fortawesome/free-solid-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { Badge } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet, type TemplateViewData } from '@/components/ViewTemplateSheet';
@@ -29,13 +18,13 @@ import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Type display mapping ────────────────────────────────────────────────────
 
-const TYPE_META: Record<string, { label: string; icon: IconDefinition }> = {
-  checklist: { label: 'Checklist', icon: faListCheck },
-  procedure: { label: 'Procedure', icon: faClipboardList },
-  compliance: { label: 'Compliance', icon: faShieldHalved },
-  request: { label: 'Request', icon: faHandHoldingHand },
-  onboarding: { label: 'Onboarding', icon: faUserGraduate },
-  skill_training: { label: 'Skill Training', icon: faBullseye },
+const TYPE_META: Record<string, { label: string; icon: string }> = {
+  checklist:     { label: 'Checklist',      icon: icon.typeChecklist },
+  procedure:     { label: 'Procedure',      icon: icon.typeProcedure },
+  compliance:    { label: 'Compliance',     icon: icon.typeCompliance },
+  request:       { label: 'Request',        icon: icon.typeRequest },
+  onboarding:    { label: 'Onboarding',     icon: icon.typeOnboarding },
+  skill_training:{ label: 'Skill Training', icon: icon.typeSkillTraining },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -268,13 +257,13 @@ const SEED_TEMPLATES: TemplateRow[] = [
 // ─── Add menu template type defaults ─────────────────────────────────────────
 
 const ADD_MENU_TYPES = [
-  { id: 'checklist', label: 'Checklist', desc: 'Recurring to-do lists', icon: faListCheck },
-  { id: 'procedure', label: 'Procedure', desc: 'Step-by-step workflows', icon: faClipboardList },
-  { id: 'compliance', label: 'Compliance', desc: 'Regulatory & safety tasks', icon: faShieldHalved },
-  { id: 'request', label: 'Request', desc: 'Supply & service requests', icon: faHandHoldingHand },
-  { id: 'onboarding', label: 'Onboarding', desc: 'New employee orientation', icon: faUserGraduate },
-  { id: 'skill_training', label: 'Training', desc: 'Continuing education', icon: faBullseye },
-] as const;
+  { id: 'checklist',     label: 'Checklist',  desc: 'Recurring to-do lists',      icon: icon.typeChecklist },
+  { id: 'procedure',     label: 'Procedure',  desc: 'Step-by-step workflows',      icon: icon.typeProcedure },
+  { id: 'compliance',    label: 'Compliance', desc: 'Regulatory & safety tasks',   icon: icon.typeCompliance },
+  { id: 'request',       label: 'Request',    desc: 'Supply & service requests',   icon: icon.typeRequest },
+  { id: 'onboarding',    label: 'Onboarding', desc: 'New employee orientation',    icon: icon.typeOnboarding },
+  { id: 'skill_training',label: 'Training',   desc: 'Continuing education',        icon: icon.typeSkillTraining },
+];
 
 const EMPTY_FORM_BASE: TemplateFormData = {
   name: '', type: 'checklist', category: 'cleaning', frequency: 'daily',
@@ -386,7 +375,7 @@ function TypeChip({ type }: { type: string }) {
   const meta = TYPE_META[type] ?? TYPE_META.checklist;
   return (
     <span style={typeChipStyle}>
-      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
+      <Icon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
       {meta.label}
     </span>
   );
@@ -504,7 +493,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
         <div ref={addBtnRef} style={{ position: 'relative' }}>
           <button style={addBtnStyle} onClick={() => setAddMenuOpen((p) => !p)}>
             Add Template
-            <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: font.size.body.xs, marginLeft: gap.md }} />
+            <Icon icon={icon.chevronDown} style={{ fontSize: font.size.body.xs, marginLeft: gap.md }} />
           </button>
           {addMenuOpen && (
             <div
@@ -530,7 +519,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-accent)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <FontAwesomeIcon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
+                  <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
                   <div>
                     <div style={{ fontWeight: 600 }}>{t.label}</div>
                     <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
@@ -592,14 +581,14 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                       onClick={() => handleViewClick(template)}
                       aria-label={`View ${template.name}`}
                     >
-                      <FontAwesomeIcon icon={faEye} />
+                      <Icon icon={icon.eye} />
                     </button>
                     <button
                       style={actionBtnStyle}
                       onClick={() => handleEditClick(template)}
                       aria-label={`Edit ${template.name}`}
                     >
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <Icon icon={icon.edit} />
                     </button>
                   </div>
                 </TableCell>
