@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
-import { Tag } from '@bds/components';
-import { Badge } from '@bds/components';
+import { Tag, Badge, Dot } from '@bds/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
-import { shadow, color, space, gap, border } from '@/lib/tokens';
+import { shadow, color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Mock task type ─────────────────────────────────────────────────────────
 
@@ -233,6 +232,10 @@ export default function TasksPage() {
                 flexDirection: 'column',
                 gap: gap.sm,
               }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs }}>
+                  <Dot status="error" size="sm" pulse />
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.negative }}>Overdue</span>
+                </div>
                 {overdueTasks.map((task) => {
                   const pri = PRIORITY_MAP[task.priority];
                   const taskDeptColors = getDepartmentColors(task.dept);
