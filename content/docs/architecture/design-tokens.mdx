@@ -1,0 +1,352 @@
+---
+title: Design Tokens
+description: Color system, department tokens, status badges, and how UI color derives from data relationships.
+---
+
+Renew PMS uses the Brik Design System (BDS) token system for all color, typography, and spacing values. Colors are never hardcoded — every value references a CSS custom property defined in `figma-tokens.css`.
+
+This page documents the **data-driven color tokens** used throughout the application.
+
+## Department colors
+
+Each department has a color key stored in `departments.color` (e.g. `"blue"`, `"green"`). This key maps to a set of three CSS custom properties per color:
+
+| Token | Purpose | Example usage |
+|-------|---------|---------------|
+| `--color-department-{key}` | Base/saturated | Table dot indicators, charts |
+| `--color-department-{key}-light` | Light/pastel | Card backgrounds, avatar fills, department tags |
+| `--color-department-{key}-text` | Contrast text | Text on light backgrounds, avatar initials |
+
+### Available color keys
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', marginBottom: '24px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#425973' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#cee2fa' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#223040' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>blue</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>Clinical — <code style={{ fontSize: '11px' }}>#425973</code> · <code style={{ fontSize: '11px' }}>#cee2fa</code> · <code style={{ fontSize: '11px' }}>#223040</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#cee2fa', color: '#223040', fontSize: '12px', fontWeight: 600 }}>Clinical</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#6b9e78' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#adebbd' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#32523a' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>green</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>Front Desk — <code style={{ fontSize: '11px' }}>#6b9e78</code> · <code style={{ fontSize: '11px' }}>#adebbd</code> · <code style={{ fontSize: '11px' }}>#32523a</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#adebbd', color: '#32523a', fontSize: '12px', fontWeight: 600 }}>Front Desk</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#8B6BAE' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#eadaef' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#5b5266' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>purple</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>Engineering — <code style={{ fontSize: '11px' }}>#8B6BAE</code> · <code style={{ fontSize: '11px' }}>#eadaef</code> · <code style={{ fontSize: '11px' }}>#5b5266</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#eadaef', color: '#5b5266', fontSize: '12px', fontWeight: 600 }}>Engineering</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#C77DA3' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f5dfe9' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#7a3d5e' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>pink</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>HR — <code style={{ fontSize: '11px' }}>#C77DA3</code> · <code style={{ fontSize: '11px' }}>#f5dfe9</code> · <code style={{ fontSize: '11px' }}>#7a3d5e</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#f5dfe9', color: '#7a3d5e', fontSize: '12px', fontWeight: 600 }}>HR</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#cfa553' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#ffe8b7' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#604628' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>gold</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>Administration — <code style={{ fontSize: '11px' }}>#cfa553</code> · <code style={{ fontSize: '11px' }}>#ffe8b7</code> · <code style={{ fontSize: '11px' }}>#604628</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#ffe8b7', color: '#604628', fontSize: '12px', fontWeight: 600 }}>Administration</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#a6635c' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#ffdedb' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#4f2824' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>red</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>Sterilization — <code style={{ fontSize: '11px' }}>#a6635c</code> · <code style={{ fontSize: '11px' }}>#ffdedb</code> · <code style={{ fontSize: '11px' }}>#4f2824</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#ffdedb', color: '#4f2824', fontSize: '12px', fontWeight: 600 }}>Sterilization</span>
+  </div>
+
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#f2f2f2' }}>
+    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#4AACA0' }} title="Base" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#d4f0ec' }} title="Light" />
+      <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#1f4a44' }} title="Text" />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 700, fontSize: '14px' }}>teal</div>
+      <div style={{ fontSize: '12px', color: '#717171' }}>All Departments — <code style={{ fontSize: '11px' }}>#4AACA0</code> · <code style={{ fontSize: '11px' }}>#d4f0ec</code> · <code style={{ fontSize: '11px' }}>#1f4a44</code></div>
+    </div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#d4f0ec', color: '#1f4a44', fontSize: '12px', fontWeight: 600 }}>All Depts</span>
+  </div>
+</div>
+
+Each row shows three swatches (base, light, text) alongside the token's resolved hex value and a sample tag rendered with the light + text pair.
+
+The department-to-key mapping is defined in `src/lib/department-colors.ts`. When wired to real data, the key comes directly from `departments.color` in the database.
+
+### Color derivation chain
+
+Department color flows through the data model to style UI elements automatically:
+
+```
+departments.color ("blue")
+    │
+    ├── Department cards → colored dot (light token)
+    │
+    ├── practice_role_types.department_id (FK)
+    │       │
+    │       ├── Role cards → avatar background (light token + text token)
+    │       │
+    │       └── practice_members.practice_role_id (FK)
+    │               │
+    │               ├── User cards → avatar background (light token + text token)
+    │               └── User cards → department tag (light token + text token)
+    │
+    └── Tables → department color dot indicator (base token)
+```
+
+This means changing a department's color in settings automatically updates every role card, user card, and avatar that belongs to that department. No manual sync required.
+
+### Fallback behavior
+
+- **Role with no department** (`department_id` is null): avatar falls back to `--border-muted` (neutral gray)
+- **Unknown color key**: defaults to `blue` token set
+- **User with no role** (`practice_role_id` is null): no department tag shown, avatar uses neutral gray
+
+## System colors
+
+General-purpose semantic colors used by badges, alerts, and system feedback.
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', marginBottom: '24px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#a6635c', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-red</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Errors, destructive actions</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#6b9e78', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-green</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Success, positive outcomes</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#cfa553', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-yellow</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Warnings, attention needed</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#425973', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-blue</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Informational, links</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#8c5a4e', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-orange</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Caution (secondary to yellow)</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#642f6c', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '180px' }}>--color-system-link</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>Interactive links (maps to brand primary)</span>
+  </div>
+</div>
+
+## Status badges
+
+Status values map to BDS `Badge` component status variants. The Badge uses semantic system colors — never hardcoded hex values.
+
+### Badge status variants
+
+<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px', marginBottom: '24px' }}>
+  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600, backgroundColor: '#6b9e78', color: '#ffffff' }}>positive</span>
+  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600, backgroundColor: '#cfa553', color: '#ffffff' }}>warning</span>
+  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600, backgroundColor: '#a6635c', color: '#ffffff' }}>error</span>
+  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600, backgroundColor: '#425973', color: '#ffffff' }}>info</span>
+  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600, backgroundColor: '#8B6BAE', color: '#ffffff' }}>progress</span>
+</div>
+
+| Variant | Semantic meaning | Used for |
+|---------|-----------------|----------|
+| `positive` | Success / active | Active accounts, completed tasks, active templates |
+| `warning` | Caution / in-progress | Maturing employees, draft templates, medium priority |
+| `error` | Negative / critical | Inactive accounts, archived templates, high/critical priority |
+| `info` | Neutral / new | New employees, low priority |
+| `progress` | In-progress | Task progress indicators |
+
+### Status-to-badge mappings
+
+#### Employee status (`practice_members.employee_status`)
+
+| Value | Badge variant | Label |
+|-------|--------------|-------|
+| `new` | `info` | New |
+| `maturing` | `warning` | Maturing |
+| `active` | `positive` | Active |
+
+#### Account status (`profiles.is_active`)
+
+| Value | Badge variant | Label |
+|-------|--------------|-------|
+| `true` | `positive` | Active |
+| `false` | `error` | Inactive |
+
+#### Task priority (`tasks.priority`)
+
+| Value | Badge variant | Label |
+|-------|--------------|-------|
+| `critical` | `error` | Critical |
+| `high` | `error` | High |
+| `medium` | `warning` | Medium |
+| `low` | `info` | Low |
+
+#### Template status
+
+| Value | Badge variant | Label |
+|-------|--------------|-------|
+| `active` | `positive` | Active |
+| `draft` | `warning` | Draft |
+| `archived` | `error` | Archived |
+
+#### Room / equipment active state
+
+| Value | Badge variant | Label |
+|-------|--------------|-------|
+| `true` | `positive` | Active |
+| `false` | `error` | Inactive |
+
+## Brand palette
+
+Renew's brand colors override BDS defaults via `src/styles/theme-renew.css`. All values sourced from Figma.
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', marginBottom: '24px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#642f6c', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--background-brand-primary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#642f6c — Primary brand (deep purple)</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#ba9cc5', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--theme-accent-secondary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#ba9cc5 — Secondary accent (soft purple)</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#cfa553', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--theme-accent-tertiary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#cfa553 — Tertiary accent (gold)</span>
+  </div>
+</div>
+
+### Surface + text tokens
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', marginBottom: '24px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#ffffff', border: '1px solid #d7d7d7', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--surface-primary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#ffffff — Cards, sheets, modals</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f2f2f2', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--surface-secondary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#f2f2f2 — Profile cards, subtle backgrounds</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#f5f2ee', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--surface-tertiary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#f5f2ee — Warm neutral background</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#1b1b1b', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--text-primary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#1b1b1b — Primary text</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#717171', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--text-secondary</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#717171 — Secondary text, subtitles</span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <span style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#a3a3a3', flexShrink: 0 }} />
+    <code style={{ fontSize: '13px', minWidth: '220px' }}>--text-muted</code>
+    <span style={{ fontSize: '13px', color: '#717171' }}>#a3a3a3 — Muted text, placeholders</span>
+  </div>
+</div>
+
+## Profile cards
+
+The `ProfileCard` component renders relationship cards in view sheets. Each variant uses color differently:
+
+| Variant | Avatar/visual | Color source |
+|---------|--------------|--------------|
+| **User** | Initials on department color circle | `departments.color` via role → department FK |
+| **Role** | Initials on department color circle | `departments.color` via direct department FK |
+| **Department** | Solid color dot | `departments.color` (light token) |
+| **Team** | Initials on neutral circle | `--border-muted` (teams are cross-department) |
+
+User cards additionally show a **department tag** (inline-right) using the light + text token pair.
+
+### Tags vs badges
+
+These serve different purposes and have different visual treatments:
+
+<div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', marginTop: '12px', marginBottom: '24px' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+    <div style={{ fontSize: '12px', fontWeight: 600, color: '#717171', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tags (nouns)</div>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#cee2fa', color: '#223040', fontSize: '13px', fontWeight: 600 }}>Clinical</span>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#adebbd', color: '#32523a', fontSize: '13px', fontWeight: 600 }}>Front Desk</span>
+    <span style={{ padding: '3px 10px', borderRadius: '4px', backgroundColor: '#eadaef', color: '#5b5266', fontSize: '13px', fontWeight: 600 }}>Engineering</span>
+  </div>
+  <div style={{ width: '1px', backgroundColor: '#d7d7d7', alignSelf: 'stretch' }} />
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+    <div style={{ fontSize: '12px', fontWeight: 600, color: '#717171', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Badges (verbs)</div>
+    <span style={{ padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#6b9e78', color: '#ffffff', fontSize: '13px', fontWeight: 600 }}>Active</span>
+    <span style={{ padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#cfa553', color: '#ffffff', fontSize: '13px', fontWeight: 600 }}>Maturing</span>
+    <span style={{ padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#a6635c', color: '#ffffff', fontSize: '13px', fontWeight: 600 }}>Inactive</span>
+  </div>
+</div>
+
+| Element | Shape | Purpose | Examples |
+|---------|-------|---------|----------|
+| **Tag** | Soft rounded (`border-radius-sm`) | Nouns — categories, labels, things | "Clinical", "Front Desk", "Engineering" |
+| **Badge** | Pill (`border-radius: 9999px`) | Verbs — statuses, states, outcomes | "Active", "New", "Completed", "Critical" |
+
+Tags use department color tokens (light background + text). Badges use the BDS `Badge` component with semantic status variants (`positive`, `warning`, `error`, `info`).
+
+## Token file reference
+
+| File | Purpose | Edit? |
+|------|---------|-------|
+| `src/lib/tokens.ts` | TypeScript token map — CSS var references | Add tokens here |
+| `src/lib/department-colors.ts` | Department name → color key map | Update when departments change |
+| `brik-bds/tokens/figma-tokens.css` | Generated CSS custom properties | Never edit manually |
+| `src/styles/theme-renew.css` | Renew-specific theme overrides | Client theme values |

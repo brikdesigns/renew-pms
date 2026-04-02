@@ -1,0 +1,28 @@
+---
+title: Google Drive Integration
+description: Document source of truth — practice files, SOPs, and reference docs.
+---
+
+## Overview
+
+Google Drive serves as the document source of truth for practice files, SOPs, and reference documents. The integration surfaces relevant docs in task and workflow context.
+
+## Configuration
+
+The folder ID is stored per-practice in the `integrations` JSONB column:
+
+```json
+{
+  "gdrive": {
+    "folder_id": "1abc..."
+  }
+}
+```
+
+This lives in `practices.integrations` and is **server-side only**.
+
+## Future plans
+
+- Surface relevant documents alongside tasks (e.g., SOP for equipment maintenance)
+- Link training modules to reference documents
+- Practice-level file browser within the app

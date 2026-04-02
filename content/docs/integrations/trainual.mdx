@@ -1,0 +1,54 @@
+---
+title: Trainual Integration
+description: Staff training sync — people management and assignment status from Trainual API.
+---
+
+## Overview
+
+Trainual is the source of truth for staff training and onboarding content. The integration syncs user IDs and training completion status to inform employee lifecycle and task personalization.
+
+## API capabilities
+
+API docs: [trainual.docs.apiary.io](https://trainual.docs.apiary.io/)
+
+**What the API supports:**
+- People management (create, read, update users)
+- Assignment status (which training is assigned, completion %)
+
+**What the API does NOT support:**
+- Reading or editing training content (subjects, topics, steps)
+- Content is managed directly in the Trainual UI
+
+## Data flow
+
+```
+Trainual API → practice_members.trainual_user_id
+Trainual API → employee_status (new → maturing → active)
+employee_status → task personalization + dashboard widgets
+```
+
+1. Each practice member is linked to their Trainual person via `practice_members.trainual_user_id`
+2. Training completion data informs `employee_status` transitions
+3. Employee status drives which tasks and workflows are surfaced
+
+## Configuration
+
+The API key is stored per-practice in the `integrations` JSONB column:
+
+```json
+{
+  "trainual": {
+    "api_key": "tk_live_..."
+  }
+}
+```
+
+This lives in `practices.integrations` and is **server-side only** — never expose to the client.
+
+## Employee status lifecycle
+
+| Status | Trainual signal |
+|--------|----------------|
+| `new` | User created, minimal training completed |
+| `maturing` | Progressing through required assignments |
+| `active` | All required training completed |

@@ -1,0 +1,106 @@
+#!/usr/bin/env sh
+
+echo "Running lint..."
+npm run lint
+
+echo "Running typecheck..."
+npm run typecheck
+
+# ── Migration orphan detection ──────────────────────────────────────────────
+# Catches the case where a migration file exists locally but isn't staged.
+# Prevents: migration applied to DB, code committed, but migration file
+# left untracked — CI will never apply it, others won't know it exists.
+echo "Checking for orphaned migrations..."
+
+STAGED_MIGRATIONS=$(git diff --cached --name-only -- 'supabase/migrations/*.sql' || true)
+
+ORPHANED=""
+for file in supabase/migrations/*.sql; do
+  [ -f "$file" ] || continue
+  BASENAME=$(basename "$file")
+
+  # Skip if already tracked and unmodified
+  git ls-files --error-unmatch "$file" > /dev/null 2>&1 && continue
+
+  # Skip if it's in the staged changes
+  echo "$STAGED_MIGRATIONS" | grep -q "$BASENAME" 2>/dev/null && continue
+
+  ORPHANED="$ORPHANED\n   $BASENAME"
+done
+
+if [ -n "$ORPHANED" ]; then
+  echo ""
+  echo "⚠️  Orphaned migration(s) — exist locally but aren't staged:"
+  echo -e "$ORPHANED"
+  echo ""
+  echo "   Stage them: git add supabase/migrations/<file>"
+  echo "   Or move them out of supabase/migrations/ if they're drafts."
+  echo "   To bypass (not recommended): git commit --no-verify"
+  exit 1
+fi
+
+# ── Token compliance ─────────────────────────────────────────────────────────
+# Check staged .tsx/.ts files for hardcoded values that should use BDS tokens.
+STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM -- 'src/**/*.tsx' 'src/**/*.ts' \
+  | grep -v 'src/styles/' \
+  | grep -v 'src/lib/tokens\.ts' \
+  | grep -v 'src/lib/styles\.ts' \
+  || true)
+
+if [ -n "$STAGED_SRC" ]; then
+  TOKEN_VIOLATIONS=""
+
+  # 1. Hardcoded font sizes
+  HARDCODED_PX=$(echo "$STAGED_SRC" | xargs grep -n "fontSize: '[0-9]" 2>/dev/null \
+    | grep -v "DevPersonaSwitcher" \
+    || true)
+  [ -n "$HARDCODED_PX" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [font-size] Hardcoded px — use font.size.* from @/lib/tokens:\n${HARDCODED_PX}\n"
+
+  # 2. Hardcoded line heights
+  HARDCODED_LH=$(echo "$STAGED_SRC" | xargs grep -n "lineHeight: '[0-9]" 2>/dev/null \
+    | grep -v "lineHeight: 'var(" || true)
+  [ -n "$HARDCODED_LH" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [line-height] Hardcoded numeric value — use font.lineHeight.* from @/lib/tokens:\n${HARDCODED_LH}\n"
+
+  # 3. Hardcoded hex colors in inline styles
+  HARDCODED_HEX=$(echo "$STAGED_SRC" | xargs grep -En "(color|Color|background|Background):\s*['\"]#[0-9a-fA-F]" 2>/dev/null \
+    | grep -v "DevPersonaSwitcher" \
+    || true)
+  [ -n "$HARDCODED_HEX" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [color] Hardcoded hex — use color.* from @/lib/tokens:\n${HARDCODED_HEX}\n"
+
+  # 4. Raw var() strings in style props (should use @/lib/tokens imports)
+  RAW_VAR=$(echo "$STAGED_SRC" | xargs grep -En ":\s*['\"]var\(--" 2>/dev/null \
+    | grep -v "color-mix(" \
+    | grep -v "DevPersonaSwitcher" \
+    | grep -v "// " \
+    || true)
+  [ -n "$RAW_VAR" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [raw-var] Use token imports instead of raw var() strings — import { color, font, gap } from '@/lib/tokens':\n${RAW_VAR}\n"
+
+  # 7. Hardcoded rgba/rgb values
+  HARDCODED_RGBA=$(echo "$STAGED_SRC" | xargs grep -En "rgba?\([0-9]" 2>/dev/null \
+    | grep -v "DevPersonaSwitcher" \
+    | grep -v "// " \
+    || true)
+  [ -n "$HARDCODED_RGBA" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [rgba] Hardcoded rgba/rgb — use shadow.* or color.* tokens:\n${HARDCODED_RGBA}\n"
+
+  # 5. Badge without explicit size prop (standard: size="sm")
+  BADGE_NO_SIZE=$(echo "$STAGED_SRC" | xargs grep -En "<Badge\b[^>]*>" 2>/dev/null \
+    | grep -v 'size=' \
+    | grep -v "// " \
+    || true)
+  [ -n "$BADGE_NO_SIZE" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [badge-size] Badge missing size prop — standard is size=\"sm\":\n${BADGE_NO_SIZE}\n"
+
+  # 6. Badge imported from direct path (must use barrel)
+  BADGE_DIRECT=$(echo "$STAGED_SRC" | xargs grep -En "from '@bds/components/ui/Badge'" 2>/dev/null || true)
+  [ -n "$BADGE_DIRECT" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [badge-import] Import Badge from '@bds/components', not from direct path:\n${BADGE_DIRECT}\n"
+
+  if [ -n "$TOKEN_VIOLATIONS" ]; then
+    echo ""
+    echo "⚠️  Token compliance violations in staged files:"
+    echo -e "$TOKEN_VIOLATIONS"
+    echo "   Run './scripts/token-audit.sh' for a full report."
+    echo "   To bypass (not recommended): git commit --no-verify"
+    exit 1
+  fi
+fi
+
+echo "Pre-commit checks passed."

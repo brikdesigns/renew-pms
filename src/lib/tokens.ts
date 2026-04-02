@@ -122,6 +122,8 @@ export const color = {
     overlay: 'var(--surface-overlay)',
     brandPrimary: 'var(--surface-brand-primary)',
     brandSecondary: 'var(--surface-brand-secondary)',
+    nav: 'var(--surface-nav)',
+    accent: 'var(--surface-accent)',
   },
   background: {
     primary: 'var(--background-primary)',
@@ -131,6 +133,8 @@ export const color = {
     elevated: 'var(--background-elevated)',
     input: 'var(--background-input)',
     onColorDark: 'var(--background-on-color-dark)',
+    muted: 'var(--background-muted)',
+    accent: 'var(--background-accent)',
   },
   border: {
     primary: 'var(--border-primary)',
@@ -142,7 +146,7 @@ export const color = {
     inverse: 'var(--border-inverse)',
   },
   brand: {
-    primary: 'var(--brand--primary)',
+    primary: 'var(--background-brand-primary)',
   },
   page: {
     primary: 'var(--page-primary)',
@@ -158,39 +162,40 @@ export const color = {
     orange: 'var(--color-system-orange)',
     purple: 'var(--color-system-purple)',
   },
-  service: {
-    brand: {
-      bg: 'var(--background-service-brand)',
-      text: 'var(--text-service-brand)',
-      light: 'var(--services--yellow-light)',
-    },
-    marketing: {
-      bg: 'var(--background-service-marketing)',
-      text: 'var(--text-service-marketing)',
-      light: 'var(--services--green-light)',
-    },
-    information: {
-      bg: 'var(--background-service-information)',
-      text: 'var(--text-service-information)',
-      light: 'var(--services--blue-light)',
-    },
-    product: {
-      bg: 'var(--background-service-product)',
-      text: 'var(--text-service-product)',
-      light: 'var(--services--purple-light)',
-    },
-    service: {
-      bg: 'var(--background-service-service)',
-      text: 'var(--text-service-service)',
-      light: 'var(--services--orange-light)',
-    },
+  department: {
+    blue:   { base: 'var(--color-department-blue)',   light: 'var(--color-department-blue-light)',   text: 'var(--color-department-blue-text)' },
+    green:  { base: 'var(--color-department-green)',  light: 'var(--color-department-green-light)',  text: 'var(--color-department-green-text)' },
+    purple: { base: 'var(--color-department-purple)', light: 'var(--color-department-purple-light)', text: 'var(--color-department-purple-text)' },
+    pink:   { base: 'var(--color-department-pink)',   light: 'var(--color-department-pink-light)',   text: 'var(--color-department-pink-text)' },
+    gold:   { base: 'var(--color-department-gold)',   light: 'var(--color-department-gold-light)',   text: 'var(--color-department-gold-text)' },
+    red:    { base: 'var(--color-department-red)',     light: 'var(--color-department-red-light)',     text: 'var(--color-department-red-text)' },
+    teal:   { base: 'var(--color-department-teal)',   light: 'var(--color-department-teal-light)',   text: 'var(--color-department-teal-text)' },
   },
 } as const;
 
-/** Look up service color tokens by category slug */
-export function serviceColor(category: string) {
-  const key = category as keyof typeof color.service;
-  return color.service[key] ?? color.service.service;
+// ─── Interaction States ──────────────────────────────────────────────
+
+export const state = {
+  hover: {
+    overlay: 'var(--state-hover-overlay)',
+    brandPrimary: 'var(--background-brand-primary-hover)',
+  },
+  pressed: {
+    overlay: 'var(--state-pressed-overlay)',
+    brandPrimary: 'var(--background-brand-primary-pressed)',
+  },
+  focus: 'var(--state-focus)',
+  disabled: {
+    opacity: 'var(--state-disabled-opacity)',
+  },
+} as const;
+
+export type DepartmentColorKey = keyof typeof color.department;
+
+/** Look up department color tokens by color key */
+export function departmentColor(colorKey: string) {
+  const key = colorKey as DepartmentColorKey;
+  return color.department[key] ?? color.department.blue;
 }
 
 // ─── Spacing (Padding) ──────────────────────────────────────────────

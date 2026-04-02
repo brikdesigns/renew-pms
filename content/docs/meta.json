@@ -1,0 +1,9 @@
+{
+  "root": true,
+  "pages": [
+    "index",
+    "architecture",
+    "schema",
+    "integrations"
+  ]
+}

@@ -1,0 +1,35 @@
+---
+title: Renew PMS Documentation
+description: Technical documentation for the Renew dental practice management platform.
+---
+
+Welcome to the Renew PMS technical documentation. This is the reference for developers, admins, and contributors working on the platform.
+
+## What is Renew PMS?
+
+Renew is a dental practice management and training platform (vertical SaaS). It's a staff-only back-office tool — no patient-facing features in V1.
+
+- **Multi-tenant** — practice-scoped data isolation via RLS
+- **Built for dental** — seeded with dental-specific defaults (rooms, roles, equipment, compliance)
+- **Trainual-integrated** — syncs staff training status to personalize workflows
+
+## Quick links
+
+- [Architecture Overview](/docs/architecture/overview) — multi-tenancy, role model, provisioning
+- [Design Tokens](/docs/architecture/design-tokens) — color system, department tokens, status badges
+- [Database Schema](/docs/schema/tables) — all tables, relationships, and RLS policies
+- [Integrations](/docs/integrations/trainual) — Trainual, Google Drive
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router, TypeScript) |
+| Auth | Supabase Auth (email/password, middleware sessions) |
+| Database | Supabase PostgreSQL with Row Level Security |
+| UI | Brik Design System (BDS) + Tailwind CSS + Radix UI |
+| Icons | FontAwesome 7 |
+| Email | Resend |
+| Error tracking | Sentry |
+| Hosting | Netlify |
+| Testing | Vitest |

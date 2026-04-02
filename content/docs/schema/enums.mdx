@@ -1,0 +1,112 @@
+---
+title: Enum Fields
+description: Fields where app logic depends on the value — not user-renameable.
+---
+
+These fields use `CHECK` constraints (not PostgreSQL `ENUM` types). App logic depends on these values — they are **not user-renameable**.
+
+## profiles.system_role
+
+Controls permissions (what you can DO).
+
+| Value | Meaning |
+|-------|---------|
+| `platform_admin` | Brik staff — full cross-practice access |
+| `practice_admin` | Practice administrator — manages users/settings |
+| `staff` | Standard team member — scoped to practice data |
+
+## practice_members.employee_status
+
+Drives Trainual sync and task personalization.
+
+| Value | Meaning |
+|-------|---------|
+| `new` | Recently onboarded |
+| `maturing` | Progressing through training |
+| `active` | Fully ramped |
+
+## practice_members.shift
+
+Optional — not all practices use shift-based scheduling.
+
+| Value | Meaning |
+|-------|---------|
+| `opening` | Opening shift |
+| `closing` | Closing shift |
+| `evening` | Evening shift |
+| `full_day` | Full day |
+| `null` | No shift assigned |
+
+## tasks.status
+
+Maps to the task state machine.
+
+| Value | Meaning |
+|-------|---------|
+| `not_started` | Default — task created but not begun |
+| `in_progress` | Work underway |
+| `awaiting_approval` | Completed, pending review |
+| `completed` | Done |
+| `blocked` | Cannot proceed |
+| `skipped` | Intentionally skipped |
+| `overdue` | Past due date |
+
+## tasks.priority
+
+Drives sort and filter logic.
+
+| Value |
+|-------|
+| `low` |
+| `medium` (default) |
+| `high` |
+| `critical` |
+
+## tasks.frequency
+
+Drives scheduling and recurrence logic. Nullable — `null` means one-time task.
+
+| Value | Meaning |
+|-------|---------|
+| `daily` | Every day |
+| `weekly` | Every week |
+| `bi_weekly` | Every two weeks |
+| `monthly` | Every month |
+| `quarterly` | Every three months |
+| `semi_annually` | Every six months |
+| `annually` | Every year |
+| `per_shift` | Once per shift |
+| `custom` | Custom recurrence |
+
+## equipment.status
+
+| Value | Meaning |
+|-------|---------|
+| `active` | In normal use |
+| `needs_service` | Flagged for maintenance |
+| `out_of_service` | Offline |
+
+## training_modules.difficulty
+
+| Value |
+|-------|
+| `beginner` |
+| `intermediate` |
+| `advanced` |
+
+## training_modules.status
+
+| Value |
+|-------|
+| `draft` |
+| `published` |
+| `archived` |
+
+## training_progress.status
+
+| Value |
+|-------|
+| `not_started` |
+| `in_progress` |
+| `completed` |
+| `failed` |

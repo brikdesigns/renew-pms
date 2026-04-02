@@ -1,0 +1,11 @@
+{
+  "root": true,
+  "pages": [
+    "index",
+    "getting-started",
+    "settings",
+    "tasks",
+    "training",
+    "equipment"
+  ]
+}
