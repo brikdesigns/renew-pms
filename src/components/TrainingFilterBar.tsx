@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Chip } from '@bds/components/ui/Chip';
-import { Menu } from '@bds/components/ui/Menu';
-import type { MenuItemData } from '@bds/components/ui/Menu';
-import { space } from '@/lib/tokens';
+import { Chip } from '@bds/components';
+import { Menu } from '@bds/components';
+import type { MenuItemData } from '@bds/components';
+import { space, gap } from '@/lib/tokens';
 
 // ─── Filter options ──────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const barStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'flex-start',
   padding: `${space.md} 0`,
-  gap: 'var(--gap-md)',
+  gap: gap.md,
 };
 
 const chipWrapperStyle: CSSProperties = {

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter } from '@/components/TrainingFilterBar';
+import { color, font } from '@/lib/tokens';
 
 // ─── Mock data (uses seed users from Settings > Users) ───────────────────────
 
@@ -157,9 +158,9 @@ export default function TrainingPage() {
             alignItems: 'center',
             justifyContent: 'center',
             flex: 1,
-            fontFamily: 'var(--font-family-body)',
-            fontSize: 'var(--body-md)',
-            color: 'var(--text-muted)',
+            fontFamily: font.family.body,
+            fontSize: font.size.body.md,
+            color: color.text.muted,
           }}>
             No team members match the current filters.
           </div>

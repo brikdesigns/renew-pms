@@ -138,8 +138,8 @@ const removeBtn: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: 'var(--space-700)',
-  height: 'var(--space-700)',
+  width: '28px',
+  height: '28px',
   borderRadius: border.radius.sm,
   backgroundColor: 'transparent',
   color: color.system.red,
@@ -270,7 +270,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
                   <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{r.description}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -314,7 +314,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
                   <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{u.role}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>{u.role}</span>
                 </TableCell>
                 <TableCell>
                   <button

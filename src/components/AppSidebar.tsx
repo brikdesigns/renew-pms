@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
+import { font, color } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -31,8 +32,8 @@ const sidebarStyle: CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'space-between',
-  backgroundColor: 'var(--surface-nav)',
-  borderRight: '1px solid var(--border-primary)',
+  backgroundColor: color.surface.nav,
+  borderRight: `1px solid ${color.border.primary}`,
   height: '100dvh',
   position: 'sticky',
   top: 0,
@@ -59,7 +60,7 @@ const logoStyle: CSSProperties = {
 const diamondStyle: CSSProperties = {
   width: '29px',
   height: '29px',
-  backgroundColor: 'var(--background-inverse)',
+  backgroundColor: color.background.inverse,
   borderRadius: '4px',
   transform: 'rotate(45deg)',
 };
@@ -79,7 +80,7 @@ function navItemStyle(active: boolean): CSSProperties {
     justifyContent: 'center',
     flexShrink: 0,
     padding: '10px',
-    backgroundColor: active ? 'var(--background-brand-primary)' : 'transparent',
+    backgroundColor: active ? color.background.brandPrimary : 'transparent',
     textDecoration: 'none',
     cursor: 'pointer',
     transition: 'background-color 0.15s ease',
@@ -101,7 +102,7 @@ const bottomBtnStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   borderRadius: '10px',
-  backgroundColor: 'var(--surface-secondary)',
+  backgroundColor: color.surface.secondary,
   flexShrink: 0,
   border: 'none',
   cursor: 'pointer',
@@ -160,8 +161,8 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
                   icon={item.icon}
                   fixedWidth
                   style={{
-                    fontSize: '20px',
-                    color: active ? 'var(--text-on-color-dark)' : 'var(--text-primary)',
+                    fontSize: font.size.body.xl,
+                    color: active ? color.text.onColorDark : color.text.primary,
                     fontWeight: active ? 900 : 300,
                   }}
                 />
@@ -174,10 +175,10 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
         <button onClick={toggle} style={bottomBtnStyle} aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <FontAwesomeIcon icon={isDark ? faSun : faMoon} fixedWidth style={{ fontSize: '14px', color: 'var(--text-primary)' }} />
+          <FontAwesomeIcon icon={isDark ? faSun : faMoon} fixedWidth style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
         <button style={bottomBtnStyle} aria-label="Log out">
-          <FontAwesomeIcon icon={faPowerOff} fixedWidth style={{ fontSize: '14px', color: 'var(--text-primary)' }} />
+          <FontAwesomeIcon icon={faPowerOff} fixedWidth style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
       </div>
     </aside>

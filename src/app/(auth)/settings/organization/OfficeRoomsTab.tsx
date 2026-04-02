@@ -26,17 +26,11 @@ import {
   faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { ViewRoomSheet, type RoomViewData } from '@/components/ViewRoomSheet';
 import { SEED_ROOMS, type SeedRoom } from '@/lib/seed-rooms';
-
-// ─── Design tokens ───────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-const BORDER_ACCENT = 'var(--border-primary)';
-const BRAND_PRIMARY = 'var(--background-brand-primary)';
+import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Room type display mapping ───────────────────────────────────────────────
 
@@ -71,32 +65,32 @@ const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '16px 32px',
-  borderBottom: `1px solid ${BORDER_ACCENT}`,
+  padding: `${space.md} ${space.xl}`,
+  borderBottom: `1px solid ${color.border.primary}`,
 };
 
 const subHeaderLeftStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
+  gap: space.sm,
 };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: '16px',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.md,
   fontWeight: 600,
-  color: TEXT_PRIMARY,
+  color: color.text.primary,
   margin: 0,
 };
 
 const subHeaderCountStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
-  color: TEXT_SECONDARY,
-  backgroundColor: 'var(--surface-secondary)',
-  padding: '2px 8px',
-  borderRadius: '4px',
+  color: color.text.secondary,
+  backgroundColor: color.surface.secondary,
+  padding: `2px ${gap.md}`,
+  borderRadius: border.radius.sm,
 };
 
 const addRoomBtnStyle: CSSProperties = {
@@ -105,11 +99,11 @@ const addRoomBtnStyle: CSSProperties = {
   justifyContent: 'center',
   height: '36px',
   paddingInline: '14px',
-  borderRadius: '8px',
-  backgroundColor: BRAND_PRIMARY,
-  color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  borderRadius: border.radius.sm,
+  backgroundColor: color.background.brandPrimary,
+  color: color.text.onColorDark,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 700,
   border: 'none',
   cursor: 'pointer',
@@ -119,23 +113,23 @@ const addRoomBtnStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
-  padding: '0 32px 32px',
+  padding: `0 ${space.xl} ${space.xl}`,
 };
 
 const typeChipStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  gap: gap.sm,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
-  color: TEXT_SECONDARY,
+  color: color.text.secondary,
 };
 
 const statusDotBase: CSSProperties = {
   width: '8px',
   height: '8px',
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   display: 'inline-block',
   flexShrink: 0,
 };
@@ -143,19 +137,19 @@ const statusDotBase: CSSProperties = {
 const statusWrapperStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  gap: gap.sm,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
 };
 
-const actionBtnGroup: CSSProperties = { display: 'flex', gap: '8px', justifyContent: 'flex-end' };
+const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
 const actionBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: 'var(--border-radius-md)',
-  backgroundColor: 'var(--background-brand-primary)', color: 'var(--text-on-color-dark)',
-  border: 'none', cursor: 'pointer', fontSize: 'var(--body-sm)',
+  width: '36px', height: '36px', borderRadius: border.radius.md,
+  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
+  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -164,7 +158,7 @@ function RoomTypeChip({ roomType }: { roomType: string }) {
   const meta = ROOM_TYPE_META[roomType] ?? ROOM_TYPE_META.other;
   return (
     <span style={typeChipStyle}>
-      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: 'var(--body-xs)' }} />
+      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
       {meta.label}
     </span>
   );
@@ -275,7 +269,7 @@ export function OfficeRoomsTab() {
             {rooms.map((room) => (
               <TableRow key={room.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>
                     {room.name}
                   </span>
                 </TableCell>
@@ -283,7 +277,7 @@ export function OfficeRoomsTab() {
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>

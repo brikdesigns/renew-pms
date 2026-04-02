@@ -14,6 +14,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
+import { font, color, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -119,11 +120,6 @@ const EMPTY_FORM: RoleFormData = {
   is_active: true,
 };
 
-// ─── Tokens ──────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const removeBtn: CSSProperties = {
@@ -132,19 +128,19 @@ const removeBtn: CSSProperties = {
   justifyContent: 'center',
   width: '28px',
   height: '28px',
-  borderRadius: 'var(--border-radius-sm)',
+  borderRadius: border.radius.sm,
   backgroundColor: 'transparent',
-  color: 'var(--color-system-red)',
-  border: '1px solid var(--color-system-red)',
+  color: color.system.red,
+  border: `1px solid ${color.system.red}`,
   cursor: 'pointer',
-  fontSize: '12px',
+  fontSize: font.size.body.xs,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -265,10 +261,10 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{u.name}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{u.email}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -308,7 +304,7 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
             {departments.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{d.name}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.name}</span>
                 </TableCell>
                 <TableCell>
                   <button

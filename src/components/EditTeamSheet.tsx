@@ -14,6 +14,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
+import { font, color, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -136,11 +137,6 @@ const EMPTY_FORM: TeamFormData = {
   is_active: true,
 };
 
-// ─── Tokens ──────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const removeBtn: CSSProperties = {
@@ -149,19 +145,19 @@ const removeBtn: CSSProperties = {
   justifyContent: 'center',
   width: '28px',
   height: '28px',
-  borderRadius: 'var(--border-radius-sm)',
+  borderRadius: border.radius.sm,
   backgroundColor: 'transparent',
-  color: 'var(--color-system-red)',
-  border: '1px solid var(--color-system-red)',
+  color: color.system.red,
+  border: `1px solid ${color.system.red}`,
   cursor: 'pointer',
-  fontSize: '12px',
+  fontSize: font.size.body.xs,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -290,10 +286,10 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{r.name}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{r.description}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -335,13 +331,13 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{u.name}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{u.role}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{u.email}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
                   <button

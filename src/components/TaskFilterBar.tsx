@@ -3,9 +3,9 @@
 import { useState, type CSSProperties } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Chip } from '@bds/components/ui/Chip';
-import { Menu } from '@bds/components/ui/Menu';
-import type { MenuItemData } from '@bds/components/ui/Menu';
+import { Chip } from '@bds/components';
+import { Menu } from '@bds/components';
+import type { MenuItemData } from '@bds/components';
 import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Filter options (match schema enums + seed defaults) ─────────────────────
@@ -98,7 +98,7 @@ const barStyle: CSSProperties = {
 const chipGroupStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 'var(--gap-md)',
+  gap: gap.md,
 };
 
 const datePickerStyle: CSSProperties = {
@@ -114,7 +114,7 @@ const iconButtonStyle: CSSProperties = {
   width: 40,
   height: 40,
   borderRadius: border.radius.pill,
-  backgroundColor: 'var(--background-accent)',
+  backgroundColor: color.background.accent,
   border: 'none',
   cursor: 'pointer',
   color: color.text.primary,

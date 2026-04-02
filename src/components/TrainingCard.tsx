@@ -2,9 +2,10 @@
 
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import { Tag } from '@bds/components/ui/Tag';
+import { Tag } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
+import { color, font, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,9 +28,9 @@ export interface TrainingMember {
 // ─── Employee type tag colors ────────────────────────────────────────────────
 
 const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: 'var(--color-department-blue)',  color: 'var(--text-on-color-dark)', label: 'New Hire' },
-  maturing: { bg: 'var(--color-department-gold)',  color: 'var(--text-on-color-dark)', label: 'Maturing' },
-  active:   { bg: 'var(--color-department-green)', color: 'var(--text-on-color-dark)', label: 'Active' },
+  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
+  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -40,9 +41,9 @@ function cardStyle(borderColor: string): CSSProperties {
     flexDirection: 'column',
     gap: '16px',
     padding: '18px 24px',
-    backgroundColor: 'var(--surface-primary)',
+    backgroundColor: color.surface.primary,
     borderLeft: `8px solid ${borderColor}`,
-    borderRadius: 'var(--border-radius-200)',
+    borderRadius: border.radius.md,
     overflow: 'hidden',
     width: '100%',
     boxSizing: 'border-box',
@@ -63,19 +64,19 @@ const personStyle: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--label-md)',
+  fontFamily: font.family.body,
+  fontSize: font.size.label.md,
   fontWeight: 800,
   lineHeight: 'normal',
-  color: 'var(--text-primary)',
+  color: color.text.primary,
 };
 
 const roleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 400,
   lineHeight: 'normal',
-  color: 'var(--text-primary)',
+  color: color.text.primary,
 };
 
 const bottomRowStyle: CSSProperties = {
@@ -101,7 +102,7 @@ const progressTrackStyle: CSSProperties = {
   width: '166px',
   height: '6px',
   borderRadius: '3px',
-  backgroundColor: 'var(--background-muted)',
+  backgroundColor: 'var(--background-muted)', // not in typed tokens yet
   overflow: 'hidden',
   position: 'relative',
 };
@@ -114,15 +115,15 @@ function progressBarStyle(pct: number): CSSProperties {
     height: '100%',
     width: `${pct}%`,
     borderRadius: '3px',
-    backgroundColor: 'var(--background-brand-primary)',
+    backgroundColor: color.background.brandPrimary,
   };
 }
 
 const progressLabelStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-label)',
-  fontSize: 'var(--body-xs)',
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
   fontWeight: 600,
-  color: 'var(--text-secondary)',
+  color: color.text.secondary,
   whiteSpace: 'nowrap',
 };
 
@@ -132,11 +133,11 @@ const viewBtnStyle: CSSProperties = {
   justifyContent: 'center',
   height: '32px',
   paddingInline: '16px',
-  borderRadius: 'var(--border-radius-100)',
-  backgroundColor: 'var(--background-brand-primary)',
-  color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-label)',
-  fontSize: 'var(--body-sm)',
+  borderRadius: border.radius.sm,
+  backgroundColor: color.background.brandPrimary,
+  color: color.text.onColorDark,
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
   fontWeight: 800,
   border: 'none',
   cursor: 'pointer',
@@ -186,7 +187,7 @@ export function TrainingCard({ member }: { member: TrainingMember }) {
             </div>
           </div>
         ) : (
-          <span style={{ ...progressLabelStyle, color: 'var(--text-muted)' }}>
+          <span style={{ ...progressLabelStyle, color: color.text.muted }}>
             No training due
           </span>
         )}

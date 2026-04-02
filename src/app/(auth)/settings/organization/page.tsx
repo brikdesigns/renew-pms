@@ -13,6 +13,7 @@ import {
   editBtnStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
+import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
@@ -37,11 +38,11 @@ function StatusBadge({ status }: { status: string }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        fontFamily: 'var(--font-family-body)',
-        fontSize: 'var(--body-sm)',
+        fontFamily: font.family.body,
+        fontSize: font.size.body.sm,
         fontWeight: 600,
-        padding: '4px 10px',
-        borderRadius: '6px',
+        padding: `${gap.xs} ${space.xs}`,
+        borderRadius: border.radius.sm,
         backgroundColor: colors.bg,
         color: colors.text,
         lineHeight: 1,
@@ -63,8 +64,8 @@ function DetailsTab({ practice }: { practice: OrganizationData }) {
       <div style={rowStyle}>
         <ReadOnlyField label="Practice Name" value={practice.name || null} />
         <ReadOnlyField label="Website" value={practice.website_url || null} />
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-          <span style={{ fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 500, lineHeight: '1.1', color: 'var(--text-primary)' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: gap.md, alignItems: 'flex-start' }}>
+          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
             Status
           </span>
           <StatusBadge status={practice.status} />
@@ -192,7 +193,7 @@ export default function OrganizationSettingsPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', color: 'var(--text-muted)' }}>Loading...</div>;
+    return <div style={{ padding: '40px', color: color.text.muted }}>Loading...</div>;
   }
 
   return (

@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react';
+import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Shared settings page styles ─────────────────────────────────────────────
-// All color/font references use BDS semantic tokens via CSS vars.
+// All color/font references use BDS semantic tokens via @/lib/tokens.
 // The active theme (theme-renew.css) provides the actual values.
 
 export const settingsPlaceholderStyle: CSSProperties = {
@@ -9,35 +10,35 @@ export const settingsPlaceholderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: 'var(--text-secondary)',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm, 14px)',
+  color: color.text.secondary,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
 };
 
 export const contentStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  gap: '48px',
+  gap: space.huge,         // 48px
   alignItems: 'flex-start',
-  paddingTop: '40px',
-  paddingBottom: '80px',
-  paddingInline: '32px',
+  paddingTop: '40px',      // no exact BDS token (between space.xl=32px and space.huge=48px)
+  paddingBottom: '80px',   // layout-specific, no BDS token
+  paddingInline: space.xl, // 32px
 };
 
 export const sectionTitleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-heading)',
-  fontSize: '25px',
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.medium,
   fontWeight: 400,
   lineHeight: 1,
-  color: 'var(--text-secondary)',
+  color: color.text.secondary,
   margin: 0,
   width: '100%',
 };
 
 export const rowStyle: CSSProperties = {
   display: 'flex',
-  gap: '24px',
+  gap: space.lg,           // 24px
   alignItems: 'flex-start',
   width: '100%',
 };
@@ -46,37 +47,37 @@ export const fieldStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
+  gap: gap.md,             // 8px
   minWidth: 0,
 };
 
 export const labelStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-label)',
-  fontSize: 'var(--body-sm, 14px)',
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
-  lineHeight: '1.1',
-  color: 'var(--text-primary)',
+  lineHeight: font.lineHeight.tight,
+  color: color.text.primary,
 };
 
 export const valueStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm, 14px)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 400,
-  lineHeight: '1.5',
-  color: 'var(--text-secondary)',
+  lineHeight: font.lineHeight.normal,
+  color: color.text.secondary,
 };
 
 export const editBtnStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  height: '40px',
-  paddingInline: '16px',
-  borderRadius: '8px',
-  backgroundColor: 'var(--background-brand-primary)',
-  color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-label)',
-  fontSize: 'var(--body-sm, 14px)',
+  height: '40px',          // button height, no BDS token
+  paddingInline: space.md, // 16px
+  borderRadius: border.radius.sm, // 8px
+  backgroundColor: color.background.brandPrimary,
+  color: color.text.onColorDark,
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
   fontWeight: 800,
   border: 'none',
   cursor: 'pointer',
@@ -91,11 +92,11 @@ export const emptyFieldStyle: CSSProperties = {
 export const statusBadgeBase: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
-  fontFamily: 'var(--font-family-label)',
-  fontSize: '13px',
+  gap: gap.sm,             // 6px
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
   fontWeight: 600,
-  lineHeight: '1',
-  padding: '4px 10px',
-  borderRadius: '6px',
+  lineHeight: font.lineHeight.none,
+  padding: `${gap.xs} ${space.xs}`, // 4px 10px
+  borderRadius: border.radius.sm,   // 8px (closest named token to 6px)
 };

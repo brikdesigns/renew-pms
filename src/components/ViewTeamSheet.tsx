@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
@@ -162,7 +162,7 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
       <ReadOnlyField label="Department" value={team.department || 'Cross-department'} />
       <ReadOnlyField label="Shift" value={team.shift ? (SHIFT_LABELS[team.shift] ?? team.shift) : null} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

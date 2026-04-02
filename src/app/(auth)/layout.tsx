@@ -6,6 +6,7 @@ import { AuthLayoutInner } from '@/components/AuthLayoutInner';
 import { ToastProvider } from '@/components/ToastProvider';
 import { DevPersonaSwitcher } from '@/components/DevPersonaSwitcher';
 import type { CSSProperties } from 'react';
+import { color, font } from '@/lib/tokens';
 
 // ─── Layout styles matching Paper "App Shell" artboard ───────────────────────
 
@@ -13,8 +14,8 @@ const shellStyle: CSSProperties = {
   display: 'flex',
   height: '100dvh',
   overflow: 'hidden',
-  backgroundColor: 'var(--page-secondary)',
-  fontFamily: 'var(--font-family-body)',
+  backgroundColor: color.page.secondary,
+  fontFamily: font.family.body,
 };
 
 const mainStyle: CSSProperties = {

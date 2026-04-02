@@ -4,20 +4,15 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
-import { Tag } from '@bds/components/ui/Tag';
+import { Badge } from '@bds/components';
+import { Tag } from '@bds/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPenToSquare, faEye } from '@fortawesome/free-solid-svg-icons';
+import { color, font, space, gap, border } from '@/lib/tokens';
 import { EditInventorySheet, type InventoryFormData } from '@/components/EditInventorySheet';
 import { ViewInventorySheet, type InventoryViewData } from '@/components/ViewInventorySheet';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { getRoomName } from '@/lib/seed-rooms';
-
-// ─── Design tokens ───────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-const BRAND_PRIMARY = 'var(--background-brand-primary)';
 
 // ─── Local type ──────────────────────────────────────────────────────────────
 
@@ -89,25 +84,25 @@ const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', fle
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: '16px 0', borderBottom: '1px solid var(--border-muted)',
+  padding: '16px 0', borderBottom: `1px solid ${color.border.muted}`,
 };
 
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px' };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)', fontSize: '16px', fontWeight: 600, color: TEXT_PRIMARY, margin: 0,
+  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
 };
 
 const countBadge: CSSProperties = {
-  fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 500,
-  color: TEXT_SECONDARY, backgroundColor: 'var(--surface-secondary)', padding: '2px 8px', borderRadius: '4px',
+  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: '2px 8px', borderRadius: '4px',
 };
 
 const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: '8px',
-  backgroundColor: BRAND_PRIMARY, color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', fontWeight: 700,
+  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
+  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
@@ -117,13 +112,13 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: '8px', justifyCont
 
 const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: 'var(--border-radius-md)',
-  backgroundColor: BRAND_PRIMARY, color: 'var(--text-on-color-dark)',
-  border: 'none', cursor: 'pointer', fontSize: 'var(--body-sm)',
+  width: '36px', height: '36px', borderRadius: border.radius.md,
+  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
+  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
 };
 
-const nameCellStyle: CSSProperties = { fontWeight: 500, color: TEXT_PRIMARY };
-const secondaryCellStyle: CSSProperties = { fontSize: 'var(--body-sm)', color: TEXT_SECONDARY };
+const nameCellStyle: CSSProperties = { fontWeight: 500, color: color.text.primary };
+const secondaryCellStyle: CSSProperties = { fontSize: font.size.body.sm, color: color.text.secondary };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

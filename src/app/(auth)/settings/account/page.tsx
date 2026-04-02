@@ -25,7 +25,7 @@ export default async function AccountSettingsPage() {
         team: '',            // TODO: join teams table when available
         organization: '',    // TODO: join practices table
         start_date: '',      // TODO: practice_members.joined_at
-        employee_status: '', // TODO: practice_members.employee_status
+        employee_type: '', // TODO: practice_members.employee_type
         shift: '',           // TODO: practice_members.shift
       }}
       isAdmin={isAdmin}

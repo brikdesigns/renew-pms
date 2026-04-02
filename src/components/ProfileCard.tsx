@@ -50,7 +50,7 @@ const cardStyle: CSSProperties = {
   gap: '12px',
   padding: '16px',
   borderRadius: border.radius.md,
-  backgroundColor: 'var(--surface-secondary)',
+  backgroundColor: color.surface.secondary,
 };
 
 // Avatar rendering moved to shared UserAvatar component

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { InventoryTable } from '@/components/InventoryTable';
+import { color, font, gap, space } from '@/lib/tokens';
 
 const TABS = [
   { key: 'equipment', label: 'Equipment' },
@@ -29,24 +30,24 @@ export default function InventorySettingsPage() {
           alignItems: 'center',
           justifyContent: 'center',
           flex: 1,
-          gap: 'var(--gap-lg)',
-          padding: 'var(--padding-xl)',
+          gap: gap.lg,
+          padding: space.xl,
           minHeight: '40vh',
         }}>
           <h2 style={{
-            fontFamily: 'var(--font-family-heading)',
-            fontSize: 'var(--heading-md)',
+            fontFamily: font.family.heading,
+            fontSize: font.size.heading.medium,
             fontWeight: 700,
-            color: 'var(--text-primary)',
+            color: color.text.primary,
             margin: 0,
           }}>No Supplies Tracked Yet</h2>
           <p style={{
-            fontFamily: 'var(--font-family-body)',
-            fontSize: 'var(--body-md)',
-            color: 'var(--text-secondary)',
+            fontFamily: font.family.body,
+            fontSize: font.size.body.md,
+            color: color.text.secondary,
             textAlign: 'center',
             maxWidth: '400px',
-            lineHeight: 'var(--font-line-height-normal)',
+            lineHeight: font.lineHeight.normal,
           }}>
             Track consumable supplies like PPE, instruments, disposables, and autoclave bags here.
           </p>

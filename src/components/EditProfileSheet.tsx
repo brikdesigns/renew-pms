@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
+import { gap } from '@/lib/tokens';
 import { Sheet, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
@@ -22,7 +23,7 @@ export interface ProfileFormData {
   team: string;
   organization: string;
   start_date: string;
-  employee_status: string;
+  employee_type: string;
   shift: string;
 }
 
@@ -68,7 +69,7 @@ const DEPARTMENT_OPTIONS = [
   { label: 'All Departments', value: 'All Departments' },
 ];
 
-const EMPLOYEE_STATUS_OPTIONS = [
+const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
   { label: 'Active', value: 'active' },
@@ -82,7 +83,7 @@ const SHIFT_OPTIONS = [
   { label: 'Full Day', value: 'full_day' },
 ];
 
-const formRowStyle: React.CSSProperties = { display: 'flex', gap: 'var(--gap-lg)', width: '100%' };
+const formRowStyle: React.CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const formRowHalf: React.CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -259,11 +260,11 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
             <div style={formRowStyle}>
               <div style={formRowHalf}>
                 <Select
-                  label="Employee Status"
+                  label="Employee Type"
                   size="sm"
-                  options={EMPLOYEE_STATUS_OPTIONS}
-                  value={form.employee_status}
-                  onChange={updateSelect('employee_status')}
+                  options={EMPLOYEE_TYPE_OPTIONS}
+                  value={form.employee_type}
+                  onChange={updateSelect('employee_type')}
                   fullWidth
                   disabled={!isAdmin}
                 />

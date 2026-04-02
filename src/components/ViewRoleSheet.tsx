@@ -2,12 +2,13 @@
 
 import { useState, type CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { getDepartmentColors } from '@/lib/department-colors';
+import { color, font } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -93,11 +94,6 @@ const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
   Staff: [{ id: '7', name: 'All Departments' }],
 };
 
-// ─── Tokens ──────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const dotBase: CSSProperties = {
@@ -112,16 +108,16 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -144,7 +140,7 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
       <ReadOnlyField label="Description" value={role.description} />
       <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

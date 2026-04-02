@@ -3,8 +3,8 @@
 import { useState, type CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
-import { Tag } from '@bds/components/ui/Tag';
+import { Badge } from '@bds/components';
+import { Tag } from '@bds/components';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -109,9 +109,9 @@ const SHIFT_LABELS: Record<string, string> = {
 };
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: 'var(--color-department-blue)',  color: 'var(--text-on-color-dark)', label: 'New Hire' },
-  maturing: { bg: 'var(--color-department-gold)',  color: 'var(--text-on-color-dark)', label: 'Maturing' },
-  active:   { bg: 'var(--color-department-green)', color: 'var(--text-on-color-dark)', label: 'Active' },
+  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
+  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
 };
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────

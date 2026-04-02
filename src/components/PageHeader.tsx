@@ -12,8 +12,8 @@ const headerStyle: CSSProperties = {
   gap: gap.xl,
   alignItems: 'flex-start',
   justifyContent: 'center',
-  paddingTop: 'var(--space-1000)',
-  paddingBottom: 'var(--space-450)',
+  paddingTop: '40px',
+  paddingBottom: '18px',
   paddingInline: space.xl,
   borderBottom: `1px solid ${color.border.muted}`,
   width: '100%',
@@ -29,7 +29,7 @@ const topRowStyle: CSSProperties = {
 
 const titleStyle: CSSProperties = {
   fontFamily: font.family.heading,
-  fontSize: 'var(--space-900)',
+  fontSize: font.size.heading.large,
   fontWeight: 400,
   lineHeight: 1,
   color: color.text.primary,
@@ -55,7 +55,7 @@ function tabStyle(active: boolean): CSSProperties {
     fontFamily: font.family.label,
     fontSize: font.size.body.md,
     fontWeight: active ? 600 : 500,
-    lineHeight: '1.1',
+    lineHeight: font.lineHeight.tight,
     color: active ? color.text.brand : color.text.secondary,
     cursor: 'pointer',
     background: 'none',
@@ -94,7 +94,7 @@ const breadcrumbBarStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.sm,
   fontWeight: 500,
-  lineHeight: '1.1',
+  lineHeight: font.lineHeight.tight,
 };
 
 const breadcrumbLinkStyle: CSSProperties = {
@@ -116,7 +116,7 @@ const descriptionStyle: CSSProperties = {
   fontFamily: font.family.body,
   fontSize: font.size.body.md,
   color: color.text.secondary,
-  lineHeight: 'var(--font-line-height-normal)',
+  lineHeight: font.lineHeight.normal,
   margin: 0,
   maxWidth: '600px',
 };

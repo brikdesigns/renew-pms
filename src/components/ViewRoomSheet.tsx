@@ -2,7 +2,8 @@
 
 import type { CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
+import { color, font } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 
@@ -40,10 +41,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
-// ─── Tokens ─────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const dotBase: CSSProperties = {
@@ -58,8 +55,8 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
 };
 
@@ -89,7 +86,7 @@ export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
         )}
         <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
             Status
           </span>
           <div style={{ display: 'inline-flex' }}>

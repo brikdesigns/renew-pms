@@ -73,7 +73,7 @@ export function AccountSettingsClient({ profile, isAdmin }: AccountSettingsClien
         {/* Status */}
         <h2 style={sectionTitleStyle}>Status</h2>
         <div style={rowStyle}>
-          <ReadOnlyField label="Employee Status" value={(STATUS_LABELS[profile.employee_status] ?? profile.employee_status) || null} />
+          <ReadOnlyField label="Employee Type" value={(STATUS_LABELS[profile.employee_type] ?? profile.employee_type) || null} />
           <ReadOnlyField label="Shift" value={(SHIFT_LABELS[profile.shift] ?? profile.shift) || null} />
           <EmptyField />
         </div>

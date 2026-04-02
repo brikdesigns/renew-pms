@@ -122,6 +122,8 @@ export const color = {
     overlay: 'var(--surface-overlay)',
     brandPrimary: 'var(--surface-brand-primary)',
     brandSecondary: 'var(--surface-brand-secondary)',
+    nav: 'var(--surface-nav)',
+    accent: 'var(--surface-accent)',
   },
   background: {
     primary: 'var(--background-primary)',
@@ -131,6 +133,8 @@ export const color = {
     elevated: 'var(--background-elevated)',
     input: 'var(--background-input)',
     onColorDark: 'var(--background-on-color-dark)',
+    muted: 'var(--background-muted)',
+    accent: 'var(--background-accent)',
   },
   border: {
     primary: 'var(--border-primary)',

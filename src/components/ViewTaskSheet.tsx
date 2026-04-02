@@ -1,8 +1,8 @@
 'use client';
 
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
-import { Tag } from '@bds/components/ui/Tag';
+import { Badge } from '@bds/components';
+import { Tag } from '@bds/components';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { getDepartmentColors } from '@/lib/department-colors';
 import {
@@ -10,6 +10,7 @@ import {
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
 import type { CSSProperties } from 'react';
+import { color, font } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,8 +51,6 @@ const PRIORITY_DISPLAY: Record<string, { status: 'error' | 'warning' | 'info'; l
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const TEXT_PRIMARY = 'var(--text-primary)';
-
 const rowStyle: CSSProperties = {
   display: 'flex',
   gap: '16px',
@@ -91,10 +90,10 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
       <span>{task.title}</span>
       <span style={{
-        fontFamily: 'var(--font-family-label)',
-        fontSize: 'var(--body-sm)',
+        fontFamily: font.family.label,
+        fontSize: font.size.body.sm,
         fontWeight: 400,
-        color: 'var(--text-secondary)',
+        color: color.text.secondary,
       }}>
         {task.templateName}
       </span>
@@ -146,7 +145,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
                 Department
               </span>
               <div style={tagRowStyle}>
@@ -176,7 +175,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
         <div style={rowStyle}>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
                 Priority
               </span>
               <div style={{ display: 'inline-flex' }}>
@@ -186,7 +185,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
                 Status
               </span>
               <div style={{ display: 'inline-flex' }}>

@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components/ui/Board';
-import { Tag } from '@bds/components/ui/Tag';
-import { Badge } from '@bds/components/ui/Badge';
+import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
+import { Tag } from '@bds/components';
+import { Badge } from '@bds/components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
+import { shadow, color, space, gap, border } from '@/lib/tokens';
 
 // ─── Mock task type ─────────────────────────────────────────────────────────
 
@@ -215,7 +216,7 @@ export default function TasksPage() {
         const normalTasks = col.tasks.filter((t) => !t.overdue || checked[t.id]);
 
         return (
-          <BoardColumn key={col.person.name} style={{ backgroundColor: 'var(--surface-primary)', '--dept-avatar-bg': col.deptColors.light, '--dept-avatar-color': col.deptColors.text } as React.CSSProperties}>
+          <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary, '--dept-avatar-bg': col.deptColors.light, '--dept-avatar-color': col.deptColors.text } as React.CSSProperties}>
             <BoardHeader
               name={col.person.name}
               subtitle={col.person.subtitle}
@@ -225,12 +226,12 @@ export default function TasksPage() {
             {/* Overdue partition */}
             {overdueTasks.length > 0 && (
               <div style={{
-                backgroundColor: 'var(--surface-warning)',
-                borderRadius: 'var(--border-radius-200)',
-                padding: 'var(--padding-sm)',
+                backgroundColor: color.surface.warning,
+                borderRadius: border.radius.md,
+                padding: space.sm,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 'var(--gap-sm)',
+                gap: gap.sm,
               }}>
                 {overdueTasks.map((task) => {
                   const pri = PRIORITY_MAP[task.priority];
@@ -260,7 +261,7 @@ export default function TasksPage() {
                         room: task.room,
                         equipment: task.equipment,
                       })}
-                      style={{ backgroundColor: 'var(--surface-overlay)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.10)', cursor: 'pointer' }}
+                      style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
                       tags={
                         <>
                           <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>
@@ -317,7 +318,7 @@ export default function TasksPage() {
                     room: task.room,
                     equipment: task.equipment,
                   })}
-                  style={{ backgroundColor: 'var(--surface-overlay)', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.10)', cursor: 'pointer' }}
+                  style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
                   tags={
                     <>
                       <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>

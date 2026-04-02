@@ -15,13 +15,17 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 | Layer | Technology |
 |-------|-----------|
 | Framework | Next.js 16 (App Router, TypeScript) |
-| Auth | Supabase Auth (email/password, middleware session refresh) |
+| React | React 19 |
+| Auth | Supabase Auth (`@supabase/ssr`) — session refresh via `src/proxy.ts` |
 | Database | Supabase PostgreSQL (RLS) |
-| UI | BDS submodule + Tailwind CSS 3 + Radix UI |
+| UI | BDS submodule + Tailwind CSS 4 + Radix UI |
+| Styling | Tailwind CSS 4 (CSS-first config — no `tailwind.config.ts`; uses `@theme {}` in `globals.css`) |
 | Email | Resend |
 | Icons | FontAwesome 7 |
 | Error tracking | Sentry |
 | Testing | Vitest |
+| Validation | Zod v4 |
+| Docs | Fumadocs (fumadocs-ui, fumadocs-mdx, fumadocs-core) — `/docs` and `/guide` routes |
 | Hosting | Netlify |
 
 ## Business Context
@@ -81,24 +85,56 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 ## Token & Style Rules
 
 ```ts
-import { font, color, space, gap } from '@/lib/tokens';
+import { font, color, space, gap, border, shadow } from '@/lib/tokens';
 import { text, heading, detail } from '@/lib/styles';
 ```
 
 Path aliases: `@/*` → `./src/*` · `@bds/components` → `./brik-bds/components` · `@bds/tokens` → `./brik-bds/tokens`
 
+**Never use raw `var(--...)` strings in CSSProperties.** Always import from `@/lib/tokens` — this is enforced by the pre-commit hook and `./scripts/token-audit.sh`. If a token is missing from the typed exports, add it to `src/lib/tokens.ts` first.
+
+**Department colors:** Read `department.color` from the DB row and call `departmentColor(colorKey)` from `@/lib/tokens`. `getDepartmentColors(name)` in `@/lib/department-colors` is `@deprecated` — do not add new calls to it.
+
+### Tailwind CSS 4
+
+Config is CSS-first — no `tailwind.config.ts`. Extend the theme in `src/app/globals.css` via `@theme {}`. PostCSS uses `@tailwindcss/postcss`.
+
+### Client theming
+
+`src/styles/theme-renew.css` overrides BDS semantic tokens with Renew Dental's palette. Values come from Figma file `kwNyWG6H3ifjZmytZnNJXd`. **Never edit this file without pulling the latest Figma export.** Never guess token values.
+
+### Storybook MCP (use when building UI)
+
+When Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can query BDS components directly via MCP at `http://localhost:6006/mcp`. Start Storybook before building portal UI — do not read source files to guess props when the MCP is available.
+
+- `list-all-documentation` — discover all components
+- `get-documentation` — full props + JSX examples
+- `preview-stories` — live preview URLs
+
+Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/)
+
 ## Commands
 
 ```bash
-npm run dev          # Local dev server
-npm run build        # Production build
-npm run lint         # ESLint
-npm run typecheck    # TypeScript check
-npm run test         # Vitest
-npm run db:push      # Push migrations
-npm run db:diff      # Generate migration diff
-npm run db:status    # List migration status
+npm run dev              # Local dev server (localhost:3000, or next available port)
+npm run build            # Production build — always run before pushing
+npm run lint             # ESLint
+npm run typecheck        # TypeScript check
+npm run test             # Vitest
+
+npm run db:push          # Push migrations to dev Supabase
+npm run db:diff          # Generate migration diff (--use-migra)
+npm run db:status        # List migration status
+npm run db:seed-test-users  # Seed test user accounts
+
+./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
+./scripts/agent-preflight.sh # Pre-task environment validation
+./scripts/token-audit.sh     # Full token compliance scan (hex, var(), font-size, rgba, Badge)
+./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
+./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
 ```
+
+**After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.
 
 ## Rules
 

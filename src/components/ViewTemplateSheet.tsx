@@ -5,9 +5,10 @@ import {
   Sheet, Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { color, font, gap, space, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -133,16 +134,11 @@ const COMPLIANCE_LABELS: Record<string, string> = {
   emergency_preparedness: 'Emergency Preparedness',
 };
 
-// ─── Tokens ─────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const rowStyle: CSSProperties = {
   display: 'flex',
-  gap: 'var(--gap-lg)',
+  gap: gap.lg,
   width: '100%',
 };
 
@@ -163,26 +159,26 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
 };
 
 const taskItemStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 'var(--gap-md)',
-  padding: 'var(--padding-sm) var(--padding-md)',
-  borderRadius: 'var(--border-radius-sm)',
-  border: 'var(--border-width-sm) solid var(--border-muted)',
-  backgroundColor: 'var(--surface-primary)',
+  gap: gap.md,
+  padding: `${space.sm} ${space.md}`,
+  borderRadius: border.radius.sm,
+  border: `${border.width.sm} solid ${color.border.muted}`,
+  backgroundColor: color.surface.primary,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -235,7 +231,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
               Priority
             </span>
             <div style={{ display: 'inline-flex' }}>
@@ -260,7 +256,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
@@ -277,20 +273,20 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       <h3 style={sheetSectionTitle}>
         {template.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}
       </h3>
-      <p style={{ color: TEXT_SECONDARY, fontSize: 'var(--body-sm)', margin: 0 }}>
+      <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: 0 }}>
         {template.tasks.length} {template.tasks.length === 1 ? 'item' : 'items'}
       </p>
 
       {template.tasks.length === 0 ? (
         <p style={emptyState}>No items defined for this template.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--gap-md)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
           {template.tasks.map((task, idx) => (
             <div key={task.id} style={taskItemStyle}>
-              <span style={{ color: TEXT_SECONDARY, fontSize: 'var(--body-sm)', minWidth: '24px' }}>
+              <span style={{ color: color.text.secondary, fontSize: font.size.body.sm, minWidth: '24px' }}>
                 {idx + 1}.
               </span>
-              <span style={{ color: TEXT_PRIMARY, fontSize: 'var(--body-sm)', flex: 1 }}>
+              <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
                 {task.label}
               </span>
             </div>

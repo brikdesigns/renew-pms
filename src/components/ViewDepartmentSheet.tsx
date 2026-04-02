@@ -2,11 +2,11 @@
 
 import { useState, type CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { departmentColor } from '@/lib/tokens';
+import { departmentColor, color, font } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -110,11 +110,6 @@ const COLOR_LABELS: Record<string, string> = {
   pink: 'Pink',
 };
 
-// ─── Tokens ──────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const colorSwatchRow: CSSProperties = {
@@ -143,16 +138,16 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -173,22 +168,22 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
       <h3 style={sheetSectionTitle}>Department Details</h3>
       <ReadOnlyField label="Name" value={department.name} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
           Color Tag
         </span>
         {department.color ? (
           <span style={colorSwatchRow}>
             <span style={{ ...colorDot, backgroundColor: departmentColor(department.color).base }} />
-            <span style={{ fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>
               {colorLabel}
             </span>
           </span>
         ) : (
-          <span style={{ fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>None</span>
+          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>None</span>
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

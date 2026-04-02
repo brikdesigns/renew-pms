@@ -14,6 +14,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
+import { font, color, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ export interface UserFormData {
   system_role: string;
   practice_role: string;
   department: string;
-  employee_status: string;
+  employee_type: string;
   shift: string;
   is_active: boolean;
 }
@@ -131,7 +132,7 @@ const DEPARTMENT_OPTIONS = [
   { label: 'All Departments', value: 'All Departments' },
 ];
 
-const EMPLOYEE_STATUS_OPTIONS = [
+const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
   { label: 'Active', value: 'active' },
@@ -158,15 +159,10 @@ const EMPTY_FORM: UserFormData = {
   system_role: 'staff',
   practice_role: '',
   department: '',
-  employee_status: 'new',
+  employee_type: 'new',
   shift: '',
   is_active: true,
 };
-
-// ─── Tokens ──────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -179,19 +175,19 @@ const removeBtn: CSSProperties = {
   justifyContent: 'center',
   width: '28px',
   height: '28px',
-  borderRadius: 'var(--border-radius-sm)',
+  borderRadius: border.radius.sm,
   backgroundColor: 'transparent',
-  color: 'var(--color-system-red)',
-  border: '1px solid var(--color-system-red)',
+  color: color.system.red,
+  border: `1px solid ${color.system.red}`,
   cursor: 'pointer',
-  fontSize: '12px',
+  fontSize: font.size.body.xs,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  color: TEXT_SECONDARY,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
   textAlign: 'center',
 };
 
@@ -312,7 +308,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
         <div style={sheetFormGroup}>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <Select label="Employee Status" size="sm" options={EMPLOYEE_STATUS_OPTIONS} value={form.employee_status} onChange={updateSelect('employee_status')} fullWidth />
+              <Select label="Employee Type" size="sm" options={EMPLOYEE_TYPE_OPTIONS} value={form.employee_type} onChange={updateSelect('employee_type')} fullWidth />
             </div>
             <div style={formRowHalf}>
               <Select label="Account Status" size="sm" options={STATUS_OPTIONS} value={String(form.is_active)} onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))} fullWidth />
@@ -341,10 +337,10 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{r.role}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>{r.department}</span>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.department}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -384,7 +380,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             {departments.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{d.department}</span>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.department}</span>
                 </TableCell>
                 <TableCell>
                   <button

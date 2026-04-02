@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag } from '@bds/components/ui/Tag';
+import { Tag } from '@bds/components';
 import { getDepartmentColors } from '@/lib/department-colors';
+import { color, font, gap } from '@/lib/tokens';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -16,9 +17,9 @@ import {
 // ─── Employee type tag colors (shared pattern) ──────────────────────────────
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: 'var(--color-department-blue)',  color: 'var(--text-on-color-dark)', label: 'New Hire' },
-  maturing: { bg: 'var(--color-department-gold)',  color: 'var(--text-on-color-dark)', label: 'Maturing' },
-  active:   { bg: 'var(--color-department-green)', color: 'var(--text-on-color-dark)', label: 'Active' },
+  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
+  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
 };
 
 const SHIFT_LABELS: Record<string, string> = {
@@ -111,38 +112,38 @@ const TABS = [
 const titleRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '16px',
+  gap: gap.lg,
 };
 
 const titleNameStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-family-heading)',
-  fontSize: 'var(--space-900)',
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.large,
   fontWeight: 400,
   lineHeight: 1,
-  color: 'var(--text-primary)',
+  color: color.text.primary,
   margin: 0,
 };
 
 const titleTagsStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: gap.md,
 };
 
 const progressTrackStyle: React.CSSProperties = {
   width: '100%',
   height: '8px',
   borderRadius: '4px',
-  backgroundColor: 'var(--background-muted)',
+  backgroundColor: color.background.muted,
   overflow: 'hidden',
   position: 'relative',
 };
 
 const progressLabelStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-family-label)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
   fontWeight: 600,
-  color: 'var(--text-secondary)',
+  color: color.text.secondary,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -156,7 +157,7 @@ export default function TrainingDetailPage() {
 
   if (!member) {
     return (
-      <div style={{ padding: '64px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-family-body)' }}>
+      <div style={{ padding: '64px', textAlign: 'center', color: color.text.muted, fontFamily: font.family.body }}>
         Member not found.
       </div>
     );
@@ -246,16 +247,16 @@ export default function TrainingDetailPage() {
               <div style={{
                 position: 'absolute', top: 0, left: 0, height: '100%',
                 width: `${member.progress}%`, borderRadius: '4px',
-                backgroundColor: 'var(--background-brand-primary)',
+                backgroundColor: color.background.brandPrimary,
               }} />
             </div>
           </div>
 
           <h2 style={sectionTitleStyle}>Assigned Modules</h2>
           <p style={{
-            fontFamily: 'var(--font-family-body)',
-            fontSize: 'var(--body-md)',
-            color: 'var(--text-muted)',
+            fontFamily: font.family.body,
+            fontSize: font.size.body.md,
+            color: color.text.muted,
             margin: 0,
           }}>
             Training module cards will appear here once training templates are assigned to this team member.

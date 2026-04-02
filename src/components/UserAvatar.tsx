@@ -24,9 +24,9 @@ interface UserAvatarProps {
 // ─── Size map ────────────────────────────────────────────────────────────────
 
 const SIZE_MAP: Record<AvatarSize, { dimension: string; fontSize: string }> = {
-  sm: { dimension: '28px', fontSize: '11px' },
-  md: { dimension: '40px', fontSize: '14px' },
-  lg: { dimension: '48px', fontSize: '16px' },
+  sm: { dimension: '28px', fontSize: font.size.body.xs },
+  md: { dimension: '40px', fontSize: font.size.body.sm },
+  lg: { dimension: '48px', fontSize: font.size.body.md },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

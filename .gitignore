@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Fumadocs generated
 .source/
+
+# Paper design artifacts (local only)
+paper/

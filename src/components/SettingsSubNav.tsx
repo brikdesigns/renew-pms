@@ -15,6 +15,7 @@ import {
   faWarehouse,
 } from '@fortawesome/free-solid-svg-icons';
 import type { CSSProperties } from 'react';
+import { font, color, border } from '@/lib/tokens';
 
 // ─── Styles (BDS tokens) ────────────────────────────────────────────────────
 
@@ -26,8 +27,8 @@ const subNavStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-start',
-  backgroundColor: 'var(--surface-secondary)',
-  borderRight: '1px solid var(--border-muted)',
+  backgroundColor: color.surface.secondary,
+  borderRight: `1px solid ${color.border.muted}`,
   height: '100%',
   paddingInline: '12px',
   paddingTop: '113px',
@@ -51,14 +52,14 @@ function menuItemStyle(active: boolean): CSSProperties {
     paddingBlock: '12px',
     paddingInline: '12px',
     width: '100%',
-    borderRadius: 'var(--border-radius-sm)',
-    backgroundColor: active ? 'var(--background-brand-primary)' : 'transparent',
-    color: active ? 'var(--text-on-color-dark)' : 'var(--text-primary)',
+    borderRadius: border.radius.sm,
+    backgroundColor: active ? color.background.brandPrimary : 'transparent',
+    color: active ? color.text.onColorDark : color.text.primary,
     textDecoration: 'none',
-    fontFamily: 'var(--font-family-label)',
-    fontSize: '16px',
+    fontFamily: font.family.label,
+    fontSize: font.size.body.md,
     fontWeight: 500,
-    lineHeight: '1.1',
+    lineHeight: font.lineHeight.tight,
     cursor: 'pointer',
     transition: 'background-color 0.15s ease, color 0.15s ease',
     boxSizing: 'border-box',
@@ -72,7 +73,7 @@ const iconStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-  fontSize: '14px',
+  fontSize: font.size.body.sm,
 };
 
 // ─── Nav items definition ────────────────────────────────────────────────────

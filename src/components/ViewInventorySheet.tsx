@@ -2,8 +2,9 @@
 
 import type { CSSProperties } from 'react';
 import { Sheet } from '@bds/components';
-import { Badge } from '@bds/components/ui/Badge';
-import { Tag } from '@bds/components/ui/Tag';
+import { Badge } from '@bds/components';
+import { Tag } from '@bds/components';
+import { color, font } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { getDepartmentColors } from '@/lib/department-colors';
@@ -38,8 +39,6 @@ const STATUS_BADGE: Record<string, { status: 'positive' | 'warning' | 'error' | 
 };
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
 
 const rowStyle: CSSProperties = {
   display: 'flex',
@@ -87,7 +86,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
         <div style={rowStyle}>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
                 Status
               </span>
               <div style={{ display: 'inline-flex' }}>
@@ -97,7 +96,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-family-label)', fontSize: 'var(--body-sm)', fontWeight: 500, color: TEXT_PRIMARY }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
                 Department
               </span>
               <div style={{ display: 'inline-flex' }}>

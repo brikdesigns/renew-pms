@@ -22,15 +22,10 @@ import {
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { Badge } from '@bds/components/ui/Badge';
+import { Badge } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet, type TemplateViewData } from '@/components/ViewTemplateSheet';
-
-// ─── Design tokens ───────────────────────────────────────────────────────────
-
-const TEXT_PRIMARY = 'var(--text-primary)';
-const TEXT_SECONDARY = 'var(--text-secondary)';
-const BRAND_PRIMARY = 'var(--background-brand-primary)';
+import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Type display mapping ────────────────────────────────────────────────────
 
@@ -302,39 +297,39 @@ const tabContentStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   flex: 1,
-  paddingInline: '32px',
+  paddingInline: space.xl,
 };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '16px 0',
-  borderBottom: '1px solid var(--border-muted)',
+  padding: `${space.md} 0`,
+  borderBottom: `1px solid ${color.border.muted}`,
 };
 
 const subHeaderLeftStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
+  gap: space.sm,
 };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: '16px',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.md,
   fontWeight: 600,
-  color: TEXT_PRIMARY,
+  color: color.text.primary,
   margin: 0,
 };
 
 const subHeaderCountStyle: CSSProperties = {
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
-  color: TEXT_SECONDARY,
-  backgroundColor: 'var(--surface-secondary)',
-  padding: '2px 8px',
-  borderRadius: '4px',
+  color: color.text.secondary,
+  backgroundColor: color.surface.secondary,
+  padding: `2px ${gap.md}`,
+  borderRadius: border.radius.sm,
 };
 
 const addBtnStyle: CSSProperties = {
@@ -343,11 +338,11 @@ const addBtnStyle: CSSProperties = {
   justifyContent: 'center',
   height: '36px',
   paddingInline: '14px',
-  borderRadius: '8px',
-  backgroundColor: BRAND_PRIMARY,
-  color: 'var(--text-on-color-dark)',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  borderRadius: border.radius.sm,
+  backgroundColor: color.background.brandPrimary,
+  color: color.text.onColorDark,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 700,
   border: 'none',
   cursor: 'pointer',
@@ -362,31 +357,14 @@ const tableWrapperStyle: CSSProperties = {
 const typeChipStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
+  gap: gap.sm,
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
   fontWeight: 500,
-  color: TEXT_SECONDARY,
+  color: color.text.secondary,
 };
 
-const statusDotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrapperStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  fontFamily: 'var(--font-family-body)',
-  fontSize: 'var(--body-sm)',
-  fontWeight: 500,
-};
-
-const actionBtnGroup: CSSProperties = { display: 'flex', gap: '8px', justifyContent: 'flex-end' };
+const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
 const actionBtnStyle: CSSProperties = {
   display: 'inline-flex',
@@ -394,12 +372,12 @@ const actionBtnStyle: CSSProperties = {
   justifyContent: 'center',
   width: '36px',
   height: '36px',
-  borderRadius: 'var(--border-radius-md)',
-  backgroundColor: BRAND_PRIMARY,
-  color: 'var(--text-on-color-dark)',
+  borderRadius: border.radius.md,
+  backgroundColor: color.background.brandPrimary,
+  color: color.text.onColorDark,
   border: 'none',
   cursor: 'pointer',
-  fontSize: 'var(--body-sm)',
+  fontSize: font.size.body.sm,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -408,7 +386,7 @@ function TypeChip({ type }: { type: string }) {
   const meta = TYPE_META[type] ?? TYPE_META.checklist;
   return (
     <span style={typeChipStyle}>
-      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: 'var(--body-xs)' }} />
+      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
       {meta.label}
     </span>
   );
@@ -526,15 +504,15 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
         <div ref={addBtnRef} style={{ position: 'relative' }}>
           <button style={addBtnStyle} onClick={() => setAddMenuOpen((p) => !p)}>
             Add Template
-            <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: 'var(--body-xs)', marginLeft: '8px' }} />
+            <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: font.size.body.xs, marginLeft: gap.md }} />
           </button>
           {addMenuOpen && (
             <div
               style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                backgroundColor: 'var(--surface-primary)', borderRadius: 'var(--border-radius-md)',
-                border: '1px solid var(--border-muted)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: 240, overflow: 'hidden',
+                backgroundColor: color.surface.primary, borderRadius: border.radius.md,
+                border: `1px solid ${color.border.muted}`,
+                boxShadow: shadow.md, minWidth: 240, overflow: 'hidden',
               }}
             >
               {filteredAddTypes.map((t) => (
@@ -543,19 +521,19 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                   type="button"
                   onClick={() => handleAddClick(t.id)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 'var(--gap-md)',
-                    width: '100%', padding: 'var(--padding-sm) var(--padding-md)',
+                    display: 'flex', alignItems: 'center', gap: gap.md,
+                    width: '100%', padding: `${space.sm} ${space.md}`,
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-sm)',
-                    color: 'var(--text-primary)', textAlign: 'left',
+                    fontFamily: font.family.body, fontSize: font.size.body.sm,
+                    color: color.text.primary, textAlign: 'left',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-accent)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <FontAwesomeIcon icon={t.icon} style={{ width: 16, color: 'var(--text-brand-primary)' }} />
+                  <FontAwesomeIcon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
                   <div>
                     <div style={{ fontWeight: 600 }}>{t.label}</div>
-                    <div style={{ fontSize: 'var(--body-xs)', color: 'var(--text-secondary)' }}>{t.desc}</div>
+                    <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
                   </div>
                 </button>
               ))}
@@ -582,7 +560,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
             {filteredTemplates.map((template) => (
               <TableRow key={template.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>
+                  <span style={{ fontWeight: 500, color: color.text.primary }}>
                     {template.name}
                   </span>
                 </TableCell>
@@ -590,17 +568,17 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                   <TypeChip type={template.type} />
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                     {CATEGORY_LABELS[template.category] ?? template.category}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                     {FREQUENCY_LABELS[template.frequency] ?? template.frequency}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: 'var(--body-sm)', color: TEXT_SECONDARY }}>
+                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
                     {ROLE_LABELS[template.assigned_role] ?? template.assigned_role}
                   </span>
                 </TableCell>
