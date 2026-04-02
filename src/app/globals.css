@@ -79,6 +79,27 @@ body {
   }
 }
 
+/*
+ * Table/list cell link — hover turns brand-primary.
+ * Apply className="cell-link" to any <a> inside a table cell or list row.
+ */
+.cell-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+.cell-link:hover {
+  color: var(--text-brand-primary);
+}
+
+/*
+ * Progress bar fill — animated width transition for training/task progress.
+ * Apply className="progress-fill" to the inner fill div.
+ */
+.progress-fill {
+  transition: width var(--duration-slow, 300ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+
 /* ── Renew button system (with interaction states) ── */
 @layer components {
   .renew-btn {
@@ -93,7 +114,9 @@ body {
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: background-color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1)),
+                box-shadow var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1)),
+                opacity var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
   }
 
   .renew-btn:focus-visible {

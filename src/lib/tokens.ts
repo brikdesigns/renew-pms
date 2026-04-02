@@ -250,6 +250,29 @@ export const border = {
   },
 } as const;
 
+// ─── Motion ──────────────────────────────────────────────────────────
+
+export const motion = {
+  ease: {
+    in: 'var(--ease-in)',
+    out: 'var(--ease-out)',
+    inOut: 'var(--ease-in-out)',
+  },
+  duration: {
+    fast: 'var(--duration-fast)',       // 100ms
+    normal: 'var(--duration-normal)',   // 200ms
+    slow: 'var(--duration-slow)',       // 300ms
+  },
+  stagger: {
+    1: 'var(--stagger-1)',  // 0ms
+    2: 'var(--stagger-2)',  // 50ms
+    3: 'var(--stagger-3)',  // 100ms
+    4: 'var(--stagger-4)',  // 150ms
+    5: 'var(--stagger-5)',  // 200ms
+    6: 'var(--stagger-6)',  // 250ms
+  },
+} as const;
+
 // ─── Shadows ─────────────────────────────────────────────────────────
 
 export const shadow = {

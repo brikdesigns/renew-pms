@@ -244,11 +244,14 @@ export default function TrainingDetailPage() {
               <span style={progressLabelStyle}>{member.progress}%</span>
             </div>
             <div style={progressTrackStyle}>
-              <div style={{
-                position: 'absolute', top: 0, left: 0, height: '100%',
-                width: `${member.progress}%`, borderRadius: '4px',
-                backgroundColor: color.background.brandPrimary,
-              }} />
+              <div
+                className="progress-fill"
+                style={{
+                  position: 'absolute', top: 0, left: 0, height: '100%',
+                  width: `${member.progress}%`, borderRadius: '4px',
+                  backgroundColor: color.background.brandPrimary,
+                }}
+              />
             </div>
           </div>
 

@@ -18,7 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-import { font, color } from '@/lib/tokens';
+import { font, color, motion } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -83,7 +83,7 @@ function navItemStyle(active: boolean): CSSProperties {
     backgroundColor: active ? color.background.brandPrimary : 'transparent',
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'background-color 0.15s ease',
+    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
     boxSizing: 'border-box',
   };
 }
