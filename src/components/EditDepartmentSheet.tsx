@@ -27,7 +27,7 @@ interface EditDepartmentSheetProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: DepartmentFormData | null;
-  onSave: (data: DepartmentFormData) => void;
+  onSave: (data: DepartmentFormData) => void | Promise<void>;
 }
 
 // ─── Mock associated data ────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ const ROLES_BY_DEPT: Record<string, AssociatedRole[]> = {
     { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation' },
     { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing' },
   ],
-  Engineering: [
+  Maintenance: [
     { id: '8', name: 'Engineer', description: 'Equipment maintenance, IT systems' },
     { id: '9', name: 'Inventory Manager', description: 'Supply ordering, stock tracking' },
   ],
@@ -84,7 +84,7 @@ const USERS_BY_DEPT: Record<string, AssociatedUser[]> = {
     { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com' },
     { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com' },
   ],
-  Engineering: [
+  Maintenance: [
     { id: '10', name: 'Jordan Hayes', role: 'Inventory Manager', email: 'jordan@renewdental.com' },
   ],
   HR: [
@@ -198,9 +198,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
     if (!form.name.trim()) return;
 
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 500));
-
-    onSave(form);
+    await onSave(form);
     setSaving(false);
     showToast({
       title: isEdit ? 'Department updated' : 'Department created',
@@ -267,10 +265,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{r.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>{r.description}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -311,10 +309,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{u.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>{u.role}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{u.role}</span>
                 </TableCell>
                 <TableCell>
                   <button

@@ -53,7 +53,7 @@ const ROLES_BY_DEPT: Record<string, AssociatedRole[]> = {
     { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation' },
     { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing' },
   ],
-  Engineering: [
+  Maintenance: [
     { id: '8', name: 'Engineer', description: 'Equipment maintenance, IT systems' },
     { id: '9', name: 'Inventory Manager', description: 'Supply ordering, stock tracking' },
   ],
@@ -81,7 +81,7 @@ const USERS_BY_DEPT: Record<string, AssociatedUser[]> = {
     { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com' },
     { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com' },
   ],
-  Engineering: [
+  Maintenance: [
     { id: '10', name: 'Jordan Hayes', role: 'Inventory Manager', email: 'jordan@renewdental.com' },
   ],
   HR: [
@@ -138,15 +138,15 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: color.text.secondary,
   textAlign: 'center',
 };
@@ -168,22 +168,22 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
       <h3 style={sheetSectionTitle}>Department Details</h3>
       <ReadOnlyField label="Name" value={department.name} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Color Tag
         </span>
         {department.color ? (
           <span style={colorSwatchRow}>
             <span style={{ ...colorDot, backgroundColor: departmentColor(department.color).base }} />
-            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>
+            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>
               {colorLabel}
             </span>
           </span>
         ) : (
-          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>None</span>
+          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>None</span>
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

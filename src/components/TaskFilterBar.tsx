@@ -1,24 +1,13 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { color, font, space, gap, border } from '@/lib/tokens';
-
-// ─── Filter options (match schema enums + seed defaults) ─────────────────────
-
-const DEPARTMENTS = [
-  'All Departments',
-  'Clinical',
-  'Front Desk',
-  'Engineering',
-  'HR',
-  'Administration',
-  'Sterilization',
-] as const;
+import { useDepartments } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
   'All Frequencies',
@@ -209,6 +198,12 @@ export function TaskFilterBar({
   showOverdue,
   onShowOverdueChange,
 }: TaskFilterBarProps) {
+  const { departments } = useDepartments();
+  const departmentOptions = useMemo(
+    () => ['All Departments', ...departments.filter((d) => d.is_active).map((d) => d.name)],
+    [departments]
+  );
+
   const handlePrev = () => onDateChange(shiftDate(selectedDate, -1));
   const handleNext = () => onDateChange(shiftDate(selectedDate, 1));
 
@@ -245,7 +240,7 @@ export function TaskFilterBar({
         />
         <ChipFilter
           label="Department"
-          options={DEPARTMENTS}
+          options={departmentOptions}
           selected={selectedDepartment}
           onChange={onDepartmentChange}
         />

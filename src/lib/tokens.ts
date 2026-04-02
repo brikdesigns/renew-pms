@@ -23,6 +23,7 @@ export const font = {
     body: 'var(--font-family-body)',
     heading: 'var(--font-family-heading)',
     label: 'var(--font-family-label)',
+    subtitle: 'var(--font-family-subtitle)',
     display: 'var(--font-family-display)',
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },

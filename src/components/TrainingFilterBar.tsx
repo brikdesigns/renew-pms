@@ -1,22 +1,11 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { space, gap } from '@/lib/tokens';
-
-// ─── Filter options ──────────────────────────────────────────────────────────
-
-const DEPARTMENTS = [
-  'All Departments',
-  'Clinical',
-  'Front Desk',
-  'Engineering',
-  'HR',
-  'Administration',
-  'Sterilization',
-] as const;
+import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -104,6 +93,12 @@ export function TrainingFilterBar({
   activeTypes,
   onToggleType,
 }: TrainingFilterBarProps) {
+  const { departments } = useDepartments();
+  const departmentOptions = useMemo(
+    () => ['All Departments', ...departments.filter((d) => d.is_active).map((d) => d.name)],
+    [departments]
+  );
+
   return (
     <div style={barStyle}>
       <Chip
@@ -125,7 +120,7 @@ export function TrainingFilterBar({
         onChipClick={() => onToggleType('active')}
       />
       <ChipFilter
-        options={DEPARTMENTS}
+        options={departmentOptions}
         selected={selectedDepartment}
         onChange={onDepartmentChange}
       />

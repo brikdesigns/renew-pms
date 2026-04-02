@@ -56,7 +56,7 @@ const SEED_USERS: UserRow[] = [
   { id: '7',  first_name: 'Rachel',   last_name: 'Foster',    email: 'rachel@renewdental.com',   phone: '(555) 100-0007', system_role: 'staff',          practice_role: 'Receptionist',         department: 'Front Desk',     employee_type: 'active',   shift: 'full_day', is_active: true, joined_at: '2024-07-15' },
   { id: '8',  first_name: 'David',    last_name: 'Park',      email: 'david@renewdental.com',    phone: '(555) 100-0008', system_role: 'staff',          practice_role: 'Treatment Coordinator', department: 'Front Desk',    employee_type: 'active',   shift: 'full_day', is_active: true, joined_at: '2024-08-01' },
   { id: '9',  first_name: 'Lisa',     last_name: 'Gomez',     email: 'lisa@renewdental.com',     phone: '(555) 100-0009', system_role: 'staff',          practice_role: 'Insurance Coordinator', department: 'Front Desk',    employee_type: 'active',   shift: 'full_day', is_active: true, joined_at: '2024-09-10' },
-  { id: '10', first_name: 'Jordan',   last_name: 'Hayes',     email: 'jordan@renewdental.com',   phone: '(555) 100-0010', system_role: 'staff',          practice_role: 'Inventory Manager',    department: 'Engineering',    employee_type: 'new',      shift: '',         is_active: true, joined_at: '2026-02-01' },
+  { id: '10', first_name: 'Jordan',   last_name: 'Hayes',     email: 'jordan@renewdental.com',   phone: '(555) 100-0010', system_role: 'staff',          practice_role: 'Inventory Manager',    department: 'Maintenance',    employee_type: 'new',      shift: '',         is_active: true, joined_at: '2026-02-01' },
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -68,17 +68,17 @@ const subHeaderStyle: CSSProperties = {
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
@@ -86,13 +86,13 @@ const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 const statusWrap: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
 };
 
 // Avatar rendering moved to shared UserAvatar component
@@ -184,27 +184,27 @@ export function UsersTable() {
                     <div style={nameWrap}>
                       <UserAvatar name={fullName} department={u.department} size="sm" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 500, color: color.text.primary, fontSize: font.size.body.md, lineHeight: font.lineHeight.snug }}>
+                        <span style={{ fontFamily: font.family.label, fontWeight: font.weight.medium, color: color.text.primary, fontSize: font.size.label.md, lineHeight: font.lineHeight.snug }}>
                           {u.first_name} {u.last_name}
                         </span>
-                        <span style={{ fontSize: font.size.body.sm, color: color.text.secondary, lineHeight: font.lineHeight.snug }}>
+                        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary, lineHeight: font.lineHeight.snug }}>
                           {u.email}
                         </span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                       {u.practice_role || '—'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                       {u.department || '—'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                       {SYSTEM_ROLE_LABELS[u.system_role] ?? u.system_role}
                     </span>
                   </TableCell>

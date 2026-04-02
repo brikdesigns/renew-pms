@@ -52,7 +52,7 @@ const MOCK_MEMBERS: Record<string, MemberDetail> = {
   'pm-jordan': {
     id: 'pm-jordan', firstName: 'Jordan', lastName: 'Hayes',
     email: 'jordan@renewdental.com', phone: '(555) 100-0010',
-    role: 'Inventory Manager', department: 'Engineering',
+    role: 'Inventory Manager', department: 'Maintenance',
     employeeType: 'new', shift: '', startDate: '2026-02-01',
     organization: 'Renew Dental', totalModules: 6, completedModules: 1, progress: 12,
   },
@@ -118,7 +118,7 @@ const titleRowStyle: React.CSSProperties = {
 const titleNameStyle: React.CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.large,
-  fontWeight: 400,
+  fontWeight: font.weight.regular,
   lineHeight: 1,
   color: color.text.primary,
   margin: 0,
@@ -141,8 +141,8 @@ const progressTrackStyle: React.CSSProperties = {
 
 const progressLabelStyle: React.CSSProperties = {
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 600,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.semibold,
   color: color.text.secondary,
 };
 

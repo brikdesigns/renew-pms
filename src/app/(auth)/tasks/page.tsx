@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
 import { Tag, Badge, Dot, AnimatedIcon, Tooltip } from '@bds/components';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
-import { getDepartmentColors } from '@/lib/department-colors';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
-import { shadow, color, font, space, gap, border } from '@/lib/tokens';
+import { shadow, color, font, space, gap, border, departmentColor } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Mock task type ─────────────────────────────────────────────────────────
 
@@ -109,11 +109,11 @@ const MOCK_BOARD: { person: { name: string; subtitle: string; department: string
     ],
   },
   {
-    person: { name: 'Jordan Hayes', subtitle: 'Inventory Manager', department: 'Engineering' },
+    person: { name: 'Jordan Hayes', subtitle: 'Inventory Manager', department: 'Maintenance' },
     tasks: [
-      { id: 't30', title: 'Review current supply inventory levels', due: 'Due today', dept: 'Engineering', freq: 'Weekly', priority: 'warning', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'role', assignmentValue: 'Inventory Manager', room: 'Supply Storage' },
-      { id: 't31', title: 'Check gloves and PPE stock', due: 'Due today', dept: 'Engineering', freq: 'Weekly', priority: 'warning', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'role', assignmentValue: 'Inventory Manager', room: 'Supply Storage' },
-      { id: 't32', title: 'Submit supply order for approval', due: 'Due Friday', dept: 'Engineering', freq: 'Weekly', priority: 'info', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'department', assignmentValue: 'Engineering' },
+      { id: 't30', title: 'Review current supply inventory levels', due: 'Due today', dept: 'Maintenance', freq: 'Weekly', priority: 'warning', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'role', assignmentValue: 'Inventory Manager', room: 'Supply Storage' },
+      { id: 't31', title: 'Check gloves and PPE stock', due: 'Due today', dept: 'Maintenance', freq: 'Weekly', priority: 'warning', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'role', assignmentValue: 'Inventory Manager', room: 'Supply Storage' },
+      { id: 't32', title: 'Submit supply order for approval', due: 'Due Friday', dept: 'Maintenance', freq: 'Weekly', priority: 'info', type: 'checklist', template: 'Weekly Inventory Checklist', overdue: false, assignmentType: 'department', assignmentValue: 'Maintenance' },
     ],
   },
 ];
@@ -159,13 +159,20 @@ export default function TasksPage() {
   const [showOverdue, setShowOverdue] = useState(false);
   const [viewingTask, setViewingTask] = useState<TaskViewData | null>(null);
 
+  const { departments } = useDepartments();
+  const deptColorMap = useMemo(
+    () => new Map(departments.map((d) => [d.name, d.color])),
+    [departments]
+  );
+  const getDeptColors = (deptName: string) => departmentColor(deptColorMap.get(deptName) ?? 'blue');
+
   const toggle = (id: string) =>
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // Apply all filters and derive department colors + dynamic progress
   const filteredBoard = MOCK_BOARD
     .map((col) => {
-      const colors = getDepartmentColors(col.person.department);
+      const colors = getDeptColors(col.person.department);
       const totalTasks = col.tasks.length;
       const completedTasks = col.tasks.filter((t) => checked[t.id]).length;
       const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -227,12 +234,12 @@ export default function TasksPage() {
             {overdueTasks.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs, paddingInline: space.sm }}>
-                  <Dot status="error" size="sm" pulse />
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.negative }}>Overdue</span>
+                  <Dot status="warning" size="sm" pulse />
+                  <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.negative }}>Overdue</span>
                 </div>
                 {overdueTasks.map((task) => {
                   const pri = PRIORITY_MAP[task.priority];
-                  const taskDeptColors = getDepartmentColors(task.dept);
+                  const taskDeptColors = getDeptColors(task.dept);
                   return (
                     <BoardCard
                       key={task.id}
@@ -293,7 +300,7 @@ export default function TasksPage() {
             {/* Normal tasks */}
             {normalTasks.map((task) => {
               const pri = PRIORITY_MAP[task.priority];
-              const taskDeptColors = getDepartmentColors(task.dept);
+              const taskDeptColors = getDeptColors(task.dept);
               return (
                 <BoardCard
                   key={task.id}

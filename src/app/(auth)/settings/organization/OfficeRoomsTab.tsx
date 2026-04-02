@@ -61,17 +61,17 @@ const subHeaderLeftStyle: CSSProperties = {
 };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: 600,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   margin: 0,
 };
 
 const subHeaderCountStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
   backgroundColor: color.surface.secondary,
   padding: `2px ${gap.md}`,
@@ -87,9 +87,9 @@ const addRoomBtnStyle: CSSProperties = {
   borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 700,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.bold,
   border: 'none',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
@@ -105,9 +105,9 @@ const typeChipStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
 };
 
@@ -123,9 +123,9 @@ const statusWrapperStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
 };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
@@ -134,7 +134,7 @@ const actionBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -254,7 +254,7 @@ export function OfficeRoomsTab() {
             {rooms.map((room) => (
               <TableRow key={room.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                     {room.name}
                   </span>
                 </TableCell>
@@ -262,7 +262,7 @@ export function OfficeRoomsTab() {
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>

@@ -33,8 +33,8 @@ const SEED_ROLES: RoleRow[] = [
   { id: '5',  name: 'Receptionist',           department: 'Front Desk',     description: 'Patient check-in, scheduling, phone management', is_default: true, is_active: true, sort_order: 5,  member_count: 1 },
   { id: '6',  name: 'Treatment Coordinator',  department: 'Front Desk',     description: 'Treatment plan presentation and patient follow-up', is_default: true, is_active: true, sort_order: 6,  member_count: 1 },
   { id: '7',  name: 'Insurance Coordinator',  department: 'Front Desk',     description: 'Claims processing, benefits verification, billing', is_default: true, is_active: true, sort_order: 7,  member_count: 1 },
-  { id: '8',  name: 'Engineer',               department: 'Engineering',    description: 'Equipment maintenance, IT systems, technical support', is_default: true, is_active: true, sort_order: 8,  member_count: 0 },
-  { id: '9',  name: 'Inventory Manager',      department: 'Engineering',    description: 'Supply ordering, stock tracking, vendor management', is_default: true, is_active: true, sort_order: 9,  member_count: 1 },
+  { id: '8',  name: 'Engineer',               department: 'Maintenance',    description: 'Equipment maintenance, IT systems, technical support', is_default: true, is_active: true, sort_order: 8,  member_count: 0 },
+  { id: '9',  name: 'Inventory Manager',      department: 'Maintenance',    description: 'Supply ordering, stock tracking, vendor management', is_default: true, is_active: true, sort_order: 9,  member_count: 1 },
   { id: '10', name: 'Manager',                department: 'All Departments', description: 'Cross-department management and oversight', is_default: true, is_active: true, sort_order: 10, member_count: 0 },
   { id: '11', name: 'Admin',                  department: 'All Departments', description: 'Administrative access across the practice', is_default: true, is_active: true, sort_order: 11, member_count: 0 },
   { id: '12', name: 'Staff',                  department: 'All Departments', description: 'General staff member', is_default: true, is_active: true, sort_order: 12, member_count: 0 },
@@ -50,17 +50,17 @@ const subHeaderStyle: CSSProperties = {
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
@@ -68,13 +68,13 @@ const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 const statusWrap: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -140,16 +140,16 @@ export function RolesTable() {
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.department}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.department}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.member_count}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.member_count}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {r.is_default ? 'Default' : 'Custom'}
                   </span>
                 </TableCell>

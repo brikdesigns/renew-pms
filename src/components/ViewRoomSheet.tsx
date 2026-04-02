@@ -55,9 +55,9 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
 };
 
 
@@ -86,7 +86,7 @@ export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
         )}
         <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
             Status
           </span>
           <div style={{ display: 'inline-flex' }}>

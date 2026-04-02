@@ -29,7 +29,7 @@ export const contentStyle: CSSProperties = {
 export const sectionTitleStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.medium,
-  fontWeight: 400,
+  fontWeight: font.weight.regular,
   lineHeight: 1,
   color: color.text.secondary,
   margin: 0,
@@ -53,16 +53,16 @@ export const fieldStyle: CSSProperties = {
 
 export const labelStyle: CSSProperties = {
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
   lineHeight: font.lineHeight.tight,
   color: color.text.primary,
 };
 
 export const valueStyle: CSSProperties = {
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 400,
+  fontSize: font.size.body.md,
+  fontWeight: font.weight.regular,
   lineHeight: font.lineHeight.normal,
   color: color.text.secondary,
 };
@@ -77,8 +77,8 @@ export const editBtnStyle: CSSProperties = {
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 800,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.bold,
   border: 'none',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
@@ -94,8 +94,8 @@ export const statusBadgeBase: CSSProperties = {
   alignItems: 'center',
   gap: gap.sm,             // 6px
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 600,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.semibold,
   lineHeight: font.lineHeight.none,
   padding: `${gap.xs} ${space.xs}`, // 4px 10px
   borderRadius: border.radius.sm,   // 8px (closest named token to 6px)

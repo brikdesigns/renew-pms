@@ -30,7 +30,7 @@ const topRowStyle: CSSProperties = {
 const titleStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.large,
-  fontWeight: 400,
+  fontWeight: font.weight.regular,
   lineHeight: 1,
   color: color.text.primary,
   margin: 0,
@@ -53,8 +53,8 @@ const tabBarStyle: CSSProperties = {
 function tabStyle(active: boolean): CSSProperties {
   return {
     fontFamily: font.family.label,
-    fontSize: font.size.body.md,
-    fontWeight: active ? 600 : 500,
+    fontSize: font.size.label.md,
+    fontWeight: active ? font.weight.semibold : font.weight.medium,
     lineHeight: font.lineHeight.tight,
     color: active ? color.text.brand : color.text.secondary,
     cursor: 'pointer',
@@ -92,8 +92,8 @@ const breadcrumbBarStyle: CSSProperties = {
   alignItems: 'center',
   gap: '6px',
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   lineHeight: font.lineHeight.tight,
 };
 

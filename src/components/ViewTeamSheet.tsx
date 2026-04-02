@@ -130,15 +130,15 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: TEXT_SECONDARY,
   textAlign: 'center',
 };
@@ -162,7 +162,7 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
       <ReadOnlyField label="Department" value={team.department || 'Cross-department'} />
       <ReadOnlyField label="Shift" value={team.shift ? (SHIFT_LABELS[team.shift] ?? team.shift) : null} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

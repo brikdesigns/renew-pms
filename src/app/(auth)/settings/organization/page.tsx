@@ -38,9 +38,9 @@ function StatusBadge({ status }: { status: string }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        fontFamily: font.family.body,
-        fontSize: font.size.body.sm,
-        fontWeight: 600,
+        fontFamily: font.family.label,
+        fontSize: font.size.label.sm,
+        fontWeight: font.weight.semibold,
         padding: `${gap.xs} ${space.xs}`,
         borderRadius: border.radius.sm,
         backgroundColor: colors.bg,
@@ -65,7 +65,7 @@ function DetailsTab({ practice }: { practice: OrganizationData }) {
         <ReadOnlyField label="Practice Name" value={practice.name || null} />
         <ReadOnlyField label="Website" value={practice.website_url || null} />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: gap.md, alignItems: 'flex-start' }}>
-          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
             Status
           </span>
           <StatusBadge status={practice.status} />

@@ -68,7 +68,7 @@ const USERS_BY_ROLE: Record<string, AssociatedUser[]> = {
     { id: '9', name: 'Lisa Gomez', email: 'lisa@renewdental.com', department: 'Front Desk' },
   ],
   'Inventory Manager': [
-    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Engineering' },
+    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Maintenance' },
   ],
   Engineer: [],
   Manager: [],
@@ -87,8 +87,8 @@ const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
   Receptionist: [{ id: '2', name: 'Front Desk' }],
   'Treatment Coordinator': [{ id: '2', name: 'Front Desk' }],
   'Insurance Coordinator': [{ id: '2', name: 'Front Desk' }],
-  Engineer: [{ id: '3', name: 'Engineering' }],
-  'Inventory Manager': [{ id: '3', name: 'Engineering' }],
+  Engineer: [{ id: '3', name: 'Maintenance' }],
+  'Inventory Manager': [{ id: '3', name: 'Maintenance' }],
   Manager: [{ id: '7', name: 'All Departments' }],
   Admin: [{ id: '7', name: 'All Departments' }],
   Staff: [{ id: '7', name: 'All Departments' }],
@@ -108,15 +108,15 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
 };
 
 const emptyState: CSSProperties = {
   padding: '24px 0',
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: color.text.secondary,
   textAlign: 'center',
 };
@@ -140,7 +140,7 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
       <ReadOnlyField label="Description" value={role.description} />
       <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>

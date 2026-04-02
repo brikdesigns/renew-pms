@@ -51,17 +51,17 @@ const subHeaderStyle: CSSProperties = {
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
@@ -69,13 +69,13 @@ const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 const statusWrap: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -141,20 +141,20 @@ export function TeamsTable() {
             {teams.map((t) => (
               <TableRow key={t.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{t.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{t.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {t.department || 'Cross-department'}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {t.shift ? SHIFT_LABELS[t.shift] ?? t.shift : '—'}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{t.member_count}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{t.member_count}</span>
                 </TableCell>
                 <TableCell>
                   <Badge status={t.is_active ? 'positive' : 'error'} size="sm">

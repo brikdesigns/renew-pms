@@ -90,11 +90,11 @@ const subHeaderStyle: CSSProperties = {
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px' };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: '2px 8px', borderRadius: '4px',
 };
 
@@ -102,7 +102,7 @@ const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: '8px',
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
@@ -114,11 +114,11 @@ const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 
-const nameCellStyle: CSSProperties = { fontWeight: 500, color: color.text.primary };
-const secondaryCellStyle: CSSProperties = { fontSize: font.size.body.sm, color: color.text.secondary };
+const nameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
+const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

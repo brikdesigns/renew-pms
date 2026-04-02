@@ -76,7 +76,7 @@ const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
     { id: '9', role: 'Insurance Coordinator', department: 'Front Desk' },
   ],
   'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Engineering' },
+    { id: '10', role: 'Inventory Manager', department: 'Maintenance' },
   ],
 };
 
@@ -90,7 +90,7 @@ const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
   'Rachel Foster': [{ id: '7', department: 'Front Desk' }],
   'David Park': [{ id: '8', department: 'Front Desk' }],
   'Lisa Gomez': [{ id: '9', department: 'Front Desk' }],
-  'Jordan Hayes': [{ id: '10', department: 'Engineering' }],
+  'Jordan Hayes': [{ id: '10', department: 'Maintenance' }],
 };
 
 // ─── Label lookups ──────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: TEXT_SECONDARY,
   textAlign: 'center',
 };
@@ -184,7 +184,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
       <div style={fieldRow}>
         <div style={fieldHalf}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Employee Type
             </span>
             <div style={{ display: 'inline-flex' }}>
@@ -196,7 +196,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
         </div>
         <div style={fieldHalf}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Account Status
             </span>
             <div style={{ display: 'inline-flex' }}>

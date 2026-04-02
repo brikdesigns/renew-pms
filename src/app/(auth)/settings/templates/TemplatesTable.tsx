@@ -304,17 +304,17 @@ const subHeaderLeftStyle: CSSProperties = {
 };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: 600,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   margin: 0,
 };
 
 const subHeaderCountStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
   backgroundColor: color.surface.secondary,
   padding: `2px ${gap.md}`,
@@ -330,9 +330,9 @@ const addBtnStyle: CSSProperties = {
   borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 700,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.bold,
   border: 'none',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
@@ -347,9 +347,9 @@ const typeChipStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
 };
 
@@ -366,7 +366,7 @@ const actionBtnStyle: CSSProperties = {
   color: color.text.onColorDark,
   border: 'none',
   cursor: 'pointer',
-  fontSize: font.size.body.sm,
+  fontSize: font.size.icon.sm,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -513,7 +513,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                     display: 'flex', alignItems: 'center', gap: gap.md,
                     width: '100%', padding: `${space.sm} ${space.md}`,
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: font.family.body, fontSize: font.size.body.sm,
+                    fontFamily: font.family.label, fontSize: font.size.label.sm,
                     color: color.text.primary, textAlign: 'left',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-accent)'; }}
@@ -521,7 +521,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                 >
                   <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>{t.label}</div>
+                    <div style={{ fontWeight: font.weight.semibold }}>{t.label}</div>
                     <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
                   </div>
                 </button>
@@ -549,7 +549,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
             {filteredTemplates.map((template) => (
               <TableRow key={template.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                     {template.name}
                   </span>
                 </TableCell>
@@ -557,17 +557,17 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                   <TypeChip type={template.type} />
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {CATEGORY_LABELS[template.category] ?? template.category}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {FREQUENCY_LABELS[template.frequency] ?? template.frequency}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {ROLE_LABELS[template.assigned_role] ?? template.assigned_role}
                   </span>
                 </TableCell>

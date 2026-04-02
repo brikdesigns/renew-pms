@@ -8,9 +8,9 @@ export const sheetBodyStyle: CSSProperties = {
 };
 
 export const sheetSectionTitle: CSSProperties = {
-  fontFamily: font.family.label,
+  fontFamily: font.family.heading,
   fontSize: font.size.heading.small,
-  fontWeight: 700,
+  fontWeight: font.weight.bold,
   lineHeight: font.lineHeight.tight,
   color: color.text.primary,
   margin: 0,
@@ -42,8 +42,8 @@ export const cancelBtnStyle: CSSProperties = {
   backgroundColor: 'transparent',
   color: color.text.primary,
   fontFamily: font.family.label,
-  fontSize: font.size.body.md,
-  fontWeight: 600,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   border: 'none',
   cursor: 'pointer',
 };
@@ -58,8 +58,8 @@ export const saveBtnStyle: CSSProperties = {
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
   fontFamily: font.family.label,
-  fontSize: font.size.body.md,
-  fontWeight: 600,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   border: 'none',
   cursor: 'pointer',
 };

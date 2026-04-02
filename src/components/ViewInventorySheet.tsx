@@ -86,7 +86,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
         <div style={rowStyle}>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Status
               </span>
               <div style={{ display: 'inline-flex' }}>
@@ -96,7 +96,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Department
               </span>
               <div style={{ display: 'inline-flex' }}>

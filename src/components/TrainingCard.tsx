@@ -65,17 +65,17 @@ const personStyle: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = {
-  fontFamily: font.family.body,
+  fontFamily: font.family.label,
   fontSize: font.size.label.md,
-  fontWeight: 800,
+  fontWeight: font.weight.bold,
   lineHeight: 'normal',
   color: color.text.primary,
 };
 
 const roleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 400,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.regular,
   lineHeight: 'normal',
   color: color.text.primary,
 };
@@ -121,9 +121,9 @@ function progressBarStyle(pct: number): CSSProperties {
 }
 
 const progressLabelStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.body.xs,
-  fontWeight: 600,
+  fontFamily: font.family.subtitle,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.semibold,
   color: color.text.secondary,
   whiteSpace: 'nowrap',
 };
@@ -138,8 +138,8 @@ const viewBtnStyle: CSSProperties = {
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 800,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.bold,
   border: 'none',
   cursor: 'pointer',
   textDecoration: 'none',

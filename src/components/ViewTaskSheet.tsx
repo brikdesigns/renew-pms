@@ -91,8 +91,8 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
       <span>{task.title}</span>
       <span style={{
         fontFamily: font.family.label,
-        fontSize: font.size.body.sm,
-        fontWeight: 400,
+        fontSize: font.size.label.sm,
+        fontWeight: font.weight.regular,
         color: color.text.secondary,
       }}>
         {task.templateName}
@@ -145,7 +145,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Department
               </span>
               <div style={tagRowStyle}>
@@ -175,7 +175,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
         <div style={rowStyle}>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Priority
               </span>
               <div style={{ display: 'inline-flex' }}>
@@ -185,7 +185,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
           </div>
           <div style={halfStyle}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Status
               </span>
               <div style={{ display: 'inline-flex' }}>

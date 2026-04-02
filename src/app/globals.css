@@ -1,6 +1,7 @@
 /* BDS token layer — must come first */
 @import '../../brik-bds/tokens/fonts.css' layer(base);
 @import '../../brik-bds/tokens/figma-tokens.css' layer(base);
+@import '../../brik-bds/tokens/overrides.css' layer(base);
 /* Renew Dental brand override — after BDS so it wins */
 @import '../styles/theme-renew.css' layer(base);
 

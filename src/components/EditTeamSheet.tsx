@@ -109,7 +109,7 @@ const DEPARTMENT_OPTIONS = [
   { label: '— (Cross-department)', value: '' },
   { label: 'Clinical', value: 'Clinical' },
   { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Maintenance', value: 'Maintenance' },
   { label: 'HR', value: 'HR' },
   { label: 'Administration', value: 'Administration' },
   { label: 'Sterilization', value: 'Sterilization' },
@@ -286,10 +286,10 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.description}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -331,13 +331,13 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{u.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.role}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.email}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
                   <button

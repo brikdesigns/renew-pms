@@ -10,28 +10,8 @@ import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
 import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewDepartmentSheet';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
-
-// ─── Local type ──────────────────────────────────────────────────────────────
-
-interface DepartmentRow {
-  id: string;
-  name: string;
-  color: string;
-  is_active: boolean;
-  is_default: boolean;
-  sort_order: number;
-  member_count: number;
-}
-
-const SEED_DEPARTMENTS: DepartmentRow[] = [
-  { id: '1', name: 'Clinical',        color: 'blue',   is_active: true, is_default: true, sort_order: 1, member_count: 4 },
-  { id: '2', name: 'Front Desk',      color: 'green',  is_active: true, is_default: true, sort_order: 2, member_count: 3 },
-  { id: '3', name: 'Engineering',     color: 'purple', is_active: true, is_default: true, sort_order: 3, member_count: 1 },
-  { id: '4', name: 'HR',              color: 'pink',   is_active: true, is_default: true, sort_order: 4, member_count: 1 },
-  { id: '5', name: 'Administration',  color: 'gold',   is_active: true, is_default: true, sort_order: 5, member_count: 2 },
-  { id: '6', name: 'Sterilization',   color: 'red',    is_active: true, is_default: true, sort_order: 6, member_count: 2 },
-  { id: '7', name: 'All Departments', color: 'teal',   is_active: true, is_default: true, sort_order: 7, member_count: 0 },
-];
+import { useDepartments } from '@/hooks/useDepartments';
+import type { Department } from '@/hooks/useDepartments';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -45,11 +25,11 @@ const subHeaderStyle: CSSProperties = {
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
@@ -57,7 +37,7 @@ const addBtnStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
   border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
@@ -69,14 +49,7 @@ const actionBtn: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '36px', height: '36px', borderRadius: border.radius.md,
   backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
-};
-
-const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
 };
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
@@ -84,29 +57,40 @@ const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: b
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
-  const [departments, setDepartments] = useState<DepartmentRow[]>(SEED_DEPARTMENTS);
+  const { departments, setDepartments, loading } = useDepartments();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [editing, setEditing] = useState<DepartmentRow | null>(null);
+  const [editing, setEditing] = useState<Department | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
-  const [viewing, setViewing] = useState<DepartmentRow | null>(null);
+  const [viewing, setViewing] = useState<Department | null>(null);
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
-  const handleEdit = (d: DepartmentRow) => { setEditing(d); setSheetOpen(true); };
+  const handleEdit = (d: Department) => { setEditing(d); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleView = (d: DepartmentRow) => { setViewing(d); setViewSheetOpen(true); };
+  const handleView = (d: Department) => { setViewing(d); setViewSheetOpen(true); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
 
-  const handleSave = (data: DepartmentFormData) => {
+  const handleSave = async (data: DepartmentFormData) => {
     if (editing) {
-      setDepartments((prev) => prev.map((d) =>
-        d.id === editing.id ? { ...d, ...data } : d
-      ));
+      const res = await fetch(`/api/departments/${editing.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const updated = await res.json() as Department;
+        setDepartments((prev) => prev.map((d) => d.id === editing.id ? updated : d));
+      }
     } else {
-      setDepartments((prev) => [...prev, {
-        id: crypto.randomUUID(), ...data, is_default: false,
-        sort_order: prev.length + 1, member_count: 0,
-      }]);
+      const res = await fetch('/api/departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const created = await res.json() as Department;
+        setDepartments((prev) => [...prev, created]);
+      }
     }
   };
 
@@ -119,7 +103,7 @@ export function DepartmentsTable() {
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
           <h3 style={subHeaderTitleStyle}>Departments</h3>
-          <span style={countBadge}>{departments.length}</span>
+          <span style={countBadge}>{loading ? '–' : departments.length}</span>
         </div>
         <button style={addBtnStyle} onClick={handleAdd}>Add Department</button>
       </div>
@@ -131,30 +115,30 @@ export function DepartmentsTable() {
               <TableHead>Name</TableHead>
               <TableHead>Color</TableHead>
               <TableHead>Members</TableHead>
-              <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
               <TableHead style={{ width: '100px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {departments.map((d) => (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                  Loading departments…
+                </TableCell>
+              </TableRow>
+            ) : departments.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
                 </TableCell>
                 <TableCell>
                   {d.color
                     ? <span style={{ ...colorDot, backgroundColor: departmentColor(d.color).base }} />
-                    : <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>—</span>
+                    : <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
                   }
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{d.member_count}</span>
-                </TableCell>
-                <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
-                    {d.is_default ? 'Default' : 'Custom'}
-                  </span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{d.member_count}</span>
                 </TableCell>
                 <TableCell>
                   <Badge status={d.is_active ? 'positive' : 'error'} size="sm">
@@ -186,7 +170,7 @@ export function DepartmentsTable() {
           name: viewing.name,
           color: viewing.color,
           is_active: viewing.is_active,
-          is_default: viewing.is_default,
+          is_default: false,
           member_count: viewing.member_count,
         } satisfies DepartmentViewData : null}
         onEdit={handleViewEdit}

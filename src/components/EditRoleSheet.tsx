@@ -89,8 +89,8 @@ const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
   Receptionist: [{ id: '2', name: 'Front Desk' }],
   'Treatment Coordinator': [{ id: '2', name: 'Front Desk' }],
   'Insurance Coordinator': [{ id: '2', name: 'Front Desk' }],
-  Engineer: [{ id: '3', name: 'Engineering' }],
-  'Inventory Manager': [{ id: '3', name: 'Engineering' }],
+  Engineer: [{ id: '3', name: 'Maintenance' }],
+  'Inventory Manager': [{ id: '3', name: 'Maintenance' }],
   Manager: [{ id: '7', name: 'All Departments' }],
   Admin: [{ id: '7', name: 'All Departments' }],
   Staff: [{ id: '7', name: 'All Departments' }],
@@ -101,7 +101,7 @@ const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
 const DEPARTMENT_OPTIONS = [
   { label: 'Clinical', value: 'Clinical' },
   { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Maintenance', value: 'Maintenance' },
   { label: 'HR', value: 'HR' },
   { label: 'Administration', value: 'Administration' },
   { label: 'Sterilization', value: 'Sterilization' },
@@ -261,10 +261,10 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{u.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.email}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -304,7 +304,7 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
             {departments.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
                 </TableCell>
                 <TableCell>
                   <button

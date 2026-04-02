@@ -159,9 +159,9 @@ const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.medium,
 };
 
 const taskItemStyle: CSSProperties = {
@@ -177,7 +177,7 @@ const taskItemStyle: CSSProperties = {
 const emptyState: CSSProperties = {
   padding: '24px 0',
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: color.text.secondary,
   textAlign: 'center',
 };
@@ -231,7 +231,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
               Priority
             </span>
             <div style={{ display: 'inline-flex' }}>
@@ -256,7 +256,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
@@ -273,7 +273,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       <h3 style={sheetSectionTitle}>
         {template.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}
       </h3>
-      <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: 0 }}>
+      <p style={{ color: color.text.secondary, fontSize: font.size.body.md, margin: 0 }}>
         {template.tasks.length} {template.tasks.length === 1 ? 'item' : 'items'}
       </p>
 
@@ -283,10 +283,10 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
           {template.tasks.map((task, idx) => (
             <div key={task.id} style={taskItemStyle}>
-              <span style={{ color: color.text.secondary, fontSize: font.size.body.sm, minWidth: '24px' }}>
+              <span style={{ color: color.text.secondary, fontSize: font.size.body.md, minWidth: '24px' }}>
                 {idx + 1}.
               </span>
-              <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
+              <span style={{ color: color.text.primary, fontSize: font.size.body.md, flex: 1 }}>
                 {task.label}
               </span>
             </div>

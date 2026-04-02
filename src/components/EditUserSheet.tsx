@@ -80,7 +80,7 @@ const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
     { id: '9', role: 'Insurance Coordinator', department: 'Front Desk' },
   ],
   'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Engineering' },
+    { id: '10', role: 'Inventory Manager', department: 'Maintenance' },
   ],
 };
 
@@ -94,7 +94,7 @@ const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
   'Rachel Foster': [{ id: '7', department: 'Front Desk' }],
   'David Park': [{ id: '8', department: 'Front Desk' }],
   'Lisa Gomez': [{ id: '9', department: 'Front Desk' }],
-  'Jordan Hayes': [{ id: '10', department: 'Engineering' }],
+  'Jordan Hayes': [{ id: '10', department: 'Maintenance' }],
 };
 
 // ─── Options ─────────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ const DEPARTMENT_OPTIONS = [
   { label: '— (Unassigned)', value: '' },
   { label: 'Clinical', value: 'Clinical' },
   { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Maintenance', value: 'Maintenance' },
   { label: 'HR', value: 'HR' },
   { label: 'Administration', value: 'Administration' },
   { label: 'Sterilization', value: 'Sterilization' },
@@ -337,10 +337,10 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.role}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.department}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.department}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -380,7 +380,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             {departments.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.department}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.department}</span>
                 </TableCell>
                 <TableCell>
                   <button

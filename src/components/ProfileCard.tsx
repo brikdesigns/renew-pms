@@ -71,9 +71,9 @@ const textWrap: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: 800,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.bold,
   color: color.text.primary,
   lineHeight: 1,
   overflow: 'hidden',
@@ -82,9 +82,9 @@ const nameStyle: CSSProperties = {
 };
 
 const subtitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 400,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.regular,
   color: color.text.secondary,
   lineHeight: 1,
   overflow: 'hidden',
@@ -96,9 +96,9 @@ const subtitleStyle: CSSProperties = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const deptTagStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.body.xs,
-  fontWeight: 600,
+  fontFamily: font.family.subtitle,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.semibold,
   lineHeight: 1,
   padding: '4px 8px',
   borderRadius: border.radius.sm,

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { Tag, Badge, Tooltip } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
-import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, gap, space, border, shadow } from '@/lib/tokens';
+import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
 import { label as labelStyle } from '@/lib/styles';
 import type { CSSProperties } from 'react';
 
@@ -24,7 +24,7 @@ const OVERDUE_TASKS = [
 ];
 
 const ONBOARDING_MEMBERS = [
-  { id: 'pm-jordan', name: 'Jordan Hayes', role: 'Inventory Manager', dept: 'Engineering', type: 'new' as const, progress: 12, completed: 1, total: 6 },
+  { id: 'pm-jordan', name: 'Jordan Hayes', role: 'Inventory Manager', dept: 'Maintenance', type: 'new' as const, progress: 12, completed: 1, total: 6 },
   { id: 'pm-tyler', name: 'Tyler Nguyen', role: 'Dental Assistant', dept: 'Sterilization', type: 'new' as const, progress: 25, completed: 2, total: 8 },
   { id: 'pm-rachel', name: 'Rachel Foster', role: 'Receptionist', dept: 'Front Desk', type: 'maturing' as const, progress: 60, completed: 3, total: 5 },
   { id: 'pm-emily', name: 'Emily Rivera', role: 'Dental Assistant', dept: 'Clinical', type: 'maturing' as const, progress: 75, completed: 6, total: 8 },
@@ -35,7 +35,7 @@ const DEPT_COMPLETION = [
   { dept: 'Administration', completed: 4, total: 6 },
   { dept: 'Front Desk', completed: 5, total: 9 },
   { dept: 'Sterilization', completed: 2, total: 7 },
-  { dept: 'Engineering', completed: 1, total: 3 },
+  { dept: 'Maintenance', completed: 1, total: 3 },
 ];
 
 const COMPLIANCE_ITEMS = [
@@ -75,7 +75,7 @@ const pageStyle: CSSProperties = {
 const greetingStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.medium,
-  fontWeight: 400,
+  fontWeight: font.weight.regular,
   color: color.text.primary,
   margin: 0,
 };
@@ -112,15 +112,15 @@ const cardHeaderStyle: CSSProperties = {
 const cardTitleStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.label.lg,
-  fontWeight: 800,
+  fontWeight: font.weight.bold,
   color: color.text.primary,
   margin: 0,
 };
 
 const cardLinkStyle: CSSProperties = {
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 600,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.semibold,
   color: color.text.brand,
   textDecoration: 'none',
   display: 'flex',
@@ -155,9 +155,9 @@ const listItemLeftStyle: CSSProperties = {
 };
 
 const listItemTitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 600,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -165,9 +165,9 @@ const listItemTitleStyle: CSSProperties = {
 };
 
 const listItemSubStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.xs,
-  fontWeight: 400,
+  fontFamily: font.family.subtitle,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.regular,
   color: color.text.secondary,
 };
 
@@ -189,7 +189,7 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
       <text x="50%" y="50%" textAnchor="middle" dy="0.35em"
-        style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: 700, fill: color.text.primary }}>
+        style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, fill: color.text.primary }}>
         {pct}%
       </text>
     </svg>
@@ -198,19 +198,19 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
 
 // ─── Bar chart ───────────────────────────────────────────────────────────────
 
-function DeptBar({ dept, completed, total }: { dept: string; completed: number; total: number }) {
+function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey: string; completed: number; total: number }) {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const deptColors = getDepartmentColors(dept);
+  const deptColors = departmentColor(colorKey);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
-      <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
+      <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
       <div style={{ flex: 1, height: '28px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
       </div>
-      <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
+      <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
         {completed}/{total}
       </span>
     </div>
@@ -230,6 +230,16 @@ function MiniProgress({ pct }: { pct: number }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { departments } = useDepartments();
+
+  // Map dept name → color key for all rendering that needs dept colors
+  const deptColorMap = useMemo(
+    () => new Map(departments.map((d) => [d.name, d.color])),
+    [departments]
+  );
+
+  const getDeptColors = (deptName: string) => departmentColor(deptColorMap.get(deptName) ?? 'blue');
+
   return (
     <div style={pageStyle}>
       <div>
@@ -244,7 +254,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.department.red.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Overdue Tasks</h2>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
+              <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {OVERDUE_TASKS.length}
               </span>
             </div>
@@ -255,7 +265,7 @@ export default function DashboardPage() {
           <ul style={listStyle}>
             {OVERDUE_TASKS.map((task) => {
               const pri = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.info;
-              const deptColors = getDepartmentColors(task.dept);
+              const deptColors = getDeptColors(task.dept);
               return (
                 <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
                   <div style={listItemLeftStyle}>
@@ -289,17 +299,17 @@ export default function DashboardPage() {
             <ProgressRing pct={TODAY_PCT} />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Remaining</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
               </div>
             </div>
@@ -308,7 +318,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.lg, flex: 1, justifyContent: 'space-between' }}>
             <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>By Department</span>
             {DEPT_COMPLETION.map((d) => (
-              <DeptBar key={d.dept} dept={d.dept} completed={d.completed} total={d.total} />
+              <DeptBar key={d.dept} dept={d.dept} colorKey={deptColorMap.get(d.dept) ?? 'blue'} completed={d.completed} total={d.total} />
             ))}
           </div>
         </div>
@@ -323,7 +333,7 @@ export default function DashboardPage() {
           </div>
           <ul style={listStyle}>
             {ONBOARDING_MEMBERS.map((m) => {
-              const deptColors = getDepartmentColors(m.dept);
+              const deptColors = getDeptColors(m.dept);
               const typeTag = TYPE_TAG[m.type];
               return (
                 <li key={m.id} style={listItemStyle}>
@@ -336,7 +346,7 @@ export default function DashboardPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
                     <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, whiteSpace: 'nowrap' }}>
                       {m.completed}/{m.total}
                     </span>
                     <MiniProgress pct={m.progress} />
