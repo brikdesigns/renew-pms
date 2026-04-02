@@ -114,6 +114,61 @@ fi
 pass "Updated: $CURRENT_SHA -> $LATEST_SHA"
 echo ""
 
+# ── Token documentation drift check ──
+# Verify that heading token comments in src/lib/tokens.ts match actual
+# resolved values in brik-bds/tokens/figma-tokens.css.
+# Catches cases where a Figma update changes a token value but the
+# tokens.ts comment table isn't updated — keeping docs accurate for agents.
+info "Checking heading token documentation..."
+
+TOKENS_CSS="$BDS_DIR/tokens/figma-tokens.css"
+TOKENS_TS="$PROJECT_ROOT/src/lib/tokens.ts"
+
+if [ -f "$TOKENS_CSS" ] && [ -f "$TOKENS_TS" ]; then
+  DRIFT=false
+
+  # Extract resolved px values for key heading tokens from figma-tokens.css
+  # Each token resolves via var() chain — grep the primitive font-size values
+  check_token() {
+    local token_name="$1"   # e.g. --heading-tiny
+    local expected_px="$2"  # e.g. 18px
+    local comment_label="$3" # e.g. heading.tiny
+
+    # Find what font-size variable --heading-tiny resolves to
+    local var_ref
+    var_ref=$(grep -E "^\s+${token_name}:" "$TOKENS_CSS" | head -1 | grep -oE 'var\(--font-size-[0-9]+\)' | head -1 || true)
+    if [ -z "$var_ref" ]; then return; fi
+
+    local fs_var
+    fs_var=$(echo "$var_ref" | grep -oE -- '--font-size-[0-9]+')
+    local actual_px
+    actual_px=$(grep -E "^\s+${fs_var}:" "$TOKENS_CSS" | head -1 | grep -oE '[0-9.]+px' | head -1 || true)
+
+    if [ -n "$actual_px" ] && [ "$actual_px" != "$expected_px" ]; then
+      warn "Token drift: $comment_label documents ${expected_px} but ${token_name} resolves to ${actual_px}"
+      warn "  Update comment in src/lib/tokens.ts for $comment_label"
+      DRIFT=true
+    fi
+  }
+
+  check_token "--heading-tiny" "18px" "heading.tiny"
+  check_token "--heading-sm"   "20px" "heading.small"
+  check_token "--heading-md"   "22.5px" "heading.medium"
+  check_token "--heading-lg"   "28.5px" "heading.large"
+  check_token "--heading-xl"   "32px" "heading.xLarge"
+  check_token "--heading-xxl"  "36px" "heading.xxLarge"
+  check_token "--heading-huge" "40.5px" "heading.xxxLarge"
+
+  if [ "$DRIFT" = false ]; then
+    pass "Heading token documentation is accurate"
+  else
+    echo ""
+    warn "Update tokens.ts comment table to match current BDS values before committing."
+    echo ""
+  fi
+fi
+echo ""
+
 # ── Build ──
 info "Building..."
 echo ""

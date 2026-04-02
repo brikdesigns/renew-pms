@@ -6,8 +6,8 @@ import {
 } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { EditInventorySheet, type InventoryFormData } from '@/components/EditInventorySheet';
 import { ViewInventorySheet, type InventoryViewData } from '@/components/ViewInventorySheet';
@@ -204,10 +204,10 @@ export function InventoryTable() {
                   <TableCell>
                     <div style={actionBtnGroup}>
                       <button style={actionBtn} onClick={() => handleView(item)} aria-label={`View ${item.name}`}>
-                        <FontAwesomeIcon icon={faEye} />
+                        <Icon icon={icon.eye} />
                       </button>
                       <button style={actionBtn} onClick={() => handleEdit(item)} aria-label={`Edit ${item.name}`}>
-                        <FontAwesomeIcon icon={faPenToSquare} />
+                        <Icon icon={icon.edit} />
                       </button>
                     </div>
                   </TableCell>

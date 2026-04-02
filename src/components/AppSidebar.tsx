@@ -2,23 +2,12 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-  faHouse,
-  faCalendarDays,
-  faListCheck,
-  faFolderOpen,
-  faChartColumn,
-  faGraduationCap,
-  faGear,
-  faPowerOff,
-  faMoon,
-  faSun,
-} from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
+import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-import { font, color } from '@/lib/tokens';
+import { font, color, motion } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -57,13 +46,6 @@ const logoStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const diamondStyle: CSSProperties = {
-  width: '29px',
-  height: '29px',
-  backgroundColor: color.background.inverse,
-  borderRadius: '4px',
-  transform: 'rotate(45deg)',
-};
 
 const navGroupStyle: CSSProperties = {
   display: 'flex',
@@ -83,7 +65,7 @@ function navItemStyle(active: boolean): CSSProperties {
     backgroundColor: active ? color.background.brandPrimary : 'transparent',
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'background-color 0.15s ease',
+    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
     boxSizing: 'border-box',
   };
 }
@@ -112,20 +94,20 @@ const bottomBtnStyle: CSSProperties = {
 
 interface NavItem {
   href: string;
-  icon: IconDefinition;
+  icon: string;
   label: string;
   match: (p: string) => boolean;
   adminOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', icon: faHouse, label: 'Dashboard', match: (p) => p === '/dashboard' || p === '/' },
-  { href: '/schedule', icon: faCalendarDays, label: 'Schedule', match: (p) => p.startsWith('/schedule'), adminOnly: true },
-  { href: '/tasks', icon: faListCheck, label: 'Tasks', match: (p) => p.startsWith('/tasks') },
-  { href: '/training', icon: faGraduationCap, label: 'Training', match: (p) => p.startsWith('/training') },
-  { href: '/documents', icon: faFolderOpen, label: 'Documents', match: (p) => p.startsWith('/documents'), adminOnly: true },
-  { href: '/analytics', icon: faChartColumn, label: 'Analytics', match: (p) => p.startsWith('/analytics'), adminOnly: true },
-  { href: '/settings', icon: faGear, label: 'Settings', match: (p) => p.startsWith('/settings') },
+  { href: '/dashboard', icon: icon.home,      label: 'Dashboard', match: (p) => p === '/dashboard' || p === '/' },
+  { href: '/schedule',  icon: icon.calendar,  label: 'Schedule',  match: (p) => p.startsWith('/schedule'), adminOnly: true },
+  { href: '/tasks',     icon: icon.tasks,     label: 'Tasks',     match: (p) => p.startsWith('/tasks') },
+  { href: '/training',  icon: icon.training,  label: 'Training',  match: (p) => p.startsWith('/training') },
+  { href: '/documents', icon: icon.documents, label: 'Documents', match: (p) => p.startsWith('/documents'), adminOnly: true },
+  { href: '/analytics', icon: icon.analytics, label: 'Analytics', match: (p) => p.startsWith('/analytics'), adminOnly: true },
+  { href: '/settings',  icon: icon.settings,  label: 'Settings',  match: (p) => p.startsWith('/settings') },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -146,9 +128,9 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   return (
     <aside style={sidebarStyle}>
       <div style={topGroupStyle}>
-        {/* Diamond logo */}
+        {/* Logomark */}
         <div style={logoStyle}>
-          <div style={diamondStyle} />
+          <Logomark size={40} />
         </div>
 
         {/* Nav icons */}
@@ -157,13 +139,11 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
             const active = item.match(pathname);
             return (
               <Link key={item.href} href={item.href} style={navItemStyle(active)} aria-label={item.label}>
-                <FontAwesomeIcon
+                <Icon
                   icon={item.icon}
-                  fixedWidth
                   style={{
                     fontSize: font.size.body.xl,
                     color: active ? color.text.onColorDark : color.text.primary,
-                    fontWeight: active ? 900 : 300,
                   }}
                 />
               </Link>
@@ -175,10 +155,10 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
         <button onClick={toggle} style={bottomBtnStyle} aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <FontAwesomeIcon icon={isDark ? faSun : faMoon} fixedWidth style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
+          <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
         <button style={bottomBtnStyle} aria-label="Log out">
-          <FontAwesomeIcon icon={faPowerOff} fixedWidth style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
+          <Icon icon={icon.power} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
       </div>
     </aside>

@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
-import { Tag } from '@bds/components';
-import { Badge } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip } from '@bds/components';
+import checkCompleteAnimation from '@/animations/check-complete.json';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
-import { shadow, color, space, gap, border } from '@/lib/tokens';
+import { shadow, color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Mock task type ─────────────────────────────────────────────────────────
 
@@ -118,11 +118,11 @@ const MOCK_BOARD: { person: { name: string; subtitle: string; department: string
   },
 ];
 
-const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string }> = {
-  critical: { status: 'error', label: 'Critical' },
-  error: { status: 'error', label: 'High' },
-  warning: { status: 'warning', label: 'Medium' },
-  info: { status: 'info', label: 'Low' },
+const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string; icon: string }> = {
+  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
+  error:    { status: 'error',   label: 'High',     icon: icon.priorityHigh },
+  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
+  info:     { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
 };
 
 // Map filter labels back to task data values
@@ -225,14 +225,11 @@ export default function TasksPage() {
             />
             {/* Overdue partition */}
             {overdueTasks.length > 0 && (
-              <div style={{
-                backgroundColor: color.surface.warning,
-                borderRadius: border.radius.md,
-                padding: space.sm,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: gap.sm,
-              }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs, paddingInline: space.sm }}>
+                  <Dot status="error" size="sm" pulse />
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.negative }}>Overdue</span>
+                </div>
                 {overdueTasks.map((task) => {
                   const pri = PRIORITY_MAP[task.priority];
                   const taskDeptColors = getDepartmentColors(task.dept);
@@ -261,28 +258,32 @@ export default function TasksPage() {
                         room: task.room,
                         equipment: task.equipment,
                       })}
-                      style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
+                      style={{ backgroundColor: color.surface.warning, boxShadow: shadow.sm, cursor: 'pointer' }}
                       tags={
                         <>
-                          <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>
-                          <Tag size="sm">{task.freq}</Tag>
-                          <Badge
-                            status="warning"
-                            size="xs"
-                            variant="dark"
-                            icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
-                            title="Overdue"
-                          />
+                          <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
+                          <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
+                          <Tooltip content="Overdue" placement="top">
+                            <Badge
+                              status="warning"
+                              size="xs"
+                              variant="dark"
+                              icon={<Icon icon={icon.overdue} />}
+                              style={{ flexShrink: 0 }}
+                            />
+                          </Tooltip>
                         </>
                       }
                       trailingTag={
-                        <Badge
-                          status={pri.status}
-                          size="xs"
-                          variant="dark"
-                          icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
-                          title={pri.label}
-                        />
+                        <Tooltip content={pri.label} placement="top">
+                          <Badge
+                            status={pri.status}
+                            size="xs"
+                            variant="dark"
+                            icon={<Icon icon={pri.icon} />}
+                            style={{ flexShrink: 0 }}
+                          />
+                        </Tooltip>
                       }
                     />
                   );
@@ -321,18 +322,30 @@ export default function TasksPage() {
                   style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
                   tags={
                     <>
-                      <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text }}>{task.dept}</Tag>
-                      <Tag size="sm">{task.freq}</Tag>
+                      <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
+                      <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
                     </>
                   }
                   trailingTag={
-                    <Badge
-                      status={pri.status}
-                      size="xs"
-                      variant="dark"
-                      icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
-                      title={pri.label}
-                    />
+                    checked[task.id] ? (
+                      <AnimatedIcon
+                        key={`check-${task.id}-done`}
+                        animationData={checkCompleteAnimation}
+                        trigger="once"
+                        size={20}
+                        label="Completed"
+                      />
+                    ) : (
+                      <Tooltip content={pri.label} placement="top">
+                        <Badge
+                          status={pri.status}
+                          size="xs"
+                          variant="dark"
+                          icon={<Icon icon={pri.icon} />}
+                          style={{ flexShrink: 0 }}
+                        />
+                      </Tooltip>
+                    )
                   }
                 />
               );

@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import { Tag } from '@bds/components';
+import { Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
 import { color, font, border } from '@/lib/tokens';
@@ -102,7 +102,7 @@ const progressTrackStyle: CSSProperties = {
   width: '166px',
   height: '6px',
   borderRadius: '3px',
-  backgroundColor: 'var(--background-muted)', // not in typed tokens yet
+  backgroundColor: color.background.muted,
   overflow: 'hidden',
   position: 'relative',
 };
@@ -170,20 +170,21 @@ export function TrainingCard({ member }: { member: TrainingMember }) {
       {/* Bottom row: type + dept tags | progress bar */}
       <div style={bottomRowStyle}>
         <div style={tagGroupStyle}>
-          <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
-            {typeTag.label}
-          </Tag>
           <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
             {member.department}
+          </Tag>
+          <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
+            {typeTag.label}
           </Tag>
         </div>
         {member.hasTrainingDue ? (
           <div style={progressWrapStyle}>
+            <Dot status="warning" size="sm" pulse />
             <span style={progressLabelStyle}>
               {member.completedModules}/{member.totalModules}
             </span>
             <div style={progressTrackStyle}>
-              <div style={progressBarStyle(member.progress)} />
+              <div className="progress-fill" style={progressBarStyle(member.progress)} />
             </div>
           </div>
         ) : (

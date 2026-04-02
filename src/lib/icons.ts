@@ -1,0 +1,85 @@
+/**
+ * Icon registry — Phosphor icon set via Iconify
+ *
+ * Registers the full Phosphor collection offline (bundled, no CDN).
+ * Import named constants from here; render with <Icon icon={...} /> from '@iconify/react'.
+ *
+ * All icons use the "fill" weight — better legibility at small sizes.
+ * Full icon browser: https://phosphoricons.com
+ */
+import { addCollection } from '@iconify/react';
+import phData from '@iconify-json/ph/icons.json';
+
+addCollection(phData);
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+export const icon = {
+  // App nav
+  home:         'ph:house-fill',
+  calendar:     'ph:calendar-dots-fill',
+  tasks:        'ph:list-checks-fill',
+  training:     'ph:graduation-cap-fill',
+  documents:    'ph:folder-open-fill',
+  analytics:    'ph:chart-bar-fill',
+  settings:     'ph:gear-fill',
+
+  // Settings sub-nav
+  profile:      'ph:user-fill',
+  organization: 'ph:buildings-fill',
+  roles:        'ph:clipboard-text-fill',
+  inventory:    'ph:archive-fill',
+  teams:        'ph:users-three-fill',
+  permissions:  'ph:shield-check-fill',
+  invite:       'ph:user-plus-fill',
+  rooms:        'ph:warehouse-fill',
+
+  // Actions
+  eye:          'ph:eye-fill',
+  edit:         'ph:pencil-simple-fill',
+  close:        'ph:x-circle-fill',
+  arrowRight:   'ph:arrow-right-fill',
+  chevronLeft:  'ph:caret-left-fill',
+  chevronRight: 'ph:caret-right-fill',
+
+  // UI chrome
+  bell:         'ph:bell-fill',
+  help:         'ph:question-fill',
+  power:        'ph:power-fill',
+  moon:         'ph:moon-fill',
+  sun:          'ph:sun-fill',
+
+  // Status / feedback
+  warning:      'ph:warning-fill',
+  overdue:      'ph:calendar-x-fill',
+  circleCheck:  'ph:check-circle-fill',
+
+  // Priority levels (distinct, intentional meanings)
+  priorityCritical: 'ph:warning-octagon-fill',
+  priorityHigh:     'ph:arrow-fat-up-fill',
+  priorityWarning:  'ph:warning-fill',
+  priorityInfo:     'ph:info-fill',
+
+  // Task / template types
+  typeChecklist:     'ph:list-checks-fill',
+  typeProcedure:     'ph:clipboard-text-fill',
+  typeCompliance:    'ph:shield-check-fill',
+  typeRequest:       'ph:handshake-fill',
+  typeOnboarding:    'ph:graduation-cap-fill',
+  typeSkillTraining: 'ph:target-fill',
+  chevronDown:       'ph:caret-down-fill',
+
+  // Room types (dental practice)
+  roomLobby:          'ph:door-open-fill',
+  roomFrontOffice:    'ph:desktop-fill',
+  roomWaiting:        'ph:couch-fill',
+  roomOperatory:      'ph:tooth-fill',
+  roomSterilization:  'ph:broom-fill',
+  roomXray:           'ph:scan-fill',
+  roomLab:            'ph:flask-fill',
+  roomConsultation:   'ph:chat-dots-fill',
+  roomStorage:        'ph:package-fill',
+  roomBreak:          'ph:coffee-fill',
+  roomRestroom:       'ph:toilet-fill',
+} as const;
+
+export type IconName = typeof icon[keyof typeof icon];

@@ -9,23 +9,8 @@ import {
   TableHead,
   TableCell,
 } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faDoorOpen,
-  faDesktop,
-  faCouch,
-  faTeeth,
-  faFlask,
-  faBroom,
-  faBoxes,
-  faRestroom,
-  faCoffee,
-  faComments,
-  faXRay,
-  faEye,
-  faPenToSquare,
-} from '@fortawesome/free-solid-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { Badge } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { ViewRoomSheet, type RoomViewData } from '@/components/ViewRoomSheet';
@@ -34,19 +19,19 @@ import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Room type display mapping ───────────────────────────────────────────────
 
-const ROOM_TYPE_META: Record<string, { label: string; icon: IconDefinition }> = {
-  lobby: { label: 'Lobby', icon: faDoorOpen },
-  front_office: { label: 'Front Office', icon: faDesktop },
-  waiting_area: { label: 'Waiting Area', icon: faCouch },
-  operatory: { label: 'Operatory', icon: faTeeth },
-  sterilization_room: { label: 'Sterilization', icon: faBroom },
-  xray_room: { label: 'X-Ray Room', icon: faXRay },
-  lab: { label: 'Lab', icon: faFlask },
-  consultation_room: { label: 'Consultation', icon: faComments },
-  supply_storage: { label: 'Supply / Storage', icon: faBoxes },
-  break_room: { label: 'Break Room', icon: faCoffee },
-  restroom: { label: 'Restroom', icon: faRestroom },
-  other: { label: 'Other', icon: faDoorOpen },
+const ROOM_TYPE_META: Record<string, { label: string; icon: string }> = {
+  lobby:              { label: 'Lobby',          icon: icon.roomLobby },
+  front_office:       { label: 'Front Office',   icon: icon.roomFrontOffice },
+  waiting_area:       { label: 'Waiting Area',   icon: icon.roomWaiting },
+  operatory:          { label: 'Operatory',      icon: icon.roomOperatory },
+  sterilization_room: { label: 'Sterilization',  icon: icon.roomSterilization },
+  xray_room:          { label: 'X-Ray Room',     icon: icon.roomXray },
+  lab:                { label: 'Lab',            icon: icon.roomLab },
+  consultation_room:  { label: 'Consultation',   icon: icon.roomConsultation },
+  supply_storage:     { label: 'Supply / Storage', icon: icon.roomStorage },
+  break_room:         { label: 'Break Room',     icon: icon.roomBreak },
+  restroom:           { label: 'Restroom',       icon: icon.roomRestroom },
+  other:              { label: 'Other',          icon: icon.roomLobby },
 };
 
 // ─── Local room type alias ──────────────────────────────────────────────────
@@ -158,7 +143,7 @@ function RoomTypeChip({ roomType }: { roomType: string }) {
   const meta = ROOM_TYPE_META[roomType] ?? ROOM_TYPE_META.other;
   return (
     <span style={typeChipStyle}>
-      <FontAwesomeIcon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
+      <Icon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
       {meta.label}
     </span>
   );
@@ -291,14 +276,14 @@ export function OfficeRoomsTab() {
                       onClick={() => handleViewClick(room)}
                       aria-label={`View ${room.name}`}
                     >
-                      <FontAwesomeIcon icon={faEye} />
+                      <Icon icon={icon.eye} />
                     </button>
                     <button
                       style={actionBtnStyle}
                       onClick={() => handleEditClick(room)}
                       aria-label={`Edit ${room.name}`}
                     >
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <Icon icon={icon.edit} />
                     </button>
                   </div>
                 </TableCell>

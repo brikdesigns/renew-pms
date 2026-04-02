@@ -1,7 +1,7 @@
 'use client';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 
 const emptyStateStyle: React.CSSProperties = {
@@ -40,7 +40,7 @@ const descStyle: React.CSSProperties = {
 export default function DocumentsPage() {
   return (
     <div style={emptyStateStyle}>
-      <FontAwesomeIcon icon={faFolderOpen} style={iconStyle as React.CSSProperties & Record<string, string>} />
+      <Icon icon={icon.documents} style={iconStyle as React.CSSProperties & Record<string, string>} />
       <h1 style={headingStyle}>Documents</h1>
       <p style={descStyle}>
         Document management is coming soon. You&apos;ll be able to access SOPs, compliance forms, and practice resources here.

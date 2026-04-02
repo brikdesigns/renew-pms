@@ -5,8 +5,8 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import { Badge } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { EditRoleSheet, type RoleFormData } from '@/components/EditRoleSheet';
 import { ViewRoleSheet, type RoleViewData } from '@/components/ViewRoleSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -161,10 +161,10 @@ export function RolesTable() {
                 <TableCell>
                   <div style={actionBtnGroup}>
                     <button style={actionBtn} onClick={() => handleView(r)} aria-label={`View ${r.name}`}>
-                      <FontAwesomeIcon icon={faEye} />
+                      <Icon icon={icon.eye} />
                     </button>
                     <button style={actionBtn} onClick={() => handleEdit(r)} aria-label={`Edit ${r.name}`}>
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <Icon icon={icon.edit} />
                     </button>
                   </div>
                 </TableCell>

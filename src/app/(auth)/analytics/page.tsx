@@ -1,7 +1,7 @@
 'use client';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartColumn } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 
 const emptyStateStyle: React.CSSProperties = {
@@ -40,7 +40,7 @@ const descStyle: React.CSSProperties = {
 export default function AnalyticsPage() {
   return (
     <div style={emptyStateStyle}>
-      <FontAwesomeIcon icon={faChartColumn} style={iconStyle as React.CSSProperties & Record<string, string>} />
+      <Icon icon={icon.analytics} style={iconStyle as React.CSSProperties & Record<string, string>} />
       <h1 style={headingStyle}>Analytics</h1>
       <p style={descStyle}>
         Reports and insights are coming soon. You&apos;ll be able to track task completion, team performance, and compliance metrics here.

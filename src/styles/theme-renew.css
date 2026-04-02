@@ -98,6 +98,10 @@
   --border-on-color-dark: #ffffff;
   --border-on-color-light: #000000;
 
+  /* ── Shadows (light mode — dark ambient drop shadow) ─── */
+  --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --box-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.06);
+
   /* ── Elevated / tertiary surfaces ─────────────────────── */
   --background-elevated: #ffffff;
   --surface-tertiary: #f5f5f4;           /* taupe/lightest */
@@ -122,6 +126,9 @@
   --font-family-heading: 'Century Schoolbook', 'Georgia', serif;
   --font-family-body: 'Avenir', 'Avenir Next', system-ui, sans-serif;
   --font-family-label: 'Avenir', 'Avenir Next', system-ui, sans-serif;
+
+  /* ── Label casing — controls text-transform on board subtitles ── */
+  --text-transform-label: capitalize;
 
   /* ── System / status colors (from Figma color scales) ── */
   --color-system-green: #6b9e78;         /* green/light [base] */
@@ -156,6 +163,10 @@
   --color-department-teal: #4AACA0;
   --color-department-teal-light: #d4f0ec;
   --color-department-teal-text: #1f4a44;
+
+  /* ── Tooltip (uses BDS --tooltip-background / --tooltip-text tokens) ── */
+  --tooltip-background: #464050;  /* colors/dark-purple from Figma primitives */
+  --tooltip-text: #ffffff;
 
   /* ── Interaction state tokens (Layer 2 — from Figma state group) ── */
   --state-hover-overlay: rgba(0, 0, 0, 0.0004);     /* Figma: state/hover-overlay */
@@ -223,7 +234,11 @@
   /* ── Borders ─── */
   --border-muted: #575757;               /* grayscale/dark */
   --border-inverse: #000000;
-  --border-input: #0a0a0a;               /* grayscale/darkest */
+  --border-input: #575757;               /* grayscale/dark — visible on dark bg */
+
+  /* ── Shadows (dark mode — suppress drop shadows, use border for separation) ── */
+  --box-shadow-sm: none;
+  --box-shadow-md: none;
 
   /* ── Interaction states (dark mode overrides) ─── */
   --state-hover-overlay: rgba(255, 255, 255, 0.0006);   /* Figma: state/hover-overlay dark */
@@ -270,7 +285,9 @@
     --text-text-link: #ba9cc5;
     --border-muted: #575757;
     --border-inverse: #000000;
-    --border-input: #0a0a0a;
+    --border-input: #575757;               /* grayscale/dark — visible on dark bg */
+    --box-shadow-sm: none;
+    --box-shadow-md: none;
     --state-hover-overlay: rgba(255, 255, 255, 0.0006);
     --state-pressed-overlay: rgba(255, 255, 255, 0.001);
     --state-disabled: rgba(230, 230, 230, 0.004);

@@ -103,14 +103,12 @@ export const heading = {
 // ─── Labels (subtitle/md pattern) ────────────────────────────────────
 
 export const label = {
-  /** subtitle/md — uppercase label (Figma "subtitle/md") */
+  /** subtitle/md — muted label (Figma label/sm · 14px · medium · 0% letter-spacing) */
   subtitle: {
     fontFamily: font.family.label,
     fontSize: font.size.label.sm,
     fontWeight: font.weight.medium,
     color: color.text.secondary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
   } satisfies CSSProperties,
 
   /** Standard label (label/sm · 14px) */
@@ -133,7 +131,7 @@ export const label = {
 // ─── Meta (label + value pairs) ──────────────────────────────────────
 
 export const meta = {
-  /** Meta label — uppercase, muted (used in detail pages) */
+  /** Meta label — muted, capitalized (used in detail pages) */
   label: {
     ...label.subtitle,
     margin: `0 0 ${gap.xs}`,
