@@ -5,8 +5,8 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import { Badge } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { EditTeamSheet, type TeamFormData } from '@/components/EditTeamSheet';
 import { ViewTeamSheet, type TeamViewData } from '@/components/ViewTeamSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -164,10 +164,10 @@ export function TeamsTable() {
                 <TableCell>
                   <div style={actionBtnGroup}>
                     <button style={actionBtn} onClick={() => handleView(t)} aria-label={`View ${t.name}`}>
-                      <FontAwesomeIcon icon={faEye} />
+                      <Icon icon={icon.eye} />
                     </button>
                     <button style={actionBtn} onClick={() => handleEdit(t)} aria-label={`Edit ${t.name}`}>
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <Icon icon={icon.edit} />
                     </button>
                   </div>
                 </TableCell>

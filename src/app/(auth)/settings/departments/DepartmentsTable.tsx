@@ -5,8 +5,8 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import { Badge } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faEye } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
 import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewDepartmentSheet';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
@@ -164,10 +164,10 @@ export function DepartmentsTable() {
                 <TableCell>
                   <div style={actionBtnGroup}>
                     <button style={actionBtn} onClick={() => handleView(d)} aria-label={`View ${d.name}`}>
-                      <FontAwesomeIcon icon={faEye} />
+                      <Icon icon={icon.eye} />
                     </button>
                     <button style={actionBtn} onClick={() => handleEdit(d)} aria-label={`Edit ${d.name}`}>
-                      <FontAwesomeIcon icon={faPenToSquare} />
+                      <Icon icon={icon.edit} />
                     </button>
                   </div>
                 </TableCell>

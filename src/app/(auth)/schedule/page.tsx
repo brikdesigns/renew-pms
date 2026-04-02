@@ -1,7 +1,7 @@
 'use client';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDays } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 
 const emptyStateStyle: React.CSSProperties = {
@@ -40,7 +40,7 @@ const descStyle: React.CSSProperties = {
 export default function SchedulePage() {
   return (
     <div style={emptyStateStyle}>
-      <FontAwesomeIcon icon={faCalendarDays} style={iconStyle as React.CSSProperties & Record<string, string>} />
+      <Icon icon={icon.calendar} style={iconStyle as React.CSSProperties & Record<string, string>} />
       <h1 style={headingStyle}>Schedule</h1>
       <p style={descStyle}>
         Staff scheduling is coming soon. You&apos;ll be able to manage shifts, view daily coverage, and coordinate team availability here.

@@ -6,8 +6,8 @@ import {
 } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -219,10 +219,10 @@ export function UsersTable() {
                   <TableCell>
                     <div style={actionBtnGroup}>
                       <button style={actionBtn} onClick={() => handleView(u)} aria-label={`View ${u.first_name}`}>
-                        <FontAwesomeIcon icon={faEye} />
+                        <Icon icon={icon.eye} />
                       </button>
                       <button style={actionBtn} onClick={() => handleEdit(u)} aria-label={`Edit ${u.first_name}`}>
-                        <FontAwesomeIcon icon={faPenToSquare} />
+                        <Icon icon={icon.edit} />
                       </button>
                     </div>
                   </TableCell>

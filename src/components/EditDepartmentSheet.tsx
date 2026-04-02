@@ -6,8 +6,8 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -279,7 +279,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
                     onClick={() => handleRemoveRole(r.id, r.name)}
                     aria-label={`Remove ${r.name} from department`}
                   >
-                    <FontAwesomeIcon icon={faXmark} />
+                    <Icon icon={icon.close} />
                   </button>
                 </TableCell>
               </TableRow>
@@ -323,7 +323,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
                     onClick={() => handleRemoveUser(u.id, u.name)}
                     aria-label={`Remove ${u.name} from department`}
                   >
-                    <FontAwesomeIcon icon={faXmark} />
+                    <Icon icon={icon.close} />
                   </button>
                 </TableCell>
               </TableRow>

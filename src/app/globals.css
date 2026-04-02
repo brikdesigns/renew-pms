@@ -56,7 +56,7 @@ body {
 /* ── Subtitle casing ── */
 .bds-board-header__subtitle,
 .bds-board-card__subtitle {
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 /* ── Board overrides (neutral column backgrounds) ── */
