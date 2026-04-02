@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Board, BoardColumn, BoardHeader, BoardCard } from '@bds/components';
-import { Tag, Badge, Dot } from '@bds/components';
+import { Tag, Badge, Dot, AnimatedIcon } from '@bds/components';
+import checkCompleteAnimation from '@/animations/check-complete.json';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
@@ -329,13 +330,23 @@ export default function TasksPage() {
                     </>
                   }
                   trailingTag={
-                    <Badge
-                      status={pri.status}
-                      size="xs"
-                      variant="dark"
-                      icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
-                      title={pri.label}
-                    />
+                    checked[task.id] ? (
+                      <AnimatedIcon
+                        key={`check-${task.id}-done`}
+                        animationData={checkCompleteAnimation}
+                        trigger="once"
+                        size={20}
+                        label="Completed"
+                      />
+                    ) : (
+                      <Badge
+                        status={pri.status}
+                        size="xs"
+                        variant="dark"
+                        icon={<FontAwesomeIcon icon={faTriangleExclamation} />}
+                        title={pri.label}
+                      />
+                    )
                   }
                 />
               );
