@@ -207,7 +207,7 @@ function DeptBar({ dept, completed, total }: { dept: string; completed: number; 
       <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
-      <div style={{ flex: 1, height: '20px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ flex: 1, height: '28px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
       </div>
       <span style={{ fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: 600, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
@@ -284,31 +284,28 @@ export default function DashboardPage() {
               <h2 style={cardTitleStyle}>Today&apos;s Progress</h2>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: space.huge }}>
+          {/* Top row: ring + stats spread across right */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: space.xl }}>
             <ProgressRing pct={TODAY_PCT} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: space.sm, flex: 1 }}>
-              <div>
-                <span style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.text.primary }}>{TODAY_COMPLETED}</span>
-                <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}> / {TODAY_TOTAL} tasks</span>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
+                <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
               </div>
-              <div style={{ display: 'flex', gap: gap.lg }}>
-                <div>
-                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
-                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
-                </div>
-                <div>
-                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Remaining</div>
-                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
-                </div>
-                <div>
-                  <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
-                  <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.small, fontWeight: 700, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
-                </div>
+              <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
+                <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Remaining</div>
+              </div>
+              <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: 700, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
+                <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
               </div>
             </div>
           </div>
           {/* Department bar chart */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md, marginTop: gap.md }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.lg, flex: 1, justifyContent: 'space-between' }}>
             <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>By Department</span>
             {DEPT_COMPLETION.map((d) => (
               <DeptBar key={d.dept} dept={d.dept} completed={d.completed} total={d.total} />

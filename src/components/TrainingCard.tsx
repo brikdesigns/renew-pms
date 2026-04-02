@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, border } from '@/lib/tokens';
+import { color, font, border, shadow } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -44,6 +44,7 @@ function cardStyle(borderColor: string): CSSProperties {
     backgroundColor: color.surface.primary,
     borderLeft: `8px solid ${borderColor}`,
     borderRadius: border.radius.md,
+    boxShadow: shadow.sm,
     overflow: 'hidden',
     width: '100%',
     boxSizing: 'border-box',
