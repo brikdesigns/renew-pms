@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { gap } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useRoles } from '@/hooks/useRoles';
 import { Sheet, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
@@ -62,7 +64,7 @@ const DEPARTMENT_OPTIONS = [
   { label: '— (Unassigned)', value: '' },
   { label: 'Clinical', value: 'Clinical' },
   { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Maintenance', value: 'Maintenance' },
   { label: 'HR', value: 'HR' },
   { label: 'Administration', value: 'Administration' },
   { label: 'Sterilization', value: 'Sterilization' },
@@ -92,6 +94,19 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
   const { showToast } = useToast();
   const [form, setForm] = useState<ProfileFormData>(initialData);
   const [saving, setSaving] = useState(false);
+
+  const { departments } = useDepartments();
+  const { roles } = useRoles();
+
+  const practiceRoleOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.name })),
+  ], [roles]);
+
+  const departmentOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
+  ], [departments]);
 
   useEffect(() => {
     if (isOpen) {
@@ -196,7 +211,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
                 <Select
                   label="Practice Role"
                   size="sm"
-                  options={PRACTICE_ROLE_OPTIONS}
+                  options={practiceRoleOptions}
                   value={form.practice_role}
                   onChange={updateSelect('practice_role')}
                   fullWidth
@@ -209,7 +224,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
                 <Select
                   label="Department"
                   size="sm"
-                  options={DEPARTMENT_OPTIONS}
+                  options={departmentOptions}
                   value={form.department}
                   onChange={updateSelect('department')}
                   fullWidth

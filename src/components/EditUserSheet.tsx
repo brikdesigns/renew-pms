@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from 'react';
 import {
   Sheet, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
@@ -15,6 +15,8 @@ import {
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
 import { font, color, border } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useRoles } from '@/hooks/useRoles';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -201,6 +203,19 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const [removedRoleIds, setRemovedRoleIds] = useState<Set<string>>(new Set());
   const [removedDeptIds, setRemovedDeptIds] = useState<Set<string>>(new Set());
 
+  const { departments } = useDepartments();
+  const { roles } = useRoles();
+
+  const practiceRoleOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.name })),
+  ], [roles]);
+
+  const departmentOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
+  ], [departments]);
+
   const isEdit = initialData !== null;
 
   useEffect(() => {
@@ -241,10 +256,10 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   // ─── Associated data (edit mode only) ───────────────────────────────────
 
   const userName = isEdit ? `${initialData?.first_name ?? ''} ${initialData?.last_name ?? ''}`.trim() : '';
-  const allRoles = ROLES_BY_USER[userName] ?? [];
-  const allDepts = DEPARTMENTS_BY_USER[userName] ?? [];
-  const roles = allRoles.filter((r) => !removedRoleIds.has(r.id));
-  const departments = allDepts.filter((d) => !removedDeptIds.has(d.id));
+  const allAssocRoles = ROLES_BY_USER[userName] ?? [];
+  const allAssocDepts = DEPARTMENTS_BY_USER[userName] ?? [];
+  const assocRoles = allAssocRoles.filter((r) => !removedRoleIds.has(r.id));
+  const assocDepts = allAssocDepts.filter((d) => !removedDeptIds.has(d.id));
 
   const handleRemoveRole = (id: string, name: string) => {
     setRemovedRoleIds((prev) => new Set(prev).add(id));
@@ -290,12 +305,12 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
               <Select label="System Role" size="sm" options={SYSTEM_ROLE_OPTIONS} value={form.system_role} onChange={updateSelect('system_role')} fullWidth />
             </div>
             <div style={formRowHalf}>
-              <Select label="Practice Role" size="sm" options={PRACTICE_ROLE_OPTIONS} value={form.practice_role} onChange={updateSelect('practice_role')} fullWidth />
+              <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role} onChange={updateSelect('practice_role')} fullWidth />
             </div>
           </div>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <Select label="Department" size="sm" options={DEPARTMENT_OPTIONS} value={form.department} onChange={updateSelect('department')} fullWidth />
+              <Select label="Department" size="sm" options={departmentOptions} value={form.department} onChange={updateSelect('department')} fullWidth />
             </div>
             <div style={formRowHalf}>
               <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
@@ -322,7 +337,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const rolesContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Roles</h3>
-      {roles.length === 0 ? (
+      {assocRoles.length === 0 ? (
         <p style={emptyState}>No roles assigned to this user.</p>
       ) : (
         <Table size="default">
@@ -334,7 +349,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles.map((r) => (
+            {assocRoles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.role}</span>
@@ -366,7 +381,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const departmentsContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Departments</h3>
-      {departments.length === 0 ? (
+      {assocDepts.length === 0 ? (
         <p style={emptyState}>No departments assigned to this user.</p>
       ) : (
         <Table size="default">
@@ -377,7 +392,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             </TableRow>
           </TableHeader>
           <TableBody>
-            {departments.map((d) => (
+            {assocDepts.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.department}</span>
