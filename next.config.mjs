@@ -9,6 +9,7 @@ const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'ut
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   distDir: process.env.NEXT_BUILD_OUTPUT_DIR || '.next',
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
