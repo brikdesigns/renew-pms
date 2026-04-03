@@ -26,15 +26,6 @@ const mainStyle: CSSProperties = {
   overflow: 'hidden',
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getInitials(firstName: string | null, lastName: string | null, email: string | null): string {
-  if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
-  if (firstName) return firstName.slice(0, 2).toUpperCase();
-  if (email) return email.slice(0, 2).toUpperCase();
-  return '?';
-}
-
 // ─── Layout ──────────────────────────────────────────────────────────────────
 
 export default async function AuthLayout({
@@ -48,7 +39,7 @@ export default async function AuthLayout({
     redirect('/login');
   }
 
-  const { first_name, last_name, email, full_name } = authUser.profile;
+  const { first_name, email, full_name } = authUser.profile;
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
   const userDepartment = authUser.membership?.department ?? null;
 
