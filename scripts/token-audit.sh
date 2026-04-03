@@ -268,6 +268,44 @@ else
   echo -e "  ${GREEN}Clean${NC}"
 fi
 
+# ── 13. Client theme completeness ───────────────────────────────────
+section "Client theme completeness (all font-family tokens must be explicit)"
+#
+# Why this check exists:
+#   BDS defines font-family tokens with Poppins defaults in figma-tokens.css.
+#   Client themes MUST explicitly override every token — even when two tokens
+#   share the same family value (e.g. display = heading = Century Schoolbook).
+#   Omitting any token silently falls through to the BDS Poppins default.
+#
+#   --font-family-subtitle is a BDS gap-fill token (not yet in Figma variables).
+#   It lives only in overrides.css as var(--font-family-label) — invisible to
+#   Figma exports and will always be missed by a sync unless checked here.
+
+REQUIRED_FONT_TOKENS=(
+  "font-family-heading"
+  "font-family-display"
+  "font-family-body"
+  "font-family-label"
+  "font-family-subtitle"
+)
+
+THEME_VIOLATIONS=0
+for theme_file in src/styles/theme-*.css; do
+  [ -f "$theme_file" ] || continue
+  for token in "${REQUIRED_FONT_TOKENS[@]}"; do
+    if ! grep -q "\-\-${token}:" "$theme_file"; then
+      echo -e "  ${RED}MISSING${NC} --${token} in ${theme_file}"
+      THEME_VIOLATIONS=$((THEME_VIOLATIONS + 1))
+    fi
+  done
+done
+
+if [ "$THEME_VIOLATIONS" -eq 0 ]; then
+  echo -e "  ${GREEN}Clean${NC}"
+else
+  VIOLATIONS=$((VIOLATIONS + THEME_VIOLATIONS))
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────
 echo ""
 echo "========================================="
@@ -277,13 +315,14 @@ else
   echo -e "  ${RED}${VIOLATIONS} violation(s) found${NC}"
   echo ""
   echo "  Priority order:"
-  echo "  1. Native <button> — missing interaction states, breaking BDS"
-  echo "  2. Raw var() strings — bypasses type-safe token layer"
-  echo "  3. Hardcoded colors — breaks dark mode / client theming"
-  echo "  4. Hardcoded fontFamily/fontSize — invisible until client theme"
-  echo "  5. Hardcoded borderRadius/gap — breaks spacing scale"
-  echo "  6. Badge missing size — admin UI standard"
-  echo "  7. Hardcoded px padding/margin — fix file-by-file"
+  echo "  1. Theme completeness — missing font-family tokens fall through to Poppins"
+  echo "  2. Native <button> — missing interaction states, breaking BDS"
+  echo "  3. Raw var() strings — bypasses type-safe token layer"
+  echo "  4. Hardcoded colors — breaks dark mode / client theming"
+  echo "  5. Hardcoded fontFamily/fontSize — invisible until client theme"
+  echo "  6. Hardcoded borderRadius/gap — breaks spacing scale"
+  echo "  7. Badge missing size — admin UI standard"
+  echo "  8. Hardcoded px padding/margin — fix file-by-file"
 fi
 echo "========================================="
 echo ""

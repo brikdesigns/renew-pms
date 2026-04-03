@@ -129,8 +129,10 @@
 
   /* ── Typography (from Figma primitives) ─────────────── */
   --font-family-heading: 'Century Schoolbook', 'Georgia', serif;
+  --font-family-display: 'Century Schoolbook', 'Georgia', serif;  /* matches heading — spec: Heading/Display both Century Schoolbook */
   --font-family-body: 'Avenir', 'Avenir Next', system-ui, sans-serif;
   --font-family-label: 'Avenir', 'Avenir Next', system-ui, sans-serif;
+  --font-family-subtitle: 'Avenir', 'Avenir Next', system-ui, sans-serif;  /* explicit — breaks BDS alias chain from overrides.css */
 
   /* ── Label casing — controls text-transform on board subtitles ── */
   --text-transform-label: capitalize;
