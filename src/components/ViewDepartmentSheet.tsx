@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { departmentColor, color, font } from '@/lib/tokens';
+import { departmentColor, color, font, gap, space, border } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -115,13 +115,13 @@ const COLOR_LABELS: Record<string, string> = {
 const colorSwatchRow: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: gap.md,
 };
 
 const colorDot: CSSProperties = {
   width: '12px',
   height: '12px',
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   display: 'inline-block',
   flexShrink: 0,
 };
@@ -129,7 +129,7 @@ const colorDot: CSSProperties = {
 const dotBase: CSSProperties = {
   width: '8px',
   height: '8px',
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   display: 'inline-block',
   flexShrink: 0,
 };
@@ -137,14 +137,14 @@ const dotBase: CSSProperties = {
 const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: gap.sm,
   fontFamily: font.family.label,
   fontSize: font.size.label.md,
   fontWeight: font.weight.medium,
 };
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
   fontSize: font.size.body.md,
   color: color.text.secondary,
@@ -167,7 +167,7 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Department Details</h3>
       <ReadOnlyField label="Name" value={department.name} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Color Tag
         </span>
@@ -182,7 +182,7 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
           <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>None</span>
         )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
@@ -260,10 +260,10 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

@@ -56,6 +56,11 @@
   --background-brand-primary-hover: #855f91;   /* purple/dark */
   --background-brand-primary-pressed: #5a4261;  /* purple/darker */
 
+  /* ── Surface interaction states (secondary buttons, ghost, nav items) ── */
+  --surface-subtle-hover: #f5f5f5;       /* grayscale/lightest — ghost/outline/nav hover on white bg */
+  --surface-secondary-hover: #e6e6e6;    /* grayscale/lighter — one step darker than surface-secondary */
+  --surface-secondary-pressed: #575757;  /* grayscale/dark — pressed (7:1 contrast w/ white text) */
+
   /* ── Page (from Figma Light mode) ─────────────────── */
   --page-primary: #ffffff;
   --page-secondary: #f5f5f5;            /* grayscale/lightest */
@@ -273,6 +278,11 @@
   /* ── Brand interaction states (dark mode — lighter primitives) ─── */
   --background-brand-primary-hover: #decee4;   /* purple/lighter */
   --background-brand-primary-pressed: #faf9fb;  /* purple/lightest */
+
+  /* ── Surface interaction states (dark mode) ─── */
+  --surface-subtle-hover: #2e2e2e;       /* grayscale/darker — ghost/nav hover on black bg */
+  --surface-secondary-hover: #575757;    /* grayscale/dark — one step lighter than dark surface-secondary */
+  --surface-secondary-pressed: #0a0a0a;  /* grayscale/darkest — pressed (21:1 contrast w/ white text) */
 }
 
 /* ── System preference auto-switch (mirrors .dark from Figma) ── */
@@ -318,5 +328,8 @@
     --state-disabled: rgba(230, 230, 230, 0.004);
     --background-brand-primary-hover: #decee4;
     --background-brand-primary-pressed: #faf9fb;
+    --surface-subtle-hover: #2e2e2e;
+    --surface-secondary-hover: #575757;
+    --surface-secondary-pressed: #0a0a0a;
   }
 }

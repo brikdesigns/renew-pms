@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, type ReactNode, type CSSProperties } from 'react';
 import { Toast, type ToastVariant } from '@bds/components';
+import { gap } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ const containerStyle: CSSProperties = {
   right: '24px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
+  gap: gap.md,
   zIndex: 2000,
   pointerEvents: 'none',
 };

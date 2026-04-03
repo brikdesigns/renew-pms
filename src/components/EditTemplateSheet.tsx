@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, TextInput, TextArea, Select, Switch } from '@bds/components';
+import { Sheet, Button, TextInput, TextArea, Select, Switch } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space, border } from '@/lib/tokens';
@@ -462,18 +462,14 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
             }}
           />
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="button"
           onClick={addTask}
-          className="renew-btn renew-btn--primary"
-          style={{
-            height: '36px',
-            fontSize: font.size.body.sm,
-            padding: `0 ${space.md}`,
-          }}
         >
           Add
-        </button>
+        </Button>
       </div>
 
       {tasks.length > 0 && (
@@ -528,10 +524,10 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-template-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-template-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     />
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -121,7 +121,7 @@ const TEXT_SECONDARY = color.text.secondary;
 const dotBase: CSSProperties = {
   width: gap.md,
   height: gap.md,
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   display: 'inline-block',
   flexShrink: 0,
 };
@@ -239,9 +239,9 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
       onTabChange={setActiveTab}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
@@ -183,7 +183,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
       </div>
       <div style={fieldRow}>
         <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
             <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Employee Type
             </span>
@@ -195,7 +195,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
           </div>
         </div>
         <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
             <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Account Status
             </span>
@@ -270,9 +270,9 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
       onTabChange={setActiveTab}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
@@ -33,24 +33,9 @@ const countBadge: CSSProperties = {
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
-const addBtnStyle: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
-  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-};
-
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
-
-const actionBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: border.radius.md,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
-};
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 
@@ -105,7 +90,7 @@ export function DepartmentsTable() {
           <h3 style={subHeaderTitleStyle}>Departments</h3>
           <span style={countBadge}>{loading ? '–' : departments.length}</span>
         </div>
-        <button style={addBtnStyle} onClick={handleAdd}>Add Department</button>
+        <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
       </div>
 
       <div style={tableWrap}>
@@ -147,12 +132,8 @@ export function DepartmentsTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <button style={actionBtn} onClick={() => handleView(d)} aria-label={`View ${d.name}`}>
-                      <Icon icon={icon.eye} />
-                    </button>
-                    <button style={actionBtn} onClick={() => handleEdit(d)} aria-label={`Edit ${d.name}`}>
-                      <Icon icon={icon.edit} />
-                    </button>
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
                   </div>
                 </TableCell>
               </TableRow>

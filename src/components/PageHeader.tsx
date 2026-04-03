@@ -12,8 +12,8 @@ const headerStyle: CSSProperties = {
   gap: gap.xl,
   alignItems: 'flex-start',
   justifyContent: 'center',
-  paddingTop: '40px',
-  paddingBottom: '18px',
+  paddingTop: '40px',         // layout-specific: no BDS token (between space.xl=32px and space.huge=48px)
+  paddingBottom: '18px',      // layout-specific: no BDS token (between space.sm=12px and space.md=16px)
   paddingInline: space.xl,
   borderBottom: `1px solid ${color.border.muted}`,
   width: '100%',
@@ -60,7 +60,10 @@ function tabStyle(active: boolean): CSSProperties {
     cursor: 'pointer',
     background: 'none',
     border: 'none',
-    padding: 0,
+    borderBottom: active ? `2px solid ${color.border.brand}` : '2px solid transparent',
+    paddingBottom: gap.sm,
+    paddingTop: 0,
+    paddingInline: 0,
     whiteSpace: 'nowrap',
   };
 }
@@ -90,7 +93,7 @@ interface PageHeaderProps {
 const breadcrumbBarStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: gap.sm,
   fontFamily: font.family.label,
   fontSize: font.size.label.sm,
   fontWeight: font.weight.medium,
@@ -137,7 +140,7 @@ export function PageHeader({
           {breadcrumbs.map((crumb, i) => {
             const isLast = i === breadcrumbs.length - 1;
             return (
-              <span key={crumb.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span key={crumb.label} style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
                 {i > 0 && <span style={breadcrumbSepStyle}>/</span>}
                 {crumb.href && !isLast ? (
                   <Link href={crumb.href} style={breadcrumbLinkStyle}>{crumb.label}</Link>

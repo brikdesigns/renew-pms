@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { gap } from '@/lib/tokens';
 
 // ─── Only render in development ─────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ const panelStyle: CSSProperties = {
   padding: '12px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: gap.xs,
   fontFamily: 'var(--font-family-body, system-ui)',
 };
 
@@ -177,7 +178,7 @@ const testerTabStyle = (active: boolean): CSSProperties => ({
 
 const testerTabRowStyle: CSSProperties = {
   display: 'flex',
-  gap: '4px',
+  gap: gap.xs,
   borderBottom: '1px solid #333',
   marginBottom: '4px',
 };

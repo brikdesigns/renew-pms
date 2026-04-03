@@ -2,10 +2,11 @@
 
 import { usePathname } from 'next/navigation';
 import type { CSSProperties, ReactNode } from 'react';
+import { space } from '@/lib/tokens';
 
 const pageStyle: CSSProperties = {
   flex: 1,
-  padding: '32px',
+  padding: space.xl,
   overflowY: 'auto',
 };
 

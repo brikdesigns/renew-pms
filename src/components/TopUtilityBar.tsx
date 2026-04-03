@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, gap, space, border } from '@/lib/tokens';
+import { IconButton } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 
 // ─── Route label mapping ─────────────────────────────────────────────────────
@@ -117,9 +118,7 @@ export function TopUtilityBar({ userInitials, userName, userFullName, userDepart
         <Link href="/guide" style={bellStyle} aria-label="Help & User Guide">
           <Icon icon={icon.help} style={{ fontSize: font.size.body.md, color: color.text.primary }} />
         </Link>
-        <button style={bellStyle} aria-label="Notifications">
-          <Icon icon={icon.bell} style={{ fontSize: font.size.body.md, color: color.text.primary }} />
-        </button>
+        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" />
         <UserAvatar
           name={userFullName ?? userName ?? '?'}
           department={userDepartment}

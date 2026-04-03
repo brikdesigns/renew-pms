@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { font, color, gap, border } from '@/lib/tokens';
+import { font, color, space, gap, border } from '@/lib/tokens';
 import { UserAvatar } from '@/components/UserAvatar';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -47,8 +47,8 @@ export type ProfileCardProps =
 const cardStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
-  padding: '16px',
+  gap: gap.md,
+  padding: space.md,
   borderRadius: border.radius.md,
   backgroundColor: color.surface.secondary,
 };
@@ -58,14 +58,14 @@ const cardStyle: CSSProperties = {
 const dotStyle: CSSProperties = {
   width: '40px',
   height: '40px',
-  borderRadius: '9999px',
+  borderRadius: border.radius.pill,
   flexShrink: 0,
 };
 
 const textWrap: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '2px',
+  gap: gap.tiny,
   minWidth: 0,
   flex: 1,
 };
@@ -100,7 +100,7 @@ const deptTagStyle: CSSProperties = {
   fontSize: font.size.subtitle.md,
   fontWeight: font.weight.semibold,
   lineHeight: 1,
-  padding: '4px 8px',
+  padding: `${gap.xs} ${gap.md}`,
   borderRadius: border.radius.sm,
   whiteSpace: 'nowrap',
   flexShrink: 0,

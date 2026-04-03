@@ -6,11 +6,11 @@ import type { TabItem } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
+import { Button } from '@bds/components';
 import {
   contentStyle,
   sectionTitleStyle,
   rowStyle,
-  editBtnStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -201,9 +201,7 @@ export default function OrganizationSettingsPage() {
       <PageHeader
         title="Organization"
         actions={
-          <button style={editBtnStyle} onClick={() => setSheetOpen(true)}>
-            Edit Organization
-          </button>
+          <Button variant="primary" size="sm" onClick={() => setSheetOpen(true)}>Edit Organization</Button>
         }
         tabs={ORG_TABS}
         activeTab={activeTab}

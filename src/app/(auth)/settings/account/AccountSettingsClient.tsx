@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
+import { Button } from '@bds/components';
 import {
   contentStyle,
   sectionTitleStyle,
   rowStyle,
-  editBtnStyle,
 } from '../_shared';
 
 interface AccountSettingsClientProps {
@@ -43,9 +43,7 @@ export function AccountSettingsClient({ profile, isAdmin }: AccountSettingsClien
       <PageHeader
         title="Profile"
         actions={
-          <button style={editBtnStyle} onClick={() => setSheetOpen(true)}>
-            Edit Profile
-          </button>
+          <Button variant="primary" size="sm" onClick={() => setSheetOpen(true)}>Edit Profile</Button>
         }
       />
       <div style={contentStyle}>

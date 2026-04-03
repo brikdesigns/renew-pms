@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
 import {
-  Sheet, TextInput, Select,
+  Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
@@ -14,7 +14,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, border } from '@/lib/tokens';
+import { font, color, space, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -154,7 +154,7 @@ const removeBtn: CSSProperties = {
 };
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
   fontSize: font.size.body.sm,
   color: color.text.secondary,
@@ -381,10 +381,10 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-team-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-team-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       {/* children only used in add mode (no tabs) */}

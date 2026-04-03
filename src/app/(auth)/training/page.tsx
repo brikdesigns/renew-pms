@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter } from '@/components/TrainingFilterBar';
-import { color, font } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 
 // ─── Mock data (uses seed users from Settings > Users) ───────────────────────
 
@@ -13,7 +13,7 @@ const MOCK_MEMBERS: TrainingMember[] = [
     id: 'pm-jordan',
     name: 'Jordan Hayes',
     role: 'Inventory Manager',
-    department: 'Engineering',
+    department: 'Maintenance',
     employeeType: 'new',
     progress: 12,
     totalModules: 6,
@@ -97,14 +97,14 @@ const MOCK_MEMBERS: TrainingMember[] = [
 const pageStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '16px',
+  gap: gap.lg,
 };
 
 const listStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '12px',
-  paddingBottom: '24px',
+  gap: gap.md,
+  paddingBottom: space.lg,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

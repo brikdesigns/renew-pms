@@ -182,4 +182,15 @@ body {
   .renew-btn--ghost:active:not(:disabled) {
     background-color: var(--surface-muted);
   }
+
+}
+
+/* ── Settings sub-nav entrance animation ── */
+@keyframes settings-subnav-in {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.settings-subnav {
+  animation: settings-subnav-in var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1)) both;
 }

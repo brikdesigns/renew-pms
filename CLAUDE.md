@@ -82,6 +82,13 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 - **Trainual** — staff training source of truth; API supports people management + assignment status only (cannot read/edit content). Key in `practices.integrations.trainual.api_key`.
 - **Google Drive** — practice files, SOPs. Folder ID in `practices.integrations.gdrive.folder_id`.
 
+## General Principles
+
+- **Match what exists first.** Before writing new patterns, read two or three nearby files. Copy their structure.
+- **BDS first, always.** Before writing a custom UI element, check whether a BDS component covers the need. Build on the system — never build on an island.
+- **No speculative abstractions.** Three similar lines of code is better than a premature helper. Only abstract when the pattern is stable and used in three or more places.
+- **Design drives code.** Never build UI from assumptions when a Figma spec or Paper prototype exists. Read the spec first.
+
 ## Token & Style Rules
 
 ```ts
@@ -95,9 +102,20 @@ Path aliases: `@/*` → `./src/*` · `@bds/components` → `./brik-bds/component
 
 **Department colors:** Read `department.color` from the DB row and call `departmentColor(colorKey)` from `@/lib/tokens`. `getDepartmentColors(name)` in `@/lib/department-colors` is `@deprecated` — do not add new calls to it.
 
-### Tailwind CSS 4
+### Font family rules
 
-Config is CSS-first — no `tailwind.config.ts`. Extend the theme in `src/app/globals.css` via `@theme {}`. PostCSS uses `@tailwindcss/postcss`.
+Font family token **must match the element's semantic role**. BDS defaults all three families to Poppins — misuse is invisible until a client theme assigns distinct typefaces.
+
+- `font.family.heading` — `h1`–`h5`, card names, section titles. Min size: `font.size.heading.tiny` (18px)
+- `font.family.label` — Labels, badges, tags, buttons, captions
+- `font.family.subtitle` — Subtitle-sized text alongside headings, secondary metadata. Pair with `font.size.subtitle.*`
+- `font.family.body` — Body copy, descriptions, paragraphs
+
+### Tailwind vs tokens
+
+- **Tailwind** — layout and structural utilities: `flex`, `grid`, `gap`, `overflow`, `position`, `display`, `z-index`
+- **BDS tokens** — all visual language: color, typography, spacing scale, border radius, shadow. These must be themed. Tailwind defaults are not themeable.
+- Config is CSS-first — no `tailwind.config.ts`. Extend the theme in `src/app/globals.css` via `@theme {}`. PostCSS uses `@tailwindcss/postcss`.
 
 ### Client theming
 
@@ -112,6 +130,28 @@ When Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can 
 - `preview-stories` — live preview URLs
 
 Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/)
+
+## Component Rules
+
+### BDS first
+
+- Check BDS before building custom. Query via Storybook MCP (`http://localhost:6006/mcp`) when running, or browse [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/). Read component props and examples before writing JSX.
+- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@bds/components`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
+- **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
+- Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
+- Never edit BDS submodule files directly (`brik-bds/` inside this project). Always edit in `brik/brik-bds/`, push, merge, then run `./scripts/bds-sync.sh`.
+
+### Server vs client components
+
+- Default to Server Components. Only add `'use client'` when you need interactivity, event handlers, `useState`, or `useEffect`.
+- Data fetching happens on the server. Pass data down as props — don't fetch in client components unless triggered by user interaction.
+
+## File & Folder Conventions
+
+- Components used by a single route live inside that route folder. Components used by two or more routes go in `src/components/`.
+- Shared style definitions for a route group go in `_shared.ts` in the route folder. Do not duplicate style objects across sibling files. **Never put interactive element styles in `_shared.ts`** — use BDS components at call sites.
+- React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
+- No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
 ## Commands
 
@@ -129,12 +169,33 @@ npm run db:seed-test-users  # Seed test user accounts
 
 ./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
 ./scripts/agent-preflight.sh # Pre-task environment validation
-./scripts/token-audit.sh     # Full token compliance scan (hex, var(), font-size, rgba, Badge)
+./scripts/token-audit.sh     # Full token + component compliance scan
 ./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
 ./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
 ```
 
 **After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.
+
+## Enforcement
+
+### Pre-commit hooks (automatic)
+
+- Hardcoded hex colors — blocked
+- Raw `var(--...)` strings in style props — blocked
+- Hardcoded font sizes in px — blocked
+- Direct BDS component path imports (not via barrel) — blocked
+- Hardcoded rgba/rgb values — blocked
+
+### Manual audit (run before every PR)
+
+```bash
+./scripts/token-audit.sh   # Covers: buttons, colors, var(), fontFamily, borderRadius, gap, padding, Badge
+npm run lint               # ESLint
+npm run typecheck          # TypeScript
+npm run build              # Full build — catches what lint misses
+```
+
+The audit catches 12 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius, and hardcoded gap/padding values. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
 
 ## Rules
 

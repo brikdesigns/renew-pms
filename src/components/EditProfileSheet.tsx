@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
-import { Sheet, TextInput, Select } from '@bds/components';
+import { Sheet, Button, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -44,32 +44,6 @@ const SYSTEM_ROLE_OPTIONS = [
   { label: 'Platform Admin', value: 'platform_admin' },
 ];
 
-const PRACTICE_ROLE_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Owner', value: 'Owner' },
-  { label: 'Office Manager', value: 'Office Manager' },
-  { label: 'Dental Hygienist', value: 'Dental Hygienist' },
-  { label: 'Dental Assistant', value: 'Dental Assistant' },
-  { label: 'Receptionist', value: 'Receptionist' },
-  { label: 'Treatment Coordinator', value: 'Treatment Coordinator' },
-  { label: 'Insurance Coordinator', value: 'Insurance Coordinator' },
-  { label: 'Engineer', value: 'Engineer' },
-  { label: 'Inventory Manager', value: 'Inventory Manager' },
-  { label: 'Manager', value: 'Manager' },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Staff', value: 'Staff' },
-];
-
-const DEPARTMENT_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Clinical', value: 'Clinical' },
-  { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Maintenance', value: 'Maintenance' },
-  { label: 'HR', value: 'HR' },
-  { label: 'Administration', value: 'Administration' },
-  { label: 'Sterilization', value: 'Sterilization' },
-  { label: 'All Departments', value: 'All Departments' },
-];
 
 const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
@@ -138,10 +112,10 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
     <Sheet
       isOpen={isOpen} onClose={onClose} title="Edit Profile" width="600px" side="right"
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-profile-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-profile-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       <form id="edit-profile-form" onSubmit={handleSave}>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
 import {
-  Sheet, TextInput, Select,
+  Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
@@ -356,10 +356,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-dept-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-dept-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       {/* children only used in add mode (no tabs) */}

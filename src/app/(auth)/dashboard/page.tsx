@@ -8,6 +8,7 @@ import { Tag, Badge, Tooltip } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
+import { useMembers } from '@/hooks/useMembers';
 import { label as labelStyle } from '@/lib/styles';
 import type { CSSProperties } from 'react';
 
@@ -23,12 +24,7 @@ const OVERDUE_TASKS = [
   { id: 't2', title: 'Verify operatory setup and readiness', assignee: 'Sarah Mitchell', dept: 'Clinical', priority: 'warning' as const },
 ];
 
-const ONBOARDING_MEMBERS = [
-  { id: 'pm-jordan', name: 'Jordan Hayes', role: 'Inventory Manager', dept: 'Maintenance', type: 'new' as const, progress: 12, completed: 1, total: 6 },
-  { id: 'pm-tyler', name: 'Tyler Nguyen', role: 'Dental Assistant', dept: 'Sterilization', type: 'new' as const, progress: 25, completed: 2, total: 8 },
-  { id: 'pm-rachel', name: 'Rachel Foster', role: 'Receptionist', dept: 'Front Desk', type: 'maturing' as const, progress: 60, completed: 3, total: 5 },
-  { id: 'pm-emily', name: 'Emily Rivera', role: 'Dental Assistant', dept: 'Clinical', type: 'maturing' as const, progress: 75, completed: 6, total: 8 },
-];
+// ONBOARDING_MEMBERS sourced from useMembers() — filtered by employee_type !== 'active'
 
 const DEPT_COMPLETION = [
   { dept: 'Clinical', completed: 14, total: 22 },
@@ -219,23 +215,22 @@ function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey:
 
 // ─── Progress bar (inline) ───────────────────────────────────────────────────
 
-function MiniProgress({ pct }: { pct: number }) {
-  return (
-    <div style={{ width: '80px', height: '6px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: color.background.brandPrimary }} />
-    </div>
-  );
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { departments } = useDepartments();
+  const { members } = useMembers();
 
   // Map dept name → color key for all rendering that needs dept colors
   const deptColorMap = useMemo(
     () => new Map(departments.map((d) => [d.name, d.color])),
     [departments]
+  );
+
+  // Onboarding members: new hires and maturing staff (not yet fully active)
+  const onboardingMembers = useMemo(
+    () => members.filter((m) => m.employee_type !== 'active' && m.is_active),
+    [members]
   );
 
   const getDeptColors = (deptName: string) => departmentColor(deptColorMap.get(deptName) ?? 'blue');
@@ -332,24 +327,25 @@ export default function DashboardPage() {
             </Link>
           </div>
           <ul style={listStyle}>
-            {ONBOARDING_MEMBERS.map((m) => {
-              const deptColors = getDeptColors(m.dept);
-              const typeTag = TYPE_TAG[m.type];
+            {onboardingMembers.length === 0 && (
+              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                No members currently onboarding.
+              </li>
+            )}
+            {onboardingMembers.map((m) => {
+              const typeTag = TYPE_TAG[m.employee_type] ?? TYPE_TAG.new;
+              const fullName = `${m.first_name} ${m.last_name}`;
               return (
                 <li key={m.id} style={listItemStyle}>
                   <div style={listItemLeftStyle}>
-                    <UserAvatar name={m.name} department={m.dept} size="sm" />
+                    <UserAvatar name={fullName} department={m.department} size="sm" />
                     <div style={{ minWidth: 0 }}>
-                      <div style={listItemTitleStyle}>{m.name}</div>
-                      <div style={listItemSubStyle}>{m.role}</div>
+                      <div style={listItemTitleStyle}>{fullName}</div>
+                      <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
                     <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
-                    <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, whiteSpace: 'nowrap' }}>
-                      {m.completed}/{m.total}
-                    </span>
-                    <MiniProgress pct={m.progress} />
                   </div>
                 </li>
               );

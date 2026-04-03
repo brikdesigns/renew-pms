@@ -11,7 +11,7 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet, type TemplateViewData } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -321,22 +321,6 @@ const subHeaderCountStyle: CSSProperties = {
   borderRadius: border.radius.sm,
 };
 
-const addBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '36px',
-  paddingInline: '14px',
-  borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.bold,
-  border: 'none',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-};
 
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
@@ -355,19 +339,6 @@ const typeChipStyle: CSSProperties = {
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
-const actionBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '36px',
-  height: '36px',
-  borderRadius: border.radius.md,
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  border: 'none',
-  cursor: 'pointer',
-  fontSize: font.size.icon.sm,
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -491,10 +462,9 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
           <span style={subHeaderCountStyle}>{filteredTemplates.length}</span>
         </div>
         <div ref={addBtnRef} style={{ position: 'relative' }}>
-          <button style={addBtnStyle} onClick={() => setAddMenuOpen((p) => !p)}>
+          <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen((p) => !p)}>
             Add Template
-            <Icon icon={icon.chevronDown} style={{ fontSize: font.size.body.xs, marginLeft: gap.md }} />
-          </button>
+          </Button>
           {addMenuOpen && (
             <div
               style={{
@@ -576,20 +546,8 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <button
-                      style={actionBtnStyle}
-                      onClick={() => handleViewClick(template)}
-                      aria-label={`View ${template.name}`}
-                    >
-                      <Icon icon={icon.eye} />
-                    </button>
-                    <button
-                      style={actionBtnStyle}
-                      onClick={() => handleEditClick(template)}
-                      aria-label={`Edit ${template.name}`}
-                    >
-                      <Icon icon={icon.edit} />
-                    </button>
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
                   </div>
                 </TableCell>
               </TableRow>

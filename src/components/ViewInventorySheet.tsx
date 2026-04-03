@@ -1,10 +1,10 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
-import { color, font } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { getDepartmentColors } from '@/lib/department-colors';
@@ -42,7 +42,7 @@ const STATUS_BADGE: Record<string, { status: 'positive' | 'warning' | 'error' | 
 
 const rowStyle: CSSProperties = {
   display: 'flex',
-  gap: '16px',
+  gap: gap.lg,
   width: '100%',
 };
 
@@ -67,8 +67,8 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
       width="600px"
       side="right"
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
-        <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+        <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
       </>}
     >
       <div style={sheetBodyStyle}>
@@ -85,7 +85,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
 
         <div style={rowStyle}>
           <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
               <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Status
               </span>
@@ -95,7 +95,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
             </div>
           </div>
           <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
               <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Department
               </span>

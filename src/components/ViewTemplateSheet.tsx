@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import {
-  Sheet, Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+  Sheet, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
@@ -150,7 +150,7 @@ const halfStyle: CSSProperties = {
 const dotBase: CSSProperties = {
   width: '8px',
   height: '8px',
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   display: 'inline-block',
   flexShrink: 0,
 };
@@ -158,7 +158,7 @@ const dotBase: CSSProperties = {
 const statusWrap: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: gap.sm,
   fontFamily: font.family.label,
   fontSize: font.size.label.md,
   fontWeight: font.weight.medium,
@@ -175,7 +175,7 @@ const taskItemStyle: CSSProperties = {
 };
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
   fontSize: font.size.body.md,
   color: color.text.secondary,
@@ -230,7 +230,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
           <ReadOnlyField label="Frequency" value={FREQUENCY_LABELS[template.frequency] ?? template.frequency} />
         </div>
         <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
             <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
               Priority
             </span>
@@ -255,7 +255,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       </div>
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
@@ -312,7 +312,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
       }
     />
   );

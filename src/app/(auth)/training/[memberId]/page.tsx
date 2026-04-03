@@ -7,7 +7,7 @@ import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Tag } from '@bds/components';
 import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, gap } from '@/lib/tokens';
+import { color, font, gap, border } from '@/lib/tokens';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -133,7 +133,7 @@ const titleTagsStyle: React.CSSProperties = {
 const progressTrackStyle: React.CSSProperties = {
   width: '100%',
   height: '8px',
-  borderRadius: '4px',
+  borderRadius: border.radius.xs,
   backgroundColor: color.background.muted,
   overflow: 'hidden',
   position: 'relative',
@@ -236,7 +236,7 @@ export default function TrainingDetailPage() {
       {activeTab === 'training' && (
         <div style={contentStyle}>
           <h2 style={sectionTitleStyle}>Training Progress</h2>
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: gap.md }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={progressLabelStyle}>
                 {member.completedModules} of {member.totalModules} modules completed
@@ -248,7 +248,7 @@ export default function TrainingDetailPage() {
                 className="progress-fill"
                 style={{
                   position: 'absolute', top: 0, left: 0, height: '100%',
-                  width: `${member.progress}%`, borderRadius: '4px',
+                  width: `${member.progress}%`, borderRadius: border.radius.xs,
                   backgroundColor: color.background.brandPrimary,
                 }}
               />

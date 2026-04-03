@@ -3,10 +3,10 @@
 import { useState, useMemo, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Chip } from '@bds/components';
+import { Chip, IconButton } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
@@ -96,19 +96,6 @@ const datePickerStyle: CSSProperties = {
   gap: gap.lg,
 };
 
-const iconButtonStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 40,
-  height: 40,
-  borderRadius: border.radius.pill,
-  backgroundColor: color.background.accent,
-  border: 'none',
-  cursor: 'pointer',
-  color: color.text.primary,
-  fontSize: font.size.icon.lg,
-};
 
 const dateLabelStyle: CSSProperties = {
   fontFamily: font.family.body,
@@ -211,23 +198,9 @@ export function TaskFilterBar({
     <div style={barStyle}>
       {/* Date navigation */}
       <div style={datePickerStyle}>
-        <button
-          type="button"
-          style={iconButtonStyle}
-          onClick={handlePrev}
-          aria-label="Previous day"
-        >
-          <Icon icon={icon.chevronLeft} />
-        </button>
+        <IconButton variant="ghost" size="md" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
         <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
-        <button
-          type="button"
-          style={iconButtonStyle}
-          onClick={handleNext}
-          aria-label="Next day"
-        >
-          <Icon icon={icon.chevronRight} />
-        </button>
+        <IconButton variant="ghost" size="md" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
       </div>
 
       {/* Filter chips */}

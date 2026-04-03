@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Sheet, TextInput, Select } from '@bds/components';
+import { Sheet, Button, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -105,10 +105,10 @@ export function EditOrganizationSheet({ isOpen, onClose, initialData, onSave }: 
   return (
     <Sheet isOpen={isOpen} onClose={onClose} title="Edit Organization" width="600px" side="right"
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-org-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-org-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       <form id="edit-org-form" onSubmit={handleSave}>

@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditTeamSheet, type TeamFormData } from '@/components/EditTeamSheet';
@@ -57,20 +57,7 @@ const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const addBtnStyle: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.bold,
-  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-};
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
-const actionBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: border.radius.md,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.icon.sm,
-};
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 const statusWrap: CSSProperties = {
@@ -122,7 +109,7 @@ export function TeamsTable() {
           <h3 style={subHeaderTitleStyle}>Teams</h3>
           <span style={countBadge}>{teams.length}</span>
         </div>
-        <button style={addBtnStyle} onClick={handleAdd}>Add Team</button>
+        <Button variant="primary" size="sm" onClick={handleAdd}>Add Team</Button>
       </div>
 
       <div style={tableWrap}>
@@ -163,12 +150,8 @@ export function TeamsTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <button style={actionBtn} onClick={() => handleView(t)} aria-label={`View ${t.name}`}>
-                      <Icon icon={icon.eye} />
-                    </button>
-                    <button style={actionBtn} onClick={() => handleEdit(t)} aria-label={`Edit ${t.name}`}>
-                      <Icon icon={icon.edit} />
-                    </button>
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
                   </div>
                 </TableCell>
               </TableRow>

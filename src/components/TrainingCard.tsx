@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, border, shadow } from '@/lib/tokens';
+import { color, font, space, border, shadow, gap } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,8 +39,9 @@ function cardStyle(borderColor: string): CSSProperties {
   return {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
-    padding: '18px 24px',
+    gap: gap.lg,
+    paddingBlock: space.md,
+    paddingInline: space.lg,
     backgroundColor: color.surface.primary,
     borderLeft: `8px solid ${borderColor}`,
     borderRadius: border.radius.md,
@@ -61,7 +62,7 @@ const topRowStyle: CSSProperties = {
 const personStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '10px',
+  gap: gap.md,
 };
 
 const nameStyle: CSSProperties = {
@@ -90,19 +91,19 @@ const bottomRowStyle: CSSProperties = {
 const tagGroupStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: gap.md,
 };
 
 const progressWrapStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: gap.md,
 };
 
 const progressTrackStyle: CSSProperties = {
   width: '166px',
   height: '6px',
-  borderRadius: '3px',
+  borderRadius: border.radius.xs,
   backgroundColor: color.background.muted,
   overflow: 'hidden',
   position: 'relative',
@@ -115,7 +116,7 @@ function progressBarStyle(pct: number): CSSProperties {
     left: 0,
     height: '100%',
     width: `${pct}%`,
-    borderRadius: '3px',
+    borderRadius: border.radius.xs,
     backgroundColor: color.background.brandPrimary,
   };
 }
@@ -133,7 +134,7 @@ const viewBtnStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   height: '32px',
-  paddingInline: '16px',
+  paddingInline: space.md,
   borderRadius: border.radius.sm,
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,

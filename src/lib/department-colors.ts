@@ -22,7 +22,7 @@ export type { DepartmentColorKey } from './tokens';
 const DEPARTMENT_COLOR_MAP: Record<string, string> = {
   'Clinical':         'blue',
   'Front Desk':       'green',
-  'Engineering':      'purple',
+  'Maintenance':      'purple',
   'HR':               'pink',
   'Administration':   'gold',
   'Sterilization':    'red',

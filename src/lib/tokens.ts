@@ -206,10 +206,13 @@ export const state = {
   hover: {
     overlay: 'var(--state-hover-overlay)',
     brandPrimary: 'var(--background-brand-primary-hover)',
+    subtle: 'var(--surface-subtle-hover)',      // ghost / nav / transparent-bg hover
+    secondary: 'var(--surface-secondary-hover)', // secondary surface hover
   },
   pressed: {
     overlay: 'var(--state-pressed-overlay)',
     brandPrimary: 'var(--background-brand-primary-pressed)',
+    secondary: 'var(--surface-secondary-pressed)', // secondary surface pressed
   },
   focus: 'var(--state-focus)',
   disabled: {
@@ -245,13 +248,15 @@ export const space = {
 
 export const gap = {
   none: 'var(--gap-none)',
-  tiny: 'var(--gap-tiny)',
-  xs: 'var(--gap-xs)',
-  sm: 'var(--gap-sm)',
-  md: 'var(--gap-md)',
-  lg: 'var(--gap-lg)',
-  xl: 'var(--gap-xl)',
-  huge: 'var(--gap-huge)',
+  tiny: 'var(--gap-tiny)',   // 2px
+  xs: 'var(--gap-xs)',       // 4px
+  sm: 'var(--gap-sm)',       // 6px
+  md: 'var(--gap-md)',       // 8px
+  lg: 'var(--gap-lg)',       // 16px
+  xl: 'var(--gap-xl)',       // 24px
+  huge: 'var(--gap-huge)',   // 32px
+  // Extended — references space primitives (no --gap-* alias in BDS for these steps)
+  section: 'var(--space-1200)', // 48px — large section/column separation
 } as const;
 
 // ─── Border ──────────────────────────────────────────────────────────
@@ -266,12 +271,13 @@ export const border = {
     huge: 'var(--border-width-huge)',
   },
   radius: {
-    none: 'var(--border-radius-none)',
-    sm: 'var(--border-radius-sm)',
-    md: 'var(--border-radius-md)',
-    lg: 'var(--border-radius-lg)',
-    button: 'var(--border-radius-50)',
-    input: 'var(--border-radius-50)',
+    none: 'var(--border-radius-none)', // 0
+    xs: 'var(--border-radius-100)',    // 4px — progress bars, count badges
+    sm: 'var(--border-radius-sm)',     // 8px
+    md: 'var(--border-radius-md)',     // 12px
+    lg: 'var(--border-radius-lg)',     // 16px
+    button: 'var(--border-radius-50)', // 2px
+    input: 'var(--border-radius-50)',  // 2px
     pill: '9999px',
     circle: '50%',
   },

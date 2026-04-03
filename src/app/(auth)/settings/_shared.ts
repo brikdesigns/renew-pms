@@ -67,22 +67,6 @@ export const valueStyle: CSSProperties = {
   color: color.text.secondary,
 };
 
-export const editBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '40px',          // button height, no BDS token
-  paddingInline: space.md, // 16px
-  borderRadius: border.radius.sm, // 8px
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.bold,
-  border: 'none',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-};
 
 export const emptyFieldStyle: CSSProperties = {
   flex: 1,
