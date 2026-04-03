@@ -50,6 +50,7 @@ export const icon = {
   sun:          'ph:sun-fill',
 
   // Status / feedback
+  remove:       'ph:minus-circle',
   warning:      'ph:warning-fill',
   overdue:      'ph:calendar-x-fill',
   circleCheck:  'ph:check-circle-fill',

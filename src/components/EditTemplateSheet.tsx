@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select, Switch } from '@bds/components';
+import { Sheet, Button, IconButton, TextInput, TextArea, Select, Switch } from '@bds/components';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import type { SheetTab } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space, border } from '@/lib/tokens';
@@ -201,15 +203,6 @@ const taskItemStyle: React.CSSProperties = {
   backgroundColor: color.surface.primary,
 };
 
-const taskRemoveStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  color: color.text.muted,
-  fontSize: font.size.body.sm,
-  padding: space.xs,
-  marginLeft: 'auto',
-};
 
 const addTaskRowStyle: React.CSSProperties = {
   display: 'flex',
@@ -226,6 +219,7 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
   const [newTask, setNewTask] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   const isEdit = initialData !== null;
   const typeLabel = TYPE_LABELS[form.type] ?? form.type;
@@ -438,12 +432,14 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
 
   const tasksContent = (
     <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>{form.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}</h3>
-      <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: `0 0 ${gap.lg} 0` }}>
-        {form.type === 'procedure'
-          ? 'Add steps in order. Steps will be enforced sequentially.'
-          : `Add items that will appear when this ${typeLabel.toLowerCase()} is assigned.`}
-      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
+        <h3 style={sheetSectionTitle}>{form.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}</h3>
+        <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: 0 }}>
+          {form.type === 'procedure'
+            ? 'Add steps in order. Steps will be enforced sequentially.'
+            : `Add items that will appear when this ${typeLabel.toLowerCase()} is assigned.`}
+        </p>
+      </div>
 
       <div style={addTaskRowStyle}>
         <div style={{ flex: 1 }}>
@@ -464,7 +460,7 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
         </div>
         <Button
           variant="primary"
-          size="md"
+          size="sm"
           type="button"
           onClick={addTask}
         >
@@ -475,21 +471,28 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
       {tasks.length > 0 && (
         <div style={{ ...taskListStyle, marginTop: gap.lg }}>
           {tasks.map((task, idx) => (
-            <div key={task.id} style={taskItemStyle}>
+            <div
+              key={task.id}
+              style={{
+                ...taskItemStyle,
+                backgroundColor: hoveredTaskId === task.id ? color.surface.secondary : color.surface.primary,
+              }}
+              onMouseEnter={() => setHoveredTaskId(task.id)}
+              onMouseLeave={() => setHoveredTaskId(null)}
+            >
               <span style={{ color: color.text.muted, fontSize: font.size.body.sm, minWidth: '24px' }}>
                 {idx + 1}.
               </span>
               <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
                 {task.label}
               </span>
-              <button
-                type="button"
-                style={taskRemoveStyle}
+              <IconButton
+                variant="ghost"
+                size="sm"
+                icon={<Icon icon={icon.remove} />}
+                label={`Remove ${task.label}`}
                 onClick={() => removeTask(task.id)}
-                aria-label={`Remove ${task.label}`}
-              >
-                Remove
-              </button>
+              />
             </div>
           ))}
         </div>
