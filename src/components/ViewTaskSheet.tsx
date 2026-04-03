@@ -4,13 +4,12 @@ import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { getDepartmentColors } from '@/lib/department-colors';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
 import type { CSSProperties } from 'react';
-import { color, font, gap } from '@/lib/tokens';
+import { color, font, gap, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +20,8 @@ export interface TaskViewData {
   taskType: string;
   due: string;
   dept: string;
+  /** DB-stored color key from departments.color */
+  deptColor: string;
   freq: string;
   priority: string;
   assignee: string;
@@ -84,7 +85,7 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
   if (!task) return null;
 
   const pri = PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info;
-  const deptColors = getDepartmentColors(task.dept);
+  const deptColors = departmentColor(task.deptColor);
 
   const sheetTitle = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>

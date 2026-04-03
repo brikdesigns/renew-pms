@@ -129,7 +129,7 @@ export function ProfileCard(props: ProfileCardProps) {
     visual = (
       <UserAvatar
         name={name}
-        department={deptName}
+        departmentColorKey={deptName}
         avatarUrl={url}
         size="md"
         style={styleOverrides}

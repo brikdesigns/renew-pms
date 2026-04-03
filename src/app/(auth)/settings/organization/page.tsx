@@ -26,9 +26,9 @@ const ORG_TABS: TabItem[] = [
 // ─── Status badge ────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'color-mix(in srgb, var(--color-system-green) 15%, transparent)', text: 'var(--color-system-green)' },
-  inactive: { bg: 'color-mix(in srgb, var(--text-secondary) 15%, transparent)', text: 'var(--text-secondary)' },
-  suspended: { bg: 'color-mix(in srgb, var(--color-system-red) 15%, transparent)', text: 'var(--color-system-red)' },
+  active:    { bg: `color-mix(in srgb, ${color.system.green} 15%, transparent)`, text: color.system.green },
+  inactive:  { bg: `color-mix(in srgb, ${color.text.secondary} 15%, transparent)`, text: color.text.secondary },
+  suspended: { bg: `color-mix(in srgb, ${color.system.red} 15%, transparent)`, text: color.system.red },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -193,7 +193,7 @@ export default function OrganizationSettingsPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', color: color.text.muted }}>Loading...</div>;
+    return <div style={{ padding: space['2xl'], color: color.text.muted }}>Loading...</div>;
   }
 
   return (

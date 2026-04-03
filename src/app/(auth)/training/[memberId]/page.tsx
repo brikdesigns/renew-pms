@@ -6,8 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Tag } from '@bds/components';
-import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, gap, border } from '@/lib/tokens';
+import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -42,6 +41,8 @@ interface MemberDetail {
   employeeType: 'new' | 'maturing' | 'active';
   shift: string;
   startDate: string;
+  /** DB-stored color key from departments.color */
+  departmentColor: string;
   organization: string;
   totalModules: number;
   completedModules: number;
@@ -52,49 +53,49 @@ const MOCK_MEMBERS: Record<string, MemberDetail> = {
   'pm-jordan': {
     id: 'pm-jordan', firstName: 'Jordan', lastName: 'Hayes',
     email: 'jordan@renewdental.com', phone: '(555) 100-0010',
-    role: 'Inventory Manager', department: 'Maintenance',
+    role: 'Inventory Manager', department: 'Maintenance', departmentColor: 'purple',
     employeeType: 'new', shift: '', startDate: '2026-02-01',
     organization: 'Renew Dental', totalModules: 6, completedModules: 1, progress: 12,
   },
   'pm-tyler': {
     id: 'pm-tyler', firstName: 'Tyler', lastName: 'Nguyen',
     email: 'tyler@renewdental.com', phone: '(555) 100-0006',
-    role: 'Dental Assistant', department: 'Sterilization',
+    role: 'Dental Assistant', department: 'Sterilization', departmentColor: 'red',
     employeeType: 'new', shift: 'closing', startDate: '2026-01-15',
     organization: 'Renew Dental', totalModules: 8, completedModules: 2, progress: 25,
   },
   'pm-rachel': {
     id: 'pm-rachel', firstName: 'Rachel', lastName: 'Foster',
     email: 'rachel@renewdental.com', phone: '(555) 100-0007',
-    role: 'Receptionist', department: 'Front Desk',
+    role: 'Receptionist', department: 'Front Desk', departmentColor: 'green',
     employeeType: 'maturing', shift: 'full_day', startDate: '2025-07-15',
     organization: 'Renew Dental', totalModules: 5, completedModules: 3, progress: 60,
   },
   'pm-emily': {
     id: 'pm-emily', firstName: 'Emily', lastName: 'Rivera',
     email: 'emily@renewdental.com', phone: '(555) 100-0005',
-    role: 'Dental Assistant', department: 'Clinical',
+    role: 'Dental Assistant', department: 'Clinical', departmentColor: 'blue',
     employeeType: 'maturing', shift: 'opening', startDate: '2025-09-15',
     organization: 'Renew Dental', totalModules: 8, completedModules: 6, progress: 75,
   },
   'pm-jessica': {
     id: 'pm-jessica', firstName: 'Jessica', lastName: 'Torres',
     email: 'jessica@renewdental.com', phone: '(555) 100-0002',
-    role: 'Office Manager', department: 'Administration',
+    role: 'Office Manager', department: 'Administration', departmentColor: 'gold',
     employeeType: 'active', shift: 'full_day', startDate: '2024-02-01',
     organization: 'Renew Dental', totalModules: 2, completedModules: 0, progress: 0,
   },
   'pm-sarah': {
     id: 'pm-sarah', firstName: 'Sarah', lastName: 'Mitchell',
     email: 'sarah@renewdental.com', phone: '(555) 100-0001',
-    role: 'Owner', department: 'Clinical',
+    role: 'Owner', department: 'Clinical', departmentColor: 'blue',
     employeeType: 'active', shift: 'full_day', startDate: '2024-01-15',
     organization: 'Renew Dental', totalModules: 3, completedModules: 1, progress: 33,
   },
   'pm-amanda': {
     id: 'pm-amanda', firstName: 'Amanda', lastName: 'Chen',
     email: 'amanda@renewdental.com', phone: '(555) 100-0003',
-    role: 'Dental Hygienist', department: 'Clinical',
+    role: 'Dental Hygienist', department: 'Clinical', departmentColor: 'blue',
     employeeType: 'active', shift: 'opening', startDate: '2024-03-10',
     organization: 'Renew Dental', totalModules: 2, completedModules: 1, progress: 50,
   },
@@ -157,19 +158,19 @@ export default function TrainingDetailPage() {
 
   if (!member) {
     return (
-      <div style={{ padding: '64px', textAlign: 'center', color: color.text.muted, fontFamily: font.family.body }}>
+      <div style={{ padding: space['3xl'], textAlign: 'center', color: color.text.muted, fontFamily: font.family.body }}>
         Member not found.
       </div>
     );
   }
 
   const fullName = `${member.firstName} ${member.lastName}`;
-  const deptColors = getDepartmentColors(member.department);
+  const deptColors = departmentColor(member.departmentColor);
   const typeTag = EMPLOYEE_TYPE_TAG[member.employeeType] ?? EMPLOYEE_TYPE_TAG.active;
 
   const headerTitle = (
     <div style={titleRowStyle}>
-      <UserAvatar name={fullName} department={member.department} size="lg" />
+      <UserAvatar name={fullName} departmentColorKey={member.departmentColor} size="lg" />
       <span style={titleNameStyle}>{fullName}</span>
       <div style={titleTagsStyle}>
         <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>

@@ -7,8 +7,7 @@ import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, gap, space } from '@/lib/tokens';
+import { color, font, gap, space, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,39 +35,41 @@ interface AssociatedUser {
   name: string;
   email: string;
   department: string;
+  departmentColor: string;
 }
 
 interface AssociatedDepartment {
   id: string;
   name: string;
+  departmentColor: string;
 }
 
 const USERS_BY_ROLE: Record<string, AssociatedUser[]> = {
   Owner: [
-    { id: '1', name: 'Sarah Mitchell', email: 'sarah@renewdental.com', department: 'Clinical' },
+    { id: '1', name: 'Sarah Mitchell', email: 'sarah@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Office Manager': [
-    { id: '2', name: 'Jessica Torres', email: 'jessica@renewdental.com', department: 'Administration' },
+    { id: '2', name: 'Jessica Torres', email: 'jessica@renewdental.com', department: 'Administration', departmentColor: 'gold' },
   ],
   'Dental Hygienist': [
-    { id: '3', name: 'Amanda Chen', email: 'amanda@renewdental.com', department: 'Clinical' },
-    { id: '4', name: 'Marcus Williams', email: 'marcus@renewdental.com', department: 'Clinical' },
+    { id: '3', name: 'Amanda Chen', email: 'amanda@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '4', name: 'Marcus Williams', email: 'marcus@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Dental Assistant': [
-    { id: '5', name: 'Emily Rivera', email: 'emily@renewdental.com', department: 'Clinical' },
-    { id: '6', name: 'Tyler Nguyen', email: 'tyler@renewdental.com', department: 'Sterilization' },
+    { id: '5', name: 'Emily Rivera', email: 'emily@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '6', name: 'Tyler Nguyen', email: 'tyler@renewdental.com', department: 'Sterilization', departmentColor: 'red' },
   ],
   Receptionist: [
-    { id: '7', name: 'Rachel Foster', email: 'rachel@renewdental.com', department: 'Front Desk' },
+    { id: '7', name: 'Rachel Foster', email: 'rachel@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Treatment Coordinator': [
-    { id: '8', name: 'David Park', email: 'david@renewdental.com', department: 'Front Desk' },
+    { id: '8', name: 'David Park', email: 'david@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Insurance Coordinator': [
-    { id: '9', name: 'Lisa Gomez', email: 'lisa@renewdental.com', department: 'Front Desk' },
+    { id: '9', name: 'Lisa Gomez', email: 'lisa@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Inventory Manager': [
-    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Maintenance' },
+    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Maintenance', departmentColor: 'purple' },
   ],
   Engineer: [],
   Manager: [],
@@ -77,21 +78,21 @@ const USERS_BY_ROLE: Record<string, AssociatedUser[]> = {
 };
 
 const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
-  Owner: [{ id: '1', name: 'Clinical' }],
-  'Office Manager': [{ id: '5', name: 'Administration' }],
-  'Dental Hygienist': [{ id: '1', name: 'Clinical' }],
+  Owner: [{ id: '1', name: 'Clinical', departmentColor: 'blue' }],
+  'Office Manager': [{ id: '5', name: 'Administration', departmentColor: 'gold' }],
+  'Dental Hygienist': [{ id: '1', name: 'Clinical', departmentColor: 'blue' }],
   'Dental Assistant': [
-    { id: '1', name: 'Clinical' },
-    { id: '6', name: 'Sterilization' },
+    { id: '1', name: 'Clinical', departmentColor: 'blue' },
+    { id: '6', name: 'Sterilization', departmentColor: 'red' },
   ],
-  Receptionist: [{ id: '2', name: 'Front Desk' }],
-  'Treatment Coordinator': [{ id: '2', name: 'Front Desk' }],
-  'Insurance Coordinator': [{ id: '2', name: 'Front Desk' }],
-  Engineer: [{ id: '3', name: 'Maintenance' }],
-  'Inventory Manager': [{ id: '3', name: 'Maintenance' }],
-  Manager: [{ id: '7', name: 'All Departments' }],
-  Admin: [{ id: '7', name: 'All Departments' }],
-  Staff: [{ id: '7', name: 'All Departments' }],
+  Receptionist: [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
+  'Treatment Coordinator': [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
+  'Insurance Coordinator': [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
+  Engineer: [{ id: '3', name: 'Maintenance', departmentColor: 'purple' }],
+  'Inventory Manager': [{ id: '3', name: 'Maintenance', departmentColor: 'purple' }],
+  Manager: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
+  Admin: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
+  Staff: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -150,8 +151,8 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
               subtitle={u.email}
               role={role.name}
               department={u.department}
-              departmentBg={getDepartmentColors(u.department).light}
-              departmentText={getDepartmentColors(u.department).text}
+              departmentBg={departmentColor(u.departmentColor).light}
+              departmentText={departmentColor(u.departmentColor).text}
             />
           ))}
         </div>
@@ -171,7 +172,7 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
               key={d.id}
               variant="department"
               name={d.name}
-              dotColor={getDepartmentColors(d.name).light}
+              dotColor={departmentColor(d.departmentColor).light}
             />
           ))}
         </div>

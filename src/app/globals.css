@@ -1,7 +1,7 @@
 /* BDS token layer — must come first */
 @import '../../brik-bds/tokens/fonts.css' layer(base);
 @import '../../brik-bds/tokens/figma-tokens.css' layer(base);
-@import '../../brik-bds/tokens/overrides.css' layer(base);
+@import '../../brik-bds/tokens/gap-fills.css' layer(base);
 /* Renew Dental brand override — after BDS so it wins */
 @import '../styles/theme-renew.css' layer(base);
 
@@ -146,7 +146,7 @@ body {
   }
 
   .renew-btn:focus-visible {
-    outline: 2px solid var(--state-focus);
+    outline: 2px solid var(--border-focus);
     outline-offset: 2px;
   }
 

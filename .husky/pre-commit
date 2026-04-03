@@ -82,6 +82,13 @@ if [ -n "$STAGED_SRC" ]; then
     || true)
   [ -n "$HARDCODED_RGBA" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [rgba] Hardcoded rgba/rgb — use shadow.* or color.* tokens:\n${HARDCODED_RGBA}\n"
 
+  # 8. Hardcoded padding/margin px values — use space.* from @/lib/tokens
+  HARDCODED_PADDING=$(echo "$STAGED_SRC" | xargs grep -En "(padding|margin):\s*'[0-9]+(px|rem)'" 2>/dev/null \
+    | grep -v "DevPersonaSwitcher" \
+    | grep -v "// " \
+    || true)
+  [ -n "$HARDCODED_PADDING" ] && TOKEN_VIOLATIONS="${TOKEN_VIOLATIONS}\n   [padding/margin] Hardcoded px — use space.* or size.* from @/lib/tokens:\n${HARDCODED_PADDING}\n"
+
   # 5. Badge without explicit size prop (standard: size="sm")
   BADGE_NO_SIZE=$(echo "$STAGED_SRC" | xargs grep -En "<Badge\b[^>]*>" 2>/dev/null \
     | grep -v 'size=' \

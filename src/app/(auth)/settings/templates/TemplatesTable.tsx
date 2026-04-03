@@ -486,7 +486,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                     fontFamily: font.family.label, fontSize: font.size.label.sm,
                     color: color.text.primary, textAlign: 'left',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-accent)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
                   <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />

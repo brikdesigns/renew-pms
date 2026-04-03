@@ -120,7 +120,7 @@ export function TopUtilityBar({ userName, userFullName, userDepartment }: TopUti
         <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" />
         <UserAvatar
           name={userFullName ?? userName ?? '?'}
-          department={userDepartment}
+          departmentColorKey={userDepartment}
           size="sm"
           shape="rounded"
           style={{ cursor: 'pointer' }}

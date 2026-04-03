@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import Image from 'next/image';
-import { font, color, border } from '@/lib/tokens';
-import { getDepartmentColors } from '@/lib/department-colors';
+import { font, color, border, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -10,8 +9,9 @@ type AvatarSize = 'sm' | 'md' | 'lg';
 interface UserAvatarProps {
   /** Full name — used to derive initials */
   name: string;
-  /** Department name — drives avatar color via department color map */
-  department?: string | null;
+  /** Department color key — stored on `departments.color` DB column (e.g. 'blue', 'green').
+   *  Unknown keys fall back to blue. @deprecated pass `departmentColorKey` instead of a name string. */
+  departmentColorKey?: string | null;
   /** Optional image URL (takes priority over initials) */
   avatarUrl?: string | null;
   /** Size variant */
@@ -54,7 +54,7 @@ function getInitials(name: string): string {
  */
 export function UserAvatar({
   name,
-  department,
+  departmentColorKey,
   avatarUrl,
   size = 'md',
   shape = 'circle',
@@ -66,8 +66,8 @@ export function UserAvatar({
   let bg: string;
   let fg: string;
 
-  if (department) {
-    const deptColors = getDepartmentColors(department);
+  if (departmentColorKey) {
+    const deptColors = departmentColor(departmentColorKey);
     bg = deptColors.light;
     fg = deptColors.text;
   } else {

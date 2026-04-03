@@ -177,10 +177,10 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
 
   return (
     <svg width={size} height={size} style={{ display: 'block' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--background-muted)" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color.background.muted} strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="var(--background-brand-primary)" strokeWidth={stroke}
+        stroke={color.background.brandPrimary} strokeWidth={stroke}
         strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
@@ -247,7 +247,7 @@ export default function DashboardPage() {
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-              <Icon icon={icon.priorityCritical} style={{ color: color.department.red.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Overdue Tasks</h2>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {OVERDUE_TASKS.length}
@@ -285,7 +285,7 @@ export default function DashboardPage() {
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-              <Icon icon={icon.circleCheck} style={{ color: color.department.green.base, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
               <h2 style={cardTitleStyle}>Today&apos;s Progress</h2>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
             <ProgressRing pct={TODAY_PCT} />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.department.green.base }}>{TODAY_COMPLETED}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.green }}>{TODAY_COMPLETED}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
@@ -304,7 +304,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.department.red.base }}>{OVERDUE_TASKS.length}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.red }}>{OVERDUE_TASKS.length}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
               </div>
             </div>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
               return (
                 <li key={m.id} style={listItemStyle}>
                   <div style={listItemLeftStyle}>
-                    <UserAvatar name={fullName} department={m.department} size="sm" />
+                    <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{fullName}</div>
                       <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
@@ -374,7 +374,7 @@ export default function DashboardPage() {
                       <div style={listItemSubStyle}>{item.assignedTo} · {item.due}</div>
                     </div>
                   </div>
-                  <Badge status={badge.status} size="xs">{badge.label}</Badge>
+                  <Badge status={badge.status} size="sm">{badge.label}</Badge>
                 </li>
               );
             })}

@@ -6,7 +6,6 @@ import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { getDepartmentColors } from '@/lib/department-colors';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 
@@ -40,57 +39,59 @@ interface AssociatedRole {
   id: string;
   role: string;
   department: string;
+  departmentColor: string;
 }
 
 interface AssociatedDepartment {
   id: string;
   department: string;
+  departmentColor: string;
 }
 
 const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
   'Sarah Mitchell': [
-    { id: '1', role: 'Owner', department: 'Clinical' },
+    { id: '1', role: 'Owner', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Jessica Torres': [
-    { id: '2', role: 'Office Manager', department: 'Administration' },
+    { id: '2', role: 'Office Manager', department: 'Administration', departmentColor: 'gold' },
   ],
   'Amanda Chen': [
-    { id: '3', role: 'Dental Hygienist', department: 'Clinical' },
+    { id: '3', role: 'Dental Hygienist', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Marcus Williams': [
-    { id: '4', role: 'Dental Hygienist', department: 'Clinical' },
+    { id: '4', role: 'Dental Hygienist', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Emily Rivera': [
-    { id: '5', role: 'Dental Assistant', department: 'Clinical' },
+    { id: '5', role: 'Dental Assistant', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Tyler Nguyen': [
-    { id: '6', role: 'Dental Assistant', department: 'Sterilization' },
+    { id: '6', role: 'Dental Assistant', department: 'Sterilization', departmentColor: 'red' },
   ],
   'Rachel Foster': [
-    { id: '7', role: 'Receptionist', department: 'Front Desk' },
+    { id: '7', role: 'Receptionist', department: 'Front Desk', departmentColor: 'green' },
   ],
   'David Park': [
-    { id: '8', role: 'Treatment Coordinator', department: 'Front Desk' },
+    { id: '8', role: 'Treatment Coordinator', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Lisa Gomez': [
-    { id: '9', role: 'Insurance Coordinator', department: 'Front Desk' },
+    { id: '9', role: 'Insurance Coordinator', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Maintenance' },
+    { id: '10', role: 'Inventory Manager', department: 'Maintenance', departmentColor: 'purple' },
   ],
 };
 
 const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
-  'Sarah Mitchell': [{ id: '1', department: 'Clinical' }],
-  'Jessica Torres': [{ id: '2', department: 'Administration' }],
-  'Amanda Chen': [{ id: '3', department: 'Clinical' }],
-  'Marcus Williams': [{ id: '4', department: 'Clinical' }],
-  'Emily Rivera': [{ id: '5', department: 'Clinical' }],
-  'Tyler Nguyen': [{ id: '6', department: 'Sterilization' }],
-  'Rachel Foster': [{ id: '7', department: 'Front Desk' }],
-  'David Park': [{ id: '8', department: 'Front Desk' }],
-  'Lisa Gomez': [{ id: '9', department: 'Front Desk' }],
-  'Jordan Hayes': [{ id: '10', department: 'Maintenance' }],
+  'Sarah Mitchell': [{ id: '1', department: 'Clinical', departmentColor: 'blue' }],
+  'Jessica Torres': [{ id: '2', department: 'Administration', departmentColor: 'gold' }],
+  'Amanda Chen': [{ id: '3', department: 'Clinical', departmentColor: 'blue' }],
+  'Marcus Williams': [{ id: '4', department: 'Clinical', departmentColor: 'blue' }],
+  'Emily Rivera': [{ id: '5', department: 'Clinical', departmentColor: 'blue' }],
+  'Tyler Nguyen': [{ id: '6', department: 'Sterilization', departmentColor: 'red' }],
+  'Rachel Foster': [{ id: '7', department: 'Front Desk', departmentColor: 'green' }],
+  'David Park': [{ id: '8', department: 'Front Desk', departmentColor: 'green' }],
+  'Lisa Gomez': [{ id: '9', department: 'Front Desk', departmentColor: 'green' }],
+  'Jordan Hayes': [{ id: '10', department: 'Maintenance', departmentColor: 'purple' }],
 };
 
 // ─── Label lookups ──────────────────────────────────────────────────────────
@@ -116,7 +117,7 @@ const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: stri
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space } from '@/lib/tokens';
+import { font, color, gap, space, departmentColor } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
@@ -223,8 +224,8 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
               variant="role"
               name={r.role}
               subtitle={r.department}
-              departmentBg={getDepartmentColors(r.department).light}
-              departmentText={getDepartmentColors(r.department).text}
+              departmentBg={departmentColor(r.departmentColor).light}
+              departmentText={departmentColor(r.departmentColor).text}
             />
           ))}
         </div>
@@ -244,7 +245,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
               key={d.id}
               variant="department"
               name={d.department}
-              dotColor={getDepartmentColors(d.department).light}
+              dotColor={departmentColor(d.departmentColor).light}
             />
           ))}
         </div>

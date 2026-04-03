@@ -158,7 +158,7 @@ export function UsersTable() {
                 <TableRow key={m.id}>
                   <TableCell>
                     <div style={nameWrap}>
-                      <UserAvatar name={fullName} department={m.department} size="sm" />
+                      <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontFamily: font.family.label, fontWeight: font.weight.medium, color: color.text.primary, fontSize: font.size.label.md, lineHeight: font.lineHeight.snug }}>
                           {m.first_name} {m.last_name}

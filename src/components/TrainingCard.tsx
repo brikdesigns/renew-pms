@@ -4,8 +4,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
-import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, space, border, shadow, gap } from '@/lib/tokens';
+import { color, font, space, border, shadow, gap, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,6 +14,8 @@ export interface TrainingMember {
   role: string;
   department: string;
   employeeType: 'new' | 'maturing' | 'active';
+  /** DB-stored color key from departments.color (e.g. 'blue', 'green') */
+  departmentColor: string;
   /** 0–100 training completion percentage */
   progress: number;
   /** Total assigned training modules */
@@ -150,7 +151,7 @@ const viewBtnStyle: CSSProperties = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TrainingCard({ member }: { member: TrainingMember }) {
-  const deptColors = getDepartmentColors(member.department);
+  const deptColors = departmentColor(member.departmentColor);
   const typeTag = TYPE_TAG[member.employeeType] ?? TYPE_TAG.active;
 
   return (
@@ -158,7 +159,7 @@ export function TrainingCard({ member }: { member: TrainingMember }) {
       {/* Top row: avatar + name | View Details button */}
       <div style={topRowStyle}>
         <div style={personStyle}>
-          <UserAvatar name={member.name} department={member.department} size="lg" />
+          <UserAvatar name={member.name} departmentColorKey={member.departmentColor} size="lg" />
           <div>
             <div style={nameStyle}>{member.name}</div>
             <div style={roleStyle}>{member.role}</div>

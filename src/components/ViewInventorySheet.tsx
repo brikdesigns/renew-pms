@@ -4,11 +4,9 @@ import type { CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
-import { color, font, gap } from '@/lib/tokens';
+import { color, font, gap, departmentColor } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { getDepartmentColors } from '@/lib/department-colors';
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface InventoryViewData {
@@ -16,6 +14,8 @@ export interface InventoryViewData {
   name: string;
   status: string;
   department: string;
+  /** DB-stored color key from departments.color */
+  departmentColor: string;
   description: string;
   type: string;
   company: string;
@@ -57,7 +57,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
   if (!item) return null;
 
   const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.Active;
-  const deptColors = getDepartmentColors(item.department);
+  const deptColors = departmentColor(item.departmentColor);
 
   return (
     <Sheet
