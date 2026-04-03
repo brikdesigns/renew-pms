@@ -103,4 +103,35 @@ if [ -n "$STAGED_SRC" ]; then
   fi
 fi
 
+# ── Client theme completeness ────────────────────────────────────────────────
+# When a theme CSS file is staged, verify all required font-family tokens are
+# explicitly defined. Missing tokens fall through to BDS Poppins defaults —
+# silent at dev time, broken at client theme runtime.
+STAGED_THEMES=$(git diff --cached --name-only --diff-filter=ACM -- 'src/styles/theme-*.css' || true)
+
+if [ -n "$STAGED_THEMES" ]; then
+  REQUIRED_FONT_TOKENS="font-family-heading font-family-display font-family-body font-family-label font-family-subtitle"
+  THEME_VIOLATIONS=""
+
+  for theme_file in $STAGED_THEMES; do
+    [ -f "$theme_file" ] || continue
+    for token in $REQUIRED_FONT_TOKENS; do
+      if ! grep -q "\-\-${token}:" "$theme_file"; then
+        THEME_VIOLATIONS="${THEME_VIOLATIONS}\n   [theme-completeness] --${token} missing from ${theme_file}"
+      fi
+    done
+  done
+
+  if [ -n "$THEME_VIOLATIONS" ]; then
+    echo ""
+    echo "⚠️  Client theme completeness violations:"
+    echo -e "$THEME_VIOLATIONS"
+    echo ""
+    echo "   Every theme must explicitly define all 5 font-family tokens."
+    echo "   Missing tokens silently fall through to BDS Poppins defaults."
+    echo "   To bypass (not recommended): git commit --no-verify"
+    exit 1
+  fi
+fi
+
 echo "Pre-commit checks passed."
