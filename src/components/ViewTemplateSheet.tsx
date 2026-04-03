@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import {
-  Sheet, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -145,23 +143,6 @@ const rowStyle: CSSProperties = {
 const halfStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
-};
-
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
 };
 
 const taskItemStyle: CSSProperties = {

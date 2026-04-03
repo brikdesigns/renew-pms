@@ -126,23 +126,6 @@ const colorDot: CSSProperties = {
   flexShrink: 0,
 };
 
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
-};
-
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,

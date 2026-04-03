@@ -11,9 +11,6 @@ import { EditTeamSheet, type TeamFormData } from '@/components/EditTeamSheet';
 import { ViewTeamSheet, type TeamViewData } from '@/components/ViewTeamSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
 
-const TEXT_PRIMARY = color.text.primary;
-const TEXT_SECONDARY = color.text.secondary;
-
 // ─── Local type ──────────────────────────────────────────────────────────────
 
 interface TeamRow {
@@ -59,12 +56,6 @@ const countBadge: CSSProperties = {
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
-const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
-const statusWrap: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TeamsTable() {

@@ -50,7 +50,6 @@ export default async function AuthLayout({
 
   const { first_name, last_name, email, full_name } = authUser.profile;
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
-  const initials = getInitials(first_name, last_name, email);
   const userDepartment = authUser.membership?.department ?? null;
 
   return (
@@ -59,7 +58,7 @@ export default async function AuthLayout({
         <AppSidebar userRole={authUser.profile.system_role} />
         <div style={mainStyle}>
           <AuthLayoutInner
-            topBar={<TopUtilityBar userInitials={initials} userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} />}
+            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} />}
           >
             {children}
           </AuthLayoutInner>

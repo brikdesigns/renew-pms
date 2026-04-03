@@ -13,7 +13,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { Badge, Button, IconButton } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData } from '@/components/EditTemplateSheet';
-import { ViewTemplateSheet, type TemplateViewData } from '@/components/ViewTemplateSheet';
+import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Type display mapping ────────────────────────────────────────────────────

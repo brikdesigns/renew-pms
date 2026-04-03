@@ -8,7 +8,7 @@ import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetS
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font, gap, space, border } from '@/lib/tokens';
+import { color, font, gap, space } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -95,23 +95,6 @@ const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
-};
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,

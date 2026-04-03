@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import Image from 'next/image';
 import { font, color, border } from '@/lib/tokens';
 import { getDepartmentColors } from '@/lib/department-colors';
 
@@ -23,10 +24,10 @@ interface UserAvatarProps {
 
 // ─── Size map ────────────────────────────────────────────────────────────────
 
-const SIZE_MAP: Record<AvatarSize, { dimension: string; fontSize: string }> = {
-  sm: { dimension: '28px', fontSize: font.size.body.xs },
-  md: { dimension: '40px', fontSize: font.size.body.sm },
-  lg: { dimension: '48px', fontSize: font.size.body.md },
+const SIZE_MAP: Record<AvatarSize, { dimension: string; dimensionPx: number; fontSize: string }> = {
+  sm: { dimension: '28px', dimensionPx: 28, fontSize: font.size.body.xs },
+  md: { dimension: '40px', dimensionPx: 40, fontSize: font.size.body.sm },
+  lg: { dimension: '48px', dimensionPx: 48, fontSize: font.size.body.md },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ export function UserAvatar({
   shape = 'circle',
   style: styleProp,
 }: UserAvatarProps) {
-  const { dimension, fontSize } = SIZE_MAP[size];
+  const { dimension, dimensionPx, fontSize } = SIZE_MAP[size];
 
   // Resolve colors from department (or fall back to brand primary)
   let bg: string;
@@ -93,12 +94,14 @@ export function UserAvatar({
 
   if (avatarUrl) {
     return (
-      <img
+      <Image
         src={avatarUrl}
         alt={name}
+        width={dimensionPx}
+        height={dimensionPx}
         style={{
           ...baseStyle,
-          objectFit: 'cover' as const,
+          objectFit: 'cover',
         }}
       />
     );

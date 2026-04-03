@@ -92,7 +92,6 @@ const bellStyle: CSSProperties = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface TopUtilityBarProps {
-  userInitials?: string;
   userName?: string;
   /** Full name for avatar initials (e.g. "Sarah Mitchell") */
   userFullName?: string;
@@ -100,7 +99,7 @@ interface TopUtilityBarProps {
   userDepartment?: string | null;
 }
 
-export function TopUtilityBar({ userInitials, userName, userFullName, userDepartment }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment }: TopUtilityBarProps) {
   const pathname = usePathname();
   const pageLabel = getPageLabel(pathname);
 

@@ -127,7 +127,7 @@ const EMPTY_FORM: DepartmentFormData = {
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, space, border } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;

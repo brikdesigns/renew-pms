@@ -66,7 +66,7 @@ const errorStyle: CSSProperties = {
   padding: `${space.sm} ${space.md}`,
   fontSize: font.size.body.sm,
   fontFamily: font.family.body,
-  lineHeight: '1.5',
+  lineHeight: font.lineHeight.normal,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export default function LoginPage() {
     setError(null);
 
     const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });

@@ -239,7 +239,7 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
       setNewTask('');
       setActiveTab('details');
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, initialTasks]);
 
   const updateText = (field: keyof TemplateFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));

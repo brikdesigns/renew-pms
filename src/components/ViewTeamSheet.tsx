@@ -111,29 +111,12 @@ const SHIFT_LABELS: Record<string, string> = {
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, gap, space } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const dotBase: CSSProperties = {
-  width: gap.md,
-  height: gap.md,
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
-};
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,

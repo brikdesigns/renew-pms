@@ -11,7 +11,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, space, border } from '@/lib/tokens';
+import { font, color, space } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

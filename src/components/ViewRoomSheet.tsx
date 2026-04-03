@@ -1,9 +1,8 @@
 'use client';
 
-import type { CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
-import { color, font, gap, border } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 
@@ -42,24 +41,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 };
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
-
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
-};
-
 
 // ─── Component ──────────────────────────────────────────────────────────────
 

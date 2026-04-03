@@ -121,12 +121,11 @@ const menuStyle: CSSProperties = {
 // ─── ChipFilter (reusable chip + menu combo) ────────────────────────────────
 
 function ChipFilter({
-  label,
   options,
   selected,
   onChange,
 }: {
-  label: string;
+  label?: string; // reserved for future accessibility use
   options: readonly string[];
   selected: string;
   onChange: (value: string) => void;

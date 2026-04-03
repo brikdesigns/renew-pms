@@ -13,7 +13,6 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useMembers, type Member } from '@/hooks/useMembers';
 
-const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
 
 const SYSTEM_ROLE_LABELS: Record<string, string> = {

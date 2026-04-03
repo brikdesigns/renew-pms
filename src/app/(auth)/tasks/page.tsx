@@ -8,7 +8,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
-import { shadow, color, font, space, gap, border, departmentColor } from '@/lib/tokens';
+import { shadow, color, font, space, gap, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Mock task type ─────────────────────────────────────────────────────────

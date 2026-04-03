@@ -13,7 +13,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { Badge, Button, IconButton } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
-import { ViewRoomSheet, type RoomViewData } from '@/components/ViewRoomSheet';
+import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { SEED_ROOMS, type SeedRoom } from '@/lib/seed-rooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 
@@ -93,23 +93,6 @@ const typeChipStyle: CSSProperties = {
   fontSize: font.size.label.sm,
   fontWeight: font.weight.medium,
   color: color.text.secondary,
-};
-
-const statusDotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrapperStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
 };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
