@@ -26,80 +26,13 @@ export interface DepartmentFormData {
 interface EditDepartmentSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: DepartmentFormData | null;
+  initialData: DepartmentFormData & { id?: string } | null;
   onSave: (data: DepartmentFormData) => void | Promise<void>;
+  /** All practice roles — filtered to this dept inside the component */
+  roles: Role[];
+  /** All practice members — filtered to this dept inside the component */
+  members: Member[];
 }
-
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedRole {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface AssociatedUser {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-}
-
-const ROLES_BY_DEPT: Record<string, AssociatedRole[]> = {
-  Clinical: [
-    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist' },
-    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care' },
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization' },
-  ],
-  'Front Desk': [
-    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling' },
-    { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation' },
-    { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing' },
-  ],
-  Maintenance: [
-    { id: '8', name: 'Engineer', description: 'Equipment maintenance, IT systems' },
-    { id: '9', name: 'Inventory Manager', description: 'Supply ordering, stock tracking' },
-  ],
-  HR: [],
-  Administration: [
-    { id: '2', name: 'Office Manager', description: 'Daily operations and staff coordination' },
-  ],
-  Sterilization: [],
-  'All Departments': [
-    { id: '10', name: 'Manager', description: 'Cross-department management and oversight' },
-    { id: '11', name: 'Admin', description: 'Administrative access across the practice' },
-    { id: '12', name: 'Staff', description: 'General staff member' },
-  ],
-};
-
-const USERS_BY_DEPT: Record<string, AssociatedUser[]> = {
-  Clinical: [
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com' },
-    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com' },
-    { id: '4', name: 'Marcus Williams', role: 'Dental Hygienist', email: 'marcus@renewdental.com' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com' },
-  ],
-  'Front Desk': [
-    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com' },
-    { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com' },
-    { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com' },
-  ],
-  Maintenance: [
-    { id: '10', name: 'Jordan Hayes', role: 'Inventory Manager', email: 'jordan@renewdental.com' },
-  ],
-  HR: [
-    { id: '2', name: 'Jessica Torres', role: 'Office Manager', email: 'jessica@renewdental.com' },
-  ],
-  Administration: [
-    { id: '2', name: 'Jessica Torres', role: 'Office Manager', email: 'jessica@renewdental.com' },
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com' },
-  ],
-  Sterilization: [
-    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com' },
-  ],
-  'All Departments': [],
-};
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
@@ -128,6 +61,8 @@ const EMPTY_FORM: DepartmentFormData = {
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
 import { font, color, space, border } from '@/lib/tokens';
+import type { Role } from '@/hooks/useRoles';
+import type { Member } from '@/hooks/useMembers';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
@@ -158,7 +93,7 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: EditDepartmentSheetProps) {
+export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, roles: allRoles, members: allMembers }: EditDepartmentSheetProps) {
   const { showToast } = useToast();
   const [form, setForm] = useState<DepartmentFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -177,11 +112,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
     }
   }, [isOpen, initialData]);
 
-  const deptName = isEdit ? (initialData?.name ?? '') : form.name;
-  const allRoles = ROLES_BY_DEPT[deptName] ?? [];
-  const allUsers = USERS_BY_DEPT[deptName] ?? [];
-  const roles = allRoles.filter((r) => !removedRoleIds.has(r.id));
-  const users = allUsers.filter((u) => !removedUserIds.has(u.id));
+  // Filter real data to this department by ID; fall back to empty when adding new
+  const deptId = initialData?.id ?? '';
+  const roles = allRoles.filter((r) => r.department_id === deptId && !removedRoleIds.has(r.id));
+  const users = allMembers.filter((m) => m.department_id === deptId && !removedUserIds.has(m.id));
 
   const handleRemoveRole = (id: string, name: string) => {
     setRemovedRoleIds((prev) => new Set(prev).add(id));
@@ -282,6 +216,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
                 </TableCell>
               </TableRow>
             ))}
+
           </TableBody>
         </Table>
       )}
@@ -306,26 +241,29 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave }: Ed
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{u.name}</span>
-                </TableCell>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{u.role}</span>
-                </TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
-                    onClick={() => handleRemoveUser(u.id, u.name)}
-                    aria-label={`Remove ${u.name} from department`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {users.map((u) => {
+              const fullName = `${u.first_name} ${u.last_name}`.trim();
+              return (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{fullName}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{u.practice_role}</span>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      type="button"
+                      style={removeBtn}
+                      onClick={() => handleRemoveUser(u.id, fullName)}
+                      aria-label={`Remove ${fullName} from department`}
+                    >
+                      <Icon icon={icon.close} />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

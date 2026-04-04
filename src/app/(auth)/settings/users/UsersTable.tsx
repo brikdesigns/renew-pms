@@ -113,6 +113,7 @@ export function UsersTable() {
         system_role: viewing.system_role,
         practice_role: viewing.practice_role,
         department: viewing.department,
+        department_color: viewing.department_color,
         employee_type: viewing.employee_type,
         shift: viewing.shift,
         is_active: viewing.is_active,

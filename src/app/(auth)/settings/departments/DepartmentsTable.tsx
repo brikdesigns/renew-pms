@@ -12,6 +12,8 @@ import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewD
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import type { Department } from '@/hooks/useDepartments';
+import { useRoles } from '@/hooks/useRoles';
+import { useMembers } from '@/hooks/useMembers';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,8 @@ const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: b
 
 export function DepartmentsTable() {
   const { departments, setDepartments, loading } = useDepartments();
+  const { roles } = useRoles();
+  const { members } = useMembers();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
@@ -79,8 +83,8 @@ export function DepartmentsTable() {
     }
   };
 
-  const sheetData: DepartmentFormData | null = editing
-    ? { name: editing.name, color: editing.color, is_active: editing.is_active }
+  const sheetData = editing
+    ? { id: editing.id, name: editing.name, color: editing.color, is_active: editing.is_active }
     : null;
 
   return (
@@ -142,7 +146,14 @@ export function DepartmentsTable() {
         </Table>
       </div>
 
-      <EditDepartmentSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
+      <EditDepartmentSheet
+        isOpen={sheetOpen}
+        onClose={handleClose}
+        initialData={sheetData}
+        onSave={handleSave}
+        roles={roles}
+        members={members}
+      />
       <ViewDepartmentSheet
         isOpen={viewSheetOpen}
         onClose={handleViewClose}
@@ -155,6 +166,8 @@ export function DepartmentsTable() {
           member_count: viewing.member_count,
         } satisfies DepartmentViewData : null}
         onEdit={handleViewEdit}
+        roles={roles}
+        members={members}
       />
     </div>
   );

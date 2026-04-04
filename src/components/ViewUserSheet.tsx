@@ -20,6 +20,7 @@ export interface UserViewData {
   system_role: string;
   practice_role: string;
   department: string;
+  department_color: string;
   employee_type: string;
   shift: string;
   is_active: boolean;
@@ -33,66 +34,7 @@ interface ViewUserSheetProps {
   onEdit?: () => void;
 }
 
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedRole {
-  id: string;
-  role: string;
-  department: string;
-  departmentColor: string;
-}
-
-interface AssociatedDepartment {
-  id: string;
-  department: string;
-  departmentColor: string;
-}
-
-const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
-  'Sarah Mitchell': [
-    { id: '1', role: 'Owner', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Jessica Torres': [
-    { id: '2', role: 'Office Manager', department: 'Administration', departmentColor: 'gold' },
-  ],
-  'Amanda Chen': [
-    { id: '3', role: 'Dental Hygienist', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Marcus Williams': [
-    { id: '4', role: 'Dental Hygienist', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Emily Rivera': [
-    { id: '5', role: 'Dental Assistant', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Tyler Nguyen': [
-    { id: '6', role: 'Dental Assistant', department: 'Sterilization', departmentColor: 'red' },
-  ],
-  'Rachel Foster': [
-    { id: '7', role: 'Receptionist', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'David Park': [
-    { id: '8', role: 'Treatment Coordinator', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'Lisa Gomez': [
-    { id: '9', role: 'Insurance Coordinator', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Maintenance', departmentColor: 'purple' },
-  ],
-};
-
-const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
-  'Sarah Mitchell': [{ id: '1', department: 'Clinical', departmentColor: 'blue' }],
-  'Jessica Torres': [{ id: '2', department: 'Administration', departmentColor: 'gold' }],
-  'Amanda Chen': [{ id: '3', department: 'Clinical', departmentColor: 'blue' }],
-  'Marcus Williams': [{ id: '4', department: 'Clinical', departmentColor: 'blue' }],
-  'Emily Rivera': [{ id: '5', department: 'Clinical', departmentColor: 'blue' }],
-  'Tyler Nguyen': [{ id: '6', department: 'Sterilization', departmentColor: 'red' }],
-  'Rachel Foster': [{ id: '7', department: 'Front Desk', departmentColor: 'green' }],
-  'David Park': [{ id: '8', department: 'Front Desk', departmentColor: 'green' }],
-  'Lisa Gomez': [{ id: '9', department: 'Front Desk', departmentColor: 'green' }],
-  'Jordan Hayes': [{ id: '10', department: 'Maintenance', departmentColor: 'purple' }],
-};
+// (No mock data — roles and department are derived directly from the user prop)
 
 // ─── Label lookups ──────────────────────────────────────────────────────────
 
@@ -144,8 +86,15 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
   if (!user) return null;
 
   const fullName = `${user.first_name} ${user.last_name}`.trim();
-  const roles = ROLES_BY_USER[fullName] ?? [];
-  const departments = DEPARTMENTS_BY_USER[fullName] ?? [];
+
+  // A member has exactly one role (via practice_role_types) and one department
+  // (via that role's department_id). Shown as single-item lists in the tabs.
+  const roles = user.practice_role
+    ? [{ id: user.id, role: user.practice_role, department: user.department, departmentColor: user.department_color }]
+    : [];
+  const departments = user.department
+    ? [{ id: user.id, department: user.department, departmentColor: user.department_color }]
+    : [];
 
   const detailsContent = (
     <div style={sheetBodyStyle}>

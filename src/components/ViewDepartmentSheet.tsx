@@ -8,6 +8,8 @@ import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetS
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { departmentColor, color, font, gap, space, border } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
+import type { Role } from '@/hooks/useRoles';
+import type { Member } from '@/hooks/useMembers';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,78 +27,11 @@ interface ViewDepartmentSheetProps {
   onClose: () => void;
   department: DepartmentViewData | null;
   onEdit?: () => void;
+  /** All practice roles — filtered to this dept inside the component */
+  roles: Role[];
+  /** All practice members — filtered to this dept inside the component */
+  members: Member[];
 }
-
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedRole {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface AssociatedUser {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-}
-
-const ROLES_BY_DEPT: Record<string, AssociatedRole[]> = {
-  Clinical: [
-    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist' },
-    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care' },
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization' },
-  ],
-  'Front Desk': [
-    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling' },
-    { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation' },
-    { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing' },
-  ],
-  Maintenance: [
-    { id: '8', name: 'Engineer', description: 'Equipment maintenance, IT systems' },
-    { id: '9', name: 'Inventory Manager', description: 'Supply ordering, stock tracking' },
-  ],
-  HR: [],
-  Administration: [
-    { id: '2', name: 'Office Manager', description: 'Daily operations and staff coordination' },
-  ],
-  Sterilization: [],
-  'All Departments': [
-    { id: '10', name: 'Manager', description: 'Cross-department management and oversight' },
-    { id: '11', name: 'Admin', description: 'Administrative access across the practice' },
-    { id: '12', name: 'Staff', description: 'General staff member' },
-  ],
-};
-
-const USERS_BY_DEPT: Record<string, AssociatedUser[]> = {
-  Clinical: [
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com' },
-    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com' },
-    { id: '4', name: 'Marcus Williams', role: 'Dental Hygienist', email: 'marcus@renewdental.com' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com' },
-  ],
-  'Front Desk': [
-    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com' },
-    { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com' },
-    { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com' },
-  ],
-  Maintenance: [
-    { id: '10', name: 'Jordan Hayes', role: 'Inventory Manager', email: 'jordan@renewdental.com' },
-  ],
-  HR: [
-    { id: '2', name: 'Jessica Torres', role: 'Office Manager', email: 'jessica@renewdental.com' },
-  ],
-  Administration: [
-    { id: '2', name: 'Jessica Torres', role: 'Office Manager', email: 'jessica@renewdental.com' },
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com' },
-  ],
-  Sterilization: [
-    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com' },
-  ],
-  'All Departments': [],
-};
 
 // ─── Color label lookup ──────────────────────────────────────────────────────
 
@@ -137,13 +72,13 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: ViewDepartmentSheetProps) {
+export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit, roles: allRoles, members: allMembers }: ViewDepartmentSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
 
   if (!department) return null;
 
-  const roles = ROLES_BY_DEPT[department.name] ?? [];
-  const users = USERS_BY_DEPT[department.name] ?? [];
+  const roles = allRoles.filter((r) => r.department_id === department.id);
+  const users = allMembers.filter((m) => m.department_id === department.id);
   const colorLabel = COLOR_LABELS[department.color] ?? department.color;
 
   const detailsContent = (
@@ -213,9 +148,9 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit }: Vie
             <ProfileCard
               key={u.id}
               variant="user"
-              name={u.name}
+              name={`${u.first_name} ${u.last_name}`.trim()}
               subtitle={u.email}
-              role={u.role}
+              role={u.practice_role}
               department={department.name}
               departmentBg={departmentColor(department.color).light}
               departmentText={departmentColor(department.color).text}

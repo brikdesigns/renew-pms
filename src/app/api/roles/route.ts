@@ -36,7 +36,19 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Flatten the department join and compute member_count (0 until members are wired)
+  // Count members per role
+  const { data: memberData } = await supabase
+    .from('practice_members')
+    .select('practice_role_id')
+    .eq('practice_id', practiceId);
+
+  const roleCountMap: Record<string, number> = {};
+  for (const m of memberData ?? []) {
+    if (m.practice_role_id) {
+      roleCountMap[m.practice_role_id] = (roleCountMap[m.practice_role_id] ?? 0) + 1;
+    }
+  }
+
   const result = (data ?? []).map((r) => {
     const deptRaw = r.departments as { id: string; name: string; color: string } | { id: string; name: string; color: string }[] | null;
     const dept = Array.isArray(deptRaw) ? (deptRaw[0] ?? null) : deptRaw;
@@ -50,7 +62,7 @@ export async function GET() {
       department_id: r.department_id,
       department: dept?.name ?? '',
       department_color: dept?.color ?? '',
-      member_count: 0,
+      member_count: roleCountMap[r.id] ?? 0,
     };
   });
 

@@ -51,50 +51,6 @@ const TYPE_LABELS: Record<string, string> = {
   skill_training: 'Skill Training',
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  cleaning: 'Cleaning',
-  equipment: 'Equipment',
-  maintenance: 'Maintenance',
-  compliance_safety: 'Compliance / Safety',
-  patient_care: 'Patient Care',
-  training: 'Training',
-  administrative: 'Administrative',
-};
-
-const FREQUENCY_LABELS: Record<string, string> = {
-  none: '—',
-  daily: 'Daily',
-  weekly: 'Weekly',
-  bi_weekly: 'Bi-Weekly',
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  semi_annually: 'Semi-Annually',
-  annually: 'Annually',
-  per_shift: 'Per Shift',
-  custom: 'Custom',
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  all_staff: 'All Staff',
-  owner: 'Owner / Dentist',
-  office_manager: 'Office Manager',
-  dental_hygienist: 'Dental Hygienist',
-  dental_assistant: 'Dental Assistant',
-  receptionist: 'Receptionist',
-  supply_manager: 'Supply Manager',
-};
-
-const DEPARTMENT_LABELS: Record<string, string> = {
-  '': '—',
-  clinical: 'Clinical',
-  front_desk: 'Front Desk',
-  administration: 'Administration',
-  sterilization: 'Sterilization',
-  hr: 'HR',
-  all_departments: 'All Departments',
-  global: 'All Departments',
-};
-
 const PRIORITY_MAP: Record<string, { status: 'error' | 'warning' | 'info'; label: string }> = {
   critical: { status: 'error', label: 'Critical' },
   high: { status: 'error', label: 'High' },
@@ -108,29 +64,6 @@ const STATUS_MAP: Record<string, { badge: 'positive' | 'warning' | 'error'; labe
   archived: { badge: 'error', label: 'Archived' },
 };
 
-const ROOM_LABELS: Record<string, string> = {
-  '': '—',
-  operatory: 'Operatory',
-  sterilization_room: 'Sterilization Room',
-  xray_room: 'X-Ray Room',
-  lab: 'Lab',
-  front_office: 'Front Office',
-  lobby: 'Lobby',
-  waiting_area: 'Waiting Area',
-  break_room: 'Break Room',
-  supply_storage: 'Supply / Storage',
-  restroom: 'Restroom',
-};
-
-const COMPLIANCE_LABELS: Record<string, string> = {
-  '': '—',
-  osha: 'OSHA',
-  hipaa: 'HIPAA',
-  infection_control: 'Infection Control',
-  radiation_safety: 'Radiation Safety',
-  fire_safety: 'Fire Safety',
-  emergency_preparedness: 'Emergency Preparedness',
-};
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -188,27 +121,27 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
           <ReadOnlyField label="Type" value={typeLabel} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Category" value={CATEGORY_LABELS[template.category] ?? template.category} />
+          <ReadOnlyField label="Category" value={template.category || '—'} />
         </div>
       </div>
 
       {template.compliance_type && (
-        <ReadOnlyField label="Compliance Type" value={COMPLIANCE_LABELS[template.compliance_type] ?? template.compliance_type} />
+        <ReadOnlyField label="Compliance Type" value={template.compliance_type} />
       )}
 
       <h3 style={sheetSectionTitle}>Assignment & Scheduling</h3>
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Assigned Role" value={ROLE_LABELS[template.assigned_role] ?? template.assigned_role} />
+          <ReadOnlyField label="Assigned Role" value={template.assigned_role || 'All Staff'} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Department" value={(DEPARTMENT_LABELS[template.department] ?? template.department) || '—'} />
+          <ReadOnlyField label="Department" value={template.department || '—'} />
         </div>
       </div>
 
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={FREQUENCY_LABELS[template.frequency] ?? template.frequency} />
+          <ReadOnlyField label="Frequency" value={template.frequency || '—'} />
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
@@ -230,7 +163,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         )}
         {template.room && (
           <div style={halfStyle}>
-            <ReadOnlyField label="Room" value={ROOM_LABELS[template.room] ?? template.room} />
+            <ReadOnlyField label="Room" value={template.room} />
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetS
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { color, font, gap, space, departmentColor } from '@/lib/tokens';
+import type { Member } from '@/hooks/useMembers';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,7 @@ export interface RoleViewData {
   id: string;
   name: string;
   department: string;
+  department_color: string;
   description: string;
   is_default: boolean;
   is_active: boolean;
@@ -26,74 +28,9 @@ interface ViewRoleSheetProps {
   onClose: () => void;
   role: RoleViewData | null;
   onEdit?: () => void;
+  /** All practice members — filtered to this role inside the component */
+  members: Member[];
 }
-
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedUser {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  departmentColor: string;
-}
-
-interface AssociatedDepartment {
-  id: string;
-  name: string;
-  departmentColor: string;
-}
-
-const USERS_BY_ROLE: Record<string, AssociatedUser[]> = {
-  Owner: [
-    { id: '1', name: 'Sarah Mitchell', email: 'sarah@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Office Manager': [
-    { id: '2', name: 'Jessica Torres', email: 'jessica@renewdental.com', department: 'Administration', departmentColor: 'gold' },
-  ],
-  'Dental Hygienist': [
-    { id: '3', name: 'Amanda Chen', email: 'amanda@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
-    { id: '4', name: 'Marcus Williams', email: 'marcus@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
-  ],
-  'Dental Assistant': [
-    { id: '5', name: 'Emily Rivera', email: 'emily@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
-    { id: '6', name: 'Tyler Nguyen', email: 'tyler@renewdental.com', department: 'Sterilization', departmentColor: 'red' },
-  ],
-  Receptionist: [
-    { id: '7', name: 'Rachel Foster', email: 'rachel@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'Treatment Coordinator': [
-    { id: '8', name: 'David Park', email: 'david@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'Insurance Coordinator': [
-    { id: '9', name: 'Lisa Gomez', email: 'lisa@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
-  ],
-  'Inventory Manager': [
-    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Maintenance', departmentColor: 'purple' },
-  ],
-  Engineer: [],
-  Manager: [],
-  Admin: [],
-  Staff: [],
-};
-
-const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
-  Owner: [{ id: '1', name: 'Clinical', departmentColor: 'blue' }],
-  'Office Manager': [{ id: '5', name: 'Administration', departmentColor: 'gold' }],
-  'Dental Hygienist': [{ id: '1', name: 'Clinical', departmentColor: 'blue' }],
-  'Dental Assistant': [
-    { id: '1', name: 'Clinical', departmentColor: 'blue' },
-    { id: '6', name: 'Sterilization', departmentColor: 'red' },
-  ],
-  Receptionist: [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
-  'Treatment Coordinator': [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
-  'Insurance Coordinator': [{ id: '2', name: 'Front Desk', departmentColor: 'green' }],
-  Engineer: [{ id: '3', name: 'Maintenance', departmentColor: 'purple' }],
-  'Inventory Manager': [{ id: '3', name: 'Maintenance', departmentColor: 'purple' }],
-  Manager: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
-  Admin: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
-  Staff: [{ id: '7', name: 'All Departments', departmentColor: 'blue' }],
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -108,13 +45,15 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetProps) {
+export function ViewRoleSheet({ isOpen, onClose, role, onEdit, members: allMembers }: ViewRoleSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
 
   if (!role) return null;
 
-  const users = USERS_BY_ROLE[role.name] ?? [];
-  const departments = DEPARTMENTS_BY_ROLE[role.name] ?? [];
+  const users = allMembers.filter((m) => m.practice_role_id === role.id);
+  const departments = role.department
+    ? [{ id: role.id, name: role.department, departmentColor: role.department_color }]
+    : [];
 
   const detailsContent = (
     <div style={sheetBodyStyle}>
@@ -147,12 +86,12 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
             <ProfileCard
               key={u.id}
               variant="user"
-              name={u.name}
+              name={`${u.first_name} ${u.last_name}`.trim()}
               subtitle={u.email}
               role={role.name}
               department={u.department}
-              departmentBg={departmentColor(u.departmentColor).light}
-              departmentText={departmentColor(u.departmentColor).text}
+              departmentBg={departmentColor(u.department_color).light}
+              departmentText={departmentColor(u.department_color).text}
             />
           ))}
         </div>

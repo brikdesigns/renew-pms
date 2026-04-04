@@ -12,28 +12,38 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
+import type { Room } from '@/hooks/useRooms';
+import type { EquipmentItem } from '@/hooks/useEquipment';
+import type { SupplyCategory } from '@/hooks/useSupplyCategories';
+import type { Department } from '@/hooks/useDepartments';
+import type { Role } from '@/hooks/useRoles';
+import type { TaskCategory } from '@/hooks/useTaskCategories';
+import type { ComplianceType } from '@/hooks/useComplianceTypes';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface TemplateFormData {
   name: string;
   type: string;
-  category: string;
+  task_category_id: string;
   frequency: string;
-  assigned_role: string;
-  department: string;
+  assigned_role_id: string;
+  department_id: string;
   priority: string;
   status: string;
   description: string;
   requires_approval: boolean;
   estimated_duration: string;
-  room: string;
-  compliance_type: string;
+  room_id: string;
+  compliance_type_id: string;
 }
 
-export interface TaskItem {
+export interface ChecklistItem {
   id: string;
   label: string;
+  room_id: string;
+  equipment_id: string;
+  supply_category_id: string;
 }
 
 interface EditTemplateSheetProps {
@@ -41,9 +51,16 @@ interface EditTemplateSheetProps {
   onClose: () => void;
   /** null = Add mode, object = Edit mode */
   initialData: TemplateFormData | null;
-  /** Existing tasks to load when editing */
-  initialTasks?: TaskItem[];
-  onSave: (data: TemplateFormData, tasks: TaskItem[]) => void;
+  initialItems?: ChecklistItem[];
+  onSave: (data: TemplateFormData, items: ChecklistItem[]) => Promise<void>;
+  // Reference data for selects — optional; defaults to empty (loading state)
+  rooms?: Room[];
+  equipment?: EquipmentItem[];
+  supplyCategories?: SupplyCategory[];
+  departments?: Department[];
+  roles?: Role[];
+  taskCategories?: TaskCategory[];
+  complianceTypes?: ComplianceType[];
 }
 
 // ─── Type metadata (drives titles + field visibility) ────────────────────────
@@ -57,8 +74,12 @@ const TYPE_LABELS: Record<string, string> = {
   skill_training: 'Training',
 };
 
-/** Which fields are relevant per type (from data point matrix in Notion) */
-const TYPE_FIELDS: Record<string, { room: boolean; frequency: boolean; compliance: boolean; approval: 'required' | 'optional' | false }> = {
+const TYPE_FIELDS: Record<string, {
+  room: boolean;
+  frequency: boolean;
+  compliance: boolean;
+  approval: 'required' | 'optional' | false;
+}> = {
   checklist:      { room: true,  frequency: true,  compliance: false, approval: 'optional' },
   procedure:      { room: true,  frequency: true,  compliance: false, approval: 'required' },
   compliance:     { room: true,  frequency: true,  compliance: true,  approval: 'required' },
@@ -67,114 +88,62 @@ const TYPE_FIELDS: Record<string, { room: boolean; frequency: boolean; complianc
   skill_training: { room: false, frequency: true,  compliance: false, approval: 'optional' },
 };
 
-// ─── Options ─────────────────────────────────────────────────────────────────
+// ─── Static options (enum fields — not user-renameable) ──────────────────────
 
 const TYPE_OPTIONS = [
-  { label: 'Checklist', value: 'checklist' },
-  { label: 'Procedure', value: 'procedure' },
-  { label: 'Compliance', value: 'compliance' },
-  { label: 'Request', value: 'request' },
-  { label: 'Onboarding', value: 'onboarding' },
-  { label: 'Skill Training', value: 'skill_training' },
-];
-
-const CATEGORY_OPTIONS = [
-  { label: 'Cleaning', value: 'cleaning' },
-  { label: 'Equipment', value: 'equipment' },
-  { label: 'Maintenance', value: 'maintenance' },
-  { label: 'Compliance / Safety', value: 'compliance_safety' },
-  { label: 'Patient Care', value: 'patient_care' },
-  { label: 'Training', value: 'training' },
-  { label: 'Administrative', value: 'administrative' },
+  { label: 'Checklist',     value: 'checklist' },
+  { label: 'Procedure',     value: 'procedure' },
+  { label: 'Compliance',    value: 'compliance' },
+  { label: 'Request',       value: 'request' },
+  { label: 'Onboarding',    value: 'onboarding' },
+  { label: 'Skill Training',value: 'skill_training' },
 ];
 
 const FREQUENCY_OPTIONS = [
-  { label: 'None', value: 'none' },
-  { label: 'Daily', value: 'daily' },
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Bi-Weekly', value: 'bi_weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Quarterly', value: 'quarterly' },
-  { label: 'Semi-Annually', value: 'semi_annually' },
-  { label: 'Annually', value: 'annually' },
-  { label: 'Per Shift', value: 'per_shift' },
-  { label: 'Custom', value: 'custom' },
-];
-
-const ROLE_OPTIONS = [
-  { label: 'All Staff', value: 'all_staff' },
-  { label: 'Owner / Dentist', value: 'owner' },
-  { label: 'Office Manager', value: 'office_manager' },
-  { label: 'Dental Hygienist', value: 'dental_hygienist' },
-  { label: 'Dental Assistant', value: 'dental_assistant' },
-  { label: 'Receptionist', value: 'receptionist' },
-  { label: 'Supply Manager', value: 'supply_manager' },
-];
-
-const DEPARTMENT_OPTIONS = [
-  { label: '—', value: '' },
-  { label: 'Clinical', value: 'clinical' },
-  { label: 'Front Desk', value: 'front_desk' },
-  { label: 'Administration', value: 'administration' },
-  { label: 'Sterilization', value: 'sterilization' },
-  { label: 'HR', value: 'hr' },
-  { label: 'All Departments', value: 'all_departments' },
+  { label: '—',            value: '' },
+  { label: 'Daily',        value: 'daily' },
+  { label: 'Weekly',       value: 'weekly' },
+  { label: 'Bi-Weekly',    value: 'bi_weekly' },
+  { label: 'Monthly',      value: 'monthly' },
+  { label: 'Quarterly',    value: 'quarterly' },
+  { label: 'Semi-Annually',value: 'semi_annually' },
+  { label: 'Annually',     value: 'annually' },
+  { label: 'Per Shift',    value: 'per_shift' },
+  { label: 'Custom',       value: 'custom' },
 ];
 
 const PRIORITY_OPTIONS = [
-  { label: 'Low', value: 'low' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'High', value: 'high' },
+  { label: 'Low',      value: 'low' },
+  { label: 'Medium',   value: 'medium' },
+  { label: 'High',     value: 'high' },
   { label: 'Critical', value: 'critical' },
 ];
 
 const STATUS_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Draft', value: 'draft' },
+  { label: 'Active',   value: 'active' },
+  { label: 'Draft',    value: 'draft' },
   { label: 'Archived', value: 'archived' },
 ];
 
-const COMPLIANCE_TYPE_OPTIONS = [
-  { label: '—', value: '' },
-  { label: 'OSHA', value: 'osha' },
-  { label: 'HIPAA', value: 'hipaa' },
-  { label: 'Infection Control', value: 'infection_control' },
-  { label: 'Radiation Safety', value: 'radiation_safety' },
-  { label: 'Fire Safety', value: 'fire_safety' },
-  { label: 'Emergency Preparedness', value: 'emergency_preparedness' },
-];
-
-const ROOM_OPTIONS = [
-  { label: '— (Not room-specific)', value: '' },
-  { label: 'Operatory', value: 'operatory' },
-  { label: 'Sterilization Room', value: 'sterilization_room' },
-  { label: 'X-Ray Room', value: 'xray_room' },
-  { label: 'Lab', value: 'lab' },
-  { label: 'Front Office', value: 'front_office' },
-  { label: 'Lobby', value: 'lobby' },
-  { label: 'Waiting Area', value: 'waiting_area' },
-  { label: 'Break Room', value: 'break_room' },
-  { label: 'Supply / Storage', value: 'supply_storage' },
-  { label: 'Restroom', value: 'restroom' },
-];
+// ─── Default form state ───────────────────────────────────────────────────────
 
 const EMPTY_FORM: TemplateFormData = {
   name: '',
   type: 'checklist',
-  category: 'cleaning',
+  task_category_id: '',
   frequency: 'daily',
-  assigned_role: 'all_staff',
-  department: '',
+  assigned_role_id: '',
+  department_id: '',
   priority: 'medium',
   status: 'draft',
   description: '',
   requires_approval: false,
   estimated_duration: '',
-  room: '',
-  compliance_type: '',
+  room_id: '',
+  compliance_type_id: '',
 };
 
-// ─── Inline styles ───────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const formRowStyle: React.CSSProperties = {
   display: 'flex',
@@ -187,39 +156,74 @@ const formRowHalf: React.CSSProperties = {
   minWidth: 0,
 };
 
-const taskListStyle: React.CSSProperties = {
+const itemListStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.md,
 };
 
-const taskItemStyle: React.CSSProperties = {
+const itemRowStyle: React.CSSProperties = {
+  borderRadius: border.radius.sm,
+  border: `${border.width.sm} solid ${color.border.muted}`,
+  backgroundColor: color.surface.primary,
+  overflow: 'hidden',
+};
+
+const itemMainRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
   padding: `${space.sm} ${space.md}`,
-  borderRadius: border.radius.sm,
-  border: `${border.width.sm} solid ${color.border.muted}`,
-  backgroundColor: color.surface.primary,
 };
 
+const itemContextRowStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: gap.md,
+  padding: `${space.xs} ${space.md} ${space.sm}`,
+  borderTop: `1px solid ${color.border.muted}`,
+  backgroundColor: color.surface.secondary,
+};
 
-const addTaskRowStyle: React.CSSProperties = {
+const contextSelectWrap: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+};
+
+const addItemRowStyle: React.CSSProperties = {
   display: 'flex',
   gap: gap.md,
   alignItems: 'flex-end',
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function hasContext(item: ChecklistItem) {
+  return !!(item.room_id || item.equipment_id || item.supply_category_id);
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, onSave }: EditTemplateSheetProps) {
+export function EditTemplateSheet({
+  isOpen,
+  onClose,
+  initialData,
+  initialItems,
+  onSave,
+  rooms = [],
+  equipment = [],
+  supplyCategories = [],
+  departments = [],
+  roles = [],
+  taskCategories = [],
+  complianceTypes = [],
+}: EditTemplateSheetProps) {
   const { showToast } = useToast();
   const [form, setForm] = useState<TemplateFormData>(EMPTY_FORM);
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [newTask, setNewTask] = useState('');
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [newItem, setNewItem] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
-  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const isEdit = initialData !== null;
   const typeLabel = TYPE_LABELS[form.type] ?? form.type;
@@ -229,50 +233,104 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
   useEffect(() => {
     if (isOpen) {
       setForm(initialData ?? EMPTY_FORM);
-      setTasks(initialTasks ?? []);
-      setNewTask('');
+      setItems(initialItems ?? []);
+      setNewItem('');
       setActiveTab('details');
+      // Auto-expand items that already have context set
+      const withContext = new Set(
+        (initialItems ?? []).filter(hasContext).map((i) => i.id)
+      );
+      setExpandedItems(withContext);
     }
-  }, [isOpen, initialData, initialTasks]);
+  }, [isOpen, initialData, initialItems]);
 
-  const updateText = (field: keyof TemplateFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const updateText = (field: keyof TemplateFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const updateSelect = (field: keyof TemplateFormData) =>
+    (e: React.ChangeEvent<HTMLSelectElement>) =>
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const toggleItemExpand = (id: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
-  const updateSelect = (field: keyof TemplateFormData) => (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const addItem = () => {
+    if (!newItem.trim()) return;
+    setItems((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), label: newItem.trim(), room_id: '', equipment_id: '', supply_category_id: '' },
+    ]);
+    setNewItem('');
   };
 
-  const addTask = () => {
-    if (!newTask.trim()) return;
-    setTasks((prev) => [...prev, { id: crypto.randomUUID(), label: newTask.trim() }]);
-    setNewTask('');
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
-  const removeTask = (id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+  const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i));
   };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-
     setSaving(true);
-
-    // TODO: Wire to Supabase insert/update on task_templates table
-    await new Promise((r) => setTimeout(r, 500));
-
-    onSave(form, tasks);
+    await onSave(form, items);
     setSaving(false);
     showToast({
       title: isEdit ? 'Template updated' : 'Template created',
-      description: isEdit
-        ? `${form.name} has been updated.`
-        : `${form.name} has been created.`,
+      description: isEdit ? `${form.name} has been updated.` : `${form.name} has been created.`,
       variant: 'success',
     });
     onClose();
   };
+
+  // ─── Reference select options ─────────────────────────────────────────────
+
+  const roomOptions = [
+    { label: '— Not room-specific', value: '' },
+    ...rooms.map((r) => ({ label: r.name, value: r.id })),
+  ];
+
+  const equipmentOptions = [
+    { label: '— Not equipment-specific', value: '' },
+    ...equipment.map((e) => ({ label: e.name, value: e.id })),
+  ];
+
+  const supplyCategoryOptions = [
+    { label: '— Not supply-related', value: '' },
+    ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
+  ];
+
+  const departmentOptions = [
+    { label: '—', value: '' },
+    ...departments.map((d) => ({ label: d.name, value: d.id })),
+  ];
+
+  const roleOptions = [
+    { label: 'All Staff', value: '' },
+    ...roles.map((r) => ({ label: r.name, value: r.id })),
+  ];
+
+  const categoryOptions = [
+    { label: '—', value: '' },
+    ...taskCategories.map((c) => ({ label: c.name, value: c.id })),
+  ];
+
+  const complianceOptions = [
+    { label: '—', value: '' },
+    ...complianceTypes.map((c) => ({ label: c.name, value: c.id })),
+  ];
+
+  // ─── Details tab ─────────────────────────────────────────────────────────
 
   const detailsContent = (
     <form id="edit-template-form" onSubmit={handleSave}>
@@ -313,9 +371,9 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
               <Select
                 label="Category"
                 size="sm"
-                options={CATEGORY_OPTIONS}
-                value={form.category}
-                onChange={updateSelect('category')}
+                options={categoryOptions}
+                value={form.task_category_id}
+                onChange={updateSelect('task_category_id')}
                 fullWidth
               />
             </div>
@@ -325,9 +383,9 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
             <Select
               label="Compliance Type"
               size="sm"
-              options={COMPLIANCE_TYPE_OPTIONS}
-              value={form.compliance_type}
-              onChange={updateSelect('compliance_type')}
+              options={complianceOptions}
+              value={form.compliance_type_id}
+              onChange={updateSelect('compliance_type_id')}
               fullWidth
             />
           )}
@@ -340,9 +398,9 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
               <Select
                 label="Assigned Role"
                 size="sm"
-                options={ROLE_OPTIONS}
-                value={form.assigned_role}
-                onChange={updateSelect('assigned_role')}
+                options={roleOptions}
+                value={form.assigned_role_id}
+                onChange={updateSelect('assigned_role_id')}
                 fullWidth
               />
             </div>
@@ -350,9 +408,9 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
               <Select
                 label="Department"
                 size="sm"
-                options={DEPARTMENT_OPTIONS}
-                value={form.department}
-                onChange={updateSelect('department')}
+                options={departmentOptions}
+                value={form.department_id}
+                onChange={updateSelect('department_id')}
                 fullWidth
               />
             </div>
@@ -397,11 +455,11 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
             {fields.room && (
               <div style={formRowHalf}>
                 <Select
-                  label="Room (optional)"
+                  label="Default Room (optional)"
                   size="sm"
-                  options={ROOM_OPTIONS}
-                  value={form.room}
-                  onChange={updateSelect('room')}
+                  options={roomOptions}
+                  value={form.room_id}
+                  onChange={updateSelect('room_id')}
                   fullWidth
                 />
               </div>
@@ -430,75 +488,110 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
     </form>
   );
 
-  const tasksContent = (
+  // ─── Items tab ────────────────────────────────────────────────────────────
+
+  const itemsContent = (
     <div style={sheetBodyStyle}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
-        <h3 style={sheetSectionTitle}>{form.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}</h3>
+        <h3 style={sheetSectionTitle}>
+          {form.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}
+        </h3>
         <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: 0 }}>
           {form.type === 'procedure'
             ? 'Add steps in order. Steps will be enforced sequentially.'
-            : `Add items that will appear when this ${typeLabel.toLowerCase()} is assigned.`}
+            : `Add items that will appear when this ${typeLabel.toLowerCase()} is assigned. Optionally connect each item to a room, equipment, or supply category.`}
         </p>
       </div>
 
-      <div style={addTaskRowStyle}>
+      <div style={addItemRowStyle}>
         <div style={{ flex: 1 }}>
           <TextInput
-            label="New Task Item"
+            label="New Item"
             size="sm"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
             placeholder="e.g. Check and refill hand sanitizer stations"
             fullWidth
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTask();
-              }
-            }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } }}
           />
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          type="button"
-          onClick={addTask}
-        >
+        <Button variant="primary" size="sm" type="button" onClick={addItem}>
           Add
         </Button>
       </div>
 
-      {tasks.length > 0 && (
-        <div style={{ ...taskListStyle, marginTop: gap.lg }}>
-          {tasks.map((task, idx) => (
-            <div
-              key={task.id}
-              style={{
-                ...taskItemStyle,
-                backgroundColor: hoveredTaskId === task.id ? color.surface.secondary : color.surface.primary,
-              }}
-              onMouseEnter={() => setHoveredTaskId(task.id)}
-              onMouseLeave={() => setHoveredTaskId(null)}
-            >
-              <span style={{ color: color.text.muted, fontSize: font.size.body.sm, minWidth: '24px' }}>
-                {idx + 1}.
-              </span>
-              <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
-                {task.label}
-              </span>
-              <IconButton
-                variant="ghost"
-                size="sm"
-                icon={<Icon icon={icon.remove} />}
-                label={`Remove ${task.label}`}
-                onClick={() => removeTask(task.id)}
-              />
-            </div>
-          ))}
+      {items.length > 0 && (
+        <div style={{ ...itemListStyle, marginTop: gap.lg }}>
+          {items.map((item, idx) => {
+            const isExpanded = expandedItems.has(item.id);
+            return (
+              <div key={item.id} style={itemRowStyle}>
+                {/* Main row */}
+                <div style={itemMainRowStyle}>
+                  <span style={{ color: color.text.muted, fontSize: font.size.body.sm, minWidth: '24px' }}>
+                    {idx + 1}.
+                  </span>
+                  <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
+                    {item.label}
+                  </span>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    icon={<Icon icon={icon.chevronDown} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }} />}
+                    label={isExpanded ? 'Hide context' : 'Add context (room, equipment, supply)'}
+                    onClick={() => toggleItemExpand(item.id)}
+                  />
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    icon={<Icon icon={icon.remove} />}
+                    label={`Remove ${item.label}`}
+                    onClick={() => removeItem(item.id)}
+                  />
+                </div>
+
+                {/* Context row — shown when expanded */}
+                {isExpanded && (
+                  <div style={itemContextRowStyle}>
+                    <div style={contextSelectWrap}>
+                      <Select
+                        label="Room"
+                        size="sm"
+                        options={roomOptions}
+                        value={item.room_id}
+                        onChange={(e) => updateItemContext(item.id, 'room_id', e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                    <div style={contextSelectWrap}>
+                      <Select
+                        label="Equipment"
+                        size="sm"
+                        options={equipmentOptions}
+                        value={item.equipment_id}
+                        onChange={(e) => updateItemContext(item.id, 'equipment_id', e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                    <div style={contextSelectWrap}>
+                      <Select
+                        label="Supply Category"
+                        size="sm"
+                        options={supplyCategoryOptions}
+                        value={item.supply_category_id}
+                        onChange={(e) => updateItemContext(item.id, 'supply_category_id', e.target.value)}
+                        fullWidth
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {tasks.length === 0 && (
+      {items.length === 0 && (
         <div style={{
           textAlign: 'center',
           padding: space.xl,
@@ -513,7 +606,7 @@ export function EditTemplateSheet({ isOpen, onClose, initialData, initialTasks, 
 
   const sheetTabs: SheetTab[] = [
     { id: 'details', label: 'Details', content: detailsContent },
-    { id: 'tasks', label: form.type === 'procedure' ? 'Steps' : 'Tasks', content: tasksContent },
+    { id: 'tasks', label: form.type === 'procedure' ? 'Steps' : 'Tasks', content: itemsContent },
   ];
 
   return (

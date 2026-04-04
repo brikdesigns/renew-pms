@@ -1,9 +1,12 @@
-/* BDS token layer — must come first */
-@import '../../brik-bds/tokens/fonts.css' layer(base);
-@import '../../brik-bds/tokens/figma-tokens.css' layer(base);
-@import '../../brik-bds/tokens/gap-fills.css' layer(base);
-/* Renew Dental brand override — after BDS so it wins */
-@import '../styles/theme-renew.css' layer(base);
+/* ── Layer order: later = higher cascade priority ── */
+@layer bds-tokens, bds-components, client-theme, client-overrides;
+
+/* BDS token layer */
+@import '../../brik-bds/tokens/fonts.css'        layer(bds-tokens);
+@import '../../brik-bds/tokens/figma-tokens.css'  layer(bds-tokens);
+@import '../../brik-bds/tokens/gap-fills.css'     layer(bds-tokens);
+/* Renew Dental brand override */
+@import '../styles/theme-renew.css' layer(client-theme);
 
 @import 'tailwindcss';
 
@@ -54,46 +57,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Tags and Badges: uppercase is a UI convention (not a Figma type style) ── */
-.bds-tag,
-.bds-badge {
-  text-transform: uppercase;
-}
-
-/* ── Board subtitles: token-driven casing + fix BDS Board.css body→label font ── */
-.bds-board-header__subtitle,
-.bds-board-card__subtitle {
-  text-transform: var(--text-transform-label);
-  font-family: var(--font-family-label);
-}
-
-/* ── Board overrides (neutral column backgrounds) ── */
-.bds-board-column .bds-avatar {
-  background-color: var(--dept-avatar-bg, var(--background-brand-primary));
-  color: var(--dept-avatar-color, var(--text-inverse));
-}
-
-/* Board header name + subtitle: font-family semantics are now correct in BDS.
- * Only color/opacity overrides needed here for Renew's neutral-column layout. */
-.bds-board-column .bds-board-header__name {
-  color: var(--text-primary);
-}
-
-.bds-board-column .bds-board-header__subtitle {
-  color: var(--text-secondary);
-  opacity: 1;
-}
-
-/* ── Sheet: top-align close button with heading ── */
-.bds-sheet__header,
-.bds-sheet__header-top {
-  align-items: flex-start;
-}
-
-.bds-sheet__close {
-  padding-top: 0;
-}
-
 @keyframes toast-slide-in {
   from {
     opacity: 0;
@@ -103,19 +66,6 @@ body {
     opacity: 1;
     transform: translateX(0);
   }
-}
-
-/*
- * Table/list cell link — hover turns brand-primary.
- * Apply className="cell-link" to any <a> inside a table cell or list row.
- */
-.cell-link {
-  color: var(--text-primary);
-  text-decoration: none;
-  transition: color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
-}
-.cell-link:hover {
-  color: var(--text-brand-primary);
 }
 
 /*
@@ -183,6 +133,70 @@ body {
     background-color: var(--surface-muted);
   }
 
+}
+
+@layer client-overrides {
+  /* Table header: white bg (BDS default is surface-secondary) */
+  .bds-table-head {
+    background-color: var(--background-primary);
+  }
+
+  /* Tags and Badges: uppercase is a UI convention (not a Figma type style) */
+  .bds-tag,
+  .bds-badge {
+    text-transform: uppercase;
+  }
+
+  /* Board subtitles: token-driven casing + fix BDS Board.css body→label font */
+  .bds-board-header__subtitle,
+  .bds-board-card__subtitle {
+    text-transform: var(--text-transform-label);
+    font-family: var(--font-family-label);
+  }
+
+  /* Board overrides (neutral column backgrounds) */
+  .bds-board-column .bds-avatar {
+    background-color: var(--dept-avatar-bg, var(--background-brand-primary));
+    color: var(--dept-avatar-color, var(--text-inverse));
+  }
+
+  /* Board header name + subtitle: color/opacity overrides for Renew's neutral-column layout */
+  .bds-board-column .bds-board-header__name {
+    color: var(--text-primary);
+  }
+
+  .bds-board-column .bds-board-header__subtitle {
+    color: var(--text-secondary);
+    opacity: 1;
+  }
+
+  /* Sheet: top-align close button with heading */
+  .bds-sheet__header,
+  .bds-sheet__header-top {
+    align-items: flex-start;
+  }
+
+  .bds-sheet__close {
+    padding-top: 0;
+  }
+
+  /*
+   * Table/list cell link — hover turns brand-primary.
+   * Apply className="cell-link" to any <a> inside a table cell or list row.
+   */
+  .cell-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
+  }
+  .cell-link:hover {
+    color: var(--text-brand-primary);
+  }
+
+  /* Select chevron: use primary text color instead of muted */
+  .bds-select-chevron {
+    color: var(--text-primary);
+  }
 }
 
 /* ── Settings sub-nav entrance animation ── */

@@ -4,8 +4,9 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, FilterButton } from '@bds/components';
 import { Tag } from '@bds/components';
+import type { FilterButtonOption } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
@@ -86,9 +87,10 @@ const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', fle
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  gap: gap.md,
 };
 
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
+const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 };
 
 const subHeaderTitleStyle: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
@@ -98,6 +100,8 @@ const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `${gap.tiny} ${gap.md}`, borderRadius: border.radius.xs,
 };
+
+const filterGroupStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
@@ -114,6 +118,26 @@ export function InventoryTable() {
   const [editing, setEditing] = useState<InventoryRow | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewing, setViewing] = useState<InventoryRow | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | undefined>();
+  const [filterType, setFilterType] = useState<string | undefined>();
+  const [filterCompany, setFilterCompany] = useState<string | undefined>();
+
+  const statusOptions: FilterButtonOption[] = Object.keys(STATUS_BADGE).map((k) => ({ id: k, label: STATUS_BADGE[k].label }));
+
+  const typeOptions: FilterButtonOption[] = [...new Set(items.map((i) => i.type).filter(Boolean))]
+    .sort()
+    .map((t) => ({ id: t, label: t }));
+
+  const companyOptions: FilterButtonOption[] = [...new Set(items.map((i) => i.company).filter(Boolean))]
+    .sort()
+    .map((c) => ({ id: c, label: c }));
+
+  const filteredItems = items.filter((i) => {
+    if (filterStatus && i.status !== filterStatus) return false;
+    if (filterType && i.type !== filterType) return false;
+    if (filterCompany && i.company !== filterCompany) return false;
+    return true;
+  });
 
   const handleAdd = () => { setEditing(null); setEditSheetOpen(true); };
   const handleEdit = (item: InventoryRow) => { setEditing(item); setEditSheetOpen(true); };
@@ -145,9 +169,32 @@ export function InventoryTable() {
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
           <h3 style={subHeaderTitleStyle}>Clinical Equipment</h3>
-          <span style={countBadge}>{items.length}</span>
+          <span style={countBadge}>{filteredItems.length}{filteredItems.length !== items.length && ` / ${items.length}`}</span>
         </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Item</Button>
+        <div style={filterGroupStyle}>
+          <FilterButton
+            label="Status"
+            size="sm"
+            options={statusOptions}
+            value={filterStatus}
+            onChange={setFilterStatus}
+          />
+          <FilterButton
+            label="Type"
+            size="sm"
+            options={typeOptions}
+            value={filterType}
+            onChange={setFilterType}
+          />
+          <FilterButton
+            label="Third-Party Company"
+            size="sm"
+            options={companyOptions}
+            value={filterCompany}
+            onChange={setFilterCompany}
+          />
+          <Button variant="primary" size="sm" onClick={handleAdd}>Add Item</Button>
+        </div>
       </div>
 
       <div style={tableWrap}>
@@ -164,7 +211,14 @@ export function InventoryTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => {
+            {filteredItems.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                  No items match the selected filters.
+                </TableCell>
+              </TableRow>
+            )}
+            {filteredItems.map((item) => {
               const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.Active;
               const deptColors = departmentColor(item.departmentColor);
               return (

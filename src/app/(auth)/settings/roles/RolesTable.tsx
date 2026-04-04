@@ -12,6 +12,7 @@ import { ViewRoleSheet, type RoleViewData } from '@/components/ViewRoleSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useRoles } from '@/hooks/useRoles';
 import type { Role } from '@/hooks/useRoles';
+import { useMembers } from '@/hooks/useMembers';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 
 export function RolesTable() {
   const { roles, setRoles, loading } = useRoles();
+  const { members } = useMembers();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Role | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
@@ -76,7 +78,7 @@ export function RolesTable() {
     : null;
 
   const viewData: RoleViewData | null = viewing
-    ? { id: viewing.id, name: viewing.name, department: viewing.department, description: viewing.description, is_default: viewing.is_default, is_active: viewing.is_active, member_count: viewing.member_count }
+    ? { id: viewing.id, name: viewing.name, department: viewing.department, department_color: viewing.department_color, description: viewing.description, is_default: viewing.is_default, is_active: viewing.is_active, member_count: viewing.member_count }
     : null;
 
   return (
@@ -142,7 +144,7 @@ export function RolesTable() {
       </div>
 
       <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
-      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} />
+      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} />
     </div>
   );
 }

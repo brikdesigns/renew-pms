@@ -35,8 +35,22 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // member_count will be computed here once practice_members are wired
-  const result = (data ?? []).map((d) => ({ ...d, member_count: 0 }));
+  // Count members per department via their assigned role's department_id
+  const { data: memberRoles } = await supabase
+    .from('practice_members')
+    .select('practice_role_types!inner(department_id)')
+    .eq('practice_id', practiceId);
+
+  const deptCountMap: Record<string, number> = {};
+  for (const m of memberRoles ?? []) {
+    const deptRaw = m.practice_role_types as { department_id: string } | { department_id: string }[] | null;
+    const dept = Array.isArray(deptRaw) ? (deptRaw[0] ?? null) : deptRaw;
+    if (dept?.department_id) {
+      deptCountMap[dept.department_id] = (deptCountMap[dept.department_id] ?? 0) + 1;
+    }
+  }
+
+  const result = (data ?? []).map((d) => ({ ...d, member_count: deptCountMap[d.id] ?? 0 }));
   return NextResponse.json(result);
 }
 

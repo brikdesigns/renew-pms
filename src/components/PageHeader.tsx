@@ -6,19 +6,21 @@ import { font, color, gap, space } from '@/lib/tokens';
 
 // ─── Styles (all via BDS semantic tokens) ────────────────────────────────────
 
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.xl,
-  alignItems: 'flex-start',
-  justifyContent: 'center',
-  paddingTop: '40px',         // layout-specific: no BDS token (between space.xl=32px and space.huge=48px)
-  paddingBottom: '18px',      // layout-specific: no BDS token (between space.sm=12px and space.md=16px)
-  paddingInline: space.xl,
-  borderBottom: `1px solid ${color.border.muted}`,
-  width: '100%',
-  boxSizing: 'border-box',
-};
+function headerStyle(hasTabs: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: gap.xl,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingTop: '40px',          // layout-specific: no BDS token (between space.xl=32px and space.huge=48px)
+    paddingBottom: hasTabs ? 0 : '40px',
+    paddingInline: space.xl,
+    borderBottom: `1px solid ${color.border.primary}`,
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+}
 
 const topRowStyle: CSSProperties = {
   display: 'flex',
@@ -133,8 +135,9 @@ export function PageHeader({
   activeTab,
   onTabChange,
 }: PageHeaderProps) {
+  const hasTabs = Boolean(tabs && tabs.length > 0);
   return (
-    <header style={headerStyle}>
+    <header style={headerStyle(hasTabs)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav style={breadcrumbBarStyle} aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, i) => {

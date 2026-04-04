@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
-import { font, color, border, state, gap, space } from '@/lib/tokens';
+import { font, color, state, gap, space } from '@/lib/tokens';
 
 // ─── Styles (BDS tokens) ────────────────────────────────────────────────────
 
@@ -21,7 +21,6 @@ const subNavStyle: CSSProperties = {
   backgroundColor: color.surface.primary,
   borderRight: `1px solid ${color.border.primary}`,
   height: '100%',
-  paddingInline: space.sm,
   paddingTop: '113px',        // layout-specific: no BDS token (top bar 64px + visual offset)
   overflowY: 'auto',
   boxSizing: 'border-box',
@@ -48,7 +47,6 @@ function menuItemStyle(active: boolean, hovered: boolean): CSSProperties {
     paddingBlock: space.sm,
     paddingInline: space.sm,
     width: '100%',
-    borderRadius: border.radius.sm,
     backgroundColor,
     color: active ? color.text.onColorDark : hovered ? color.text.brand : color.text.primary,
     textDecoration: 'none',
