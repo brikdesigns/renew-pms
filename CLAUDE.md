@@ -139,7 +139,7 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@bds/components`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
 - **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
 - Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
-- Never edit BDS submodule files directly (`brik-bds/` inside this project). Always edit in `brik/brik-bds/`, push, merge, then run `./scripts/bds-sync.sh`.
+- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules > Submodule Discipline.
 
 ### Server vs client components
 
@@ -203,4 +203,4 @@ The audit catches 12 violation categories including native `<button>` elements, 
 - Always build locally before pushing
 - Stage specific files, never `git add -A`
 - Never push without user confirmation
-- BDS development in `GitHub/brik/brik-bds/`, not in the submodule
+- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules
