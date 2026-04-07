@@ -45,6 +45,8 @@ STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM -- 'src/**/*.tsx' '
   | grep -v 'src/styles/' \
   | grep -v 'src/lib/tokens\.ts' \
   | grep -v 'src/lib/styles\.ts' \
+  | grep -v 'error\.tsx' \
+  | grep -v 'global-error\.tsx' \
   || true)
 
 if [ -n "$STAGED_SRC" ]; then

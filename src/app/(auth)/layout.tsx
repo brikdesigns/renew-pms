@@ -49,7 +49,7 @@ export default async function AuthLayout({
         <AppSidebar userRole={authUser.profile.system_role} />
         <div style={mainStyle}>
           <AuthLayoutInner
-            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} />}
+            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} />}
           >
             {children}
           </AuthLayoutInner>

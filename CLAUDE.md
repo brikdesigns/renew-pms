@@ -52,7 +52,7 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 ### Enum fields (app logic depends on these)
 
 - `profiles.system_role` — `platform_admin | practice_admin | staff`
-- `practice_members.employee_type` — `new | maturing | active`
+- `practice_members.employee_type` — `new | maturing | proficient`
 - `tasks.status` — `not_started | in_progress | awaiting_approval | completed | blocked | skipped | overdue`
 - `tasks.priority` — `low | medium | high | critical`
 
@@ -79,6 +79,7 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 
 ## Integrations
 
+- **Sentry** — error tracking (client + server + edge), error boundaries (`global-error.tsx`, `error.tsx`), and in-app User Feedback via `FeedbackButton` in the utility bar. Init in `instrumentation-client.ts` (client) and `instrumentation.ts` (server). Free tier.
 - **Trainual** — staff training source of truth; API supports people management + assignment status only (cannot read/edit content). Key in `practices.integrations.trainual.api_key`.
 - **Google Drive** — practice files, SOPs. Folder ID in `practices.integrations.gdrive.folder_id`.
 
@@ -171,6 +172,7 @@ npm run db:seed-test-users  # Seed test user accounts
 ./scripts/agent-preflight.sh # Pre-task environment validation
 ./scripts/token-audit.sh     # Full token + component compliance scan
 ./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
+./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
 ./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
 ```
 

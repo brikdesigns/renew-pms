@@ -50,7 +50,7 @@ const SYSTEM_ROLE_OPTIONS = [
 const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
-  { label: 'Active', value: 'active' },
+  { label: 'Proficient', value: 'proficient' },
 ];
 
 const SHIFT_OPTIONS = [

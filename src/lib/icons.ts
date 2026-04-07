@@ -45,6 +45,7 @@ export const icon = {
   // UI chrome
   bell:         'ph:bell-fill',
   help:         'ph:question-fill',
+  feedback:     'ph:chat-teardrop-text-fill',
   power:        'ph:power-fill',
   moon:         'ph:moon-fill',
   sun:          'ph:sun-fill',

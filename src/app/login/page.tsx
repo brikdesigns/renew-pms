@@ -49,7 +49,7 @@ const logoStyle: CSSProperties = {
 const taglineStyle: CSSProperties = {
   fontFamily: font.family.body,
   fontSize: font.size.body.sm,
-  color: color.text.muted,
+  color: color.text.secondary,
   margin: 0,
 };
 
