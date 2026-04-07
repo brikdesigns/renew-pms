@@ -13,6 +13,7 @@ import {
 
 interface AccountSettingsClientProps {
   profile: ProfileFormData;
+  memberId: string | null;
   isAdmin: boolean;
 }
 
@@ -35,8 +36,9 @@ const SHIFT_LABELS: Record<string, string> = {
   full_day: 'Full Day',
 };
 
-export function AccountSettingsClient({ profile, isAdmin }: AccountSettingsClientProps) {
+export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSettingsClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState(profile);
 
   return (
     <>
@@ -50,29 +52,29 @@ export function AccountSettingsClient({ profile, isAdmin }: AccountSettingsClien
         {/* Contact Information */}
         <h2 style={sectionTitleStyle}>Contact Information</h2>
         <div style={rowStyle}>
-          <ReadOnlyField label="First Name" value={profile.first_name || null} />
-          <ReadOnlyField label="Last Name" value={profile.last_name || null} />
-          <ReadOnlyField label="Email" value={profile.email || null} />
+          <ReadOnlyField label="First Name" value={currentProfile.first_name || null} />
+          <ReadOnlyField label="Last Name" value={currentProfile.last_name || null} />
+          <ReadOnlyField label="Email" value={currentProfile.email || null} />
         </div>
 
         {/* User Information */}
         <h2 style={sectionTitleStyle}>User Information</h2>
         <div style={rowStyle}>
-          <ReadOnlyField label="Role" value={ROLE_LABELS[profile.system_role] ?? profile.system_role} />
-          <ReadOnlyField label="Practice Role" value={profile.practice_role || null} />
-          <ReadOnlyField label="Department" value={profile.department || null} />
+          <ReadOnlyField label="Role" value={ROLE_LABELS[currentProfile.system_role] ?? currentProfile.system_role} />
+          <ReadOnlyField label="Practice Role" value={currentProfile.practice_role || null} />
+          <ReadOnlyField label="Department" value={currentProfile.department || null} />
         </div>
         <div style={rowStyle}>
-          <ReadOnlyField label="Team" value={profile.team || null} />
-          <ReadOnlyField label="Organization" value={profile.organization || null} />
-          <ReadOnlyField label="Start Date" value={profile.start_date || null} />
+          <ReadOnlyField label="Team" value={currentProfile.team || null} />
+          <ReadOnlyField label="Organization" value={currentProfile.organization || null} />
+          <ReadOnlyField label="Start Date" value={currentProfile.start_date || null} />
         </div>
 
         {/* Status */}
         <h2 style={sectionTitleStyle}>Status</h2>
         <div style={rowStyle}>
-          <ReadOnlyField label="Employee Type" value={(STATUS_LABELS[profile.employee_type] ?? profile.employee_type) || null} />
-          <ReadOnlyField label="Shift" value={(SHIFT_LABELS[profile.shift] ?? profile.shift) || null} />
+          <ReadOnlyField label="Employee Type" value={(STATUS_LABELS[currentProfile.employee_type] ?? currentProfile.employee_type) || null} />
+          <ReadOnlyField label="Shift" value={(SHIFT_LABELS[currentProfile.shift] ?? currentProfile.shift) || null} />
           <EmptyField />
         </div>
 
@@ -88,8 +90,10 @@ export function AccountSettingsClient({ profile, isAdmin }: AccountSettingsClien
       <EditProfileSheet
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        initialData={profile}
+        initialData={currentProfile}
+        memberId={memberId}
         isAdmin={isAdmin}
+        onSaved={(updated) => setCurrentProfile(updated)}
       />
     </>
   );

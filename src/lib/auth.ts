@@ -47,8 +47,15 @@ export interface AuthUser {
   };
   /** Practice membership context (null if user has no practice membership) */
   membership: {
+    memberId: string;
+    practiceId: string;
     department: string | null;
     practice_role: string | null;
+    practice_role_id: string | null;
+    employee_type: string;
+    shift: string | null;
+    joined_at: string | null;
+    organization: string | null;
   } | null;
 }
 
@@ -76,29 +83,41 @@ export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser |
     return null;
   }
 
-  // Fetch practice membership with department (via role → department FK chain)
+  // Fetch practice membership with department, role, practice name
   const { data: memberRow } = await client
     .from('practice_members')
-    .select('practice_role_types(name, departments(name))')
+    .select(`
+      id, practice_id, practice_role_id, employee_type, shift, joined_at,
+      practice_role_types(name, departments(name)),
+      practices(name)
+    `)
     .eq('user_id', user.id)
     .eq('is_active', true)
     .limit(1)
     .maybeSingle();
 
   // Supabase returns nested FK joins as objects (single) or arrays (many).
-  // practice_role_types is a single FK, departments is a single FK off that.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const roleType = memberRow?.practice_role_types as any as
+  const roleType = (memberRow?.practice_role_types as any) as
     | { name: string; departments: { name: string } | null }
     | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const practice = (memberRow?.practices as any) as { name: string } | null;
 
   return {
     user,
     profile: profile as AuthUser['profile'],
     membership: memberRow
       ? {
+          memberId: memberRow.id,
+          practiceId: memberRow.practice_id,
           department: roleType?.departments?.name ?? null,
           practice_role: roleType?.name ?? null,
+          practice_role_id: memberRow.practice_role_id,
+          employee_type: memberRow.employee_type,
+          shift: memberRow.shift ?? null,
+          joined_at: memberRow.joined_at,
+          organization: practice?.name ?? null,
         }
       : null,
   };
