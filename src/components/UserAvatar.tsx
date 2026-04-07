@@ -4,7 +4,7 @@ import { font, color, border, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type AvatarSize = 'sm' | 'md' | 'lg';
+type AvatarSize = 'sm' | 'md' | 'lg' | 'button';
 
 interface UserAvatarProps {
   /** Full name — used to derive initials */
@@ -25,9 +25,11 @@ interface UserAvatarProps {
 // ─── Size map ────────────────────────────────────────────────────────────────
 
 const SIZE_MAP: Record<AvatarSize, { dimension: string; dimensionPx: number; fontSize: string }> = {
-  sm: { dimension: '28px', dimensionPx: 28, fontSize: font.size.body.xs },
-  md: { dimension: '40px', dimensionPx: 40, fontSize: font.size.body.sm },
-  lg: { dimension: '48px', dimensionPx: 48, fontSize: font.size.body.md },
+  sm:     { dimension: '28px', dimensionPx: 28, fontSize: font.size.body.xs },
+  md:     { dimension: '40px', dimensionPx: 40, fontSize: font.size.body.sm },
+  /** Matches sm IconButton min-height (44px) for table row alignment */
+  button: { dimension: '44px', dimensionPx: 44, fontSize: font.size.body.md },
+  lg:     { dimension: '48px', dimensionPx: 48, fontSize: font.size.body.md },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

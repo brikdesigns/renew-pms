@@ -1,13 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, gap, space } from '@/lib/tokens';
 import { IconButton } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
+import { FeedbackButton } from '@/components/FeedbackButton';
 
 // ─── Route label mapping ─────────────────────────────────────────────────────
 
@@ -71,20 +71,7 @@ const greetingStyle: CSSProperties = {
 const rightStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: space.sm,
-};
-
-const bellStyle: CSSProperties = {
-  width: '36px',
-  height: '36px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: border.radius.md,
-  backgroundColor: color.surface.secondary,
-  flexShrink: 0,
-  border: 'none',
-  cursor: 'pointer',
+  gap: gap.md,
 };
 
 // Avatar rendering moved to shared UserAvatar component
@@ -97,9 +84,10 @@ interface TopUtilityBarProps {
   userFullName?: string;
   /** Department name — drives avatar color */
   userDepartment?: string | null;
+  userEmail?: string;
 }
 
-export function TopUtilityBar({ userName, userFullName, userDepartment }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment, userEmail }: TopUtilityBarProps) {
   const pathname = usePathname();
   const pageLabel = getPageLabel(pathname);
 
@@ -114,14 +102,13 @@ export function TopUtilityBar({ userName, userFullName, userDepartment }: TopUti
         <span style={greetingStyle}>{greeting}, {displayName}</span>
       </div>
       <div style={rightStyle}>
-        <Link href="/guide" style={bellStyle} aria-label="Help & User Guide">
-          <Icon icon={icon.help} style={{ fontSize: font.size.body.md, color: color.text.primary }} />
-        </Link>
+        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.help} />} label="Help & User Guide" onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')} />
+        <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
         <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" />
         <UserAvatar
           name={userFullName ?? userName ?? '?'}
           departmentColorKey={userDepartment}
-          size="sm"
+          size="md"
           shape="rounded"
           style={{ cursor: 'pointer' }}
         />

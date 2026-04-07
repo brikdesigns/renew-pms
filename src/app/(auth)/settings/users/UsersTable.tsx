@@ -22,9 +22,9 @@ const SYSTEM_ROLE_LABELS: Record<string, string> = {
 };
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base,   color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base,   color: color.text.onColorDark, label: 'Maturing' },
-  active:   { bg: color.department.green.base,  color: color.text.onColorDark, label: 'Active' },
+  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
+  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
+  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ export function UsersTable() {
                 <TableRow key={m.id}>
                   <TableCell>
                     <div style={nameWrap}>
-                      <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
+                      <UserAvatar name={fullName} departmentColorKey={m.department_color} size="button" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontFamily: font.family.label, fontWeight: font.weight.medium, color: color.text.primary, fontSize: font.size.label.md, lineHeight: font.lineHeight.snug }}>
                           {m.first_name} {m.last_name}

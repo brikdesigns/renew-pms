@@ -24,15 +24,17 @@ const OVERDUE_TASKS = [
   { id: 't2', title: 'Verify operatory setup and readiness', assignee: 'Sarah Mitchell', dept: 'Clinical', priority: 'warning' as const },
 ];
 
-// ONBOARDING_MEMBERS sourced from useMembers() — filtered by employee_type !== 'active'
+// ONBOARDING_MEMBERS sourced from useMembers() — filtered by employee_type !== 'proficient'
 
-const DEPT_COMPLETION = [
-  { dept: 'Clinical', completed: 14, total: 22 },
-  { dept: 'Administration', completed: 4, total: 6 },
-  { dept: 'Front Desk', completed: 5, total: 9 },
-  { dept: 'Sterilization', completed: 2, total: 7 },
-  { dept: 'Maintenance', completed: 1, total: 3 },
-];
+// Mock task completion counts keyed by department name.
+// Replace with real aggregated task query once tasks are wired to the DB.
+const MOCK_DEPT_COMPLETION: Record<string, { completed: number; total: number }> = {
+  'Clinical':       { completed: 14, total: 22 },
+  'Administration': { completed: 4,  total: 6  },
+  'Front Desk':     { completed: 5,  total: 9  },
+  'Sterilization':  { completed: 2,  total: 7  },
+  'Maintenance':    { completed: 1,  total: 3  },
+};
 
 const COMPLIANCE_ITEMS = [
   { name: 'OSHA Safety Training', assignedTo: 'All Staff', due: 'Q2 2026', status: 'upcoming' as const },
@@ -48,8 +50,8 @@ const TODAY_PCT = Math.round((TODAY_COMPLETED / TODAY_TOTAL) * 100);
 // ─── Employee type tags (shared) ─────────────────────────────────────────────
 
 const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base, color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base, color: color.text.onColorDark, label: 'Maturing' },
+  new:      { bg: color.department.blue.base, color: color.text.inverse, label: 'New Hire' },
+  maturing: { bg: color.department.gold.base, color: color.text.inverse, label: 'Maturing' },
 };
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
@@ -203,7 +205,7 @@ function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey:
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
-      <div style={{ flex: 1, height: '28px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ flex: 1, height: '14px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
       </div>
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
@@ -229,7 +231,7 @@ export default function DashboardPage() {
 
   // Onboarding members: new hires and maturing staff (not yet fully active)
   const onboardingMembers = useMemo(
-    () => members.filter((m) => m.employee_type !== 'active' && m.is_active),
+    () => members.filter((m) => m.employee_type !== 'proficient' && m.is_active),
     [members]
   );
 
@@ -254,7 +256,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <Link href="/tasks" style={cardLinkStyle}>
-              View All <Icon icon={icon.arrowRight} style={{ fontSize: font.size.body.xs }} />
+              View All
             </Link>
           </div>
           <ul style={listStyle}>
@@ -309,12 +311,15 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          {/* Department bar chart */}
+          {/* Department bar chart — driven by departments from Settings */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.lg, flex: 1, justifyContent: 'space-between' }}>
             <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>By Department</span>
-            {DEPT_COMPLETION.map((d) => (
-              <DeptBar key={d.dept} dept={d.dept} colorKey={deptColorMap.get(d.dept) ?? 'blue'} completed={d.completed} total={d.total} />
-            ))}
+            {departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => {
+              const counts = MOCK_DEPT_COMPLETION[d.name] ?? { completed: 0, total: 0 };
+              return (
+                <DeptBar key={d.id} dept={d.name} colorKey={d.color} completed={counts.completed} total={counts.total} />
+              );
+            })}
           </div>
         </div>
 
@@ -323,7 +328,7 @@ export default function DashboardPage() {
           <div style={cardHeaderStyle}>
             <h2 style={cardTitleStyle}>Onboarding Status</h2>
             <Link href="/training" style={cardLinkStyle}>
-              View All <Icon icon={icon.arrowRight} style={{ fontSize: font.size.body.xs }} />
+              View All
             </Link>
           </div>
           <ul style={listStyle}>

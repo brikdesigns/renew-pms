@@ -52,9 +52,9 @@ const SHIFT_LABELS: Record<string, string> = {
 };
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
-  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
+  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
+  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
+  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
 };
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
@@ -138,8 +138,8 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
               Employee Type
             </span>
             <div style={{ display: 'inline-flex' }}>
-              <Tag size="sm" style={{ backgroundColor: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).bg, color: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).color }}>
-                {(EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).label}
+              <Tag size="sm" style={{ backgroundColor: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).bg, color: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).color }}>
+                {(EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).label}
               </Tag>
             </div>
           </div>

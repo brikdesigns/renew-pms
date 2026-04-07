@@ -21,7 +21,7 @@ const subNavStyle: CSSProperties = {
   backgroundColor: color.surface.primary,
   borderRight: `1px solid ${color.border.primary}`,
   height: '100%',
-  paddingTop: '113px',        // layout-specific: no BDS token (top bar 64px + visual offset)
+  paddingTop: space.md,
   overflowY: 'auto',
   boxSizing: 'border-box',
 };
@@ -44,7 +44,7 @@ function menuItemStyle(active: boolean, hovered: boolean): CSSProperties {
     display: 'flex',
     alignItems: 'center',
     gap: gap.md,
-    paddingBlock: space.sm,
+    height: '52px',
     paddingInline: space.sm,
     width: '100%',
     backgroundColor,

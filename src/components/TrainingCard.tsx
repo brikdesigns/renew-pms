@@ -13,7 +13,7 @@ export interface TrainingMember {
   name: string;
   role: string;
   department: string;
-  employeeType: 'new' | 'maturing' | 'active';
+  employeeType: 'new' | 'maturing' | 'proficient';
   /** DB-stored color key from departments.color (e.g. 'blue', 'green') */
   departmentColor: string;
   /** 0–100 training completion percentage */
@@ -29,9 +29,9 @@ export interface TrainingMember {
 // ─── Employee type tag colors ────────────────────────────────────────────────
 
 const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
-  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
+  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
+  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
+  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -152,7 +152,7 @@ const viewBtnStyle: CSSProperties = {
 
 export function TrainingCard({ member }: { member: TrainingMember }) {
   const deptColors = departmentColor(member.departmentColor);
-  const typeTag = TYPE_TAG[member.employeeType] ?? TYPE_TAG.active;
+  const typeTag = TYPE_TAG[member.employeeType] ?? TYPE_TAG.proficient;
 
   return (
     <div style={cardStyle(deptColors.light)}>

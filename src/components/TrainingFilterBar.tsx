@@ -4,12 +4,12 @@ import { useState, useMemo, type CSSProperties } from 'react';
 import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { space, gap } from '@/lib/tokens';
+import { gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type EmployeeTypeFilter = 'new' | 'maturing' | 'active';
+export type EmployeeTypeFilter = 'new' | 'maturing' | 'proficient';
 
 interface TrainingFilterBarProps {
   selectedDepartment: string;
@@ -23,8 +23,7 @@ interface TrainingFilterBarProps {
 const barStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-start',
-  padding: `${space.md} 0`,
+  justifyContent: 'flex-end',
   gap: gap.md,
 };
 
@@ -114,10 +113,10 @@ export function TrainingFilterBar({
         onChipClick={() => onToggleType('maturing')}
       />
       <Chip
-        label="Active"
-        variant={activeTypes.has('active') ? 'primary' : 'secondary'}
-        appearance={activeTypes.has('active') ? 'solid' : 'light'}
-        onChipClick={() => onToggleType('active')}
+        label="Proficient"
+        variant={activeTypes.has('proficient') ? 'primary' : 'secondary'}
+        appearance={activeTypes.has('proficient') ? 'solid' : 'light'}
+        onChipClick={() => onToggleType('proficient')}
       />
       <ChipFilter
         options={departmentOptions}

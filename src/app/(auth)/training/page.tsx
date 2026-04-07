@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';
-import { color, font, space, gap } from '@/lib/tokens';
+import { color, font, space, gap, border } from '@/lib/tokens';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -12,6 +12,39 @@ const pageStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.lg,
+};
+
+// Matches DepartmentsTable subHeaderStyle
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: `${space.md} 0`,
+  borderBottom: `1px solid ${color.border.muted}`,
+};
+
+const headerLeftStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: space.sm,
+};
+
+const titleStyle: React.CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
+  color: color.text.primary,
+  margin: 0,
+};
+
+const countBadgeStyle: React.CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
+  color: color.text.secondary,
+  backgroundColor: color.surface.secondary,
+  padding: `2px ${gap.md}`,
+  borderRadius: border.radius.sm,
 };
 
 const listStyle: React.CSSProperties = {
@@ -36,7 +69,6 @@ const emptyStyle: React.CSSProperties = {
 export default function TrainingPage() {
   const { members, loading } = useMembers();
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
-  // All type chips active by default — toggle individual types on/off
   const [activeTypes, setActiveTypes] = useState<Set<EmployeeTypeFilter>>(new Set());
 
   const toggleType = useCallback((type: EmployeeTypeFilter) => {
@@ -51,9 +83,6 @@ export default function TrainingPage() {
     });
   }, []);
 
-  // Map Member → TrainingMember.
-  // Training progress (totalModules, completedModules) will come from Trainual
-  // once that integration is connected. Placeholder 0 values for now.
   const trainingMembers = useMemo((): TrainingMember[] =>
     members
       .filter((m) => m.is_active)
@@ -63,7 +92,7 @@ export default function TrainingPage() {
         role:             m.practice_role,
         department:       m.department,
         departmentColor:  m.department_color,
-        employeeType:     (m.employee_type as EmployeeTypeFilter) ?? 'active',
+        employeeType:     (m.employee_type as EmployeeTypeFilter) ?? 'proficient',
         progress:         0,
         totalModules:     0,
         completedModules: 0,
@@ -78,9 +107,8 @@ export default function TrainingPage() {
       if (selectedDepartment !== 'All Departments' && m.department !== selectedDepartment) return false;
       return true;
     })
-    // Sort: new → maturing → active, then alphabetically
     .sort((a, b) => {
-      const order = { new: 0, maturing: 1, active: 2 };
+      const order = { new: 0, maturing: 1, proficient: 2 };
       const diff = order[a.employeeType] - order[b.employeeType];
       if (diff !== 0) return diff;
       return a.name.localeCompare(b.name);
@@ -90,12 +118,18 @@ export default function TrainingPage() {
 
   return (
     <div style={pageStyle}>
-      <TrainingFilterBar
-        selectedDepartment={selectedDepartment}
-        onDepartmentChange={setSelectedDepartment}
-        activeTypes={activeTypes}
-        onToggleType={toggleType}
-      />
+      <div style={headerStyle}>
+        <div style={headerLeftStyle}>
+          <h3 style={titleStyle}>Team Members</h3>
+          <span style={countBadgeStyle}>{loading ? '–' : filtered.length}</span>
+        </div>
+        <TrainingFilterBar
+          selectedDepartment={selectedDepartment}
+          onDepartmentChange={setSelectedDepartment}
+          activeTypes={activeTypes}
+          onToggleType={toggleType}
+        />
+      </div>
       <div style={listStyle}>
         {filtered.map((member) => (
           <TrainingCard key={member.id} member={member} />

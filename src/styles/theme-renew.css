@@ -137,6 +137,7 @@
   --font-family-display:  'Century Schoolbook', 'Georgia', serif;
   --font-family-body:     'Avenir', 'Avenir Next', system-ui, sans-serif;
   --font-family-label:    'Avenir', 'Avenir Next', system-ui, sans-serif;
+  --font-weight-label:    600;  /* semibold — Renew client preference */
   --font-family-subtitle: 'Avenir', 'Avenir Next', system-ui, sans-serif;
 
   /* ── Label casing ──────────────────────────────────────── */
@@ -303,7 +304,7 @@
 .theme-renew.dark {
 
   --surface-primary:              var(--color-pure-black);
-  --surface-secondary:            var(--color-grayscale-black);
+  --surface-secondary:            var(--color-grayscale-darkest);
   --surface-muted:                var(--color-grayscale-black);
   --surface-overlay:              var(--color-overlay-dark);
   --surface-navigation:           var(--color-pure-black);
@@ -326,9 +327,11 @@
   --background-brand-primary-hover:   var(--color-purple-lighter);
   --background-brand-primary-pressed: var(--color-purple-lightest);
 
-  --border-inverse: var(--color-pure-black);
-  --border-muted:   var(--color-grayscale-dark);
-  --border-input:   var(--color-grayscale-dark);
+  --border-primary:   var(--color-grayscale-dark);
+  --border-secondary: var(--color-grayscale-darkest);
+  --border-inverse:   var(--color-pure-black);
+  --border-muted:     var(--color-grayscale-dark);
+  --border-input:     var(--color-grayscale-dark);
 
   --text-primary:   var(--color-grayscale-white);
   --text-secondary: var(--color-grayscale-light);
@@ -341,6 +344,21 @@
   --page-muted:     var(--color-grayscale-black);
   --page-inverse:   var(--color-grayscale-white);
 
+  /* ── Department — backgrounds (dark: flip light→dark) ── */
+  --background-department-blue:         var(--color-brand-blue-lightest);
+  --background-department-blue-light:   var(--color-brand-blue-darkest);
+  --background-department-green:        var(--color-brand-green-lightest);
+  --background-department-green-light:  var(--color-brand-green-darkest);
+  --background-department-purple:       var(--color-purple-lighter);
+  --background-department-purple-light: var(--color-purple-darkest);
+  --background-department-gold:         var(--color-gold-lightest);
+  --background-department-gold-light:   var(--color-gold-darkest);
+  --background-department-red:          var(--color-brand-red-lightest);
+  --background-department-red-light:    var(--color-brand-red-darkest);
+  --background-department-taupe:        var(--color-taupe-lightest);
+  --background-department-taupe-light:  var(--color-taupe-darkest);
+
+  /* ── Department — text (dark: flip dark→light) ── */
   --text-department-blue:   var(--color-brand-blue-lightest);
   --text-department-green:  var(--color-brand-green-lightest);
   --text-department-purple: var(--color-purple-lighter);
@@ -348,6 +366,14 @@
   --text-department-red:    var(--color-brand-red-lightest);
   --text-department-taupe:  var(--color-taupe-lightest);
   --text-department-brown:  var(--color-brown-lightest);
+
+  /* ── Department — borders (dark: flip to lighter) ── */
+  --border-department-blue:   var(--color-brand-blue-lighter);
+  --border-department-green:  var(--color-brand-green-lighter);
+  --border-department-purple: var(--color-purple-lighter);
+  --border-department-gold:   var(--color-gold-lighter);
+  --border-department-red:    var(--color-brand-red-lighter);
+  --border-department-taupe:  var(--color-taupe-lighter);
 
   --box-shadow-sm: none;
   --box-shadow-md: none;
@@ -357,7 +383,7 @@
 @media (prefers-color-scheme: dark) {
   .theme-renew:not(.light) {
     --surface-primary:              var(--color-pure-black);
-    --surface-secondary:            var(--color-grayscale-black);
+    --surface-secondary:            var(--color-grayscale-darkest);
     --surface-muted:                var(--color-grayscale-black);
     --surface-overlay:              var(--color-overlay-dark);
     --surface-navigation:           var(--color-pure-black);
@@ -380,9 +406,11 @@
     --background-brand-primary-hover:   var(--color-purple-lighter);
     --background-brand-primary-pressed: var(--color-purple-lightest);
 
-    --border-inverse: var(--color-pure-black);
-    --border-muted:   var(--color-grayscale-dark);
-    --border-input:   var(--color-grayscale-dark);
+    --border-primary:   var(--color-grayscale-dark);
+    --border-secondary: var(--color-grayscale-darkest);
+    --border-inverse:   var(--color-pure-black);
+    --border-muted:     var(--color-grayscale-dark);
+    --border-input:     var(--color-grayscale-dark);
 
     --text-primary:   var(--color-grayscale-white);
     --text-secondary: var(--color-grayscale-light);
@@ -395,6 +423,21 @@
     --page-muted:     var(--color-grayscale-black);
     --page-inverse:   var(--color-grayscale-white);
 
+    /* ── Department — backgrounds (dark: flip light→dark) ── */
+    --background-department-blue:         var(--color-brand-blue-lightest);
+    --background-department-blue-light:   var(--color-brand-blue-darkest);
+    --background-department-green:        var(--color-brand-green-lightest);
+    --background-department-green-light:  var(--color-brand-green-darkest);
+    --background-department-purple:       var(--color-purple-lighter);
+    --background-department-purple-light: var(--color-purple-darkest);
+    --background-department-gold:         var(--color-gold-lightest);
+    --background-department-gold-light:   var(--color-gold-darkest);
+    --background-department-red:          var(--color-brand-red-lightest);
+    --background-department-red-light:    var(--color-brand-red-darkest);
+    --background-department-taupe:        var(--color-taupe-lightest);
+    --background-department-taupe-light:  var(--color-taupe-darkest);
+
+    /* ── Department — text (dark: flip dark→light) ── */
     --text-department-blue:   var(--color-brand-blue-lightest);
     --text-department-green:  var(--color-brand-green-lightest);
     --text-department-purple: var(--color-purple-lighter);
@@ -402,6 +445,14 @@
     --text-department-red:    var(--color-brand-red-lightest);
     --text-department-taupe:  var(--color-taupe-lightest);
     --text-department-brown:  var(--color-brown-lightest);
+
+    /* ── Department — borders (dark: flip to lighter) ── */
+    --border-department-blue:   var(--color-brand-blue-lighter);
+    --border-department-green:  var(--color-brand-green-lighter);
+    --border-department-purple: var(--color-purple-lighter);
+    --border-department-gold:   var(--color-gold-lighter);
+    --border-department-red:    var(--color-brand-red-lighter);
+    --border-department-taupe:  var(--color-taupe-lighter);
 
     --box-shadow-sm: none;
     --box-shadow-md: none;

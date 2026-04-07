@@ -17,9 +17,9 @@ import {
 // ─── Employee type tag colors (shared pattern) ──────────────────────────────
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
-  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
+  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
+  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
+  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
 };
 
 const SHIFT_LABELS: Record<string, string> = {
@@ -107,7 +107,7 @@ export default function TrainingDetailPage() {
 
   const fullName    = `${member.first_name} ${member.last_name}`.trim();
   const deptColors  = departmentColor(member.department_color);
-  const typeTag     = EMPLOYEE_TYPE_TAG[member.employee_type] ?? EMPLOYEE_TYPE_TAG.active;
+  const typeTag     = EMPLOYEE_TYPE_TAG[member.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient;
   const startDate   = member.joined_at ? new Date(member.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
 
   // Training progress — placeholder until Trainual integration is connected.

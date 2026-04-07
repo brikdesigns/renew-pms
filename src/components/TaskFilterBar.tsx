@@ -88,6 +88,7 @@ const chipGroupStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
+  flexWrap: 'wrap',
 };
 
 const datePickerStyle: CSSProperties = {
@@ -99,7 +100,7 @@ const datePickerStyle: CSSProperties = {
 
 const dateLabelStyle: CSSProperties = {
   fontFamily: font.family.body,
-  fontSize: font.size.body.lg,
+  fontSize: font.size.body.md,
   fontWeight: font.weight.bold,
   color: color.text.primary,
   whiteSpace: 'nowrap',
@@ -186,7 +187,7 @@ export function TaskFilterBar({
 }: TaskFilterBarProps) {
   const { departments } = useDepartments();
   const departmentOptions = useMemo(
-    () => ['All Departments', ...departments.filter((d) => d.is_active).map((d) => d.name)],
+    () => ['All Departments', ...departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => d.name)],
     [departments]
   );
 
@@ -197,9 +198,9 @@ export function TaskFilterBar({
     <div style={barStyle}>
       {/* Date navigation */}
       <div style={datePickerStyle}>
-        <IconButton variant="ghost" size="md" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
+        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
         <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
-        <IconButton variant="ghost" size="md" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
+        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
       </div>
 
       {/* Filter chips */}
