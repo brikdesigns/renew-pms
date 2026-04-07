@@ -1,16 +1,17 @@
 import type { CSSProperties } from 'react';
-import { font, color, border } from '@/lib/tokens';
-import { getDepartmentColors } from '@/lib/department-colors';
+import Image from 'next/image';
+import { font, color, border, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type AvatarSize = 'sm' | 'md' | 'lg';
+type AvatarSize = 'sm' | 'md' | 'lg' | 'button';
 
 interface UserAvatarProps {
   /** Full name — used to derive initials */
   name: string;
-  /** Department name — drives avatar color via department color map */
-  department?: string | null;
+  /** Department color key — stored on `departments.color` DB column (e.g. 'blue', 'green').
+   *  Unknown keys fall back to blue. @deprecated pass `departmentColorKey` instead of a name string. */
+  departmentColorKey?: string | null;
   /** Optional image URL (takes priority over initials) */
   avatarUrl?: string | null;
   /** Size variant */
@@ -23,10 +24,12 @@ interface UserAvatarProps {
 
 // ─── Size map ────────────────────────────────────────────────────────────────
 
-const SIZE_MAP: Record<AvatarSize, { dimension: string; fontSize: string }> = {
-  sm: { dimension: '28px', fontSize: font.size.body.xs },
-  md: { dimension: '40px', fontSize: font.size.body.sm },
-  lg: { dimension: '48px', fontSize: font.size.body.md },
+const SIZE_MAP: Record<AvatarSize, { dimension: string; dimensionPx: number; fontSize: string }> = {
+  sm:     { dimension: '28px', dimensionPx: 28, fontSize: font.size.body.xs },
+  md:     { dimension: '40px', dimensionPx: 40, fontSize: font.size.body.sm },
+  /** Matches sm IconButton min-height (44px) for table row alignment */
+  button: { dimension: '44px', dimensionPx: 44, fontSize: font.size.body.md },
+  lg:     { dimension: '48px', dimensionPx: 48, fontSize: font.size.body.md },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -53,20 +56,20 @@ function getInitials(name: string): string {
  */
 export function UserAvatar({
   name,
-  department,
+  departmentColorKey,
   avatarUrl,
   size = 'md',
   shape = 'circle',
   style: styleProp,
 }: UserAvatarProps) {
-  const { dimension, fontSize } = SIZE_MAP[size];
+  const { dimension, dimensionPx, fontSize } = SIZE_MAP[size];
 
   // Resolve colors from department (or fall back to brand primary)
   let bg: string;
   let fg: string;
 
-  if (department) {
-    const deptColors = getDepartmentColors(department);
+  if (departmentColorKey) {
+    const deptColors = departmentColor(departmentColorKey);
     bg = deptColors.light;
     fg = deptColors.text;
   } else {
@@ -93,12 +96,14 @@ export function UserAvatar({
 
   if (avatarUrl) {
     return (
-      <img
+      <Image
         src={avatarUrl}
         alt={name}
+        width={dimensionPx}
+        height={dimensionPx}
         style={{
           ...baseStyle,
-          objectFit: 'cover' as const,
+          objectFit: 'cover',
         }}
       />
     );

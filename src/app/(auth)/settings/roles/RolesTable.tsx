@@ -4,114 +4,81 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditRoleSheet, type RoleFormData } from '@/components/EditRoleSheet';
 import { ViewRoleSheet, type RoleViewData } from '@/components/ViewRoleSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
-
-// ─── Local type ──────────────────────────────────────────────────────────────
-
-interface RoleRow {
-  id: string;
-  name: string;
-  department: string;
-  description: string;
-  is_default: boolean;
-  is_active: boolean;
-  sort_order: number;
-  member_count: number;
-}
-
-// Seed data from schema: seed_practice_defaults
-const SEED_ROLES: RoleRow[] = [
-  { id: '1',  name: 'Owner',                 department: 'Clinical',       description: 'Practice owner / lead dentist', is_default: true, is_active: true, sort_order: 1,  member_count: 1 },
-  { id: '2',  name: 'Office Manager',        department: 'Administration', description: 'Oversees daily operations and staff coordination', is_default: true, is_active: true, sort_order: 2,  member_count: 1 },
-  { id: '3',  name: 'Dental Hygienist',      department: 'Clinical',       description: 'Patient cleanings, periodontal care, patient education', is_default: true, is_active: true, sort_order: 3,  member_count: 2 },
-  { id: '4',  name: 'Dental Assistant',       department: 'Clinical',       description: 'Chairside assistance, sterilization, patient prep', is_default: true, is_active: true, sort_order: 4,  member_count: 2 },
-  { id: '5',  name: 'Receptionist',           department: 'Front Desk',     description: 'Patient check-in, scheduling, phone management', is_default: true, is_active: true, sort_order: 5,  member_count: 1 },
-  { id: '6',  name: 'Treatment Coordinator',  department: 'Front Desk',     description: 'Treatment plan presentation and patient follow-up', is_default: true, is_active: true, sort_order: 6,  member_count: 1 },
-  { id: '7',  name: 'Insurance Coordinator',  department: 'Front Desk',     description: 'Claims processing, benefits verification, billing', is_default: true, is_active: true, sort_order: 7,  member_count: 1 },
-  { id: '8',  name: 'Engineer',               department: 'Engineering',    description: 'Equipment maintenance, IT systems, technical support', is_default: true, is_active: true, sort_order: 8,  member_count: 0 },
-  { id: '9',  name: 'Inventory Manager',      department: 'Engineering',    description: 'Supply ordering, stock tracking, vendor management', is_default: true, is_active: true, sort_order: 9,  member_count: 1 },
-  { id: '10', name: 'Manager',                department: 'All Departments', description: 'Cross-department management and oversight', is_default: true, is_active: true, sort_order: 10, member_count: 0 },
-  { id: '11', name: 'Admin',                  department: 'All Departments', description: 'Administrative access across the practice', is_default: true, is_active: true, sort_order: 11, member_count: 0 },
-  { id: '12', name: 'Staff',                  department: 'All Departments', description: 'General staff member', is_default: true, is_active: true, sort_order: 12, member_count: 0 },
-];
+import { useRoles } from '@/hooks/useRoles';
+import type { Role } from '@/hooks/useRoles';
+import { useMembers } from '@/hooks/useMembers';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
-
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.md, fontWeight: 600, color: color.text.primary, margin: 0,
+  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
+  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const addBtnStyle: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  height: '36px', paddingInline: '14px', borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 700,
-  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-};
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
-const actionBtn: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: border.radius.md,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
-};
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
-const dotBase: CSSProperties = { width: '8px', height: '8px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
-const statusWrap: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: gap.sm,
-  fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500,
-};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RolesTable() {
-  const [roles, setRoles] = useState<RoleRow[]>(SEED_ROLES);
+  const { roles, setRoles, loading } = useRoles();
+  const { members } = useMembers();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [editing, setEditing] = useState<RoleRow | null>(null);
+  const [editing, setEditing] = useState<Role | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
-  const [viewing, setViewing] = useState<RoleRow | null>(null);
+  const [viewing, setViewing] = useState<Role | null>(null);
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
-  const handleEdit = (r: RoleRow) => { setEditing(r); setSheetOpen(true); };
+  const handleEdit = (r: Role) => { setEditing(r); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleView = (r: RoleRow) => { setViewing(r); setViewSheetOpen(true); };
+  const handleView = (r: Role) => { setViewing(r); setViewSheetOpen(true); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
 
-  const handleSave = (data: RoleFormData) => {
+  const handleSave = async (data: RoleFormData) => {
     if (editing) {
-      setRoles((prev) => prev.map((r) =>
-        r.id === editing.id ? { ...r, ...data } : r
-      ));
+      const res = await fetch(`/api/roles/${editing.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const updated = await res.json() as Role;
+        setRoles((prev) => prev.map((r) => r.id === editing.id ? updated : r));
+      }
     } else {
-      setRoles((prev) => [...prev, {
-        id: crypto.randomUUID(), ...data, is_default: false,
-        sort_order: prev.length + 1, member_count: 0,
-      }]);
+      const res = await fetch('/api/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const created = await res.json() as Role;
+        setRoles((prev) => [...prev, created]);
+      }
     }
   };
 
   const sheetData: RoleFormData | null = editing
-    ? { name: editing.name, department: editing.department, description: editing.description, is_active: editing.is_active }
+    ? { name: editing.name, department_id: editing.department_id, description: editing.description, is_active: editing.is_active }
     : null;
 
   const viewData: RoleViewData | null = viewing
-    ? { id: viewing.id, name: viewing.name, department: viewing.department, description: viewing.description, is_default: viewing.is_default, is_active: viewing.is_active, member_count: viewing.member_count }
+    ? { id: viewing.id, name: viewing.name, department: viewing.department, department_color: viewing.department_color, description: viewing.description, is_default: viewing.is_default, is_active: viewing.is_active, member_count: viewing.member_count }
     : null;
 
   return (
@@ -119,9 +86,9 @@ export function RolesTable() {
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
           <h3 style={subHeaderTitleStyle}>Practice Roles</h3>
-          <span style={countBadge}>{roles.length}</span>
+          <span style={countBadge}>{loading ? '–' : roles.length}</span>
         </div>
-        <button style={addBtnStyle} onClick={handleAdd}>Add Role</button>
+        <Button variant="primary" size="sm" onClick={handleAdd}>Add Role</Button>
       </div>
 
       <div style={tableWrap}>
@@ -137,19 +104,25 @@ export function RolesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles.map((r) => (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                  Loading roles…
+                </TableCell>
+              </TableRow>
+            ) : roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.department}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.department}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.member_count}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.member_count}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {r.is_default ? 'Default' : 'Custom'}
                   </span>
                 </TableCell>
@@ -160,12 +133,8 @@ export function RolesTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <button style={actionBtn} onClick={() => handleView(r)} aria-label={`View ${r.name}`}>
-                      <Icon icon={icon.eye} />
-                    </button>
-                    <button style={actionBtn} onClick={() => handleEdit(r)} aria-label={`Edit ${r.name}`}>
-                      <Icon icon={icon.edit} />
-                    </button>
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -175,7 +144,7 @@ export function RolesTable() {
       </div>
 
       <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
-      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} />
+      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} />
     </div>
   );
 }

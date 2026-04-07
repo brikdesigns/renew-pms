@@ -1,16 +1,15 @@
 'use client';
 
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { getDepartmentColors } from '@/lib/department-colors';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
 import type { CSSProperties } from 'react';
-import { color, font } from '@/lib/tokens';
+import { color, font, gap, departmentColor } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +20,8 @@ export interface TaskViewData {
   taskType: string;
   due: string;
   dept: string;
+  /** DB-stored color key from departments.color */
+  deptColor: string;
   freq: string;
   priority: string;
   assignee: string;
@@ -53,7 +54,7 @@ const PRIORITY_DISPLAY: Record<string, { status: 'error' | 'warning' | 'info'; l
 
 const rowStyle: CSSProperties = {
   display: 'flex',
-  gap: '16px',
+  gap: gap.lg,
   width: '100%',
 };
 
@@ -65,7 +66,7 @@ const halfStyle: CSSProperties = {
 const tagRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: gap.md,
   flexWrap: 'wrap',
 };
 
@@ -84,15 +85,15 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
   if (!task) return null;
 
   const pri = PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info;
-  const deptColors = getDepartmentColors(task.dept);
+  const deptColors = departmentColor(task.deptColor);
 
   const sheetTitle = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>
       <span>{task.title}</span>
       <span style={{
         fontFamily: font.family.label,
-        fontSize: font.size.body.sm,
-        fontWeight: 400,
+        fontSize: font.size.label.sm,
+        fontWeight: font.weight.regular,
         color: color.text.secondary,
       }}>
         {task.templateName}
@@ -108,8 +109,8 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
       width="600px"
       side="right"
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
-        <button type="button" className="renew-btn renew-btn--primary">Task Complete</button>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+        <Button variant="primary" size="md" type="button">Task Complete</Button>
       </>}
     >
       <div style={sheetBodyStyle}>
@@ -144,8 +145,8 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
             <ReadOnlyField label="Task Type" value={TASK_TYPE_DISPLAY[task.taskType] ?? task.taskType} />
           </div>
           <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Department
               </span>
               <div style={tagRowStyle}>
@@ -174,8 +175,8 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
         {/* Status & Priority */}
         <div style={rowStyle}>
           <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Priority
               </span>
               <div style={{ display: 'inline-flex' }}>
@@ -184,8 +185,8 @@ export function ViewTaskSheet({ isOpen, onClose, task }: ViewTaskSheetProps) {
             </div>
           </div>
           <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
                 Status
               </span>
               <div style={{ display: 'inline-flex' }}>

@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from 'react';
 import {
-  Sheet, TextInput, Select,
+  Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, border } from '@/lib/tokens';
+import { font, color, space, gap } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useRoles } from '@/hooks/useRoles';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,7 @@ export interface UserFormData {
   email: string;
   phone: string;
   system_role: string;
+  practice_role_id: string | null;
   practice_role: string;
   department: string;
   employee_type: string;
@@ -35,67 +36,8 @@ interface EditUserSheetProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: UserFormData | null;
-  onSave: (data: UserFormData) => void;
+  onSave: (data: UserFormData) => void | Promise<void>;
 }
-
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedRole {
-  id: string;
-  role: string;
-  department: string;
-}
-
-interface AssociatedDepartment {
-  id: string;
-  department: string;
-}
-
-const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
-  'Sarah Mitchell': [
-    { id: '1', role: 'Owner', department: 'Clinical' },
-  ],
-  'Jessica Torres': [
-    { id: '2', role: 'Office Manager', department: 'Administration' },
-  ],
-  'Amanda Chen': [
-    { id: '3', role: 'Dental Hygienist', department: 'Clinical' },
-  ],
-  'Marcus Williams': [
-    { id: '4', role: 'Dental Hygienist', department: 'Clinical' },
-  ],
-  'Emily Rivera': [
-    { id: '5', role: 'Dental Assistant', department: 'Clinical' },
-  ],
-  'Tyler Nguyen': [
-    { id: '6', role: 'Dental Assistant', department: 'Sterilization' },
-  ],
-  'Rachel Foster': [
-    { id: '7', role: 'Receptionist', department: 'Front Desk' },
-  ],
-  'David Park': [
-    { id: '8', role: 'Treatment Coordinator', department: 'Front Desk' },
-  ],
-  'Lisa Gomez': [
-    { id: '9', role: 'Insurance Coordinator', department: 'Front Desk' },
-  ],
-  'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Engineering' },
-  ],
-};
-
-const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
-  'Sarah Mitchell': [{ id: '1', department: 'Clinical' }],
-  'Jessica Torres': [{ id: '2', department: 'Administration' }],
-  'Amanda Chen': [{ id: '3', department: 'Clinical' }],
-  'Marcus Williams': [{ id: '4', department: 'Clinical' }],
-  'Emily Rivera': [{ id: '5', department: 'Clinical' }],
-  'Tyler Nguyen': [{ id: '6', department: 'Sterilization' }],
-  'Rachel Foster': [{ id: '7', department: 'Front Desk' }],
-  'David Park': [{ id: '8', department: 'Front Desk' }],
-  'Lisa Gomez': [{ id: '9', department: 'Front Desk' }],
-  'Jordan Hayes': [{ id: '10', department: 'Engineering' }],
-};
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
@@ -105,37 +47,10 @@ const SYSTEM_ROLE_OPTIONS = [
   { label: 'Platform Admin', value: 'platform_admin' },
 ];
 
-const PRACTICE_ROLE_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Owner', value: 'Owner' },
-  { label: 'Office Manager', value: 'Office Manager' },
-  { label: 'Dental Hygienist', value: 'Dental Hygienist' },
-  { label: 'Dental Assistant', value: 'Dental Assistant' },
-  { label: 'Receptionist', value: 'Receptionist' },
-  { label: 'Treatment Coordinator', value: 'Treatment Coordinator' },
-  { label: 'Insurance Coordinator', value: 'Insurance Coordinator' },
-  { label: 'Engineer', value: 'Engineer' },
-  { label: 'Inventory Manager', value: 'Inventory Manager' },
-  { label: 'Manager', value: 'Manager' },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Staff', value: 'Staff' },
-];
-
-const DEPARTMENT_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Clinical', value: 'Clinical' },
-  { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
-  { label: 'HR', value: 'HR' },
-  { label: 'Administration', value: 'Administration' },
-  { label: 'Sterilization', value: 'Sterilization' },
-  { label: 'All Departments', value: 'All Departments' },
-];
-
 const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
-  { label: 'Active', value: 'active' },
+  { label: 'Proficient', value: 'proficient' },
 ];
 
 const SHIFT_OPTIONS = [
@@ -157,6 +72,7 @@ const EMPTY_FORM: UserFormData = {
   email: '',
   phone: '',
   system_role: 'staff',
+  practice_role_id: null,
   practice_role: '',
   department: '',
   employee_type: 'new',
@@ -166,25 +82,12 @@ const EMPTY_FORM: UserFormData = {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const formRowStyle: CSSProperties = { display: 'flex', gap: '16px', width: '100%' };
+const formRowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const formRowHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
-const removeBtn: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '28px',
-  height: '28px',
-  borderRadius: border.radius.sm,
-  backgroundColor: 'transparent',
-  color: color.system.red,
-  border: `1px solid ${color.system.red}`,
-  cursor: 'pointer',
-  fontSize: font.size.body.xs,
-};
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
   fontSize: font.size.body.sm,
   color: color.text.secondary,
@@ -198,8 +101,19 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const [form, setForm] = useState<UserFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
-  const [removedRoleIds, setRemovedRoleIds] = useState<Set<string>>(new Set());
-  const [removedDeptIds, setRemovedDeptIds] = useState<Set<string>>(new Set());
+
+  const { departments } = useDepartments();
+  const { roles } = useRoles();
+
+  const practiceRoleOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id })),
+  ], [roles]);
+
+  const departmentOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
+  ], [departments]);
 
   const isEdit = initialData !== null;
 
@@ -207,8 +121,6 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
     if (isOpen) {
       setForm(initialData ?? EMPTY_FORM);
       setActiveTab('details');
-      setRemovedRoleIds(new Set());
-      setRemovedDeptIds(new Set());
     }
   }, [isOpen, initialData]);
 
@@ -225,9 +137,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
     if (!form.first_name.trim() || !form.email.trim()) return;
 
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 500));
-
-    onSave(form);
+    await onSave(form);
     setSaving(false);
     const name = `${form.first_name} ${form.last_name}`.trim();
     showToast({
@@ -240,21 +150,13 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
 
   // ─── Associated data (edit mode only) ───────────────────────────────────
 
-  const userName = isEdit ? `${initialData?.first_name ?? ''} ${initialData?.last_name ?? ''}`.trim() : '';
-  const allRoles = ROLES_BY_USER[userName] ?? [];
-  const allDepts = DEPARTMENTS_BY_USER[userName] ?? [];
-  const roles = allRoles.filter((r) => !removedRoleIds.has(r.id));
-  const departments = allDepts.filter((d) => !removedDeptIds.has(d.id));
-
-  const handleRemoveRole = (id: string, name: string) => {
-    setRemovedRoleIds((prev) => new Set(prev).add(id));
-    showToast({ title: 'Role removed', description: `${name} removed from this user.`, variant: 'info' });
-  };
-
-  const handleRemoveDept = (id: string, name: string) => {
-    setRemovedDeptIds((prev) => new Set(prev).add(id));
-    showToast({ title: 'Department removed', description: `${name} removed from this user.`, variant: 'info' });
-  };
+  // Current role/dept derived from initialData (single assignment per member)
+  const assocRole = initialData?.practice_role
+    ? { id: initialData.practice_role_id ?? 'role', role: initialData.practice_role, department: initialData.department }
+    : null;
+  const assocDept = initialData?.department
+    ? { id: initialData.practice_role_id ?? 'dept', department: initialData.department }
+    : null;
 
   // ─── Tab content ────────────────────────────────────────────────────────
 
@@ -290,12 +192,12 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
               <Select label="System Role" size="sm" options={SYSTEM_ROLE_OPTIONS} value={form.system_role} onChange={updateSelect('system_role')} fullWidth />
             </div>
             <div style={formRowHalf}>
-              <Select label="Practice Role" size="sm" options={PRACTICE_ROLE_OPTIONS} value={form.practice_role} onChange={updateSelect('practice_role')} fullWidth />
+              <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role_id ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, practice_role_id: e.target.value || null }))} fullWidth />
             </div>
           </div>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <Select label="Department" size="sm" options={DEPARTMENT_OPTIONS} value={form.department} onChange={updateSelect('department')} fullWidth />
+              <Select label="Department" size="sm" options={departmentOptions} value={form.department} onChange={updateSelect('department')} fullWidth />
             </div>
             <div style={formRowHalf}>
               <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
@@ -322,38 +224,25 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const rolesContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Roles</h3>
-      {roles.length === 0 ? (
-        <p style={emptyState}>No roles assigned to this user.</p>
+      {!assocRole ? (
+        <p style={emptyState}>No role assigned to this user.</p>
       ) : (
         <Table size="default">
           <TableHeader>
             <TableRow>
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
-              <TableHead style={{ width: '50px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.role}</span>
-                </TableCell>
-                <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.department}</span>
-                </TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
-                    onClick={() => handleRemoveRole(r.id, r.role)}
-                    aria-label={`Remove ${r.role} from user`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
+            <TableRow key={assocRole.id}>
+              <TableCell>
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{assocRole.role}</span>
+              </TableCell>
+              <TableCell>
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{assocRole.department}</span>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       )}
@@ -366,34 +255,21 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const departmentsContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Departments</h3>
-      {departments.length === 0 ? (
-        <p style={emptyState}>No departments assigned to this user.</p>
+      {!assocDept ? (
+        <p style={emptyState}>No department assigned to this user.</p>
       ) : (
         <Table size="default">
           <TableHeader>
             <TableRow>
               <TableHead>Department</TableHead>
-              <TableHead style={{ width: '50px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {departments.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{d.department}</span>
-                </TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
-                    onClick={() => handleRemoveDept(d.id, d.department)}
-                    aria-label={`Remove ${d.department} from user`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
+            <TableRow key={assocDept.id}>
+              <TableCell>
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{assocDept.department}</span>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       )}
@@ -424,10 +300,10 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-user-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-user-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       {/* children only used in add mode (no tabs) */}

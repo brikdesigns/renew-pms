@@ -1,26 +1,15 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { space, gap } from '@/lib/tokens';
-
-// ─── Filter options ──────────────────────────────────────────────────────────
-
-const DEPARTMENTS = [
-  'All Departments',
-  'Clinical',
-  'Front Desk',
-  'Engineering',
-  'HR',
-  'Administration',
-  'Sterilization',
-] as const;
+import { gap } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type EmployeeTypeFilter = 'new' | 'maturing' | 'active';
+export type EmployeeTypeFilter = 'new' | 'maturing' | 'proficient';
 
 interface TrainingFilterBarProps {
   selectedDepartment: string;
@@ -34,8 +23,7 @@ interface TrainingFilterBarProps {
 const barStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-start',
-  padding: `${space.md} 0`,
+  justifyContent: 'flex-end',
   gap: gap.md,
 };
 
@@ -104,6 +92,12 @@ export function TrainingFilterBar({
   activeTypes,
   onToggleType,
 }: TrainingFilterBarProps) {
+  const { departments } = useDepartments();
+  const departmentOptions = useMemo(
+    () => ['All Departments', ...departments.filter((d) => d.is_active).map((d) => d.name)],
+    [departments]
+  );
+
   return (
     <div style={barStyle}>
       <Chip
@@ -119,13 +113,13 @@ export function TrainingFilterBar({
         onChipClick={() => onToggleType('maturing')}
       />
       <Chip
-        label="Active"
-        variant={activeTypes.has('active') ? 'primary' : 'secondary'}
-        appearance={activeTypes.has('active') ? 'solid' : 'light'}
-        onChipClick={() => onToggleType('active')}
+        label="Proficient"
+        variant={activeTypes.has('proficient') ? 'primary' : 'secondary'}
+        appearance={activeTypes.has('proficient') ? 'solid' : 'light'}
+        onChipClick={() => onToggleType('proficient')}
       />
       <ChipFilter
-        options={DEPARTMENTS}
+        options={departmentOptions}
         selected={selectedDepartment}
         onChange={onDepartmentChange}
       />

@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { getDepartmentColors } from '@/lib/department-colors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +34,7 @@ interface AssociatedRole {
   name: string;
   description: string;
   department: string;
+  departmentColor: string;
 }
 
 interface AssociatedUser {
@@ -43,60 +43,61 @@ interface AssociatedUser {
   role: string;
   email: string;
   department: string;
+  departmentColor: string;
 }
 
 const ROLES_BY_TEAM: Record<string, AssociatedRole[]> = {
   'Morning Crew': [
-    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist', department: 'Clinical' },
-    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical' },
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical' },
-    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk' },
+    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist', department: 'Clinical', departmentColor: 'blue' },
+    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical', departmentColor: 'blue' },
+    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical', departmentColor: 'blue' },
+    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Closing Crew': [
-    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical' },
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical' },
-    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk' },
+    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical', departmentColor: 'blue' },
+    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical', departmentColor: 'blue' },
+    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Clinical Team A': [
-    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist', department: 'Clinical' },
-    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical' },
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical' },
+    { id: '1', name: 'Owner', description: 'Practice owner / lead dentist', department: 'Clinical', departmentColor: 'blue' },
+    { id: '3', name: 'Dental Hygienist', description: 'Patient cleanings, periodontal care', department: 'Clinical', departmentColor: 'blue' },
+    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Front Desk Team': [
-    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk' },
-    { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation', department: 'Front Desk' },
-    { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing', department: 'Front Desk' },
+    { id: '5', name: 'Receptionist', description: 'Patient check-in, scheduling', department: 'Front Desk', departmentColor: 'green' },
+    { id: '6', name: 'Treatment Coordinator', description: 'Treatment plan presentation', department: 'Front Desk', departmentColor: 'green' },
+    { id: '7', name: 'Insurance Coordinator', description: 'Claims processing, billing', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Sterilization Team': [
-    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical' },
+    { id: '4', name: 'Dental Assistant', description: 'Chairside assistance, sterilization', department: 'Clinical', departmentColor: 'blue' },
   ],
 };
 
 const USERS_BY_TEAM: Record<string, AssociatedUser[]> = {
   'Morning Crew': [
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com', department: 'Clinical' },
-    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com', department: 'Clinical' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical' },
-    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk' },
+    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Closing Crew': [
-    { id: '4', name: 'Marcus Williams', role: 'Dental Hygienist', email: 'marcus@renewdental.com', department: 'Clinical' },
-    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com', department: 'Sterilization' },
-    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk' },
+    { id: '4', name: 'Marcus Williams', role: 'Dental Hygienist', email: 'marcus@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com', department: 'Sterilization', departmentColor: 'red' },
+    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Clinical Team A': [
-    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com', department: 'Clinical' },
-    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com', department: 'Clinical' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical' },
+    { id: '1', name: 'Sarah Mitchell', role: 'Owner', email: 'sarah@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '3', name: 'Amanda Chen', role: 'Dental Hygienist', email: 'amanda@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
+    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
   ],
   'Front Desk Team': [
-    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk' },
-    { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com', department: 'Front Desk' },
-    { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com', department: 'Front Desk' },
+    { id: '7', name: 'Rachel Foster', role: 'Receptionist', email: 'rachel@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
+    { id: '8', name: 'David Park', role: 'Treatment Coordinator', email: 'david@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
+    { id: '9', name: 'Lisa Gomez', role: 'Insurance Coordinator', email: 'lisa@renewdental.com', department: 'Front Desk', departmentColor: 'green' },
   ],
   'Sterilization Team': [
-    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com', department: 'Sterilization' },
-    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical' },
+    { id: '6', name: 'Tyler Nguyen', role: 'Dental Assistant', email: 'tyler@renewdental.com', department: 'Sterilization', departmentColor: 'red' },
+    { id: '5', name: 'Emily Rivera', role: 'Dental Assistant', email: 'emily@renewdental.com', department: 'Clinical', departmentColor: 'blue' },
   ],
 };
 
@@ -111,34 +112,17 @@ const SHIFT_LABELS: Record<string, string> = {
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, gap, space, departmentColor } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const dotBase: CSSProperties = {
-  width: gap.md,
-  height: gap.md,
-  borderRadius: '50%',
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
-};
-
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: TEXT_SECONDARY,
   textAlign: 'center',
 };
@@ -162,7 +146,7 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
       <ReadOnlyField label="Department" value={team.department || 'Cross-department'} />
       <ReadOnlyField label="Shift" value={team.shift ? (SHIFT_LABELS[team.shift] ?? team.shift) : null} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
@@ -188,8 +172,8 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
               variant="role"
               name={r.name}
               subtitle={r.description}
-              departmentBg={getDepartmentColors(r.department).light}
-              departmentText={getDepartmentColors(r.department).text}
+              departmentBg={departmentColor(r.departmentColor).light}
+              departmentText={departmentColor(r.departmentColor).text}
             />
           ))}
         </div>
@@ -212,8 +196,8 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
               subtitle={u.email}
               role={u.role}
               department={u.department}
-              departmentBg={getDepartmentColors(u.department).light}
-              departmentText={getDepartmentColors(u.department).text}
+              departmentBg={departmentColor(u.departmentColor).light}
+              departmentText={departmentColor(u.departmentColor).text}
             />
           ))}
         </div>
@@ -239,9 +223,9 @@ export function ViewTeamSheet({ isOpen, onClose, team, onEdit }: ViewTeamSheetPr
       onTabChange={setActiveTab}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

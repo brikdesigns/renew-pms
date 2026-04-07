@@ -1,24 +1,13 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Chip } from '@bds/components';
+import { Chip, IconButton } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { color, font, space, gap, border } from '@/lib/tokens';
-
-// ─── Filter options (match schema enums + seed defaults) ─────────────────────
-
-const DEPARTMENTS = [
-  'All Departments',
-  'Clinical',
-  'Front Desk',
-  'Engineering',
-  'HR',
-  'Administration',
-  'Sterilization',
-] as const;
+import { color, font, space, gap } from '@/lib/tokens';
+import { useDepartments } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
   'All Frequencies',
@@ -99,6 +88,7 @@ const chipGroupStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
+  flexWrap: 'wrap',
 };
 
 const datePickerStyle: CSSProperties = {
@@ -107,23 +97,10 @@ const datePickerStyle: CSSProperties = {
   gap: gap.lg,
 };
 
-const iconButtonStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 40,
-  height: 40,
-  borderRadius: border.radius.pill,
-  backgroundColor: color.background.accent,
-  border: 'none',
-  cursor: 'pointer',
-  color: color.text.primary,
-  fontSize: font.size.icon.lg,
-};
 
 const dateLabelStyle: CSSProperties = {
   fontFamily: font.family.body,
-  fontSize: font.size.body.lg,
+  fontSize: font.size.body.md,
   fontWeight: font.weight.bold,
   color: color.text.primary,
   whiteSpace: 'nowrap',
@@ -145,12 +122,11 @@ const menuStyle: CSSProperties = {
 // ─── ChipFilter (reusable chip + menu combo) ────────────────────────────────
 
 function ChipFilter({
-  label,
   options,
   selected,
   onChange,
 }: {
-  label: string;
+  label?: string; // reserved for future accessibility use
   options: readonly string[];
   selected: string;
   onChange: (value: string) => void;
@@ -209,6 +185,12 @@ export function TaskFilterBar({
   showOverdue,
   onShowOverdueChange,
 }: TaskFilterBarProps) {
+  const { departments } = useDepartments();
+  const departmentOptions = useMemo(
+    () => ['All Departments', ...departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => d.name)],
+    [departments]
+  );
+
   const handlePrev = () => onDateChange(shiftDate(selectedDate, -1));
   const handleNext = () => onDateChange(shiftDate(selectedDate, 1));
 
@@ -216,23 +198,9 @@ export function TaskFilterBar({
     <div style={barStyle}>
       {/* Date navigation */}
       <div style={datePickerStyle}>
-        <button
-          type="button"
-          style={iconButtonStyle}
-          onClick={handlePrev}
-          aria-label="Previous day"
-        >
-          <Icon icon={icon.chevronLeft} />
-        </button>
+        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
         <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
-        <button
-          type="button"
-          style={iconButtonStyle}
-          onClick={handleNext}
-          aria-label="Next day"
-        >
-          <Icon icon={icon.chevronRight} />
-        </button>
+        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
       </div>
 
       {/* Filter chips */}
@@ -245,7 +213,7 @@ export function TaskFilterBar({
         />
         <ChipFilter
           label="Department"
-          options={DEPARTMENTS}
+          options={departmentOptions}
           selected={selectedDepartment}
           onChange={onDepartmentChange}
         />

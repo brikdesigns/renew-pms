@@ -37,7 +37,7 @@ export default function InventorySettingsPage() {
           <h2 style={{
             fontFamily: font.family.heading,
             fontSize: font.size.heading.medium,
-            fontWeight: 700,
+            fontWeight: font.weight.bold,
             color: color.text.primary,
             margin: 0,
           }}>No Supplies Tracked Yet</h2>

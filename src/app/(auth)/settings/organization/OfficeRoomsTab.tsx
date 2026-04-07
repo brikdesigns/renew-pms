@@ -11,9 +11,9 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
-import { ViewRoomSheet, type RoomViewData } from '@/components/ViewRoomSheet';
+import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { SEED_ROOMS, type SeedRoom } from '@/lib/seed-rooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 
@@ -61,39 +61,23 @@ const subHeaderLeftStyle: CSSProperties = {
 };
 
 const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: 600,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   margin: 0,
 };
 
 const subHeaderCountStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
   backgroundColor: color.surface.secondary,
   padding: `2px ${gap.md}`,
   borderRadius: border.radius.sm,
 };
 
-const addRoomBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '36px',
-  paddingInline: '14px',
-  borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 700,
-  border: 'none',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-};
 
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
@@ -105,37 +89,14 @@ const typeChipStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   color: color.text.secondary,
-};
-
-const statusDotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: border.radius.circle,
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrapperStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
 };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
-const actionBtnStyle: CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '36px', height: '36px', borderRadius: border.radius.md,
-  backgroundColor: color.background.brandPrimary, color: color.text.onColorDark,
-  border: 'none', cursor: 'pointer', fontSize: font.size.body.sm,
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -233,9 +194,7 @@ export function OfficeRoomsTab() {
           <h3 style={subHeaderTitleStyle}>Rooms</h3>
           <span style={subHeaderCountStyle}>{rooms.length}</span>
         </div>
-        <button style={addRoomBtnStyle} onClick={handleAddClick}>
-          Add Room
-        </button>
+        <Button variant="primary" size="sm" onClick={handleAddClick}>Add Room</Button>
       </div>
 
       {/* Rooms table */}
@@ -254,7 +213,7 @@ export function OfficeRoomsTab() {
             {rooms.map((room) => (
               <TableRow key={room.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                     {room.name}
                   </span>
                 </TableCell>
@@ -262,7 +221,7 @@ export function OfficeRoomsTab() {
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>
@@ -271,20 +230,8 @@ export function OfficeRoomsTab() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <button
-                      style={actionBtnStyle}
-                      onClick={() => handleViewClick(room)}
-                      aria-label={`View ${room.name}`}
-                    >
-                      <Icon icon={icon.eye} />
-                    </button>
-                    <button
-                      style={actionBtnStyle}
-                      onClick={() => handleEditClick(room)}
-                      aria-label={`Edit ${room.name}`}
-                    >
-                      <Icon icon={icon.edit} />
-                    </button>
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
+                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
                   </div>
                 </TableCell>
               </TableRow>

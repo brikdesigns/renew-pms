@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
@@ -7,7 +8,7 @@ import { icon } from '@/lib/icons';
 import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-import { font, color, motion } from '@/lib/tokens';
+import { font, color, motion, state, gap, space, border } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -26,14 +27,14 @@ const sidebarStyle: CSSProperties = {
   height: '100dvh',
   position: 'sticky',
   top: 0,
-  paddingBlock: '24px',
+  paddingBlock: space.lg,
 };
 
 const topGroupStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: '48px',
+  gap: gap.section,
   width: '100%',
 };
 
@@ -53,7 +54,12 @@ const navGroupStyle: CSSProperties = {
   width: '100%',
 };
 
-function navItemStyle(active: boolean): CSSProperties {
+function navItemStyle(active: boolean, hovered: boolean): CSSProperties {
+  let backgroundColor: string;
+  if (active) backgroundColor = color.background.brandPrimary;
+  else if (hovered) backgroundColor = state.hover.subtle;
+  else backgroundColor = 'transparent';
+
   return {
     width: '100%',
     height: '52px',
@@ -61,8 +67,8 @@ function navItemStyle(active: boolean): CSSProperties {
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    padding: '10px',
-    backgroundColor: active ? color.background.brandPrimary : 'transparent',
+    padding: space.xs,
+    backgroundColor,
     textDecoration: 'none',
     cursor: 'pointer',
     transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
@@ -70,25 +76,34 @@ function navItemStyle(active: boolean): CSSProperties {
   };
 }
 
+function navIconColor(active: boolean, hovered: boolean): string {
+  if (active) return color.text.onColorDark;
+  if (hovered) return color.text.brand;
+  return color.text.primary;
+}
+
 const bottomGroupStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: '16px',
+  gap: gap.lg,
 };
 
-const bottomBtnStyle: CSSProperties = {
-  width: '40px',
-  height: '40px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '10px',
-  backgroundColor: color.surface.secondary,
-  flexShrink: 0,
-  border: 'none',
-  cursor: 'pointer',
-};
+function bottomBtnStyle(hovered: boolean): CSSProperties {
+  return {
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: border.radius.sm,
+    backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
+    flexShrink: 0,
+    border: 'none',
+    cursor: 'pointer',
+    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
+  };
+}
 
 // ─── Nav definition ──────────────────────────────────────────────────────────
 
@@ -120,6 +135,9 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const pathname = usePathname();
   const { isDark, toggle } = useTheme();
   const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [hoveredTheme, setHoveredTheme] = useState(false);
+  const [hoveredLogout, setHoveredLogout] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
@@ -137,13 +155,21 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
         <nav style={navGroupStyle}>
           {visibleItems.map((item) => {
             const active = item.match(pathname);
+            const hovered = hoveredItem === item.href;
             return (
-              <Link key={item.href} href={item.href} style={navItemStyle(active)} aria-label={item.label}>
+              <Link
+                key={item.href}
+                href={item.href}
+                style={navItemStyle(active, hovered)}
+                aria-label={item.label}
+                onMouseEnter={() => setHoveredItem(item.href)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
                 <Icon
                   icon={item.icon}
                   style={{
                     fontSize: font.size.body.xl,
-                    color: active ? color.text.onColorDark : color.text.primary,
+                    color: navIconColor(active, hovered),
                   }}
                 />
               </Link>
@@ -154,10 +180,21 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
 
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
-        <button onClick={toggle} style={bottomBtnStyle} aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+        <button
+          onClick={toggle}
+          style={bottomBtnStyle(hoveredTheme)}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          onMouseEnter={() => setHoveredTheme(true)}
+          onMouseLeave={() => setHoveredTheme(false)}
+        >
           <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
-        <button style={bottomBtnStyle} aria-label="Log out">
+        <button
+          style={bottomBtnStyle(hoveredLogout)}
+          aria-label="Log out"
+          onMouseEnter={() => setHoveredLogout(true)}
+          onMouseLeave={() => setHoveredLogout(false)}
+        >
           <Icon icon={icon.power} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
       </div>

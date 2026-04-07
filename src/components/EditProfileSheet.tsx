@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { gap } from '@/lib/tokens';
-import { Sheet, TextInput, Select } from '@bds/components';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useRoles } from '@/hooks/useRoles';
+import { Sheet, Button, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -19,6 +21,7 @@ export interface ProfileFormData {
   phone: string;
   system_role: string;
   practice_role: string;
+  practice_role_id: string;
   department: string;
   team: string;
   organization: string;
@@ -31,7 +34,9 @@ interface EditProfileSheetProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: ProfileFormData;
+  memberId: string | null;
   isAdmin: boolean;
+  onSaved?: (updated: ProfileFormData) => void;
 }
 
 // ─── Options ─────────────────────────────────────────────────────────────────
@@ -42,37 +47,11 @@ const SYSTEM_ROLE_OPTIONS = [
   { label: 'Platform Admin', value: 'platform_admin' },
 ];
 
-const PRACTICE_ROLE_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Owner', value: 'Owner' },
-  { label: 'Office Manager', value: 'Office Manager' },
-  { label: 'Dental Hygienist', value: 'Dental Hygienist' },
-  { label: 'Dental Assistant', value: 'Dental Assistant' },
-  { label: 'Receptionist', value: 'Receptionist' },
-  { label: 'Treatment Coordinator', value: 'Treatment Coordinator' },
-  { label: 'Insurance Coordinator', value: 'Insurance Coordinator' },
-  { label: 'Engineer', value: 'Engineer' },
-  { label: 'Inventory Manager', value: 'Inventory Manager' },
-  { label: 'Manager', value: 'Manager' },
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Staff', value: 'Staff' },
-];
-
-const DEPARTMENT_OPTIONS = [
-  { label: '— (Unassigned)', value: '' },
-  { label: 'Clinical', value: 'Clinical' },
-  { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
-  { label: 'HR', value: 'HR' },
-  { label: 'Administration', value: 'Administration' },
-  { label: 'Sterilization', value: 'Sterilization' },
-  { label: 'All Departments', value: 'All Departments' },
-];
 
 const EMPLOYEE_TYPE_OPTIONS = [
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
-  { label: 'Active', value: 'active' },
+  { label: 'Proficient', value: 'proficient' },
 ];
 
 const SHIFT_OPTIONS = [
@@ -88,10 +67,23 @@ const formRowHalf: React.CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: EditProfileSheetProps) {
+export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdmin, onSaved }: EditProfileSheetProps) {
   const { showToast } = useToast();
   const [form, setForm] = useState<ProfileFormData>(initialData);
   const [saving, setSaving] = useState(false);
+
+  const { departments } = useDepartments();
+  const { roles } = useRoles();
+
+  const practiceRoleOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id })),
+  ], [roles]);
+
+  const departmentOptions = useMemo(() => [
+    { label: '— (Unassigned)', value: '' },
+    ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
+  ], [departments]);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,24 +101,65 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
+    if (!memberId) {
+      showToast({ title: 'Error', description: 'No membership found — cannot save.', variant: 'error' });
+      return;
+    }
     setSaving(true);
 
-    // TODO: Wire to Supabase update
-    await new Promise((r) => setTimeout(r, 600));
+    try {
+      const res = await fetch(`/api/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: form.first_name,
+          last_name: form.last_name,
+          phone: form.phone || null,
+          system_role: form.system_role,
+          practice_role_id: form.practice_role_id || null,
+          employee_type: form.employee_type || 'new',
+          shift: form.shift || null,
+        }),
+      });
 
-    setSaving(false);
-    showToast({ title: 'Profile updated', description: 'Your changes have been saved.', variant: 'success' });
-    onClose();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to save');
+      }
+
+      const updated = await res.json();
+      // Map API response back to ProfileFormData shape
+      const updatedProfile: ProfileFormData = {
+        ...form,
+        first_name: updated.first_name ?? form.first_name,
+        last_name: updated.last_name ?? form.last_name,
+        phone: updated.phone ?? '',
+        system_role: updated.system_role ?? form.system_role,
+        practice_role: updated.practice_role ?? '',
+        practice_role_id: updated.practice_role_id ?? '',
+        department: updated.department ?? '',
+        employee_type: updated.employee_type ?? '',
+        shift: updated.shift ?? '',
+      };
+
+      onSaved?.(updatedProfile);
+      showToast({ title: 'Profile updated', description: 'Your changes have been saved.', variant: 'success' });
+      onClose();
+    } catch (err: unknown) {
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save', variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Sheet
       isOpen={isOpen} onClose={onClose} title="Edit Profile" width="600px" side="right"
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-profile-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-profile-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       <form id="edit-profile-form" onSubmit={handleSave}>
@@ -196,9 +229,9 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
                 <Select
                   label="Practice Role"
                   size="sm"
-                  options={PRACTICE_ROLE_OPTIONS}
-                  value={form.practice_role}
-                  onChange={updateSelect('practice_role')}
+                  options={practiceRoleOptions}
+                  value={form.practice_role_id}
+                  onChange={updateSelect('practice_role_id')}
                   fullWidth
                   disabled={!isAdmin}
                 />
@@ -209,7 +242,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
                 <Select
                   label="Department"
                   size="sm"
-                  options={DEPARTMENT_OPTIONS}
+                  options={departmentOptions}
                   value={form.department}
                   onChange={updateSelect('department')}
                   fullWidth
@@ -217,41 +250,26 @@ export function EditProfileSheet({ isOpen, onClose, initialData, isAdmin }: Edit
                 />
               </div>
               <div style={formRowHalf}>
-                <TextInput
+                <Select
                   label="Team"
                   size="sm"
+                  options={[{ label: '— (No team)', value: '' }]}
                   value={form.team}
-                  onChange={updateText('team')}
-                  placeholder="Team name"
+                  onChange={updateSelect('team')}
                   fullWidth
-                  disabled={!isAdmin}
+                  disabled
                 />
               </div>
             </div>
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <TextInput
-                  label="Organization"
-                  size="sm"
-                  value={form.organization}
-                  onChange={updateText('organization')}
-                  placeholder="Organization name"
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-              <div style={formRowHalf}>
-                <TextInput
-                  label="Start Date"
-                  size="sm"
-                  value={form.start_date}
-                  onChange={updateText('start_date')}
-                  placeholder="YYYY-MM-DD"
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-            </div>
+            <TextInput
+              label="Start Date"
+              size="sm"
+              type="date"
+              value={form.start_date}
+              onChange={updateText('start_date')}
+              fullWidth
+              disabled={!isAdmin}
+            />
           </div>
 
           {/* Status — read-only for non-admins */}

@@ -6,19 +6,21 @@ import { font, color, gap, space } from '@/lib/tokens';
 
 // ─── Styles (all via BDS semantic tokens) ────────────────────────────────────
 
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.xl,
-  alignItems: 'flex-start',
-  justifyContent: 'center',
-  paddingTop: '40px',
-  paddingBottom: '18px',
-  paddingInline: space.xl,
-  borderBottom: `1px solid ${color.border.muted}`,
-  width: '100%',
-  boxSizing: 'border-box',
-};
+function headerStyle(hasTabs: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: gap.xl,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingTop: '40px',          // layout-specific: no BDS token (between space.xl=32px and space.huge=48px)
+    paddingBottom: hasTabs ? 0 : '40px',
+    paddingInline: space.xl,
+    borderBottom: `1px solid ${color.border.primary}`,
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+}
 
 const topRowStyle: CSSProperties = {
   display: 'flex',
@@ -30,7 +32,7 @@ const topRowStyle: CSSProperties = {
 const titleStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.large,
-  fontWeight: 400,
+  fontWeight: font.weight.regular,
   lineHeight: 1,
   color: color.text.primary,
   margin: 0,
@@ -53,14 +55,17 @@ const tabBarStyle: CSSProperties = {
 function tabStyle(active: boolean): CSSProperties {
   return {
     fontFamily: font.family.label,
-    fontSize: font.size.body.md,
-    fontWeight: active ? 600 : 500,
+    fontSize: font.size.label.md,
+    fontWeight: active ? font.weight.semibold : font.weight.medium,
     lineHeight: font.lineHeight.tight,
     color: active ? color.text.brand : color.text.secondary,
     cursor: 'pointer',
     background: 'none',
     border: 'none',
-    padding: 0,
+    borderBottom: active ? `2px solid ${color.border.brand}` : '2px solid transparent',
+    paddingBottom: gap.sm,
+    paddingTop: 0,
+    paddingInline: 0,
     whiteSpace: 'nowrap',
   };
 }
@@ -90,10 +95,10 @@ interface PageHeaderProps {
 const breadcrumbBarStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: gap.sm,
   fontFamily: font.family.label,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
   lineHeight: font.lineHeight.tight,
 };
 
@@ -130,14 +135,15 @@ export function PageHeader({
   activeTab,
   onTabChange,
 }: PageHeaderProps) {
+  const hasTabs = Boolean(tabs && tabs.length > 0);
   return (
-    <header style={headerStyle}>
+    <header style={headerStyle(hasTabs)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav style={breadcrumbBarStyle} aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, i) => {
             const isLast = i === breadcrumbs.length - 1;
             return (
-              <span key={crumb.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span key={crumb.label} style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
                 {i > 0 && <span style={breadcrumbSepStyle}>/</span>}
                 {crumb.href && !isLast ? (
                   <Link href={crumb.href} style={breadcrumbLinkStyle}>{crumb.label}</Link>

@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Renew PMS
+
+Dental practice management and training platform. Staff-only back office tool for task management, training tracking, compliance, and practice operations.
+
+## Stack
+
+- **Framework:** Next.js 16 (App Router, TypeScript, React 19)
+- **Database:** Supabase (PostgreSQL, Auth, RLS)
+- **UI:** Brik Design System (git submodule) + Tailwind CSS 4
+- **Error tracking:** Sentry
+- **Docs:** Fumadocs (`/docs`, `/guide`)
+- **Hosting:** Netlify
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires `.env.local` with Supabase credentials. See 1Password for keys.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build        # Production build
+npm run lint         # ESLint
+npm run typecheck    # TypeScript check
+npm run test         # Vitest
 
-## Learn More
+npm run db:push      # Push migrations to Supabase
+npm run db:status    # Migration status
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+src/
+  app/               # Next.js App Router pages and API routes
+  components/        # Shared React components
+  hooks/             # Custom React hooks
+  lib/               # Utilities, tokens, auth, Supabase clients
+  styles/            # Client theme (theme-renew.css)
+brik-bds/            # BDS submodule (read-only — edit in brik/brik-bds)
+supabase/
+  migrations/        # Database migrations
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentation
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **CLAUDE.md** — Agent instructions, architecture, conventions
+- **Notion** — [Database Need to Knows](https://www.notion.so/Database-Need-to-Knows-32e97d34ed2880738291dc49554f0f97)

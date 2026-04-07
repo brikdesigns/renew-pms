@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { getDepartmentColors } from '@/lib/department-colors';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 
@@ -21,6 +20,7 @@ export interface UserViewData {
   system_role: string;
   practice_role: string;
   department: string;
+  department_color: string;
   employee_type: string;
   shift: string;
   is_active: boolean;
@@ -34,64 +34,7 @@ interface ViewUserSheetProps {
   onEdit?: () => void;
 }
 
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedRole {
-  id: string;
-  role: string;
-  department: string;
-}
-
-interface AssociatedDepartment {
-  id: string;
-  department: string;
-}
-
-const ROLES_BY_USER: Record<string, AssociatedRole[]> = {
-  'Sarah Mitchell': [
-    { id: '1', role: 'Owner', department: 'Clinical' },
-  ],
-  'Jessica Torres': [
-    { id: '2', role: 'Office Manager', department: 'Administration' },
-  ],
-  'Amanda Chen': [
-    { id: '3', role: 'Dental Hygienist', department: 'Clinical' },
-  ],
-  'Marcus Williams': [
-    { id: '4', role: 'Dental Hygienist', department: 'Clinical' },
-  ],
-  'Emily Rivera': [
-    { id: '5', role: 'Dental Assistant', department: 'Clinical' },
-  ],
-  'Tyler Nguyen': [
-    { id: '6', role: 'Dental Assistant', department: 'Sterilization' },
-  ],
-  'Rachel Foster': [
-    { id: '7', role: 'Receptionist', department: 'Front Desk' },
-  ],
-  'David Park': [
-    { id: '8', role: 'Treatment Coordinator', department: 'Front Desk' },
-  ],
-  'Lisa Gomez': [
-    { id: '9', role: 'Insurance Coordinator', department: 'Front Desk' },
-  ],
-  'Jordan Hayes': [
-    { id: '10', role: 'Inventory Manager', department: 'Engineering' },
-  ],
-};
-
-const DEPARTMENTS_BY_USER: Record<string, AssociatedDepartment[]> = {
-  'Sarah Mitchell': [{ id: '1', department: 'Clinical' }],
-  'Jessica Torres': [{ id: '2', department: 'Administration' }],
-  'Amanda Chen': [{ id: '3', department: 'Clinical' }],
-  'Marcus Williams': [{ id: '4', department: 'Clinical' }],
-  'Emily Rivera': [{ id: '5', department: 'Clinical' }],
-  'Tyler Nguyen': [{ id: '6', department: 'Sterilization' }],
-  'Rachel Foster': [{ id: '7', department: 'Front Desk' }],
-  'David Park': [{ id: '8', department: 'Front Desk' }],
-  'Lisa Gomez': [{ id: '9', department: 'Front Desk' }],
-  'Jordan Hayes': [{ id: '10', department: 'Engineering' }],
-};
+// (No mock data — roles and department are derived directly from the user prop)
 
 // ─── Label lookups ──────────────────────────────────────────────────────────
 
@@ -109,14 +52,14 @@ const SHIFT_LABELS: Record<string, string> = {
 };
 
 const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base,  color: color.text.onColorDark, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base,  color: color.text.onColorDark, label: 'Maturing' },
-  active:   { bg: color.department.green.base, color: color.text.onColorDark, label: 'Active' },
+  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
+  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
+  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
 };
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, gap, space, departmentColor } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
@@ -129,7 +72,7 @@ const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: TEXT_SECONDARY,
   textAlign: 'center',
 };
@@ -143,8 +86,15 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
   if (!user) return null;
 
   const fullName = `${user.first_name} ${user.last_name}`.trim();
-  const roles = ROLES_BY_USER[fullName] ?? [];
-  const departments = DEPARTMENTS_BY_USER[fullName] ?? [];
+
+  // A member has exactly one role (via practice_role_types) and one department
+  // (via that role's department_id). Shown as single-item lists in the tabs.
+  const roles = user.practice_role
+    ? [{ id: user.id, role: user.practice_role, department: user.department, departmentColor: user.department_color }]
+    : [];
+  const departments = user.department
+    ? [{ id: user.id, department: user.department, departmentColor: user.department_color }]
+    : [];
 
   const detailsContent = (
     <div style={sheetBodyStyle}>
@@ -183,20 +133,20 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
       </div>
       <div style={fieldRow}>
         <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Employee Type
             </span>
             <div style={{ display: 'inline-flex' }}>
-              <Tag size="sm" style={{ backgroundColor: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).bg, color: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).color }}>
-                {(EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.active).label}
+              <Tag size="sm" style={{ backgroundColor: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).bg, color: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).color }}>
+                {(EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).label}
               </Tag>
             </div>
           </div>
         </div>
         <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: TEXT_PRIMARY }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
               Account Status
             </span>
             <div style={{ display: 'inline-flex' }}>
@@ -223,8 +173,8 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
               variant="role"
               name={r.role}
               subtitle={r.department}
-              departmentBg={getDepartmentColors(r.department).light}
-              departmentText={getDepartmentColors(r.department).text}
+              departmentBg={departmentColor(r.departmentColor).light}
+              departmentText={departmentColor(r.departmentColor).text}
             />
           ))}
         </div>
@@ -244,7 +194,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
               key={d.id}
               variant="department"
               name={d.department}
-              dotColor={getDepartmentColors(d.department).light}
+              dotColor={departmentColor(d.departmentColor).light}
             />
           ))}
         </div>
@@ -270,9 +220,9 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
       onTabChange={setActiveTab}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

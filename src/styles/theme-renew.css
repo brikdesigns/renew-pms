@@ -1,297 +1,460 @@
 /*
  * Renew Dental — Brand Token Overrides
  *
- * Source of truth: Figma Renew-PMS (kwNyWG6H3ifjZmytZnNJXd)
- * Synced: 2026-03-24 from exported primitives + color collections
- * EVERY value below comes from resolved Figma variable output. Nothing guessed.
+ * Source of truth: Figma Renew-PMS Brand Kit (IsXucGLHH6VIVhBOCS9eKa)
+ * Generated: 2026-04-03 from Figma Variables API via claude-talk-to-figma relay
+ * DO NOT hand-edit values. Pull from Figma → regenerate this file.
  *
  * HOW CLIENT THEMING WORKS:
  * BDS components reference semantic tokens like var(--background-brand-primary).
- * figma-tokens.css defines the BDS defaults (blue #4665f5).
- * This file overrides those same tokens with Renew's palette.
+ * figma-tokens.css defines BDS defaults. This file overrides with Renew's palette.
  * Token NAMES stay the same — only VALUES change.
+ *
+ * KNOWN FIGMA ISSUES (fix in Figma, then regenerate):
+ *   1. background/brand-primary-hover and background/brand-primary-pressed alias to
+ *      purple/light [base] (same as base color) — should be purple/dark and purple/darker.
+ *      Using surface/brand-primary-hover values here instead.
+ *   2. background/primary-hover-overlay and background/primary-pressed-overlay have
+ *      0.00 opacity — corrected to 0.04 / 0.08 here.
+ *   3. background/disabled has 0.00 opacity — corrected to 0.4 here.
  *
  * ── Renew Brand Palette (from Figma Primitives collection) ──
  *
- * Named colors:
- *   Purple:      #ba9cc5
- *   Dark Purple: #464050
- *   Gold:        #cfa553
- *   Dark Gray:   #1b1b1b
- *   White:       #ffffff
- *   Black:       #000000
- *
- * Purple scale:     #3d2843 / #5a4261 / #855f91 / #ba9cc5 / #decee4 / #faf9fb
- * Gold scale:       #6d4226 / #a16c2d / #cfa553 / #d8b86c / #f2eacf / #f9f6eb
- * Grayscale:        #0a0a0a / #2e2e2e / #575757 / #a5a5a5 / #e6e6e6 / #f5f5f5
- * Blue scale:       #1f2732 / #425973 / #5d7c9a / #8fb1d9 / #abbdce / #ebeef3
- * Red scale:        #361c1b / #73403e / #a6635c / #bc8177 / #e1c6c0 / #f7efec
- * Green scale:      #101e15 / #1e3627 / #366545 / #6b9e78 / #97bea0 / #dfece0
- * Taupe scale:      #1b1918 / #282625 / #53514e / #a6a3a0 / #e6e5e5 / #f5f5f4
- * Brown scale:      #2c1f1c / #4a322c / #8c5a4e / #b08a80 / #d4bcb6 / #f6f0ef
+ * Grayscale:   #0a0a0a / #2e2e2e / #575757 / #a5a5a5 / #e6e6e6 / #f5f5f5
+ * Purple:      #3d2843 / #5a4261 / #855f91 / #ba9cc5 / #decee4 / #faf9fb
+ * Gold:        #6d4226 / #a16c2d / #cfa553 / #d8b86c / #f2eacf / #f9f6eb
+ * Blue:        #1f2732 / #425973 / #5d7c9a / #8fb1d9 / #abbdce / #ebeef3
+ * Red:         #361c1b / #73403e / #a6635c / #bc8177 / #e1c6c0 / #f7efec
+ * Green:       #101e15 / #1e3627 / #366545 / #6b9e78 / #97bea0 / #dfece0
+ * Taupe:       #1b1918 / #282625 / #53514e / #a6a3a0 / #e6e5e5 / #f5f5f4
+ * Brown:       #2c1f1c / #4a322c / #8c5a4e / #b08a80 / #d4bcb6 / #f6f0ef
  *
  * Typography:
  *   Heading/Display: Century Schoolbook (serif)
- *   Body/Label: Avenir (sans-serif)
- *   Icon: Font Awesome 6
+ *   Body/Label/Subtitle: Avenir (sans-serif)
  */
 
 /* ═══════════════════════════════════════════════
    LIGHT MODE (default)
-   All values from Figma color collection, Light mode
    ═══════════════════════════════════════════════ */
 
 .theme-renew {
-  /* ── Brand (purple/light [base] — same in both modes per Figma) ── */
-  --background-brand-primary: #ba9cc5;
-  --background-brand-secondary: #cfa553;  /* gold/dark [base] */
-  --surface-brand-primary: #ba9cc5;
-  --surface-brand-secondary: #cfa553;
-  --text-brand-primary: #ba9cc5;
-  --text-brand-secondary: #cfa553;
-  --border-brand-primary: #ba9cc5;
-  --border-brand-secondary: #cfa553;
 
-  /* ── Brand interaction states (aliases to purple primitives) ── */
-  --background-brand-primary-hover: #855f91;   /* purple/dark */
-  --background-brand-primary-pressed: #5a4261;  /* purple/darker */
+  /* ═══════════════════════════════════════════════════════════
+     TIER 1 — Renew brand palette primitives
+     Every semantic token below references one of these vars.
+     Hex values appear exactly once — here.
+     ═══════════════════════════════════════════════════════════ */
 
-  /* ── Page (from Figma Light mode) ─────────────────── */
-  --page-primary: #ffffff;
-  --page-secondary: #f5f5f5;            /* grayscale/lightest */
-  --page-brand-primary: #ba9cc5;
-  --page-brand-secondary: #cfa553;
-  --page-muted: #f5f5f5;                /* grayscale/lightest */
-  --page-inverse: #0a0a0a;              /* grayscale/darkest */
+  /* Grayscale */
+  --color-grayscale-black:    #0a0a0a;
+  --color-grayscale-darkest:  #2e2e2e;
+  --color-grayscale-dark:     #575757;
+  --color-grayscale-light:    #a5a5a5;
+  --color-grayscale-lighter:  #e6e6e6;
+  --color-grayscale-lightest: #f5f5f5;
+  --color-grayscale-white:    #ffffff;
+  --color-pure-black:         #000000;  /* absolute black — on-color contexts */
+  --color-overlay-dark:       #1b1b1b;  /* named "Dark Gray" — dark mode overlay surface */
 
-  /* ── Surfaces (from Figma Light mode) ──────────────── */
-  --surface-primary: #ffffff;
-  --surface-secondary: #f5f5f5;          /* grayscale/lightest */
-  --surface-muted: #f5f5f5;              /* grayscale/lightest */
-  --surface-nav: #ffffff;
-  --surface-overlay: #ffffff;
-  --surface-footer: #0a0a0a;             /* grayscale/darkest */
-  --background-primary: #ffffff;
-  --background-secondary: #f5f5f5;       /* grayscale/lightest */
-  --background-input: #ffffff;
-  --background-muted: #f5f5f5;           /* grayscale/lightest */
-  --background-inverse: #0a0a0a;          /* grayscale/darkest */
-  --background-on-color-light: #000000;
-  --background-on-color-dark: #ffffff;
+  /* Purple */
+  --color-purple-darkest:  #3d2843;
+  --color-purple-darker:   #5a4261;
+  --color-purple-dark:     #855f91;
+  --color-purple-base:     #ba9cc5;
+  --color-purple-lighter:  #decee4;
+  --color-purple-lightest: #faf9fb;
 
-  /* ── Text (from Figma Light mode) ──────────────────── */
-  --text-primary: #0a0a0a;              /* grayscale/darkest */
-  --text-secondary: #575757;             /* grayscale/dark */
-  --text-muted: #a5a5a5;                 /* grayscale/light */
-  --text-accent: #a5a5a5;                /* grayscale/light */
-  --text-inverse: #ffffff;
-  --text-on-color-dark: #ffffff;
-  --text-on-color-light: #000000;
-  --text-text-link: #ba9cc5;
+  /* Gold */
+  --color-gold-darkest:  #6d4226;
+  --color-gold-darker:   #a16c2d;
+  --color-gold-base:     #cfa553;
+  --color-gold-light:    #d8b86c;
+  --color-gold-lighter:  #f2eacf;
+  --color-gold-lightest: #f9f6eb;
 
-  /* ── Borders (from Figma Light mode) ───────────────── */
-  --border-primary: #0a0a0a;             /* grayscale/darkest */
-  --border-secondary: #575757;            /* grayscale/dark */
-  --border-muted: #a5a5a5;               /* grayscale/light */
-  --border-input: #0a0a0a;               /* grayscale/darkest */
-  --border-inverse: #ffffff;
-  --border-on-color-dark: #ffffff;
-  --border-on-color-light: #000000;
+  /* Blue (Renew palette — not BDS system blue) */
+  --color-brand-blue-darkest:  #1f2732;
+  --color-brand-blue-darker:   #425973;
+  --color-brand-blue-dark:     #5d7c9a;
+  --color-brand-blue-base:     #8fb1d9;
+  --color-brand-blue-lighter:  #abbdce;
+  --color-brand-blue-lightest: #ebeef3;
 
-  /* ── Shadows (light mode — dark ambient drop shadow) ─── */
+  /* Red (department) */
+  --color-brand-red-darkest:  #361c1b;
+  --color-brand-red-darker:   #73403e;
+  --color-brand-red-dark:     #a6635c;
+  --color-brand-red-base:     #bc8177;
+  --color-brand-red-lighter:  #e1c6c0;
+  --color-brand-red-lightest: #f7efec;
+
+  /* Green (department) */
+  --color-brand-green-darkest:  #101e15;
+  --color-brand-green-darker:   #1e3627;
+  --color-brand-green-dark:     #366545;
+  --color-brand-green-base:     #6b9e78;
+  --color-brand-green-lighter:  #97bea0;
+  --color-brand-green-lightest: #dfece0;
+
+  /* Taupe */
+  --color-taupe-darkest:  #1b1918;
+  --color-taupe-darker:   #282625;
+  --color-taupe-dark:     #53514e;
+  --color-taupe-base:     #a6a3a0;
+  --color-taupe-lighter:  #e6e5e5;
+  --color-taupe-lightest: #f5f5f4;
+
+  /* Brown (department) */
+  --color-brown-darkest:  #2c1f1c;
+  --color-brown-darker:   #4a322c;
+  --color-brown-dark:     #8c5a4e;
+  --color-brown-base:     #b08a80;
+  --color-brown-lighter:  #d4bcb6;
+  --color-brown-lightest: #f6f0ef;
+
+  /* System / status primitives — Renew overrides of BDS system palette.
+     Status colors (error/green/yellow) are raw values — intentionally frozen.
+     Status meaning must stay consistent regardless of theme. */
+  --color-system-link:         var(--color-purple-base);
+  --color-system-error:        #eb5757;
+  --color-system-error-light:  #fccccc;
+  --color-system-green:        #27ae60;
+  --color-system-green-light:  #bef4d4;
+  --color-system-yellow:       #f2c94c;
+  --color-system-yellow-light: #f7e190;
+  --color-system-red:          var(--color-system-error);          /* alias */
+  --color-system-blue:         var(--color-brand-blue-darker);     /* Renew palette blue */
+  --color-system-orange:       var(--color-brown-dark);            /* Renew brown/dark */
+
+  /* ═══════════════════════════════════════════════════════════
+     TIER 2 — Semantic token overrides
+     Names match BDS Tier 1. Values reference Renew primitives.
+     ═══════════════════════════════════════════════════════════ */
+
+  /* ── Typography ────────────────────────────────────────── */
+  --font-family-heading:  'Century Schoolbook', 'Georgia', serif;
+  --font-family-display:  'Century Schoolbook', 'Georgia', serif;
+  --font-family-body:     'Avenir', 'Avenir Next', system-ui, sans-serif;
+  --font-family-label:    'Avenir', 'Avenir Next', system-ui, sans-serif;
+  --font-weight-label:    600;  /* semibold — Renew client preference */
+  --font-family-subtitle: 'Avenir', 'Avenir Next', system-ui, sans-serif;
+
+  /* ── Label casing ──────────────────────────────────────── */
+  --text-transform-label: capitalize;
+
+  /* ── Surface ───────────────────────────────────────────── */
+  --surface-primary:    var(--color-grayscale-white);
+  --surface-secondary:  var(--color-grayscale-lightest);
+  --surface-muted:      var(--color-grayscale-lightest);
+  --surface-overlay:    var(--color-grayscale-white);
+  --surface-navigation: var(--color-grayscale-white);
+  --surface-footer:     var(--color-grayscale-black);
+
+  --surface-brand-primary:   var(--color-purple-base);
+  --surface-brand-secondary: var(--color-gold-base);
+  --surface-brand-accent:    var(--color-taupe-lightest);
+
+  --surface-primary-hover:          var(--color-grayscale-lightest);
+  --surface-secondary-hover:        var(--color-grayscale-lighter);
+  --surface-primary-pressed:        var(--color-grayscale-lighter);
+  --surface-secondary-pressed:      var(--color-grayscale-light);
+  --surface-brand-primary-hover:    var(--color-purple-dark);
+  --surface-brand-primary-pressed:  var(--color-purple-darker);
+  --surface-brand-secondary-hover:  var(--color-gold-darker);
+  --surface-brand-secondary-pressed: var(--color-gold-darkest);
+  --surface-brand-accent-hover:     var(--color-taupe-lighter);
+  --surface-brand-accent-pressed:   var(--color-taupe-base);
+
+  --surface-negative: var(--color-system-error-light);
+  --surface-positive: var(--color-system-green-light);
+  --surface-warning:  var(--color-system-yellow-light);
+  --surface-success:  var(--surface-positive);
+
+  /* ── Background ────────────────────────────────────────── */
+  --background-primary:         var(--color-grayscale-white);
+  --background-secondary:       var(--color-grayscale-lighter);
+  --background-muted:           var(--color-grayscale-lightest);
+  --background-inverse:         var(--color-grayscale-black);
+  --background-input:           var(--color-grayscale-white);
+  --background-on-color-light:  var(--color-pure-black);
+  --background-on-color-dark:   var(--color-grayscale-white);
+
+  --background-brand-primary:   var(--color-purple-base);
+  --background-brand-secondary: var(--color-gold-base);
+
+  --background-primary-hover:           var(--color-grayscale-lightest);
+  --background-primary-pressed:         var(--color-grayscale-lighter);
+  --background-secondary-hover:         var(--color-grayscale-light);
+  --background-secondary-pressed:       var(--color-grayscale-dark);
+  --background-brand-primary-hover:     var(--color-purple-dark);
+  --background-brand-primary-pressed:   var(--color-purple-darker);
+  --background-brand-secondary-hover:   var(--color-gold-darker);
+  --background-brand-secondary-pressed: var(--color-gold-darkest);
+  --background-disabled:                var(--color-grayscale-light);
+  --state-disabled-opacity:             0.4;
+
+  /* ── Border ────────────────────────────────────────────── */
+  --border-primary:         var(--color-grayscale-black);
+  --border-secondary:       var(--color-grayscale-dark);
+  --border-muted:           var(--color-grayscale-light);
+  --border-input:           var(--color-grayscale-black);
+  --border-inverse:         var(--color-grayscale-white);
+  --border-brand-primary:   var(--color-purple-base);
+  --border-brand-secondary: var(--color-gold-base);
+  --border-focus:           var(--color-purple-base);
+
+  --border-negative: var(--color-system-error);
+  --border-positive: var(--color-system-green);
+  --border-warning:  var(--color-system-yellow);
+
+  /* ── Text ──────────────────────────────────────────────── */
+  --text-primary:         var(--color-grayscale-black);
+  --text-secondary:       var(--color-grayscale-dark);
+  --text-muted:           var(--color-grayscale-light);
+  --text-accent:          var(--color-grayscale-light);
+  --text-inverse:         var(--color-grayscale-white);
+  --text-on-color-light:  var(--color-pure-black);
+  --text-on-color-dark:   var(--color-grayscale-white);
+  --text-brand-primary:   var(--color-purple-base);
+  --text-brand-secondary: var(--color-gold-base);
+
+  --text-negative: var(--color-system-error);
+  --text-positive: var(--color-system-green);
+  --text-warning:  var(--color-system-yellow);
+  --text-success:  var(--text-positive);
+
+  /* ── Page ──────────────────────────────────────────────── */
+  --page-primary:         var(--color-grayscale-white);
+  --page-secondary:       var(--color-grayscale-lightest);
+  --page-muted:           var(--color-grayscale-lightest);
+  --page-inverse:         var(--color-grayscale-black);
+  --page-brand-primary:   var(--color-purple-base);
+  --page-brand-secondary: var(--color-gold-base);
+
+  /* ── Department — backgrounds ──────────────────────────── */
+  --background-department-blue:         var(--color-brand-blue-darker);
+  --background-department-blue-light:   var(--color-brand-blue-lightest);
+  --background-department-green:        var(--color-brand-green-dark);
+  --background-department-green-light:  var(--color-brand-green-lightest);
+  --background-department-purple:       var(--color-purple-dark);
+  --background-department-purple-light: var(--color-purple-lighter);
+  --background-department-gold:         var(--color-gold-base);
+  --background-department-gold-light:   var(--color-gold-lighter);
+  --background-department-red:          var(--color-brand-red-darker);
+  --background-department-red-light:    var(--color-brand-red-lighter);
+  --background-department-taupe:        var(--color-taupe-dark);
+  --background-department-taupe-light:  var(--color-taupe-lighter);
+
+  /* ── Department — text ─────────────────────────────────── */
+  --text-department-blue:   var(--color-brand-blue-darkest);
+  --text-department-green:  var(--color-brand-green-darkest);
+  --text-department-purple: var(--color-purple-darkest);
+  --text-department-gold:   var(--color-gold-darkest);
+  --text-department-red:    var(--color-brand-red-darkest);
+  --text-department-taupe:  var(--color-taupe-darker);
+  --text-department-brown:  var(--color-brown-darkest);
+
+  /* ── Department — borders ──────────────────────────────── */
+  --border-department-blue:   var(--color-brand-blue-darker);
+  --border-department-green:  var(--color-brand-green-darker);
+  --border-department-purple: var(--color-purple-darkest);
+  --border-department-gold:   var(--color-gold-base);
+  --border-department-red:    var(--color-brand-red-darker);
+  --border-department-taupe:  var(--color-taupe-darker);
+
+  /* ── Shadows ───────────────────────────────────────────── */
   --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05);
   --box-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.06);
 
-  /* ── Elevated / tertiary surfaces ─────────────────────── */
-  --background-elevated: #ffffff;
-  --surface-tertiary: #f5f5f4;           /* taupe/lightest */
+  /* ── Status fill tokens ────────────────────────────────── */
+  --background-negative: var(--color-system-error);
+  --background-positive: var(--color-system-green);
+  --background-warning:  var(--color-system-yellow);
 
-  /* ── Status surfaces (light tints from Figma color scales) ── */
-  --surface-negative: #f7efec;           /* red/lightest */
-  --surface-warning: #f9f6eb;            /* gold/lightest */
-  --surface-success: #dfece0;            /* green/lightest */
+  /* ── Status surfaces — intentionally frozen ────────────────────────────
+     Must NOT chain through brand tokens. Status meaning is universal.
+     BDS system blue and neutral kept as raw values — not part of Renew palette. */
+  --background-status-error:          var(--color-system-error);
+  --background-status-error-subtle:   var(--color-system-error-light);
+  --background-status-success:        var(--color-system-green);
+  --background-status-success-subtle: var(--color-system-green-light);
+  --background-status-warning:        var(--color-system-yellow);
+  --background-status-warning-subtle: var(--color-system-yellow-light);
+  --background-status-info:           #2f80ed;   /* BDS system blue — intentionally frozen */
+  --background-status-info-subtle:    #bfe2fe;   /* BDS system blue-light — intentionally frozen */
+  --background-status-neutral:        #d4d4d4;   /* BDS system neutral — intentionally frozen */
 
-  /* ── Status text (dark end of Figma color scales) ──── */
-  --text-negative: #361c1b;              /* red/darkest */
-  --text-warning: #6d4226;               /* gold/darkest */
-  --text-success: #101e15;               /* green/darkest */
+  --text-status-error:   var(--color-system-error);
+  --text-status-success: var(--color-system-green);
+  --text-status-warning: var(--color-system-yellow);
+  --text-status-info:    #2f80ed;   /* intentionally frozen */
+  --text-status-neutral: #363636;   /* intentionally frozen */
 
-  /* ── Status borders ──────────────────────────────────── */
-  --border-negative: #a6635c;            /* red/dark */
-
-  /* ── Links (maps to brand primary) ───────────────────── */
-  --color-system-link: #ba9cc5;
-
-  /* ── Typography (from Figma primitives) ─────────────── */
-  --font-family-heading: 'Century Schoolbook', 'Georgia', serif;
-  --font-family-body: 'Avenir', 'Avenir Next', system-ui, sans-serif;
-  --font-family-label: 'Avenir', 'Avenir Next', system-ui, sans-serif;
-
-  /* ── Label casing — controls text-transform on board subtitles ── */
-  --text-transform-label: capitalize;
-
-  /* ── System / status colors (from Figma color scales) ── */
-  --color-system-green: #6b9e78;         /* green/light [base] */
-  --color-system-green-light: #97bea0;   /* green/lighter */
-  --color-system-blue: #425973;          /* blue/darker [base] */
-  --color-system-blue-light: #abbdce;    /* blue/lighter */
-  --color-system-yellow: #cfa553;        /* gold/dark [base] */
-  --color-system-yellow-light: #f2eacf;  /* gold/lighter */
-  --color-system-red: #a6635c;           /* red/dark */
-  --color-system-red-light: #e1c6c0;     /* red/lighter */
-  --color-system-orange: #8c5a4e;        /* brown/dark */
-
-  /* ── Department color palette (Layer 3 — Renew-specific) ── */
-  --color-department-blue: #425973;      /* blue/darker [base] */
-  --color-department-blue-light: #abbdce; /* blue/lighter */
-  --color-department-blue-text: #1f2732;  /* blue/darkest */
-  --color-department-green: #6b9e78;     /* green/light [base] */
-  --color-department-green-light: #97bea0; /* green/lighter */
-  --color-department-green-text: #101e15;  /* green/darkest */
-  --color-department-purple: #855f91;    /* purple/dark */
-  --color-department-purple-light: #decee4; /* purple/lighter */
-  --color-department-purple-text: #5a4261; /* purple/darker */
-  --color-department-pink: #C77DA3;
-  --color-department-pink-light: #f5dfe9;
-  --color-department-pink-text: #7a3d5e;
-  --color-department-gold: #cfa553;      /* gold/dark [base] */
-  --color-department-gold-light: #f2eacf; /* gold/lighter */
-  --color-department-gold-text: #6d4226;  /* gold/darkest */
-  --color-department-red: #a6635c;       /* red/dark */
-  --color-department-red-light: #e1c6c0;  /* red/lighter */
-  --color-department-red-text: #361c1b;   /* red/darkest */
-  --color-department-teal: #4AACA0;
-  --color-department-teal-light: #d4f0ec;
-  --color-department-teal-text: #1f4a44;
-
-  /* ── Tooltip (uses BDS --tooltip-background / --tooltip-text tokens) ── */
-  --tooltip-background: #464050;  /* colors/dark-purple from Figma primitives */
-  --tooltip-text: #ffffff;
-
-  /* ── Interaction state tokens (Layer 2 — from Figma state group) ── */
-  --state-hover-overlay: rgba(0, 0, 0, 0.0004);     /* Figma: state/hover-overlay */
-  --state-pressed-overlay: rgba(0, 0, 0, 0.0008);   /* Figma: state/pressed-overlay */
-  --state-focus: #ba9cc5;                             /* Figma: state/focus → colors/purple */
-  --state-disabled: rgba(230, 230, 230, 0.004);      /* Figma: state/disabled → grayscale/lighter */
-  --state-disabled-opacity: 0.4;
+  /* ── Tooltip ───────────────────────────────────────────── */
+  --tooltip-background: var(--background-on-color-light);
+  --tooltip-text:       var(--text-inverse);
 }
 
 /* ═══════════════════════════════════════════════
    DARK MODE
-   All values from Figma color collection, Dark mode.
-   Only tokens that DIFFER from light mode are listed.
+   Only tokens that DIFFER from light mode.
    ═══════════════════════════════════════════════ */
 
 .theme-renew.dark {
-  /* ── Elevated / tertiary surfaces ─── */
-  --background-elevated: #0a0a0a;        /* grayscale/darkest */
-  --surface-tertiary: #2e2e2e;           /* grayscale/darker [base] */
 
-  /* ── Status surfaces (dark mode — muted tints) ─── */
-  --surface-negative: #361c1b;           /* red/darkest */
-  --surface-warning: #6d4226;            /* gold/darkest */
-  --surface-success: #101e15;            /* green/darkest */
+  --surface-primary:              var(--color-pure-black);
+  --surface-secondary:            var(--color-grayscale-darkest);
+  --surface-muted:                var(--color-grayscale-black);
+  --surface-overlay:              var(--color-overlay-dark);
+  --surface-navigation:           var(--color-pure-black);
+  --surface-footer:               var(--color-grayscale-white);
+  --surface-brand-accent:         var(--color-taupe-darkest);
+  --surface-brand-accent-hover:   var(--color-taupe-darker);
+  --surface-brand-accent-pressed: var(--color-taupe-dark);
+  --surface-primary-hover:        var(--color-grayscale-black);
+  --surface-secondary-hover:      var(--color-grayscale-darkest);
+  --surface-primary-pressed:      var(--color-grayscale-darkest);
+  --surface-secondary-pressed:    var(--color-grayscale-dark);
 
-  /* ── Status text (dark mode — lighter end) ─── */
-  --text-negative: #bc8177;              /* red/light */
-  --text-warning: #d8b86c;              /* gold/light */
-  --text-success: #97bea0;              /* green/lighter */
+  --background-primary:               var(--color-pure-black);
+  --background-muted:                 var(--color-grayscale-black);
+  --background-inverse:               var(--color-grayscale-white);
+  --background-input:                 var(--color-grayscale-black);
+  --background-primary-hover:         var(--color-grayscale-darkest);
+  --background-primary-pressed:       var(--color-grayscale-dark);
+  --background-disabled:              var(--color-grayscale-darkest);
+  --background-brand-primary-hover:   var(--color-purple-lighter);
+  --background-brand-primary-pressed: var(--color-purple-lightest);
 
-  /* ── Status borders ─── */
-  --border-negative: #bc8177;            /* red/light */
+  --border-primary:   var(--color-grayscale-dark);
+  --border-secondary: var(--color-grayscale-darkest);
+  --border-inverse:   var(--color-pure-black);
+  --border-muted:     var(--color-grayscale-dark);
+  --border-input:     var(--color-grayscale-dark);
 
-  /* ── Links ─── */
-  --color-system-link: #ba9cc5;
+  --text-primary:   var(--color-grayscale-white);
+  --text-secondary: var(--color-grayscale-light);
+  --text-inverse:   var(--color-pure-black);
+  --text-accent:    var(--color-grayscale-dark);
+  --text-muted:     var(--color-grayscale-dark);
 
-  /* ── Page ─── */
-  --page-primary: #000000;
-  --page-secondary: #2e2e2e;            /* grayscale/darker [base] */
-  --page-muted: #0a0a0a;               /* grayscale/darkest */
-  --page-inverse: #ffffff;
+  --page-primary:   var(--color-pure-black);
+  --page-secondary: var(--color-grayscale-darkest);
+  --page-muted:     var(--color-grayscale-black);
+  --page-inverse:   var(--color-grayscale-white);
 
-  /* ── Surfaces ─── */
-  --surface-primary: #000000;
-  --surface-secondary: #2e2e2e;          /* grayscale/darker [base] */
-  --surface-muted: #0a0a0a;             /* grayscale/darkest */
-  --surface-nav: #000000;
-  --surface-overlay: #1b1b1b;            /* colors/dark-gray */
-  --surface-footer: #ffffff;
-  --background-primary: #000000;
-  --background-secondary: #2e2e2e;       /* grayscale/darker [base] */
-  --background-muted: #0a0a0a;           /* grayscale/darkest */
-  --background-inverse: #ffffff;          /* colors/white */
-  --background-input: #0a0a0a;           /* grayscale/darkest */
+  /* ── Department — backgrounds (dark: flip light→dark) ── */
+  --background-department-blue:         var(--color-brand-blue-lightest);
+  --background-department-blue-light:   var(--color-brand-blue-darkest);
+  --background-department-green:        var(--color-brand-green-lightest);
+  --background-department-green-light:  var(--color-brand-green-darkest);
+  --background-department-purple:       var(--color-purple-lighter);
+  --background-department-purple-light: var(--color-purple-darkest);
+  --background-department-gold:         var(--color-gold-lightest);
+  --background-department-gold-light:   var(--color-gold-darkest);
+  --background-department-red:          var(--color-brand-red-lightest);
+  --background-department-red-light:    var(--color-brand-red-darkest);
+  --background-department-taupe:        var(--color-taupe-lightest);
+  --background-department-taupe-light:  var(--color-taupe-darkest);
 
-  /* ── Text ─── */
-  --text-primary: #ffffff;
-  --text-secondary: #a5a5a5;             /* grayscale/light */
-  --text-muted: #575757;                 /* grayscale/dark */
-  --text-accent: #575757;                /* grayscale/dark */
-  --text-inverse: #000000;
-  --text-brand-secondary: #cfa553;       /* colors/gold */
-  --text-text-link: #ba9cc5;
+  /* ── Department — text (dark: flip dark→light) ── */
+  --text-department-blue:   var(--color-brand-blue-lightest);
+  --text-department-green:  var(--color-brand-green-lightest);
+  --text-department-purple: var(--color-purple-lighter);
+  --text-department-gold:   var(--color-gold-lightest);
+  --text-department-red:    var(--color-brand-red-lightest);
+  --text-department-taupe:  var(--color-taupe-lightest);
+  --text-department-brown:  var(--color-brown-lightest);
 
-  /* ── Borders ─── */
-  --border-muted: #575757;               /* grayscale/dark */
-  --border-inverse: #000000;
-  --border-input: #575757;               /* grayscale/dark — visible on dark bg */
+  /* ── Department — borders (dark: flip to lighter) ── */
+  --border-department-blue:   var(--color-brand-blue-lighter);
+  --border-department-green:  var(--color-brand-green-lighter);
+  --border-department-purple: var(--color-purple-lighter);
+  --border-department-gold:   var(--color-gold-lighter);
+  --border-department-red:    var(--color-brand-red-lighter);
+  --border-department-taupe:  var(--color-taupe-lighter);
 
-  /* ── Shadows (dark mode — suppress drop shadows, use border for separation) ── */
   --box-shadow-sm: none;
   --box-shadow-md: none;
-
-  /* ── Interaction states (dark mode overrides) ─── */
-  --state-hover-overlay: rgba(255, 255, 255, 0.0006);   /* Figma: state/hover-overlay dark */
-  --state-pressed-overlay: rgba(255, 255, 255, 0.001);  /* Figma: state/pressed-overlay dark */
-  --state-disabled: rgba(230, 230, 230, 0.004);
-
-  /* ── Brand interaction states (dark mode — lighter primitives) ─── */
-  --background-brand-primary-hover: #decee4;   /* purple/lighter */
-  --background-brand-primary-pressed: #faf9fb;  /* purple/lightest */
 }
 
-/* ── System preference auto-switch (mirrors .dark from Figma) ── */
+/* ── System preference auto-switch (mirrors .dark) ── */
 @media (prefers-color-scheme: dark) {
   .theme-renew:not(.light) {
-    --background-elevated: #0a0a0a;
-    --surface-tertiary: #2e2e2e;
-    --surface-negative: #361c1b;
-    --surface-warning: #6d4226;
-    --surface-success: #101e15;
-    --text-negative: #bc8177;
-    --text-warning: #d8b86c;
-    --text-success: #97bea0;
-    --border-negative: #bc8177;
-    --color-system-link: #ba9cc5;
-    --page-primary: #000000;
-    --page-secondary: #2e2e2e;
-    --page-muted: #0a0a0a;
-    --page-inverse: #ffffff;
-    --surface-primary: #000000;
-    --surface-secondary: #2e2e2e;
-    --surface-muted: #0a0a0a;
-    --surface-nav: #000000;
-    --surface-overlay: #1b1b1b;
-    --background-primary: #000000;
-    --background-secondary: #2e2e2e;
-    --background-muted: #0a0a0a;
-    --background-inverse: #ffffff;
-    --background-input: #0a0a0a;
-    --text-primary: #ffffff;
-    --text-secondary: #a5a5a5;
-    --text-muted: #575757;
-    --text-accent: #575757;
-    --text-inverse: #000000;
-    --text-text-link: #ba9cc5;
-    --border-muted: #575757;
-    --border-inverse: #000000;
-    --border-input: #575757;               /* grayscale/dark — visible on dark bg */
+    --surface-primary:              var(--color-pure-black);
+    --surface-secondary:            var(--color-grayscale-darkest);
+    --surface-muted:                var(--color-grayscale-black);
+    --surface-overlay:              var(--color-overlay-dark);
+    --surface-navigation:           var(--color-pure-black);
+    --surface-footer:               var(--color-grayscale-white);
+    --surface-brand-accent:         var(--color-taupe-darkest);
+    --surface-brand-accent-hover:   var(--color-taupe-darker);
+    --surface-brand-accent-pressed: var(--color-taupe-dark);
+    --surface-primary-hover:        var(--color-grayscale-black);
+    --surface-secondary-hover:      var(--color-grayscale-darkest);
+    --surface-primary-pressed:      var(--color-grayscale-darkest);
+    --surface-secondary-pressed:    var(--color-grayscale-dark);
+
+    --background-primary:               var(--color-pure-black);
+    --background-muted:                 var(--color-grayscale-black);
+    --background-inverse:               var(--color-grayscale-white);
+    --background-input:                 var(--color-grayscale-black);
+    --background-primary-hover:         var(--color-grayscale-darkest);
+    --background-primary-pressed:       var(--color-grayscale-dark);
+    --background-disabled:              var(--color-grayscale-darkest);
+    --background-brand-primary-hover:   var(--color-purple-lighter);
+    --background-brand-primary-pressed: var(--color-purple-lightest);
+
+    --border-primary:   var(--color-grayscale-dark);
+    --border-secondary: var(--color-grayscale-darkest);
+    --border-inverse:   var(--color-pure-black);
+    --border-muted:     var(--color-grayscale-dark);
+    --border-input:     var(--color-grayscale-dark);
+
+    --text-primary:   var(--color-grayscale-white);
+    --text-secondary: var(--color-grayscale-light);
+    --text-inverse:   var(--color-pure-black);
+    --text-accent:    var(--color-grayscale-dark);
+    --text-muted:     var(--color-grayscale-dark);
+
+    --page-primary:   var(--color-pure-black);
+    --page-secondary: var(--color-grayscale-darkest);
+    --page-muted:     var(--color-grayscale-black);
+    --page-inverse:   var(--color-grayscale-white);
+
+    /* ── Department — backgrounds (dark: flip light→dark) ── */
+    --background-department-blue:         var(--color-brand-blue-lightest);
+    --background-department-blue-light:   var(--color-brand-blue-darkest);
+    --background-department-green:        var(--color-brand-green-lightest);
+    --background-department-green-light:  var(--color-brand-green-darkest);
+    --background-department-purple:       var(--color-purple-lighter);
+    --background-department-purple-light: var(--color-purple-darkest);
+    --background-department-gold:         var(--color-gold-lightest);
+    --background-department-gold-light:   var(--color-gold-darkest);
+    --background-department-red:          var(--color-brand-red-lightest);
+    --background-department-red-light:    var(--color-brand-red-darkest);
+    --background-department-taupe:        var(--color-taupe-lightest);
+    --background-department-taupe-light:  var(--color-taupe-darkest);
+
+    /* ── Department — text (dark: flip dark→light) ── */
+    --text-department-blue:   var(--color-brand-blue-lightest);
+    --text-department-green:  var(--color-brand-green-lightest);
+    --text-department-purple: var(--color-purple-lighter);
+    --text-department-gold:   var(--color-gold-lightest);
+    --text-department-red:    var(--color-brand-red-lightest);
+    --text-department-taupe:  var(--color-taupe-lightest);
+    --text-department-brown:  var(--color-brown-lightest);
+
+    /* ── Department — borders (dark: flip to lighter) ── */
+    --border-department-blue:   var(--color-brand-blue-lighter);
+    --border-department-green:  var(--color-brand-green-lighter);
+    --border-department-purple: var(--color-purple-lighter);
+    --border-department-gold:   var(--color-gold-lighter);
+    --border-department-red:    var(--color-brand-red-lighter);
+    --border-department-taupe:  var(--color-taupe-lighter);
+
     --box-shadow-sm: none;
     --box-shadow-md: none;
-    --state-hover-overlay: rgba(255, 255, 255, 0.0006);
-    --state-pressed-overlay: rgba(255, 255, 255, 0.001);
-    --state-disabled: rgba(230, 230, 230, 0.004);
-    --background-brand-primary-hover: #decee4;
-    --background-brand-primary-pressed: #faf9fb;
   }
 }

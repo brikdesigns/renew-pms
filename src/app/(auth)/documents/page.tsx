@@ -23,7 +23,7 @@ const iconStyle: React.CSSProperties = {
 const headingStyle: React.CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.medium,
-  fontWeight: 700,
+  fontWeight: font.weight.bold,
   color: color.text.primary,
   margin: 0,
 };

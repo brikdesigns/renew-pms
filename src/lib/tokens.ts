@@ -9,7 +9,7 @@
  * This file makes that conversion instant — import and use, no guessing.
  *
  * USAGE:
- *   import { font, color, space, gap, radius, border } from '@/lib/tokens';
+ *   import { font, color, space, gap, size, border } from '@/lib/tokens';
  *   style={{ fontSize: font.size.body.md, color: color.text.primary }}
  *
  * DO NOT hardcode px values or hex colors. If a token is missing, add it here
@@ -23,6 +23,7 @@ export const font = {
     body: 'var(--font-family-body)',
     heading: 'var(--font-family-heading)',
     label: 'var(--font-family-label)',
+    subtitle: 'var(--font-family-subtitle)',
     display: 'var(--font-family-display)',
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
@@ -135,32 +136,32 @@ export const color = {
     onColorDark: 'var(--text-on-color-dark)',
     onColorLight: 'var(--text-on-color-light)',
     negative: 'var(--text-negative)',
+    positive: 'var(--text-positive)',
     warning: 'var(--text-warning)',
-    success: 'var(--text-success)',
+    success: 'var(--text-positive)',  // alias — Figma canonical name is "positive"
   },
   surface: {
     primary: 'var(--surface-primary)',
     secondary: 'var(--surface-secondary)',
-    tertiary: 'var(--surface-tertiary)',
+    muted: 'var(--surface-muted)',
+    accent: 'var(--surface-brand-accent)',
     negative: 'var(--surface-negative)',
+    positive: 'var(--surface-positive)',
     warning: 'var(--surface-warning)',
-    success: 'var(--surface-success)',
+    success: 'var(--surface-positive)',  // alias — Figma canonical name is "positive"
     overlay: 'var(--surface-overlay)',
     brandPrimary: 'var(--surface-brand-primary)',
     brandSecondary: 'var(--surface-brand-secondary)',
-    nav: 'var(--surface-nav)',
-    accent: 'var(--surface-accent)',
+    nav: 'var(--surface-navigation)',
   },
   background: {
     primary: 'var(--background-primary)',
     secondary: 'var(--background-secondary)',
     brandPrimary: 'var(--background-brand-primary)',
     inverse: 'var(--background-inverse)',
-    elevated: 'var(--background-elevated)',
     input: 'var(--background-input)',
     onColorDark: 'var(--background-on-color-dark)',
     muted: 'var(--background-muted)',
-    accent: 'var(--background-accent)',
   },
   border: {
     primary: 'var(--border-primary)',
@@ -168,8 +169,10 @@ export const color = {
     muted: 'var(--border-muted)',
     brand: 'var(--border-brand-primary)',
     negative: 'var(--border-negative)',
+    positive: 'var(--border-positive)',
     input: 'var(--border-input)',
     inverse: 'var(--border-inverse)',
+    focus: 'var(--border-focus)',
   },
   brand: {
     primary: 'var(--background-brand-primary)',
@@ -177,25 +180,27 @@ export const color = {
   page: {
     primary: 'var(--page-primary)',
     secondary: 'var(--page-secondary)',
-    accent: 'var(--page-accent)',
   },
   system: {
-    link: 'var(--color-system-link)',
-    red: 'var(--color-system-red)',
-    green: 'var(--color-system-green)',
-    yellow: 'var(--color-system-yellow)',
-    blue: 'var(--color-system-blue)',
-    orange: 'var(--color-system-orange)',
-    purple: 'var(--color-system-purple)',
+    link:        'var(--color-system-link)',
+    error:       'var(--color-system-error)',
+    errorLight:  'var(--color-system-error-light)',
+    green:       'var(--color-system-green)',
+    greenLight:  'var(--color-system-green-light)',
+    yellow:      'var(--color-system-yellow)',
+    yellowLight: 'var(--color-system-yellow-light)',
+    red:         'var(--color-system-error)',   // alias — prefer .error
+    blue:        'var(--color-system-blue)',
+    orange:      'var(--color-system-orange)',
   },
   department: {
-    blue:   { base: 'var(--color-department-blue)',   light: 'var(--color-department-blue-light)',   text: 'var(--color-department-blue-text)' },
-    green:  { base: 'var(--color-department-green)',  light: 'var(--color-department-green-light)',  text: 'var(--color-department-green-text)' },
-    purple: { base: 'var(--color-department-purple)', light: 'var(--color-department-purple-light)', text: 'var(--color-department-purple-text)' },
-    pink:   { base: 'var(--color-department-pink)',   light: 'var(--color-department-pink-light)',   text: 'var(--color-department-pink-text)' },
-    gold:   { base: 'var(--color-department-gold)',   light: 'var(--color-department-gold-light)',   text: 'var(--color-department-gold-text)' },
-    red:    { base: 'var(--color-department-red)',     light: 'var(--color-department-red-light)',     text: 'var(--color-department-red-text)' },
-    teal:   { base: 'var(--color-department-teal)',   light: 'var(--color-department-teal-light)',   text: 'var(--color-department-teal-text)' },
+    blue:   { base: 'var(--background-department-blue)',   light: 'var(--background-department-blue-light)',   text: 'var(--text-department-blue)',   border: 'var(--border-department-blue)' },
+    green:  { base: 'var(--background-department-green)',  light: 'var(--background-department-green-light)',  text: 'var(--text-department-green)',  border: 'var(--border-department-green)' },
+    purple: { base: 'var(--background-department-purple)', light: 'var(--background-department-purple-light)', text: 'var(--text-department-purple)', border: 'var(--border-department-purple)' },
+    gold:   { base: 'var(--background-department-gold)',   light: 'var(--background-department-gold-light)',   text: 'var(--text-department-gold)',   border: 'var(--border-department-gold)' },
+    red:    { base: 'var(--background-department-red)',    light: 'var(--background-department-red-light)',    text: 'var(--text-department-red)',    border: 'var(--border-department-red)' },
+    taupe:  { base: 'var(--background-department-taupe)',  light: 'var(--background-department-taupe-light)',  text: 'var(--text-department-taupe)',  border: 'var(--border-department-taupe)' },
+    brown:  { base: 'var(--background-department-taupe)',  light: 'var(--background-department-taupe-light)',  text: 'var(--text-department-brown)',  border: 'var(--border-department-taupe)' },
   },
 } as const;
 
@@ -203,14 +208,17 @@ export const color = {
 
 export const state = {
   hover: {
-    overlay: 'var(--state-hover-overlay)',
+    background: 'var(--background-primary-hover)',   // solid bg hover (ghost buttons, nav items)
     brandPrimary: 'var(--background-brand-primary-hover)',
+    subtle: 'var(--surface-primary-hover)',          // surface-level ghost/outline hover
+    secondary: 'var(--surface-secondary-hover)',     // secondary surface hover
   },
   pressed: {
-    overlay: 'var(--state-pressed-overlay)',
+    background: 'var(--background-primary-pressed)',
     brandPrimary: 'var(--background-brand-primary-pressed)',
+    secondary: 'var(--surface-secondary-pressed)',
   },
-  focus: 'var(--state-focus)',
+  focus: 'var(--border-focus)',
   disabled: {
     opacity: 'var(--state-disabled-opacity)',
   },
@@ -238,19 +246,24 @@ export const space = {
   huge: 'var(--padding-huge)',
   button: 'var(--padding-tiny)',
   input: 'var(--padding-tiny)',
+  // Extended — references space primitives not aliased in BDS padding tokens
+  '2xl': 'var(--space-1000)',   // 40px
+  '3xl': 'var(--space-1600)',   // 64px
 } as const;
 
 // ─── Gap (between elements) ─────────────────────────────────────────
 
 export const gap = {
   none: 'var(--gap-none)',
-  tiny: 'var(--gap-tiny)',
-  xs: 'var(--gap-xs)',
-  sm: 'var(--gap-sm)',
-  md: 'var(--gap-md)',
-  lg: 'var(--gap-lg)',
-  xl: 'var(--gap-xl)',
-  huge: 'var(--gap-huge)',
+  tiny: 'var(--gap-tiny)',   // 2px
+  xs: 'var(--gap-xs)',       // 4px
+  sm: 'var(--gap-sm)',       // 6px
+  md: 'var(--gap-md)',       // 8px
+  lg: 'var(--gap-lg)',       // 16px
+  xl: 'var(--gap-xl)',       // 24px
+  huge: 'var(--gap-huge)',   // 32px
+  // Extended — references space primitives (no --gap-* alias in BDS for these steps)
+  section: 'var(--space-1200)', // 48px — large section/column separation
 } as const;
 
 // ─── Border ──────────────────────────────────────────────────────────
@@ -265,15 +278,42 @@ export const border = {
     huge: 'var(--border-width-huge)',
   },
   radius: {
-    none: 'var(--border-radius-none)',
-    sm: 'var(--border-radius-sm)',
-    md: 'var(--border-radius-md)',
-    lg: 'var(--border-radius-lg)',
-    button: 'var(--border-radius-50)',
-    input: 'var(--border-radius-50)',
+    none: 'var(--border-radius-none)', // 0
+    xs: 'var(--border-radius-100)',    // 4px — progress bars, count badges
+    sm: 'var(--border-radius-sm)',     // 8px
+    md: 'var(--border-radius-md)',     // 12px
+    lg: 'var(--border-radius-lg)',     // 16px
+    button: 'var(--border-radius-50)', // 2px
+    input: 'var(--border-radius-50)',  // 2px
     pill: '9999px',
     circle: '50%',
   },
+} as const;
+
+// ─── Size (structural dimensions) ───────────────────────────────────
+//
+// Use these for widths, heights, and fixed-size elements (icons, dots,
+// progress bars, avatars, dividers). These map to raw --space-* primitives
+// on the 4-point grid. Do NOT hardcode px values for these — reach for
+// the closest token instead.
+//
+// Scale reference (px):
+//   xs=4  sm=8  md=12  lg=16  xl=20  xxl=24  3xl=28  4xl=32  5xl=40  6xl=48  7xl=64
+
+export const size = {
+  xs:  'var(--space-100)',   // 4px  — micro indicators, tight gaps
+  sm:  'var(--space-200)',   // 8px  — small icons, progress tracks
+  md:  'var(--space-300)',   // 12px — color dots, compact chips
+  lg:  'var(--space-400)',   // 16px — standard icons
+  xl:  'var(--space-500)',   // 20px — medium icons
+  xxl: 'var(--space-600)',   // 24px — large icons, avatar-sm
+  '3xl': 'var(--space-700)', // 28px — avatar-md, progress bars
+  '4xl': 'var(--space-800)', // 32px — avatar-lg, button-height-sm
+  '5xl': 'var(--space-1000)', // 40px — button-height-md, empty state icon
+  '6xl': 'var(--space-1200)', // 48px — section spacing, hero icons
+  '7xl': 'var(--space-1600)', // 64px — full-page loading padding
+  /** 1px — hairline dividers and separators; use border.width.sm for borders */
+  hairline: 'var(--space-25)',
 } as const;
 
 // ─── Motion ──────────────────────────────────────────────────────────

@@ -26,15 +26,6 @@ const mainStyle: CSSProperties = {
   overflow: 'hidden',
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getInitials(firstName: string | null, lastName: string | null, email: string | null): string {
-  if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
-  if (firstName) return firstName.slice(0, 2).toUpperCase();
-  if (email) return email.slice(0, 2).toUpperCase();
-  return '?';
-}
-
 // ─── Layout ──────────────────────────────────────────────────────────────────
 
 export default async function AuthLayout({
@@ -48,9 +39,8 @@ export default async function AuthLayout({
     redirect('/login');
   }
 
-  const { first_name, last_name, email, full_name } = authUser.profile;
+  const { first_name, email, full_name } = authUser.profile;
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
-  const initials = getInitials(first_name, last_name, email);
   const userDepartment = authUser.membership?.department ?? null;
 
   return (
@@ -59,7 +49,7 @@ export default async function AuthLayout({
         <AppSidebar userRole={authUser.profile.system_role} />
         <div style={mainStyle}>
           <AuthLayoutInner
-            topBar={<TopUtilityBar userInitials={initials} userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} />}
+            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} />}
           >
             {children}
           </AuthLayoutInner>

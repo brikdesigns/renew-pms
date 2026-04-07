@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
 import {
-  Sheet, TextInput, Select,
+  Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
@@ -14,7 +14,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, border } from '@/lib/tokens';
+import { font, color, space, border } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ const DEPARTMENT_OPTIONS = [
   { label: '— (Cross-department)', value: '' },
   { label: 'Clinical', value: 'Clinical' },
   { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Maintenance', value: 'Maintenance' },
   { label: 'HR', value: 'HR' },
   { label: 'Administration', value: 'Administration' },
   { label: 'Sterilization', value: 'Sterilization' },
@@ -154,7 +154,7 @@ const removeBtn: CSSProperties = {
 };
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
   fontSize: font.size.body.sm,
   color: color.text.secondary,
@@ -286,10 +286,10 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {roles.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{r.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{r.description}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -331,13 +331,13 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell>
-                  <span style={{ fontWeight: 500, color: color.text.primary }}>{u.name}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{u.name}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.role}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.role}</span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontSize: font.size.body.sm, color: color.text.secondary }}>{u.email}</span>
+                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
                   <button
@@ -381,10 +381,10 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}
       footer={<>
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" form="edit-team-form" className="renew-btn renew-btn--primary" disabled={saving}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="edit-team-form" disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+        </Button>
       </>}
     >
       {/* children only used in add mode (no tabs) */}

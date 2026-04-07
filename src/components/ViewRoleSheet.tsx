@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { getDepartmentColors } from '@/lib/department-colors';
-import { color, font } from '@/lib/tokens';
+import { color, font, gap, space, departmentColor } from '@/lib/tokens';
+import type { Member } from '@/hooks/useMembers';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +16,7 @@ export interface RoleViewData {
   id: string;
   name: string;
   department: string;
+  department_color: string;
   description: string;
   is_default: boolean;
   is_active: boolean;
@@ -27,96 +28,16 @@ interface ViewRoleSheetProps {
   onClose: () => void;
   role: RoleViewData | null;
   onEdit?: () => void;
+  /** All practice members — filtered to this role inside the component */
+  members: Member[];
 }
-
-// ─── Mock associated data ────────────────────────────────────────────────────
-
-interface AssociatedUser {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-}
-
-interface AssociatedDepartment {
-  id: string;
-  name: string;
-}
-
-const USERS_BY_ROLE: Record<string, AssociatedUser[]> = {
-  Owner: [
-    { id: '1', name: 'Sarah Mitchell', email: 'sarah@renewdental.com', department: 'Clinical' },
-  ],
-  'Office Manager': [
-    { id: '2', name: 'Jessica Torres', email: 'jessica@renewdental.com', department: 'Administration' },
-  ],
-  'Dental Hygienist': [
-    { id: '3', name: 'Amanda Chen', email: 'amanda@renewdental.com', department: 'Clinical' },
-    { id: '4', name: 'Marcus Williams', email: 'marcus@renewdental.com', department: 'Clinical' },
-  ],
-  'Dental Assistant': [
-    { id: '5', name: 'Emily Rivera', email: 'emily@renewdental.com', department: 'Clinical' },
-    { id: '6', name: 'Tyler Nguyen', email: 'tyler@renewdental.com', department: 'Sterilization' },
-  ],
-  Receptionist: [
-    { id: '7', name: 'Rachel Foster', email: 'rachel@renewdental.com', department: 'Front Desk' },
-  ],
-  'Treatment Coordinator': [
-    { id: '8', name: 'David Park', email: 'david@renewdental.com', department: 'Front Desk' },
-  ],
-  'Insurance Coordinator': [
-    { id: '9', name: 'Lisa Gomez', email: 'lisa@renewdental.com', department: 'Front Desk' },
-  ],
-  'Inventory Manager': [
-    { id: '10', name: 'Jordan Hayes', email: 'jordan@renewdental.com', department: 'Engineering' },
-  ],
-  Engineer: [],
-  Manager: [],
-  Admin: [],
-  Staff: [],
-};
-
-const DEPARTMENTS_BY_ROLE: Record<string, AssociatedDepartment[]> = {
-  Owner: [{ id: '1', name: 'Clinical' }],
-  'Office Manager': [{ id: '5', name: 'Administration' }],
-  'Dental Hygienist': [{ id: '1', name: 'Clinical' }],
-  'Dental Assistant': [
-    { id: '1', name: 'Clinical' },
-    { id: '6', name: 'Sterilization' },
-  ],
-  Receptionist: [{ id: '2', name: 'Front Desk' }],
-  'Treatment Coordinator': [{ id: '2', name: 'Front Desk' }],
-  'Insurance Coordinator': [{ id: '2', name: 'Front Desk' }],
-  Engineer: [{ id: '3', name: 'Engineering' }],
-  'Inventory Manager': [{ id: '3', name: 'Engineering' }],
-  Manager: [{ id: '7', name: 'All Departments' }],
-  Admin: [{ id: '7', name: 'All Departments' }],
-  Staff: [{ id: '7', name: 'All Departments' }],
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
-};
-
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: color.text.secondary,
   textAlign: 'center',
 };
@@ -124,13 +45,15 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetProps) {
+export function ViewRoleSheet({ isOpen, onClose, role, onEdit, members: allMembers }: ViewRoleSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
 
   if (!role) return null;
 
-  const users = USERS_BY_ROLE[role.name] ?? [];
-  const departments = DEPARTMENTS_BY_ROLE[role.name] ?? [];
+  const users = allMembers.filter((m) => m.practice_role_id === role.id);
+  const departments = role.department
+    ? [{ id: role.id, name: role.department, departmentColor: role.department_color }]
+    : [];
 
   const detailsContent = (
     <div style={sheetBodyStyle}>
@@ -139,8 +62,8 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
       <ReadOnlyField label="Department" value={role.department} />
       <ReadOnlyField label="Description" value={role.description} />
       <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
@@ -163,12 +86,12 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
             <ProfileCard
               key={u.id}
               variant="user"
-              name={u.name}
+              name={`${u.first_name} ${u.last_name}`.trim()}
               subtitle={u.email}
               role={role.name}
               department={u.department}
-              departmentBg={getDepartmentColors(u.department).light}
-              departmentText={getDepartmentColors(u.department).text}
+              departmentBg={departmentColor(u.department_color).light}
+              departmentText={departmentColor(u.department_color).text}
             />
           ))}
         </div>
@@ -188,7 +111,7 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
               key={d.id}
               variant="department"
               name={d.name}
-              dotColor={getDepartmentColors(d.name).light}
+              dotColor={departmentColor(d.departmentColor).light}
             />
           ))}
         </div>
@@ -213,10 +136,10 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit }: ViewRoleSheetPr
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-          <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
           {onEdit && (
-            <button type="button" className="renew-btn renew-btn--primary" onClick={onEdit}>Edit</button>
+            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
           )}
         </div>
       }

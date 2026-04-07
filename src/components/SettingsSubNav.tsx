@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
-import { font, color, border } from '@/lib/tokens';
+import { font, color, state, gap, space } from '@/lib/tokens';
 
 // ─── Styles (BDS tokens) ────────────────────────────────────────────────────
 
@@ -17,11 +18,10 @@ const subNavStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-start',
-  backgroundColor: color.surface.secondary,
-  borderRight: `1px solid ${color.border.muted}`,
+  backgroundColor: color.surface.primary,
+  borderRight: `1px solid ${color.border.primary}`,
   height: '100%',
-  paddingInline: '12px',
-  paddingTop: '113px',
+  paddingTop: space.md,
   overflowY: 'auto',
   boxSizing: 'border-box',
 };
@@ -34,21 +34,25 @@ const listStyle: CSSProperties = {
   width: '100%',
 };
 
-function menuItemStyle(active: boolean): CSSProperties {
+function menuItemStyle(active: boolean, hovered: boolean): CSSProperties {
+  let backgroundColor: string;
+  if (active) backgroundColor = color.background.brandPrimary;
+  else if (hovered) backgroundColor = state.hover.subtle;
+  else backgroundColor = 'transparent';
+
   return {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    paddingBlock: '12px',
-    paddingInline: '12px',
+    gap: gap.md,
+    height: '52px',
+    paddingInline: space.sm,
     width: '100%',
-    borderRadius: border.radius.sm,
-    backgroundColor: active ? color.background.brandPrimary : 'transparent',
-    color: active ? color.text.onColorDark : color.text.primary,
+    backgroundColor,
+    color: active ? color.text.onColorDark : hovered ? color.text.brand : color.text.primary,
     textDecoration: 'none',
     fontFamily: font.family.label,
-    fontSize: font.size.body.md,
-    fontWeight: 500,
+    fontSize: font.size.label.md,
+    fontWeight: font.weight.medium,
     lineHeight: font.lineHeight.tight,
     cursor: 'pointer',
     transition: 'background-color 0.15s ease, color 0.15s ease',
@@ -95,18 +99,26 @@ interface SettingsSubNavProps {
 export function SettingsSubNav({ userRole = 'staff' }: SettingsSubNavProps) {
   const pathname = usePathname();
   const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const visibleItems = SETTINGS_NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
   );
 
   return (
-    <nav style={subNavStyle} aria-label="Settings navigation">
+    <nav className="settings-subnav" style={subNavStyle} aria-label="Settings navigation">
       <div style={listStyle}>
         {visibleItems.map((item) => {
           const active = pathname.startsWith(item.href);
+          const hovered = hoveredItem === item.href;
           return (
-            <Link key={item.href} href={item.href} style={menuItemStyle(active)}>
+            <Link
+              key={item.href}
+              href={item.href}
+              style={menuItemStyle(active, hovered)}
+              onMouseEnter={() => setHoveredItem(item.href)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
               <span style={iconStyle}>
                 <Icon icon={item.icon} />
               </span>

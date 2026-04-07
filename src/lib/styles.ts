@@ -70,20 +70,20 @@ export const heading = {
     margin: 0,
   } satisfies CSSProperties,
 
-  /** Section heading inside a card (body/lg · 18px semibold) */
+  /** Section heading inside a card (heading/tiny · 18px semibold) */
   section: {
     fontFamily: font.family.heading,
-    fontSize: font.size.body.lg,
+    fontSize: font.size.heading.tiny,
     fontWeight: font.weight.semibold,
     color: color.text.primary,
     margin: `0 0 ${space.md}`,
     textTransform: 'capitalize' as const,
   } satisfies CSSProperties,
 
-  /** Sub-section heading (body/md · 16px semibold) */
+  /** Sub-section label (label/md · 16px semibold — heading scale starts at 18px) */
   subsection: {
-    fontFamily: font.family.heading,
-    fontSize: font.size.body.md,
+    fontFamily: font.family.label,
+    fontSize: font.size.label.md,
     fontWeight: font.weight.semibold,
     color: color.text.primary,
     margin: `${space.md} 0 ${gap.sm}`,

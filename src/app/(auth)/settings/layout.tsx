@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/lib/auth';
 import { SettingsSubNav } from '@/components/SettingsSubNav';
 import type { CSSProperties } from 'react';
+import { color } from '@/lib/tokens';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ const bodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   overflowY: 'auto',
+  backgroundColor: color.page.primary,
 };
 
 // ─── Layout ──────────────────────────────────────────────────────────────────

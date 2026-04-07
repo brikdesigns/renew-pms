@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import {
-  Sheet, Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -53,50 +51,6 @@ const TYPE_LABELS: Record<string, string> = {
   skill_training: 'Skill Training',
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  cleaning: 'Cleaning',
-  equipment: 'Equipment',
-  maintenance: 'Maintenance',
-  compliance_safety: 'Compliance / Safety',
-  patient_care: 'Patient Care',
-  training: 'Training',
-  administrative: 'Administrative',
-};
-
-const FREQUENCY_LABELS: Record<string, string> = {
-  none: '—',
-  daily: 'Daily',
-  weekly: 'Weekly',
-  bi_weekly: 'Bi-Weekly',
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  semi_annually: 'Semi-Annually',
-  annually: 'Annually',
-  per_shift: 'Per Shift',
-  custom: 'Custom',
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  all_staff: 'All Staff',
-  owner: 'Owner / Dentist',
-  office_manager: 'Office Manager',
-  dental_hygienist: 'Dental Hygienist',
-  dental_assistant: 'Dental Assistant',
-  receptionist: 'Receptionist',
-  supply_manager: 'Supply Manager',
-};
-
-const DEPARTMENT_LABELS: Record<string, string> = {
-  '': '—',
-  clinical: 'Clinical',
-  front_desk: 'Front Desk',
-  administration: 'Administration',
-  sterilization: 'Sterilization',
-  hr: 'HR',
-  all_departments: 'All Departments',
-  global: 'All Departments',
-};
-
 const PRIORITY_MAP: Record<string, { status: 'error' | 'warning' | 'info'; label: string }> = {
   critical: { status: 'error', label: 'Critical' },
   high: { status: 'error', label: 'High' },
@@ -110,29 +64,6 @@ const STATUS_MAP: Record<string, { badge: 'positive' | 'warning' | 'error'; labe
   archived: { badge: 'error', label: 'Archived' },
 };
 
-const ROOM_LABELS: Record<string, string> = {
-  '': '—',
-  operatory: 'Operatory',
-  sterilization_room: 'Sterilization Room',
-  xray_room: 'X-Ray Room',
-  lab: 'Lab',
-  front_office: 'Front Office',
-  lobby: 'Lobby',
-  waiting_area: 'Waiting Area',
-  break_room: 'Break Room',
-  supply_storage: 'Supply / Storage',
-  restroom: 'Restroom',
-};
-
-const COMPLIANCE_LABELS: Record<string, string> = {
-  '': '—',
-  osha: 'OSHA',
-  hipaa: 'HIPAA',
-  infection_control: 'Infection Control',
-  radiation_safety: 'Radiation Safety',
-  fire_safety: 'Fire Safety',
-  emergency_preparedness: 'Emergency Preparedness',
-};
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -147,23 +78,6 @@ const halfStyle: CSSProperties = {
   minWidth: 0,
 };
 
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
-};
-
 const taskItemStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -175,9 +89,9 @@ const taskItemStyle: CSSProperties = {
 };
 
 const emptyState: CSSProperties = {
-  padding: '24px 0',
+  padding: `${space.lg} 0`,
   fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
+  fontSize: font.size.body.md,
   color: color.text.secondary,
   textAlign: 'center',
 };
@@ -207,31 +121,31 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
           <ReadOnlyField label="Type" value={typeLabel} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Category" value={CATEGORY_LABELS[template.category] ?? template.category} />
+          <ReadOnlyField label="Category" value={template.category || '—'} />
         </div>
       </div>
 
       {template.compliance_type && (
-        <ReadOnlyField label="Compliance Type" value={COMPLIANCE_LABELS[template.compliance_type] ?? template.compliance_type} />
+        <ReadOnlyField label="Compliance Type" value={template.compliance_type} />
       )}
 
       <h3 style={sheetSectionTitle}>Assignment & Scheduling</h3>
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Assigned Role" value={ROLE_LABELS[template.assigned_role] ?? template.assigned_role} />
+          <ReadOnlyField label="Assigned Role" value={template.assigned_role || 'All Staff'} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Department" value={(DEPARTMENT_LABELS[template.department] ?? template.department) || '—'} />
+          <ReadOnlyField label="Department" value={template.department || '—'} />
         </div>
       </div>
 
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={FREQUENCY_LABELS[template.frequency] ?? template.frequency} />
+          <ReadOnlyField label="Frequency" value={template.frequency || '—'} />
         </div>
         <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
               Priority
             </span>
             <div style={{ display: 'inline-flex' }}>
@@ -249,14 +163,14 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         )}
         {template.room && (
           <div style={halfStyle}>
-            <ReadOnlyField label="Room" value={ROOM_LABELS[template.room] ?? template.room} />
+            <ReadOnlyField label="Room" value={template.room} />
           </div>
         )}
       </div>
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
@@ -273,7 +187,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       <h3 style={sheetSectionTitle}>
         {template.type === 'procedure' ? 'Procedure Steps' : `${typeLabel} Items`}
       </h3>
-      <p style={{ color: color.text.secondary, fontSize: font.size.body.sm, margin: 0 }}>
+      <p style={{ color: color.text.secondary, fontSize: font.size.body.md, margin: 0 }}>
         {template.tasks.length} {template.tasks.length === 1 ? 'item' : 'items'}
       </p>
 
@@ -283,10 +197,10 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
           {template.tasks.map((task, idx) => (
             <div key={task.id} style={taskItemStyle}>
-              <span style={{ color: color.text.secondary, fontSize: font.size.body.sm, minWidth: '24px' }}>
+              <span style={{ color: color.text.secondary, fontSize: font.size.body.md, minWidth: '24px' }}>
                 {idx + 1}.
               </span>
-              <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
+              <span style={{ color: color.text.primary, fontSize: font.size.body.md, flex: 1 }}>
                 {task.label}
               </span>
             </div>
@@ -312,7 +226,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
       }
     />
   );

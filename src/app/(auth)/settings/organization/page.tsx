@@ -6,11 +6,11 @@ import type { TabItem } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
+import { Button } from '@bds/components';
 import {
   contentStyle,
   sectionTitleStyle,
   rowStyle,
-  editBtnStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -26,9 +26,9 @@ const ORG_TABS: TabItem[] = [
 // ─── Status badge ────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'color-mix(in srgb, var(--color-system-green) 15%, transparent)', text: 'var(--color-system-green)' },
-  inactive: { bg: 'color-mix(in srgb, var(--text-secondary) 15%, transparent)', text: 'var(--text-secondary)' },
-  suspended: { bg: 'color-mix(in srgb, var(--color-system-red) 15%, transparent)', text: 'var(--color-system-red)' },
+  active:    { bg: `color-mix(in srgb, ${color.system.green} 15%, transparent)`, text: color.system.green },
+  inactive:  { bg: `color-mix(in srgb, ${color.text.secondary} 15%, transparent)`, text: color.text.secondary },
+  suspended: { bg: `color-mix(in srgb, ${color.system.red} 15%, transparent)`, text: color.system.red },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -38,9 +38,9 @@ function StatusBadge({ status }: { status: string }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        fontFamily: font.family.body,
-        fontSize: font.size.body.sm,
-        fontWeight: 600,
+        fontFamily: font.family.label,
+        fontSize: font.size.label.sm,
+        fontWeight: font.weight.semibold,
         padding: `${gap.xs} ${space.xs}`,
         borderRadius: border.radius.sm,
         backgroundColor: colors.bg,
@@ -65,7 +65,7 @@ function DetailsTab({ practice }: { practice: OrganizationData }) {
         <ReadOnlyField label="Practice Name" value={practice.name || null} />
         <ReadOnlyField label="Website" value={practice.website_url || null} />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: gap.md, alignItems: 'flex-start' }}>
-          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, fontWeight: 500, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
             Status
           </span>
           <StatusBadge status={practice.status} />
@@ -193,7 +193,7 @@ export default function OrganizationSettingsPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', color: color.text.muted }}>Loading...</div>;
+    return <div style={{ padding: space['2xl'], color: color.text.muted }}>Loading...</div>;
   }
 
   return (
@@ -201,9 +201,7 @@ export default function OrganizationSettingsPage() {
       <PageHeader
         title="Organization"
         actions={
-          <button style={editBtnStyle} onClick={() => setSheetOpen(true)}>
-            Edit Organization
-          </button>
+          <Button variant="primary" size="sm" onClick={() => setSheetOpen(true)}>Edit Organization</Button>
         }
         tabs={ORG_TABS}
         activeTab={activeTab}

@@ -1,9 +1,8 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import { Sheet } from '@bds/components';
+import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
-import { color, font } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 
@@ -43,24 +42,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const dotBase: CSSProperties = {
-  width: '8px',
-  height: '8px',
-  borderRadius: '50%',
-  display: 'inline-block',
-  flexShrink: 0,
-};
-
-const statusWrap: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  fontWeight: 500,
-};
-
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
@@ -74,7 +55,7 @@ export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
       width="600px"
       side="right"
       footer={
-        <button type="button" className="renew-btn renew-btn--ghost" onClick={onClose}>Close</button>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
       }
     >
       <div style={sheetBodyStyle}>
@@ -85,8 +66,8 @@ export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
           <ReadOnlyField label="Description" value={room.description} />
         )}
         <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span style={{ fontFamily: font.family.label, fontSize: font.size.body.sm, fontWeight: 500, color: color.text.primary }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
             Status
           </span>
           <div style={{ display: 'inline-flex' }}>

@@ -1,8 +1,25 @@
-/* BDS token layer — must come first */
-@import '../../brik-bds/tokens/fonts.css' layer(base);
-@import '../../brik-bds/tokens/figma-tokens.css' layer(base);
-/* Renew Dental brand override — after BDS so it wins */
-@import '../styles/theme-renew.css' layer(base);
+/* ── Layer order: later = higher cascade priority ── */
+/*
+  Tailwind's internal layers (theme, base, components, utilities) are declared
+  FIRST so they sit at the BOTTOM of the cascade. BDS layers are declared after,
+  making them higher priority than Tailwind's preflight and base resets.
+
+  This restores the pre-@layer BDS behavior where BDS component CSS (unlayered)
+  always beat Tailwind's base resets (padding: 0, border: 0, etc).
+
+  Final order, lowest → highest:
+    theme → base (preflight) → components → utilities
+    → bds-tokens → bds-components → client-theme → client-overrides
+*/
+@layer theme, base, components, utilities;
+@layer bds-tokens, bds-components, client-theme, client-overrides;
+
+/* BDS token layer */
+@import '../../brik-bds/tokens/fonts.css'        layer(bds-tokens);
+@import '../../brik-bds/tokens/figma-tokens.css'  layer(bds-tokens);
+@import '../../brik-bds/tokens/gap-fills.css'     layer(bds-tokens);
+/* Renew Dental brand override */
+@import '../styles/theme-renew.css' layer(client-theme);
 
 @import 'tailwindcss';
 
@@ -16,14 +33,16 @@
 }
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Tailwind v4 changed the default border color to `currentcolor`.
+  We patch it back to `--border-muted` in the bds-tokens layer (position 1)
+  so that BDS component CSS (bds-components, position 2) can override
+  border-color per-component without being beaten by a higher-priority
+  Tailwind base reset.
+  DO NOT move this back to @layer base — base is position 6 in the cascade
+  and would override BDS component border colors (e.g. Button transparent
+  borders, Board card accent left borders).
 */
-@layer base {
+@layer bds-tokens {
   *,
   ::after,
   ::before,
@@ -53,46 +72,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Tags and Badges: uppercase is a UI convention (not a Figma type style) ── */
-.bds-tag,
-.bds-badge {
-  text-transform: uppercase;
-}
-
-/* ── Board subtitles: token-driven casing + fix BDS Board.css body→label font ── */
-.bds-board-header__subtitle,
-.bds-board-card__subtitle {
-  text-transform: var(--text-transform-label);
-  font-family: var(--font-family-label);
-}
-
-/* ── Board overrides (neutral column backgrounds) ── */
-.bds-board-column .bds-avatar {
-  background-color: var(--dept-avatar-bg, var(--background-brand-primary));
-  color: var(--dept-avatar-color, var(--text-inverse));
-}
-
-/* Board header name + subtitle: font-family semantics are now correct in BDS.
- * Only color/opacity overrides needed here for Renew's neutral-column layout. */
-.bds-board-column .bds-board-header__name {
-  color: var(--text-primary);
-}
-
-.bds-board-column .bds-board-header__subtitle {
-  color: var(--text-secondary);
-  opacity: 1;
-}
-
-/* ── Sheet: top-align close button with heading ── */
-.bds-sheet__header,
-.bds-sheet__header-top {
-  align-items: flex-start;
-}
-
-.bds-sheet__close {
-  padding-top: 0;
-}
-
 @keyframes toast-slide-in {
   from {
     opacity: 0;
@@ -102,19 +81,6 @@ body {
     opacity: 1;
     transform: translateX(0);
   }
-}
-
-/*
- * Table/list cell link — hover turns brand-primary.
- * Apply className="cell-link" to any <a> inside a table cell or list row.
- */
-.cell-link {
-  color: var(--text-primary);
-  text-decoration: none;
-  transition: color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
-}
-.cell-link:hover {
-  color: var(--text-brand-primary);
 }
 
 /*
@@ -145,7 +111,7 @@ body {
   }
 
   .renew-btn:focus-visible {
-    outline: 2px solid var(--state-focus);
+    outline: 2px solid var(--border-focus);
     outline-offset: 2px;
   }
 
@@ -181,4 +147,143 @@ body {
   .renew-btn--ghost:active:not(:disabled) {
     background-color: var(--surface-muted);
   }
+
+}
+
+@layer client-overrides {
+  /* Table: white header, muted borders, no rounded corners */
+  .bds-table-head {
+    background-color: var(--background-primary);
+  }
+
+  .bds-table {
+    border-radius: 0;
+  }
+
+  .bds-table-head,
+  .bds-table-row,
+  .bds-table-cell,
+  .bds-table-head-cell {
+    border-color: var(--border-muted);
+  }
+
+  /* Table header border: match row border weight (sm instead of md) */
+  .bds-table-head {
+    border-bottom-width: var(--border-width-sm);
+  }
+
+  /* Tags and Badges: uppercase, xs text, semibold */
+  .bds-tag,
+  .bds-badge {
+    text-transform: uppercase;
+    font-size: var(--body-xs);
+    font-weight: var(--font-weight-semi-bold);
+  }
+
+  /* Board subtitles: token-driven casing + fix BDS Board.css body→label font */
+  .bds-board-header__subtitle,
+  .bds-board-card__subtitle {
+    text-transform: var(--text-transform-label);
+    font-family: var(--font-family-label);
+  }
+
+  /* Board overrides (neutral column backgrounds) */
+  .bds-board-column .bds-avatar {
+    background-color: var(--dept-avatar-bg, var(--background-brand-primary));
+    color: var(--dept-avatar-color, var(--text-inverse));
+  }
+
+  /* Board header name + subtitle: color/opacity overrides for Renew's neutral-column layout */
+  .bds-board-column .bds-board-header__name {
+    color: var(--text-primary);
+  }
+
+  .bds-board-column .bds-board-header__subtitle {
+    color: var(--text-secondary);
+    opacity: 1;
+  }
+
+  /* Sheet: top-align close button with heading */
+  .bds-sheet__header,
+  .bds-sheet__header-top {
+    align-items: flex-start;
+  }
+
+  .bds-sheet__close {
+    padding-top: 0;
+  }
+
+  /*
+   * Table/list cell link — hover turns brand-primary.
+   * Apply className="cell-link" to any <a> inside a table cell or list row.
+   */
+  .cell-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast, 100ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1));
+  }
+  .cell-link:hover {
+    color: var(--text-brand-primary);
+  }
+
+  /* Select chevron: use primary text color instead of muted */
+  .bds-select-chevron {
+    color: var(--text-primary);
+  }
+
+  /* Icon buttons: secondary variant provides the filled bg; no border needed */
+  .bds-icon-button.bds-button--secondary {
+    border-color: transparent;
+  }
+
+  /* Icon buttons: bump sm icon size from 14px (label-sm) to 18px (label-lg)
+     so icons fill more of the 40×40 hit area instead of appearing tiny */
+  .bds-icon-button--sm .bds-icon-button__icon {
+    font-size: var(--label-lg);
+  }
+
+  /* Menu items: one spacing step tighter than BDS default (md → sm) */
+  .bds-menu-item {
+    padding: var(--padding-sm);
+  }
+
+  /* Board card title: one step smaller than BDS default (label-lg → label-md) */
+  .bds-board-card__title {
+    font-size: var(--label-md);
+  }
+
+  /* Board card checkmark: brand-tinted hover — light purple bg + brand border */
+  .bds-board-card__check:hover {
+    border-color: var(--border-brand-primary);
+    background-color: var(--color-purple-lighter);
+  }
+
+  /* Board columns: allow vertical scroll on items but no horizontal scroll.
+     BDS clips the column when a background is set — override to visible so
+     cards don't get clipped and horizontal overflow stays on the board only. */
+  .bds-board-column {
+    overflow: visible;
+  }
+  .bds-board-column[style*="background"] {
+    overflow: visible;
+  }
+  .bds-board-column__items {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Toast: tighter right padding — pin close button to the edge */
+  .bds-toast__close {
+    padding-right: 0;
+  }
+}
+
+/* ── Settings sub-nav entrance animation ── */
+@keyframes settings-subnav-in {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.settings-subnav {
+  animation: settings-subnav-in var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0, 0, 0.2, 1)) both;
 }

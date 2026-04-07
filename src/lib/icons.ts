@@ -4,7 +4,8 @@
  * Registers the full Phosphor collection offline (bundled, no CDN).
  * Import named constants from here; render with <Icon icon={...} /> from '@iconify/react'.
  *
- * All icons use the "fill" weight — better legibility at small sizes.
+ * Navigation and settings icons use regular weight (ph:*) — softer, less heavy strokes.
+ * Action, status, and priority icons use fill weight (ph:*-fill) — higher legibility at small sizes.
  * Full icon browser: https://phosphoricons.com
  */
 import { addCollection } from '@iconify/react';
@@ -14,24 +15,24 @@ addCollection(phData);
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 export const icon = {
-  // App nav
-  home:         'ph:house-fill',
-  calendar:     'ph:calendar-dots-fill',
-  tasks:        'ph:list-checks-fill',
-  training:     'ph:graduation-cap-fill',
-  documents:    'ph:folder-open-fill',
-  analytics:    'ph:chart-bar-fill',
-  settings:     'ph:gear-fill',
+  // App nav — regular weight for softer appearance in the sidebar
+  home:         'ph:house',
+  calendar:     'ph:calendar-dots',
+  tasks:        'ph:list-checks',
+  training:     'ph:graduation-cap',
+  documents:    'ph:folder-open',
+  analytics:    'ph:chart-bar',
+  settings:     'ph:gear',
 
-  // Settings sub-nav
-  profile:      'ph:user-fill',
-  organization: 'ph:buildings-fill',
-  roles:        'ph:clipboard-text-fill',
-  inventory:    'ph:archive-fill',
-  teams:        'ph:users-three-fill',
-  permissions:  'ph:shield-check-fill',
-  invite:       'ph:user-plus-fill',
-  rooms:        'ph:warehouse-fill',
+  // Settings sub-nav — regular weight to match main nav
+  profile:      'ph:user',
+  organization: 'ph:buildings',
+  roles:        'ph:clipboard-text',
+  inventory:    'ph:archive',
+  teams:        'ph:users-three',
+  permissions:  'ph:shield-check',
+  invite:       'ph:user-plus',
+  rooms:        'ph:warehouse',
 
   // Actions
   eye:          'ph:eye-fill',
@@ -44,11 +45,13 @@ export const icon = {
   // UI chrome
   bell:         'ph:bell-fill',
   help:         'ph:question-fill',
+  feedback:     'ph:chat-teardrop-text-fill',
   power:        'ph:power-fill',
   moon:         'ph:moon-fill',
   sun:          'ph:sun-fill',
 
   // Status / feedback
+  remove:       'ph:minus-circle',
   warning:      'ph:warning-fill',
   overdue:      'ph:calendar-x-fill',
   circleCheck:  'ph:check-circle-fill',
