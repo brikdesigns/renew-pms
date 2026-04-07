@@ -1,0 +1,184 @@
+/**
+ * FullCalendar theme overrides — Renew PMS Schedule
+ *
+ * Layers BDS tokens over FullCalendar's default styles to match
+ * the Figma mockup (node 8008-9723). Uses semantic tokens so
+ * client theming carries through automatically.
+ */
+
+/* ─── Base layout ────────────────────────────────────────────────────────────── */
+
+.fc {
+  --fc-border-color: var(--border-muted);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: transparent;
+  --fc-today-bg-color: color-mix(in srgb, var(--background-brand-primary) 6%, transparent);
+  --fc-event-border-color: var(--border-brand-primary);
+  --fc-event-bg-color: var(--surface-brand-primary);
+  --fc-event-text-color: var(--text-on-color-dark);
+
+  font-family: var(--font-family-body);
+  height: 100%;
+}
+
+/* Remove outer border */
+.fc .fc-scrollgrid {
+  border: none;
+}
+
+/* ─── Toolbar (hidden — we use our own header) ───────────────────────────────── */
+
+.fc .fc-header-toolbar {
+  display: none;
+}
+
+/* ─── Column headers (day names) ─────────────────────────────────────────────── */
+
+.fc .fc-col-header-cell {
+  background: transparent;
+  border-bottom: 1px solid var(--border-muted);
+  border-left: none;
+  border-right: none;
+  padding: var(--padding-sm) 0;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-family: var(--font-family-label);
+  font-size: var(--label-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Time axis (left gutter) ────────────────────────────────────────────────── */
+
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-timegrid-slot-label-cushion {
+  font-family: var(--font-family-label);
+  font-size: var(--body-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.fc .fc-timegrid-slot {
+  height: 3rem;
+  border-color: var(--border-muted);
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-top-style: dotted;
+  border-color: color-mix(in srgb, var(--border-muted) 50%, transparent);
+}
+
+/* ─── Day columns ────────────────────────────────────────────────────────────── */
+
+.fc .fc-timegrid-col {
+  border-color: var(--border-muted);
+}
+
+/* ─── Events ─────────────────────────────────────────────────────────────────── */
+
+.fc .fc-timegrid-event,
+.fc .fc-daygrid-event {
+  border-radius: var(--border-radius-sm);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border-brand-primary);
+  box-shadow: var(--box-shadow-sm);
+  cursor: pointer;
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+}
+
+.fc .fc-timegrid-event:hover,
+.fc .fc-daygrid-event:hover {
+  box-shadow: var(--box-shadow-md);
+}
+
+.fc .fc-event-main {
+  padding: var(--padding-xs);
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── Custom event content layout ────────────────────────────────────────── */
+
+.renew-event-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.renew-event-avatar {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+/* Hide avatar on short events (≤ 45min slots = ~48px) */
+.fc-timegrid-event[style*="height"] .renew-event-avatar {
+  /* Avatar always shown — CSS below hides for truly tiny events */
+}
+
+.fc-event-title {
+  font-family: var(--font-family-label);
+  font-size: var(--label-sm);
+  font-weight: 600;
+  line-height: var(--font-line-height-snug);
+  color: var(--text-on-color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fc-event-time {
+  font-family: var(--font-family-body);
+  font-size: var(--body-xs);
+  color: color-mix(in srgb, var(--text-on-color-dark) 80%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── "Now" indicator ────────────────────────────────────────────────────────── */
+
+.fc .fc-timegrid-now-indicator-line {
+  border-color: var(--color-system-error);
+  border-width: 2px;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: var(--color-system-error);
+}
+
+/* ─── All-day row (compact) ──────────────────────────────────────────────────── */
+
+.fc .fc-daygrid-body {
+  display: none;
+}
+
+/* ─── Chip size fix — match border box across active/inactive states ────────── */
+/* primary-solid has no border; secondary-light has border-width-md (2px).
+   Add a transparent border so the box model stays consistent in both states. */
+
+.bds-chip--primary-solid {
+  border: var(--border-width-md) solid transparent;
+}
+
+/* ─── Scrollbar styling ──────────────────────────────────────────────────────── */
+
+.fc .fc-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fc .fc-scroller::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  border-radius: 3px;
+}
+
+.fc .fc-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
