@@ -6,7 +6,11 @@ export interface EquipmentItem {
   id: string;
   name: string;
   room_id: string | null;
+  room_name: string | null;
   status: string;
+  manufacturer: string | null;
+  description: string | null;
+  category: string | null;
 }
 
 export function useEquipment() {

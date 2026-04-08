@@ -10,6 +10,8 @@ import { icon } from '@/lib/icons';
 import { EditTeamSheet, type TeamFormData } from '@/components/EditTeamSheet';
 import { ViewTeamSheet, type TeamViewData } from '@/components/ViewTeamSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
+import { useToast } from '@/components/ToastProvider';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 // ─── Local type ──────────────────────────────────────────────────────────────
 
@@ -51,7 +53,7 @@ const subHeaderTitleStyle: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
+  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
@@ -60,14 +62,22 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 
 export function TeamsTable() {
   const [teams, setTeams] = useState<TeamRow[]>(SEED_TEAMS);
+  const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<TeamRow | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewing, setViewing] = useState<TeamRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (t: TeamRow) => { setEditing(t); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: Wire to DELETE API
+    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    setDeleteTarget(null);
+  };
 
   const handleView = (t: TeamRow) => { setViewing(t); setViewSheetOpen(true); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
@@ -141,8 +151,9 @@ export function TeamsTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -153,6 +164,13 @@ export function TeamsTable() {
 
       <EditTeamSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
       <ViewTeamSheet isOpen={viewSheetOpen} onClose={handleViewClose} team={viewData} onEdit={handleViewEdit} />
+      <ConfirmDeleteDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        itemName={deleteTarget?.name ?? ''}
+        itemType="team"
+      />
     </div>
   );
 }

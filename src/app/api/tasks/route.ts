@@ -2,16 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
-
-async function getPracticeId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from('practice_members')
-    .select('practice_id')
-    .eq('user_id', userId)
-    .limit(1)
-    .single();
-  return data?.practice_id ?? null;
-}
+import { getPracticeId } from '@/lib/practice';
 
 // ─── Join types ─────────────────────────────────────────────────────────────
 
@@ -47,6 +38,7 @@ interface RawTask {
   rooms: RoomJoin | RoomJoin[] | null;
   equipment: EquipmentJoin | EquipmentJoin[] | null;
   supply_categories: SupplyCategoryJoin | SupplyCategoryJoin[] | null;
+  departments: DepartmentJoin | DepartmentJoin[] | null;
   practice_members: MemberJoin | MemberJoin[] | null;
 }
 
@@ -58,11 +50,15 @@ function flattenTask(t: RawTask) {
   const member = first(t.practice_members);
   const profile = member ? first(member.profiles) : null;
   const role = member ? first(member.practice_role_types) : null;
-  const dept = role ? first(role.departments) : null;
+  const roleDept = role ? first(role.departments) : null;
+  const taskDept = first(t.departments);
   const taskType = first(t.task_types);
   const room = first(t.rooms);
   const equipment = first(t.equipment);
   const supplyCategory = first(t.supply_categories);
+
+  // Task's assigned department takes priority over the member's role department
+  const dept = taskDept ?? roleDept;
 
   return {
     id: t.id,
@@ -99,6 +95,7 @@ const TASK_SELECT = `
   rooms(name),
   equipment(name),
   supply_categories(name),
+  departments(name, color),
   practice_members(
     id,
     profiles(first_name, last_name),
@@ -117,25 +114,63 @@ export async function GET(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const { searchParams } = new URL(request.url);
   const dateParam = searchParams.get('date');
   const dateValue = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10);
 
+  // Fetch tasks that should appear on the selected date:
+  // 1. Tasks due exactly on this date
+  // 2. Overdue tasks (past due, not completed)
+  // 3. Recurring tasks (daily/per_shift) whose due_date <= selected date and aren't completed
   const { data, error } = await supabase
     .from('tasks')
     .select(TASK_SELECT)
     .eq('practice_id', practiceId)
     .not('assigned_to', 'is', null)
-    .or(`due_date.eq.${dateValue},status.eq.overdue`)
+    .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`)
     .order('due_date', { ascending: true })
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json((data ?? []).map(flattenTask));
+  // Deduplicate — a task may match multiple OR conditions
+  const seen = new Set<string>();
+  const unique = (data ?? []).filter((t) => {
+    if (seen.has(t.id)) return false;
+    seen.add(t.id);
+    return true;
+  });
+
+  const flatTasks = unique.map(flattenTask);
+
+  // Fetch checklist progress counts for all tasks in one query
+  const taskIds = flatTasks.map((t) => t.id);
+  if (taskIds.length > 0) {
+    const { data: checklistCounts } = await supabase
+      .from('task_checklist_items')
+      .select('task_id, is_completed')
+      .in('task_id', taskIds);
+
+    if (checklistCounts) {
+      const countMap = new Map<string, { total: number; completed: number }>();
+      for (const item of checklistCounts) {
+        const entry = countMap.get(item.task_id) ?? { total: 0, completed: 0 };
+        entry.total++;
+        if (item.is_completed) entry.completed++;
+        countMap.set(item.task_id, entry);
+      }
+      for (const task of flatTasks) {
+        const counts = countMap.get(task.id);
+        (task as Record<string, unknown>).checklist_total = counts?.total ?? 0;
+        (task as Record<string, unknown>).checklist_completed = counts?.completed ?? 0;
+      }
+    }
+  }
+
+  return NextResponse.json(flatTasks);
 }
 
 /**
@@ -148,7 +183,7 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
@@ -163,12 +198,14 @@ export async function POST(request: Request) {
       practice_id: practiceId,
       title: body.title.trim(),
       description: body.description?.trim() || null,
+      template_id: body.template_id || null,
       task_type_id: body.task_type_id || null,
       room_id: body.room_id || null,
       equipment_id: body.equipment_id || null,
       supply_category_id: body.supply_category_id || null,
       assigned_to: body.assigned_to || null,
       assigned_department: body.assigned_department || null,
+      assigned_role_id: body.assigned_role_id || null,
       status: body.status || 'not_started',
       priority: body.priority || 'medium',
       frequency: body.frequency || null,
@@ -179,6 +216,29 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If created from a template, copy its checklist items into task_checklist_items
+  if (body.template_id && data) {
+    const { data: templateItems } = await supabase
+      .from('checklist_items')
+      .select('label, sort_order, room_id, equipment_id, supply_category_id')
+      .eq('template_id', body.template_id)
+      .order('sort_order');
+
+    if (templateItems && templateItems.length > 0) {
+      await supabase.from('task_checklist_items').insert(
+        templateItems.map((item) => ({
+          task_id: data.id,
+          practice_id: practiceId,
+          label: item.label,
+          sort_order: item.sort_order,
+          room_id: item.room_id,
+          equipment_id: item.equipment_id,
+          supply_category_id: item.supply_category_id,
+        }))
+      );
+    }
+  }
 
   return NextResponse.json(flattenTask(data), { status: 201 });
 }

@@ -83,6 +83,62 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 - **Trainual** — staff training source of truth; API supports people management + assignment status only (cannot read/edit content). Key in `practices.integrations.trainual.api_key`.
 - **Google Drive** — practice files, SOPs. Folder ID in `practices.integrations.gdrive.folder_id`.
 
+## Error Handling: Fail Loud, Never Fake
+
+Prefer a visible failure over a silent fallback. Never silently swallow errors to keep things "working."
+
+**Priority order:**
+
+1. Works correctly with real data
+2. Falls back visibly — clearly signals degraded mode (banner, toast, log)
+3. Fails with a clear error message
+4. ~~Silently degrades to look "fine"~~ — **never do this**
+
+### Banned patterns (new code)
+
+```ts
+// ❌ Empty catch — errors vanish
+try { ... } catch (e) {}
+try { ... } catch { /* ignore */ }
+
+// ❌ Swallowed promise — fire-and-forget failure
+somePromise.catch(() => {})
+somePromise.catch(() => null)
+
+// ❌ Silent null return — caller has no idea why
+if (!data) return null;
+
+// ❌ Catch that fakes success — caller thinks it worked
+try { ... } catch (e) { return defaultValue; }
+```
+
+### Required patterns (new code)
+
+```ts
+// ✅ Catch that surfaces the error
+try { ... } catch (e) {
+  console.error('[context] what failed:', e);
+  throw e; // or return an error type the caller handles
+}
+
+// ✅ Fallback that discloses degraded state
+if (!data) {
+  console.warn('[ComponentName] data unavailable, showing fallback');
+  return <ErrorState message="Could not load X" />;
+}
+
+// ✅ Null check that explains itself
+if (!user) throw new Error('Expected authenticated user — missing session');
+```
+
+### Type safety rules (new code)
+
+- **Minimize `as` assertions.** Use type guards, Zod parsing, or narrow with `if` checks. `as` is acceptable for Supabase query results where the type is known but the SDK types are loose.
+- **No non-null assertions (`!`)** unless the value was just null-checked in the preceding line.
+- **Optional chaining (`?.`)** is fine for 1–2 levels. Three or more levels signals a data shape problem — destructure and validate at the boundary instead.
+
+> **Existing code:** These rules apply to new and modified code. Do not refactor existing files solely to fix these patterns — address them when you're already editing the file for another reason.
+
 ## General Principles
 
 - **Match what exists first.** Before writing new patterns, read two or three nearby files. Copy their structure.

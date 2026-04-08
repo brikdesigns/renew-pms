@@ -123,7 +123,7 @@
   --color-system-green-light:  #bef4d4;
   --color-system-yellow:       #f2c94c;
   --color-system-yellow-light: #f7e190;
-  --color-system-red:          var(--color-system-error);          /* alias */
+  --color-system-red:          #eb5757;                            /* same as error — frozen */
   --color-system-blue:         var(--color-brand-blue-darker);     /* Renew palette blue */
   --color-system-orange:       var(--color-brown-dark);            /* Renew brown/dark */
 
@@ -169,7 +169,7 @@
   --surface-negative: var(--color-system-error-light);
   --surface-positive: var(--color-system-green-light);
   --surface-warning:  var(--color-system-yellow-light);
-  --surface-success:  var(--surface-positive);
+  --surface-success:  var(--color-system-green-light);
 
   /* ── Background ────────────────────────────────────────── */
   --background-primary:         var(--color-grayscale-white);
@@ -222,7 +222,7 @@
   --text-negative: var(--color-system-error);
   --text-positive: var(--color-system-green);
   --text-warning:  var(--color-system-yellow);
-  --text-success:  var(--text-positive);
+  --text-success:  var(--color-system-green);
 
   /* ── Page ──────────────────────────────────────────────── */
   --page-primary:         var(--color-grayscale-white);
@@ -292,8 +292,8 @@
   --text-status-neutral: #363636;   /* intentionally frozen */
 
   /* ── Tooltip ───────────────────────────────────────────── */
-  --tooltip-background: var(--background-on-color-light);
-  --tooltip-text:       var(--text-inverse);
+  --tooltip-background: var(--color-pure-black);
+  --tooltip-text:       var(--color-grayscale-white);
 }
 
 /* ═══════════════════════════════════════════════
@@ -318,6 +318,7 @@
   --surface-secondary-pressed:    var(--color-grayscale-dark);
 
   --background-primary:               var(--color-pure-black);
+  --background-secondary:             var(--color-grayscale-darkest);
   --background-muted:                 var(--color-grayscale-black);
   --background-inverse:               var(--color-grayscale-white);
   --background-input:                 var(--color-grayscale-black);
@@ -344,18 +345,14 @@
   --page-muted:     var(--color-grayscale-black);
   --page-inverse:   var(--color-grayscale-white);
 
-  /* ── Department — backgrounds (dark: flip light→dark) ── */
-  --background-department-blue:         var(--color-brand-blue-lightest);
+  /* ── Department — backgrounds ── */
+  /* Base stays saturated in dark mode (white text must remain readable).
+     Light flips to dark tint (used as tag/badge backgrounds with light text). */
   --background-department-blue-light:   var(--color-brand-blue-darkest);
-  --background-department-green:        var(--color-brand-green-lightest);
   --background-department-green-light:  var(--color-brand-green-darkest);
-  --background-department-purple:       var(--color-purple-lighter);
   --background-department-purple-light: var(--color-purple-darkest);
-  --background-department-gold:         var(--color-gold-lightest);
   --background-department-gold-light:   var(--color-gold-darkest);
-  --background-department-red:          var(--color-brand-red-lightest);
   --background-department-red-light:    var(--color-brand-red-darkest);
-  --background-department-taupe:        var(--color-taupe-lightest);
   --background-department-taupe-light:  var(--color-taupe-darkest);
 
   /* ── Department — text (dark: flip dark→light) ── */
@@ -397,6 +394,7 @@
     --surface-secondary-pressed:    var(--color-grayscale-dark);
 
     --background-primary:               var(--color-pure-black);
+    --background-secondary:             var(--color-grayscale-darkest);
     --background-muted:                 var(--color-grayscale-black);
     --background-inverse:               var(--color-grayscale-white);
     --background-input:                 var(--color-grayscale-black);
@@ -423,18 +421,13 @@
     --page-muted:     var(--color-grayscale-black);
     --page-inverse:   var(--color-grayscale-white);
 
-    /* ── Department — backgrounds (dark: flip light→dark) ── */
-    --background-department-blue:         var(--color-brand-blue-lightest);
+    /* ── Department — backgrounds ── */
+    /* Base stays saturated (white text readable). Light flips to dark tint. */
     --background-department-blue-light:   var(--color-brand-blue-darkest);
-    --background-department-green:        var(--color-brand-green-lightest);
     --background-department-green-light:  var(--color-brand-green-darkest);
-    --background-department-purple:       var(--color-purple-lighter);
     --background-department-purple-light: var(--color-purple-darkest);
-    --background-department-gold:         var(--color-gold-lightest);
     --background-department-gold-light:   var(--color-gold-darkest);
-    --background-department-red:          var(--color-brand-red-lightest);
     --background-department-red-light:    var(--color-brand-red-darkest);
-    --background-department-taupe:        var(--color-taupe-lightest);
     --background-department-taupe-light:  var(--color-taupe-darkest);
 
     /* ── Department — text (dark: flip dark→light) ── */

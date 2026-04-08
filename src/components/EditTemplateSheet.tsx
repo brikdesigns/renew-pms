@@ -100,7 +100,7 @@ const TYPE_OPTIONS = [
 ];
 
 const FREQUENCY_OPTIONS = [
-  { label: '—',            value: '' },
+  { label: 'Select option', value: '' },
   { label: 'Daily',        value: 'daily' },
   { label: 'Weekly',       value: 'weekly' },
   { label: 'Bi-Weekly',    value: 'bi_weekly' },
@@ -195,6 +195,20 @@ const addItemRowStyle: React.CSSProperties = {
   alignItems: 'flex-end',
 };
 
+const linkContextBtnStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
+  color: color.text.brand,
+  padding: `${space.tiny} ${space.xs}`,
+  borderRadius: border.radius.xs,
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function hasContext(item: ChecklistItem) {
@@ -276,7 +290,18 @@ export function EditTemplateSheet({
   };
 
   const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i));
+    setItems((prev) => prev.map((i) => {
+      if (i.id !== id) return i;
+      const next = { ...i, [field]: value };
+      // Clear equipment when room changes
+      if (field === 'room_id') next.equipment_id = '';
+      return next;
+    }));
+  };
+
+  const clearItemContext = (id: string) => {
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, room_id: '', equipment_id: '', supply_category_id: '' } : i));
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -296,22 +321,28 @@ export function EditTemplateSheet({
   // ─── Reference select options ─────────────────────────────────────────────
 
   const roomOptions = [
-    { label: '— Not room-specific', value: '' },
+    { label: 'Select option', value: '' },
     ...rooms.map((r) => ({ label: r.name, value: r.id })),
   ];
 
-  const equipmentOptions = [
-    { label: '— Not equipment-specific', value: '' },
-    ...equipment.map((e) => ({ label: e.name, value: e.id })),
-  ];
+  /** Equipment options filtered by room — call per item */
+  function getEquipmentOptions(roomId: string) {
+    const filtered = roomId
+      ? equipment.filter((e) => e.room_id === roomId || !e.room_id)
+      : equipment;
+    return [
+      { label: 'Select option', value: '' },
+      ...filtered.map((e) => ({ label: e.name, value: e.id })),
+    ];
+  }
 
   const supplyCategoryOptions = [
-    { label: '— Not supply-related', value: '' },
+    { label: 'Select option', value: '' },
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
 
   const departmentOptions = [
-    { label: '—', value: '' },
+    { label: 'Select option', value: '' },
     ...departments.map((d) => ({ label: d.name, value: d.id })),
   ];
 
@@ -321,12 +352,12 @@ export function EditTemplateSheet({
   ];
 
   const categoryOptions = [
-    { label: '—', value: '' },
+    { label: 'Select option', value: '' },
     ...taskCategories.map((c) => ({ label: c.name, value: c.id })),
   ];
 
   const complianceOptions = [
-    { label: '—', value: '' },
+    { label: 'Select option', value: '' },
     ...complianceTypes.map((c) => ({ label: c.name, value: c.id })),
   ];
 
@@ -348,6 +379,7 @@ export function EditTemplateSheet({
           />
           <TextArea
             label="Description"
+            size="sm"
             value={form.description}
             onChange={updateText('description')}
             placeholder="What this template covers and when it should be used"
@@ -355,29 +387,14 @@ export function EditTemplateSheet({
             fullWidth
           />
 
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <Select
-                label="Type"
-                size="sm"
-                options={TYPE_OPTIONS}
-                value={form.type}
-                onChange={updateSelect('type')}
-                fullWidth
-                disabled
-              />
-            </div>
-            <div style={formRowHalf}>
-              <Select
-                label="Category"
-                size="sm"
-                options={categoryOptions}
-                value={form.task_category_id}
-                onChange={updateSelect('task_category_id')}
-                fullWidth
-              />
-            </div>
-          </div>
+          <Select
+            label="Category"
+            size="sm"
+            options={categoryOptions}
+            value={form.task_category_id}
+            onChange={updateSelect('task_category_id')}
+            fullWidth
+          />
 
           {fields.compliance && (
             <Select
@@ -469,19 +486,34 @@ export function EditTemplateSheet({
 
         <h3 style={sheetSectionTitle}>Status & Settings</h3>
         <div style={sheetFormGroup}>
-          <Select
-            label="Status"
-            size="sm"
-            options={STATUS_OPTIONS}
-            value={form.status}
-            onChange={updateSelect('status')}
-            fullWidth
-          />
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <Select
+                label="Status"
+                size="sm"
+                options={STATUS_OPTIONS}
+                value={form.status}
+                onChange={updateSelect('status')}
+                fullWidth
+              />
+            </div>
+            <div style={formRowHalf}>
+              <Select
+                label="Type"
+                size="sm"
+                options={TYPE_OPTIONS}
+                value={form.type}
+                onChange={updateSelect('type')}
+                fullWidth
+                disabled
+              />
+            </div>
+          </div>
           <Switch
-            label={fields.approval === 'required' ? 'Requires Approval (always on for this type)' : 'Requires Approval'}
-            checked={fields.approval === 'required' ? true : form.requires_approval}
+            label="Requires Approval"
+            size="sm"
+            checked={form.requires_approval}
             onChange={(e) => setForm((prev) => ({ ...prev, requires_approval: e.target.checked }))}
-            disabled={fields.approval === 'required'}
           />
         </div>
       </div>
@@ -524,6 +556,7 @@ export function EditTemplateSheet({
         <div style={{ ...itemListStyle, marginTop: gap.lg }}>
           {items.map((item, idx) => {
             const isExpanded = expandedItems.has(item.id);
+            const itemHasContext = hasContext(item);
             return (
               <div key={item.id} style={itemRowStyle}>
                 {/* Main row */}
@@ -534,23 +567,52 @@ export function EditTemplateSheet({
                   <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
                     {item.label}
                   </span>
+                  {!isExpanded && !itemHasContext && (
+                    <button
+                      type="button"
+                      onClick={() => toggleItemExpand(item.id)}
+                      style={linkContextBtnStyle}
+                    >
+                      + Link to inventory
+                    </button>
+                  )}
+                  {!isExpanded && itemHasContext && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => toggleItemExpand(item.id)}
+                        style={linkContextBtnStyle}
+                      >
+                        Edit link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => clearItemContext(item.id)}
+                        style={{ ...linkContextBtnStyle, color: color.system.error }}
+                      >
+                        Remove link
+                      </button>
+                    </>
+                  )}
+                  {isExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => toggleItemExpand(item.id)}
+                      style={linkContextBtnStyle}
+                    >
+                      Done
+                    </button>
+                  )}
                   <IconButton
-                    variant="ghost"
-                    size="sm"
-                    icon={<Icon icon={icon.chevronDown} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }} />}
-                    label={isExpanded ? 'Hide context' : 'Add context (room, equipment, supply)'}
-                    onClick={() => toggleItemExpand(item.id)}
-                  />
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
+                    variant="danger-ghost"
+                    size="tiny"
                     icon={<Icon icon={icon.remove} />}
                     label={`Remove ${item.label}`}
                     onClick={() => removeItem(item.id)}
                   />
                 </div>
 
-                {/* Context row — shown when expanded */}
+                {/* Context row — shown when expanded or has existing context */}
                 {isExpanded && (
                   <div style={itemContextRowStyle}>
                     <div style={contextSelectWrap}>
@@ -567,7 +629,7 @@ export function EditTemplateSheet({
                       <Select
                         label="Equipment"
                         size="sm"
-                        options={equipmentOptions}
+                        options={getEquipmentOptions(item.room_id)}
                         value={item.equipment_id}
                         onChange={(e) => updateItemContext(item.id, 'equipment_id', e.target.value)}
                         fullWidth

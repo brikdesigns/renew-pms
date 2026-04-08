@@ -13,6 +13,8 @@ import { color, font, space, gap, border } from '@/lib/tokens';
 import { useRoles } from '@/hooks/useRoles';
 import type { Role } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
+import { useToast } from '@/components/ToastProvider';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +28,7 @@ const subHeaderTitleStyle: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
 };
 const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium,
+  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
@@ -37,14 +39,22 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 export function RolesTable() {
   const { roles, setRoles, loading } = useRoles();
   const { members } = useMembers();
+  const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Role | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewing, setViewing] = useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (r: Role) => { setEditing(r); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: Wire to DELETE API
+    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    setDeleteTarget(null);
+  };
   const handleView = (r: Role) => { setViewing(r); setViewSheetOpen(true); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
@@ -86,7 +96,7 @@ export function RolesTable() {
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
           <h3 style={subHeaderTitleStyle}>Practice Roles</h3>
-          <span style={countBadge}>{loading ? '–' : roles.length}</span>
+          <span style={countBadge}>{loading ? '–' : roles.filter((r) => r.name !== 'Everyone').length}</span>
         </div>
         <Button variant="primary" size="sm" onClick={handleAdd}>Add Role</Button>
       </div>
@@ -110,7 +120,7 @@ export function RolesTable() {
                   Loading roles…
                 </TableCell>
               </TableRow>
-            ) : roles.map((r) => (
+            ) : roles.filter((r) => r.name !== 'Everyone').map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
@@ -133,8 +143,9 @@ export function RolesTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${r.name}`} onClick={() => setDeleteTarget({ id: r.id, name: r.name })} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -145,6 +156,13 @@ export function RolesTable() {
 
       <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
       <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} />
+      <ConfirmDeleteDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        itemName={deleteTarget?.name ?? ''}
+        itemType="role"
+      />
     </div>
   );
 }

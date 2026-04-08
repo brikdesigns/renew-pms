@@ -60,6 +60,7 @@ export function AuthLayoutInner({ children, topBar }: AuthLayoutInnerProps) {
   const isSettings = pathname.startsWith('/settings');
   const isTrainingDetail = pathname.startsWith('/training/') && pathname !== '/training';
   const isTasks = pathname === '/tasks';
+  const isRequests = pathname === '/requests';
   const isSchedule = pathname === '/schedule';
 
   const mainStyle = isSettings
@@ -68,7 +69,7 @@ export function AuthLayoutInner({ children, topBar }: AuthLayoutInnerProps) {
       ? fullBleedScrollStyle
     : isSchedule
       ? scheduleStyle
-    : isTasks
+    : (isTasks || isRequests)
       ? tasksStyle
       : pageStyle;
 

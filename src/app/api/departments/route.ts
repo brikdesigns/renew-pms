@@ -2,16 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
-
-async function getPracticeId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from('practice_members')
-    .select('practice_id')
-    .eq('user_id', userId)
-    .limit(1)
-    .single();
-  return data?.practice_id ?? null;
-}
+import { getPracticeId } from '@/lib/practice';
 
 /**
  * GET /api/departments
@@ -24,7 +15,7 @@ export async function GET() {
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const { data, error } = await supabase
@@ -35,18 +26,42 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Count members per department via their assigned role's department_id
+  // Count members per department via their assigned role's department_id,
+  // plus secondary department assignments for roles that span departments.
   const { data: memberRoles } = await supabase
     .from('practice_members')
-    .select('practice_role_types!inner(department_id)')
+    .select('practice_role_types!inner(name, department_id)')
     .eq('practice_id', practiceId);
+
+  // Roles that span secondary departments beyond their primary FK
+  const SECONDARY_DEPTS: Record<string, string[]> = {
+    'Office Manager':        ['IT (Information Technology)', 'Marketing', 'Finance', 'Facilities'],
+    'Clinical Manager':      ['(M) Management'],
+    'Insurance Coordinator': ['Finance'],
+    'Third Party':           ['Finance', 'Marketing', 'Facilities'],
+  };
+
+  // Build dept name → id lookup
+  const deptNameToId = new Map((data ?? []).map((d) => [d.name, d.id]));
 
   const deptCountMap: Record<string, number> = {};
   for (const m of memberRoles ?? []) {
-    const deptRaw = m.practice_role_types as { department_id: string } | { department_id: string }[] | null;
-    const dept = Array.isArray(deptRaw) ? (deptRaw[0] ?? null) : deptRaw;
-    if (dept?.department_id) {
-      deptCountMap[dept.department_id] = (deptCountMap[dept.department_id] ?? 0) + 1;
+    const roleRaw = m.practice_role_types as { name: string; department_id: string } | { name: string; department_id: string }[] | null;
+    const role = Array.isArray(roleRaw) ? (roleRaw[0] ?? null) : roleRaw;
+    if (!role) continue;
+
+    // Count for primary department
+    if (role.department_id) {
+      deptCountMap[role.department_id] = (deptCountMap[role.department_id] ?? 0) + 1;
+    }
+
+    // Count for secondary departments
+    const extras = SECONDARY_DEPTS[role.name];
+    if (extras) {
+      for (const deptName of extras) {
+        const deptId = deptNameToId.get(deptName);
+        if (deptId) deptCountMap[deptId] = (deptCountMap[deptId] ?? 0) + 1;
+      }
     }
   }
 
@@ -65,7 +80,7 @@ export async function POST(request: Request) {
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   fieldStyle,
   labelStyle,
@@ -7,14 +8,18 @@ import {
 
 interface ReadOnlyFieldProps {
   label: string;
-  value: string | null | undefined;
+  value: ReactNode | string | null | undefined;
 }
 
 export function ReadOnlyField({ label, value }: ReadOnlyFieldProps) {
+  const isString = typeof value === 'string' || value === null || value === undefined;
   return (
     <div style={fieldStyle}>
       <span style={labelStyle}>{label}</span>
-      <span style={valueStyle}>{value ?? '—'}</span>
+      {isString
+        ? <span style={valueStyle}>{value ?? '—'}</span>
+        : <div style={{ alignSelf: 'flex-start' }}>{value}</div>
+      }
     </div>
   );
 }

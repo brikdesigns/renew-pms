@@ -8,7 +8,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { ROOM_OPTIONS } from '@/lib/seed-rooms';
+import { useRooms } from '@/hooks/useRooms';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +67,8 @@ const EMPTY_FORM: InventoryFormData = {
 
 export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: EditInventorySheetProps) {
   const { showToast } = useToast();
+  const { rooms } = useRooms();
+  const roomOptions = [{ label: '— None —', value: '' }, ...rooms.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id }))];
   const [form, setForm] = useState<InventoryFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
@@ -181,7 +183,7 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
             <Select
               label="Room"
               size="sm"
-              options={ROOM_OPTIONS}
+              options={roomOptions}
               value={form.room}
               onChange={(e) => setForm((prev) => ({ ...prev, room: e.target.value }))}
               fullWidth

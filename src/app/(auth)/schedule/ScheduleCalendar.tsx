@@ -8,9 +8,11 @@ import interactionPlugin from '@fullcalendar/interaction';
 import type { DatesSetArg, DateSelectArg, EventInput } from '@fullcalendar/core';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, Chip, IconButton } from '@bds/components';
+import { Button, Chip, IconButton, Menu } from '@bds/components';
+import type { MenuItemData } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useMembers, type Member } from '@/hooks/useMembers';
+import { useDepartments } from '@/hooks/useDepartments';
 import { useScheduleEvents, type ScheduleEvent } from '@/hooks/useScheduleEvents';
 import { AddEventSheet } from './AddEventSheet';
 import { color, font, gap, space, border } from '@/lib/tokens';
@@ -18,9 +20,7 @@ import './calendar.css';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Map department color keys to CSS custom property values for event cards.
- *  Raw var() strings required — FullCalendar accepts CSS strings, not token imports.
- *  token-audit-ignore: raw-var */
+/** Map department color keys to token references for event cards */
 const DEPT_EVENT_COLORS: Record<string, { bg: string; border: string }> = {
   blue:   { bg: color.department.blue.base,   border: color.department.blue.border },
   green:  { bg: color.department.green.base,  border: color.department.green.border },
@@ -32,7 +32,6 @@ const DEPT_EVENT_COLORS: Record<string, { bg: string; border: string }> = {
 
 const DEFAULT_EVENT_COLORS = { bg: color.surface.brandPrimary, border: color.border.brand };
 
-/** Convert API events to FullCalendar EventInput format */
 function toCalendarEvents(events: ScheduleEvent[]): EventInput[] {
   return events.map(e => {
     const colors = DEPT_EVENT_COLORS[e.staffDepartmentColor ?? ''] ?? DEFAULT_EVENT_COLORS;
@@ -47,6 +46,7 @@ function toCalendarEvents(events: ScheduleEvent[]): EventInput[] {
       extendedProps: {
         staffId: e.staffId,
         staffName: e.staffName,
+        staffDepartment: e.staffDepartment,
         staffDepartmentColor: e.staffDepartmentColor,
         eventType: e.eventType,
         description: e.description,
@@ -55,15 +55,52 @@ function toCalendarEvents(events: ScheduleEvent[]): EventInput[] {
   });
 }
 
-/** Build a staff lookup from members with events */
-function buildStaffList(members: Member[]): { id: string; name: string; departmentColor: string }[] {
+function buildStaffList(members: Member[]): { id: string; name: string; department: string; departmentColor: string }[] {
   return members
     .filter(m => m.is_active)
     .map(m => ({
       id: m.id,
       name: `${m.first_name} ${m.last_name}`.trim(),
+      department: m.department,
       departmentColor: m.department_color ?? 'blue',
     }));
+}
+
+// ─── ChipFilter (reusable — matches TaskFilterBar pattern) ──────────────────
+
+function ChipFilter({ options, selected, onChange }: {
+  options: readonly string[];
+  selected: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const items: MenuItemData[] = options.map(opt => ({
+    id: opt,
+    label: opt,
+    onClick: () => { onChange(opt); setOpen(false); },
+  }));
+
+  const isFiltered = selected !== options[0];
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <Chip
+        label={selected}
+        variant={isFiltered ? 'primary' : 'secondary'}
+        appearance={isFiltered ? 'solid' : 'light'}
+        showDropdown
+        onChipClick={() => setOpen(prev => !prev)}
+      />
+      <Menu
+        items={items}
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        activeId={selected}
+        style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 }}
+      />
+    </div>
+  );
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
@@ -75,7 +112,6 @@ const containerStyle: CSSProperties = {
   overflow: 'hidden',
 };
 
-// Matches TaskFilterBar barStyle
 const toolbarStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -84,29 +120,24 @@ const toolbarStyle: CSSProperties = {
   minHeight: 0,
 };
 
-// Matches TaskFilterBar datePickerStyle
 const toolbarLeftStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: gap.lg,
+  gap: gap.sm,
 };
 
-// Matches TaskFilterBar dateLabelStyle
 const dateRangeStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: font.weight.bold,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   whiteSpace: 'nowrap',
 };
 
-// Matches TaskFilterBar chipGroupStyle
-const staffBarStyle: CSSProperties = {
+const toolbarRightStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
-  flexWrap: 'wrap',
-  paddingBottom: space.md,
 };
 
 const calendarWrapperStyle: CSSProperties = {
@@ -115,28 +146,13 @@ const calendarWrapperStyle: CSSProperties = {
 };
 
 const viewToggleBarStyle: CSSProperties = {
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
-  gap: gap.xs,
   backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm,
+  borderRadius: border.radius.md,
   padding: space.tiny,
+  gap: space.tiny,
 };
-
-const viewBtnStyle = (active: boolean): CSSProperties => ({
-  background: active ? color.surface.primary : 'transparent',
-  border: 'none',
-  cursor: 'pointer',
-  color: active ? color.text.primary : color.text.muted,
-  fontSize: font.size.body.md,
-  padding: `${space.tiny} ${space.xs}`,
-  borderRadius: border.radius.xs,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: 'all 150ms ease',
-  boxShadow: active ? 'var(--box-shadow-sm)' : 'none',
-});
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -148,42 +164,40 @@ export function ScheduleCalendar() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetPrefill, setSheetPrefill] = useState<{ date?: string; startTime?: string; endTime?: string }>({});
 
+  // Filters
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
+  const [selectedStaff, setSelectedStaff] = useState('All Staff');
+
   // Fetch real data
   const { members } = useMembers();
+  const { departments } = useDepartments();
   const { events: apiEvents, refetch } = useScheduleEvents(dateRange.start, dateRange.end);
 
   const staff = useMemo(() => buildStaffList(members), [members]);
-  const [activeStaff, setActiveStaff] = useState<Set<string> | null>(null);
 
-  // Initialize activeStaff once members load
-  const effectiveActiveStaff = useMemo(() => {
-    if (activeStaff !== null) return activeStaff;
-    return new Set(staff.map(s => s.id));
-  }, [activeStaff, staff]);
+  const departmentOptions = useMemo(
+    () => ['All Departments', ...departments.filter(d => d.is_active && d.name !== 'All Departments').map(d => d.name)] as const,
+    [departments],
+  );
+
+  const staffOptions = useMemo(
+    () => ['All Staff', ...staff.map(s => s.name)] as const,
+    [staff],
+  );
 
   const calendarEvents = useMemo(() => toCalendarEvents(apiEvents), [apiEvents]);
 
   const filteredEvents = useMemo(() => {
-    if (effectiveActiveStaff.size === staff.length) return calendarEvents;
     return calendarEvents.filter(e => {
-      const staffId = e.extendedProps?.staffId;
-      return staffId ? effectiveActiveStaff.has(staffId) : true;
-    });
-  }, [calendarEvents, effectiveActiveStaff, staff.length]);
-
-  function toggleStaff(id: string) {
-    setActiveStaff(prev => {
-      const current = prev ?? new Set(staff.map(s => s.id));
-      const next = new Set(current);
-      if (next.has(id)) {
-        if (next.size <= 1) return current;
-        next.delete(id);
-      } else {
-        next.add(id);
+      if (selectedDepartment !== 'All Departments') {
+        if (e.extendedProps?.staffDepartment !== selectedDepartment) return false;
       }
-      return next;
+      if (selectedStaff !== 'All Staff') {
+        if (e.extendedProps?.staffName !== selectedStaff) return false;
+      }
+      return true;
     });
-  }
+  }, [calendarEvents, selectedDepartment, selectedStaff]);
 
   function navigate(action: 'prev' | 'next' | 'today') {
     const api = calendarRef.current?.getApi();
@@ -204,10 +218,7 @@ export function ScheduleCalendar() {
 
   const handleDatesSet = useCallback((info: DatesSetArg) => {
     setDateTitle(info.view.title);
-    setDateRange({
-      start: info.startStr,
-      end: info.endStr,
-    });
+    setDateRange({ start: info.startStr, end: info.endStr });
   }, []);
 
   const handleSelect = useCallback((info: DateSelectArg) => {
@@ -227,26 +238,41 @@ export function ScheduleCalendar() {
 
   return (
     <div style={containerStyle}>
-      {/* ── Toolbar (matches TaskFilterBar layout) ────────────────── */}
+      {/* ── Toolbar ──────────────────────────────────────────────────── */}
       <div style={toolbarStyle}>
         <div style={toolbarLeftStyle}>
-          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous" onClick={() => navigate('prev')} />
           <span style={dateRangeStyle}>{dateTitle}</span>
+          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous" onClick={() => navigate('prev')} />
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next" onClick={() => navigate('next')} />
-          <Button variant="ghost" size="sm" onClick={() => navigate('today')}>Today</Button>
+          <Chip label="Today" variant="secondary" appearance="light" onChipClick={() => navigate('today')} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-          <div style={viewToggleBarStyle}>
-            <button type="button" style={viewBtnStyle(currentView === 'dayGridMonth')} onClick={() => changeView('dayGridMonth')} title="Month view">
-              <Icon icon="ph:squares-four" />
-            </button>
-            <button type="button" style={viewBtnStyle(currentView === 'timeGridWeek')} onClick={() => changeView('timeGridWeek')} title="Week view">
-              <Icon icon="ph:list" />
-            </button>
-            <button type="button" style={viewBtnStyle(currentView === 'timeGridDay')} onClick={() => changeView('timeGridDay')} title="Day view">
-              <Icon icon={icon.calendar} />
-            </button>
+        <div style={toolbarRightStyle}>
+          <ChipFilter options={departmentOptions} selected={selectedDepartment} onChange={setSelectedDepartment} />
+          <ChipFilter options={staffOptions} selected={selectedStaff} onChange={setSelectedStaff} />
+
+          <div style={viewToggleBarStyle} role="radiogroup" aria-label="Calendar view">
+            <IconButton
+              variant={currentView === 'dayGridMonth' ? 'primary' : 'ghost'}
+              size="tiny"
+              icon={<Icon icon="ph:squares-four-fill" />}
+              label="Month view"
+              onClick={() => changeView('dayGridMonth')}
+            />
+            <IconButton
+              variant={currentView === 'timeGridWeek' ? 'primary' : 'ghost'}
+              size="tiny"
+              icon={<Icon icon="ph:list-fill" />}
+              label="Week view"
+              onClick={() => changeView('timeGridWeek')}
+            />
+            <IconButton
+              variant={currentView === 'timeGridDay' ? 'primary' : 'ghost'}
+              size="tiny"
+              icon={<Icon icon="ph:calendar-dots-fill" />}
+              label="Day view"
+              onClick={() => changeView('timeGridDay')}
+            />
           </div>
 
           <Button variant="primary" size="sm" onClick={handleAddNew}>
@@ -255,33 +281,6 @@ export function ScheduleCalendar() {
           </Button>
         </div>
       </div>
-
-      {/* ── Staff filter chips ───────────────────────────────────────── */}
-      {staff.length > 0 && (
-        <div style={staffBarStyle}>
-          {staff.map(member => {
-            const isActive = effectiveActiveStaff.has(member.id);
-            return (
-              <Chip
-                key={member.id}
-                label={member.name}
-                variant={isActive ? 'primary' : 'secondary'}
-                appearance={isActive ? 'solid' : 'light'}
-                avatar={
-                  <UserAvatar
-                    name={member.name}
-                    departmentColorKey={member.departmentColor}
-                    size="sm"
-                    shape="rounded"
-                    style={{ width: '20px', height: '20px', fontSize: font.size.body.tiny }}
-                  />
-                }
-                onChipClick={() => toggleStaff(member.id)}
-              />
-            );
-          })}
-        </div>
-      )}
 
       {/* ── Calendar ─────────────────────────────────────────────────── */}
       <div style={calendarWrapperStyle}>

@@ -19,6 +19,7 @@ export const icon = {
   home:         'ph:house',
   calendar:     'ph:calendar-dots',
   tasks:        'ph:list-checks',
+  requests:     'ph:clipboard-text',
   training:     'ph:graduation-cap',
   documents:    'ph:folder-open',
   analytics:    'ph:chart-bar',
@@ -51,7 +52,8 @@ export const icon = {
   sun:          'ph:sun-fill',
 
   // Status / feedback
-  remove:       'ph:minus-circle',
+  remove:       'ph:minus-circle-fill',
+  trash:        'ph:trash-fill',
   warning:      'ph:warning-fill',
   overdue:      'ph:calendar-x-fill',
   circleCheck:  'ph:check-circle-fill',

@@ -77,8 +77,20 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit, roles
 
   if (!department) return null;
 
-  const roles = allRoles.filter((r) => r.department_id === department.id);
-  const users = allMembers.filter((m) => m.department_id === department.id);
+  const secondaryRoles: Record<string, string[]> = {
+    'Office Manager':        ['IT (Information Technology)', 'Marketing', 'Finance', 'Facilities'],
+    'Clinical Manager':      ['(M) Management'],
+    'Insurance Coordinator': ['Finance'],
+    'Third Party':           ['Finance', 'Marketing', 'Facilities'],
+  };
+
+  const roles = allRoles.filter(
+    (r) => r.department_id === department.id || (secondaryRoles[r.name]?.includes(department.name) ?? false),
+  );
+  const roleNames = new Set(roles.map((r) => r.name));
+  const users = allMembers.filter(
+    (m) => m.department_id === department.id || roleNames.has(m.practice_role),
+  );
   const colorLabel = COLOR_LABELS[department.color] ?? department.color;
 
   const detailsContent = (

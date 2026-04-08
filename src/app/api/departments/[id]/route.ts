@@ -2,16 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
-
-async function getPracticeId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const { data } = await supabase
-    .from('practice_members')
-    .select('practice_id')
-    .eq('user_id', userId)
-    .limit(1)
-    .single();
-  return data?.practice_id ?? null;
-}
+import { getPracticeId } from '@/lib/practice';
 
 /**
  * PATCH /api/departments/[id]
@@ -28,7 +19,7 @@ export async function PATCH(
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
@@ -74,7 +65,7 @@ export async function DELETE(
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const practiceId = await getPracticeId(supabase, authUser.profile.id);
+  const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const { error } = await supabase

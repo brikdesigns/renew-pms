@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
       // - window.location.href assignment is an intentional hard-reload for session refresh
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/immutability': 'off',
+      // Fail-loud guardrails — no silent failures
+      'no-empty': ['error', { allowEmptyCatch: false }],
+      '@typescript-eslint/no-non-null-assertion': 'error',
     },
   },
   // Override default ignores of eslint-config-next.
