@@ -1,19 +1,23 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, gap, space } from '@/lib/tokens';
-import { IconButton } from '@bds/components';
+import { IconButton, Menu } from '@bds/components';
+import type { MenuItemData } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { FeedbackButton } from '@/components/FeedbackButton';
+import { createClient } from '@/lib/supabase/client';
 
 // ─── Route label mapping ─────────────────────────────────────────────────────
 
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   tasks: 'Tasks',
+  requests: 'Requests',
   schedule: 'Schedule',
   documents: 'Documents',
   staff: 'Staff',
@@ -74,44 +78,78 @@ const rightStyle: CSSProperties = {
   gap: gap.md,
 };
 
-// Avatar rendering moved to shared UserAvatar component
+const avatarWrapStyle: CSSProperties = {
+  position: 'relative',
+};
+
+const menuStyle: CSSProperties = {
+  position: 'absolute',
+  top: '100%',
+  right: 0,
+  marginTop: 4,
+  minWidth: 180,
+  zIndex: 100,
+};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface TopUtilityBarProps {
   userName?: string;
-  /** Full name for avatar initials (e.g. "Sarah Mitchell") */
   userFullName?: string;
-  /** Department name — drives avatar color */
   userDepartment?: string | null;
   userEmail?: string;
+  practiceName?: string;
 }
 
-export function TopUtilityBar({ userName, userFullName, userDepartment, userEmail }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment, userEmail, practiceName }: TopUtilityBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const pageLabel = getPageLabel(pathname);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const displayName = userName ?? 'there';
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  const menuItems: MenuItemData[] = [
+    { id: 'profile', label: 'My Profile', onClick: () => { setMenuOpen(false); router.push('/settings/account'); } },
+    { id: 'signout', label: 'Sign Out', onClick: handleLogout },
+  ];
 
   return (
     <header style={barStyle}>
       <div style={leftStyle}>
-        <span style={labelStyle}>{pageLabel}</span>
-        <span style={greetingStyle}>{greeting}, {displayName}</span>
+        {practiceName && <span style={labelStyle}>{practiceName}</span>}
+        <span style={greetingStyle}>{pageLabel}</span>
       </div>
       <div style={rightStyle}>
         <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.help} />} label="Help & User Guide" onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')} />
         <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
         <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" />
-        <UserAvatar
-          name={userFullName ?? userName ?? '?'}
-          departmentColorKey={userDepartment}
-          size="md"
-          shape="rounded"
-          style={{ cursor: 'pointer' }}
-        />
+        <div style={avatarWrapStyle}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(prev => !prev)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            aria-label="User menu"
+          >
+            <UserAvatar
+              name={userFullName ?? userName ?? '?'}
+              departmentColorKey={userDepartment}
+              size="md"
+              shape="rounded"
+            />
+          </button>
+          <Menu
+            items={menuItems}
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            style={menuStyle}
+          />
+        </div>
       </div>
     </header>
   );

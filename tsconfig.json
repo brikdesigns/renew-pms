@@ -45,6 +45,7 @@
     "brik-bds/**/*.stories.tsx",
     "brik-bds/.storybook",
     "brik-bds/vite.config*.ts",
+    "brik-bds/vitest.config*.ts",
     "brik-bds/tools"
   ]
 }
