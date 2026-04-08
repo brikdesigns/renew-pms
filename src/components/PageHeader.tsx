@@ -13,8 +13,8 @@ function headerStyle(hasTabs: boolean): CSSProperties {
     gap: gap.xl,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    paddingTop: '40px',          // layout-specific: no BDS token (between space.xl=32px and space.huge=48px)
-    paddingBottom: hasTabs ? 0 : '40px',
+    paddingTop: space.md,
+    paddingBottom: hasTabs ? 0 : space.md,
     paddingInline: space.xl,
     borderBottom: `1px solid ${color.border.primary}`,
     width: '100%',

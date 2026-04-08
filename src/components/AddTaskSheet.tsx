@@ -145,12 +145,12 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
   }, [selectedTemplate]);
 
   const templateOptions = useMemo(() => [
-    { label: '— Select a template', value: '' },
+    { label: 'Select option', value: '' },
     ...templates.map(t => ({ label: t.name, value: t.id })),
   ], [templates]);
 
   const staffOptions = useMemo(() => [
-    { label: '— Select staff member', value: '' },
+    { label: 'Select option', value: '' },
     ...members.filter(m => m.is_active).map(m => ({
       label: `${m.first_name} ${m.last_name}`,
       value: m.id,
@@ -158,7 +158,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
   ], [members]);
 
   const deptOptions = useMemo(() => [
-    { label: '— No department', value: '' },
+    { label: 'Select option', value: '' },
     ...departments.filter(d => d.is_active).map(d => ({
       label: d.name,
       value: d.id,

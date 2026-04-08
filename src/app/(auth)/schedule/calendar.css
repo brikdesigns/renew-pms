@@ -147,11 +147,19 @@
 
 .fc .fc-timegrid-now-indicator-line {
   border-color: var(--color-system-error);
-  border-width: 2px;
+  border-width: 1px;
+  border-style: dashed;
+  z-index: 1;
 }
 
+/* Hide the triangular arrow — line alone is cleaner */
 .fc .fc-timegrid-now-indicator-arrow {
-  border-color: var(--color-system-error);
+  display: none;
+}
+
+/* Events render above the now indicator */
+.fc .fc-timegrid-event-harness {
+  z-index: 2;
 }
 
 /* ─── All-day row (compact) ──────────────────────────────────────────────────── */

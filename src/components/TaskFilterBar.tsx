@@ -33,7 +33,6 @@ const TEMPLATE_TYPES = [
   'Checklist',
   'Procedure',
   'Compliance',
-  'Request',
 ] as const;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -49,9 +48,6 @@ interface TaskFilterBarProps {
   onPriorityChange: (priority: string) => void;
   selectedType: string;
   onTypeChange: (type: string) => void;
-  selectedTemplate: string;
-  onTemplateChange: (template: string) => void;
-  templates: string[];
   showResolved: boolean;
   onShowResolvedChange: (show: boolean) => void;
   showOverdue: boolean;
@@ -82,6 +78,7 @@ const barStyle: CSSProperties = {
   justifyContent: 'space-between',
   padding: `${space.md} 0`,
   minHeight: 0,
+  flex: 1,
 };
 
 const chipGroupStyle: CSSProperties = {
@@ -94,14 +91,13 @@ const chipGroupStyle: CSSProperties = {
 const datePickerStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: gap.lg,
+  gap: gap.sm,
 };
 
-
 const dateLabelStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  fontWeight: font.weight.bold,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.md,
+  fontWeight: font.weight.semibold,
   color: color.text.primary,
   whiteSpace: 'nowrap',
 };
@@ -177,9 +173,6 @@ export function TaskFilterBar({
   onPriorityChange,
   selectedType,
   onTypeChange,
-  selectedTemplate,
-  onTemplateChange,
-  templates,
   showResolved,
   onShowResolvedChange,
   showOverdue,
@@ -198,8 +191,8 @@ export function TaskFilterBar({
     <div style={barStyle}>
       {/* Date navigation */}
       <div style={datePickerStyle}>
-        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
         <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
+        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
         <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
       </div>
 
@@ -228,12 +221,6 @@ export function TaskFilterBar({
           options={PRIORITIES}
           selected={selectedPriority}
           onChange={onPriorityChange}
-        />
-        <ChipFilter
-          label="Template"
-          options={['All Templates', ...templates]}
-          selected={selectedTemplate}
-          onChange={onTemplateChange}
         />
         <Chip
           label="Show Overdue"

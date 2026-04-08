@@ -24,12 +24,7 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-renew-primary: #642f6c;
-  --color-renew-primary-light: #ba9cc5;
-  --color-renew-gold: #cfa553;
-  --color-renew-warm-bg: #f8f6f9;
-  --color-renew-surface: #f2f2f2;
-  --color-renew-border: #d7d7d7;
+  /* Tailwind theme extensions — reference BDS primitives from theme-renew.css */
 }
 
 /*
@@ -53,8 +48,8 @@
 }
 
 :root {
-  --background: var(--page-primary);
-  --foreground: var(--text-primary);
+  --background: var(--color-grayscale-white);
+  --foreground: var(--color-grayscale-black);
 }
 
 html,
@@ -115,6 +110,12 @@ body {
     outline-offset: 2px;
   }
 
+  /* Global focus ring — single consistent style for all interactive elements */
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
   .renew-btn:disabled {
     opacity: var(--state-disabled-opacity);
     cursor: not-allowed;
@@ -170,6 +171,25 @@ body {
   /* Table header border: match row border weight (sm instead of md) */
   .bds-table-head {
     border-bottom-width: var(--border-width-sm);
+  }
+
+  /* Switch label: match form input label size (sm) + label font */
+  .bds-switch {
+    font-size: var(--label-sm);
+    font-family: var(--font-family-label);
+  }
+
+  /* Select/Input placeholder: muted text color */
+  .bds-select__native,
+  .bds-text-input__input,
+  .bds-text-area__textarea {
+    color: var(--text-primary);
+  }
+
+  .bds-select__native option[value=""],
+  .bds-text-input__input::placeholder,
+  .bds-text-area__textarea::placeholder {
+    color: var(--text-muted);
   }
 
   /* Tags and Badges: uppercase, xs text, semibold */
@@ -236,8 +256,11 @@ body {
     border-color: transparent;
   }
 
-  /* Icon buttons: bump sm icon size from 14px (label-sm) to 18px (label-lg)
-     so icons fill more of the 40×40 hit area instead of appearing tiny */
+  /* Icon buttons: bump icon sizes so icons fill the hit area proportionally */
+  .bds-icon-button--tiny .bds-icon-button__icon {
+    font-size: var(--label-sm);
+  }
+
   .bds-icon-button--sm .bds-icon-button__icon {
     font-size: var(--label-lg);
   }

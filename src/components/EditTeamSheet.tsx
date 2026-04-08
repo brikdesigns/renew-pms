@@ -2,19 +2,20 @@
 
 import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
 import {
-  Sheet, Button, TextInput, Select,
+  Sheet, Button, IconButton, TextInput, TextArea, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
+import { useDepartments } from '@/hooks/useDepartments';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, space, border } from '@/lib/tokens';
+import { font, color, space, gap } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -105,19 +106,10 @@ const USERS_BY_TEAM: Record<string, AssociatedUser[]> = {
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
-const DEPARTMENT_OPTIONS = [
-  { label: '— (Cross-department)', value: '' },
-  { label: 'Clinical', value: 'Clinical' },
-  { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Maintenance', value: 'Maintenance' },
-  { label: 'HR', value: 'HR' },
-  { label: 'Administration', value: 'Administration' },
-  { label: 'Sterilization', value: 'Sterilization' },
-  { label: 'All Departments', value: 'All Departments' },
-];
+// DEPARTMENT_OPTIONS built dynamically from useDepartments() inside the component
 
 const SHIFT_OPTIONS = [
-  { label: '— (No shift)', value: '' },
+  { label: 'Select option', value: '' },
   { label: 'Opening', value: 'opening' },
   { label: 'Closing', value: 'closing' },
   { label: 'Evening', value: 'evening' },
@@ -139,19 +131,8 @@ const EMPTY_FORM: TeamFormData = {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const removeBtn: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '28px',
-  height: '28px',
-  borderRadius: border.radius.sm,
-  backgroundColor: 'transparent',
-  color: color.system.red,
-  border: `1px solid ${color.system.red}`,
-  cursor: 'pointer',
-  fontSize: font.size.body.xs,
-};
+const formRowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
+const formRowHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -165,6 +146,8 @@ const emptyState: CSSProperties = {
 
 export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeamSheetProps) {
   const { showToast } = useToast();
+  const { departments } = useDepartments();
+  const deptOptions = [{ label: 'Select option', value: '' }, ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name }))];
   const [form, setForm] = useState<TeamFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
@@ -231,38 +214,45 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
             fullWidth
             required
           />
-          <TextInput
+          <TextArea
             label="Description"
             size="sm"
             value={form.description}
             onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
             placeholder="What this team is responsible for"
+            rows={3}
             fullWidth
           />
           <Select
             label="Department"
             size="sm"
-            options={DEPARTMENT_OPTIONS}
+            options={deptOptions}
             value={form.department}
             onChange={(e) => setForm((prev) => ({ ...prev, department: e.target.value }))}
             fullWidth
           />
-          <Select
-            label="Shift"
-            size="sm"
-            options={SHIFT_OPTIONS}
-            value={form.shift}
-            onChange={(e) => setForm((prev) => ({ ...prev, shift: e.target.value }))}
-            fullWidth
-          />
-          <Select
-            label="Status"
-            size="sm"
-            options={STATUS_OPTIONS}
-            value={String(form.is_active)}
-            onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))}
-            fullWidth
-          />
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <Select
+                label="Shift"
+                size="sm"
+                options={SHIFT_OPTIONS}
+                value={form.shift}
+                onChange={(e) => setForm((prev) => ({ ...prev, shift: e.target.value }))}
+                fullWidth
+              />
+            </div>
+            <div style={formRowHalf}>
+              <Select
+                label="Status"
+                size="sm"
+                options={STATUS_OPTIONS}
+                value={String(form.is_active)}
+                onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))}
+                fullWidth
+              />
+            </div>
+          </div>
         </div>
       </div>
     </form>
@@ -292,14 +282,13 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.description}</span>
                 </TableCell>
                 <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
+                  <IconButton
+                    variant="danger-ghost"
+                    size="tiny"
+                    icon={<Icon icon={icon.remove} />}
+                    label={`Remove ${r.name} from team`}
                     onClick={() => handleRemoveRole(r.id, r.name)}
-                    aria-label={`Remove ${r.name} from team`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -340,14 +329,13 @@ export function EditTeamSheet({ isOpen, onClose, initialData, onSave }: EditTeam
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{u.email}</span>
                 </TableCell>
                 <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
+                  <IconButton
+                    variant="danger-ghost"
+                    size="tiny"
+                    icon={<Icon icon={icon.remove} />}
+                    label={`Remove ${u.name} from team`}
                     onClick={() => handleRemoveUser(u.id, u.name)}
-                    aria-label={`Remove ${u.name} from team`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
+                  />
                 </TableCell>
               </TableRow>
             ))}

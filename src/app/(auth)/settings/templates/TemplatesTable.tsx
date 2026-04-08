@@ -11,7 +11,7 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, Tag } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -24,6 +24,8 @@ import { useRoles } from '@/hooks/useRoles';
 import { useTaskCategories } from '@/hooks/useTaskCategories';
 import { useComplianceTypes } from '@/hooks/useComplianceTypes';
 import type { TaskTemplate } from '@/hooks/useTemplates';
+import { useToast } from '@/components/ToastProvider';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 // ─── Type display mapping ────────────────────────────────────────────────────
 
@@ -123,15 +125,7 @@ const tableWrapperStyle: CSSProperties = {
   overflowX: 'auto',
 };
 
-const typeChipStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: gap.sm,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.secondary,
-};
+// typeChipStyle removed — TypeChip now uses BDS Tag
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
@@ -139,7 +133,6 @@ const ADD_MENU_TYPES = [
   { id: 'checklist',     label: 'Checklist',  desc: 'Recurring to-do lists',      icon: icon.typeChecklist },
   { id: 'procedure',     label: 'Procedure',  desc: 'Step-by-step workflows',      icon: icon.typeProcedure },
   { id: 'compliance',    label: 'Compliance', desc: 'Regulatory & safety tasks',   icon: icon.typeCompliance },
-  { id: 'request',       label: 'Request',    desc: 'Supply & service requests',   icon: icon.typeRequest },
   { id: 'onboarding',    label: 'Onboarding', desc: 'New employee orientation',    icon: icon.typeOnboarding },
   { id: 'skill_training',label: 'Training',   desc: 'Continuing education',        icon: icon.typeSkillTraining },
 ];
@@ -149,10 +142,9 @@ const ADD_MENU_TYPES = [
 function TypeChip({ type }: { type: string }) {
   const meta = TYPE_META[type] ?? TYPE_META.checklist;
   return (
-    <span style={typeChipStyle}>
-      <Icon icon={meta.icon} style={{ fontSize: font.size.body.xs }} />
+    <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
       {meta.label}
-    </span>
+    </Tag>
   );
 }
 
@@ -182,12 +174,14 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
   const { taskCategories } = useTaskCategories();
   const { complianceTypes } = useComplianceTypes();
 
+  const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
   const [newTemplateType, setNewTemplateType] = useState('checklist');
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewingTemplate, setViewingTemplate] = useState<TaskTemplate | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const addBtnRef = useRef<HTMLDivElement>(null);
 
   const filteredTemplates = typeFilter
@@ -230,6 +224,12 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
 
   const handleSheetClose = () => { setSheetOpen(false); setEditingTemplate(null); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewingTemplate(null); };
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: Wire to DELETE API
+    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    setDeleteTarget(null);
+  };
 
   const handleSave = async (data: TemplateFormData, items: ChecklistItem[]) => {
     const body = {
@@ -454,8 +454,9 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
-                      <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
+                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
+                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
+                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${template.name}`} onClick={() => setDeleteTarget({ id: template.id, name: template.name })} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -493,6 +494,13 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
         isOpen={viewSheetOpen}
         onClose={handleViewClose}
         template={viewingTemplate ? buildViewTemplate(viewingTemplate) : null}
+      />
+      <ConfirmDeleteDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        itemName={deleteTarget?.name ?? ''}
+        itemType="template"
       />
     </div>
   );

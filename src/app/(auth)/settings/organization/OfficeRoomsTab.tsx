@@ -16,6 +16,8 @@ import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { SEED_ROOMS, type SeedRoom } from '@/lib/seed-rooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
+import { useToast } from '@/components/ToastProvider';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 // ─── Room type display mapping ───────────────────────────────────────────────
 
@@ -122,10 +124,12 @@ function StatusIndicator({ active }: { active: boolean }) {
 
 export function OfficeRoomsTab() {
   const [rooms, setRooms] = useState<RoomRow[]>(SEED_ROOMS);
+  const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<RoomRow | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewingRoom, setViewingRoom] = useState<RoomRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleAddClick = () => {
     setEditingRoom(null);
@@ -150,6 +154,12 @@ export function OfficeRoomsTab() {
   const handleSheetClose = () => {
     setSheetOpen(false);
     setEditingRoom(null);
+  };
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: Wire to DELETE API
+    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    setDeleteTarget(null);
   };
 
   const handleSave = (data: RoomFormData) => {
@@ -230,8 +240,9 @@ export function OfficeRoomsTab() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
-                    <IconButton variant="primary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
+                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -257,6 +268,13 @@ export function OfficeRoomsTab() {
           is_custom: viewingRoom.is_custom,
           is_active: viewingRoom.is_active,
         } : null}
+      />
+      <ConfirmDeleteDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        itemName={deleteTarget?.name ?? ''}
+        itemType="room"
       />
     </div>
   );

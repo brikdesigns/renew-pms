@@ -62,18 +62,18 @@ interface PersonaTemplate {
   first_name: string;
   last_name: string;
   system_role: 'platform_admin' | 'practice_admin' | 'staff';
-  employee_status: 'new' | 'maturing' | 'active';
+  employee_type: 'new' | 'maturing' | 'proficient';
   shift: string | null;
   practice_role_name: string;
 }
 
 const PERSONA_TEMPLATES: PersonaTemplate[] = [
-  { key: 'brik_admin',       alias: 'brikadmin',  first_name: 'Brik',    last_name: 'Admin',    system_role: 'platform_admin', employee_status: 'active',   shift: null,       practice_role_name: 'Admin' },
-  { key: 'practice_owner',   alias: 'owner',      first_name: 'Sarah',   last_name: 'Mitchell', system_role: 'practice_admin', employee_status: 'active',   shift: 'full_day', practice_role_name: 'Owner' },
-  { key: 'new_hire',         alias: 'newhire',    first_name: 'Emily',   last_name: 'Rivera',   system_role: 'staff',          employee_status: 'new',      shift: 'opening',  practice_role_name: 'Dental Assistant' },
-  { key: 'maturing_staff',   alias: 'maturing',   first_name: 'Tyler',   last_name: 'Nguyen',   system_role: 'staff',          employee_status: 'maturing', shift: 'closing',  practice_role_name: 'Dental Assistant' },
-  { key: 'active_hygienist', alias: 'hygienist',  first_name: 'Amanda',  last_name: 'Chen',     system_role: 'staff',          employee_status: 'active',   shift: 'opening',  practice_role_name: 'Dental Hygienist' },
-  { key: 'front_desk',       alias: 'frontdesk',  first_name: 'Rachel',  last_name: 'Foster',   system_role: 'staff',          employee_status: 'active',   shift: 'full_day', practice_role_name: 'Receptionist' },
+  { key: 'brik_admin',       alias: 'brikadmin',  first_name: 'Brik',    last_name: 'Admin',    system_role: 'platform_admin', employee_type: 'proficient', shift: null,       practice_role_name: '(O) Owner' },
+  { key: 'practice_owner',   alias: 'owner',      first_name: 'Sarah',   last_name: 'Mitchell', system_role: 'practice_admin', employee_type: 'proficient', shift: 'full_day', practice_role_name: '(O) Owner' },
+  { key: 'new_hire',         alias: 'newhire',    first_name: 'Emily',   last_name: 'Rivera',   system_role: 'staff',          employee_type: 'new',        shift: 'opening',  practice_role_name: '(A) Dental Assistant' },
+  { key: 'maturing_staff',   alias: 'maturing',   first_name: 'Tyler',   last_name: 'Nguyen',   system_role: 'staff',          employee_type: 'maturing',   shift: 'closing',  practice_role_name: '(A) Dental Assistant' },
+  { key: 'active_hygienist', alias: 'hygienist',  first_name: 'Amanda',  last_name: 'Chen',     system_role: 'staff',          employee_type: 'proficient', shift: 'opening',  practice_role_name: '(H) Dental Hygienist' },
+  { key: 'front_desk',       alias: 'frontdesk',  first_name: 'Rachel',  last_name: 'Foster',   system_role: 'staff',          employee_type: 'proficient', shift: 'full_day', practice_role_name: 'Business Administrator' },
 ];
 
 // ─── Build full persona list from testers × templates ───────────────────────
@@ -85,7 +85,7 @@ interface Persona {
   first_name: string;
   last_name: string;
   system_role: 'platform_admin' | 'practice_admin' | 'staff';
-  employee_status: 'new' | 'maturing' | 'active';
+  employee_type: 'new' | 'maturing' | 'proficient';
   shift: string | null;
   practice_role_name: string;
   phone: string;
@@ -104,7 +104,7 @@ const PERSONAS: Persona[] = TESTERS.flatMap((tester, testerIdx) =>
     first_name: tmpl.first_name,
     last_name: tmpl.last_name,
     system_role: tmpl.system_role,
-    employee_status: tmpl.employee_status,
+    employee_type: tmpl.employee_type,
     shift: tmpl.shift,
     practice_role_name: tmpl.practice_role_name,
     phone: `(555) ${String(testerIdx).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
@@ -156,18 +156,18 @@ async function upsertProfile(userId: string, persona: Persona): Promise<void> {
 }
 
 async function ensurePractice(): Promise<{ practiceId: string; officeId: string }> {
-  // Check if test practice exists
-  const { data: existing } = await supabase
+  // Reuse any existing practice — avoids creating duplicates that split data
+  const { data: anyPractice } = await supabase
     .from('practices')
-    .select('id')
-    .eq('slug', PRACTICE_SLUG)
+    .select('id, name')
+    .limit(1)
     .single();
 
   let practiceId: string;
 
-  if (existing) {
-    practiceId = existing.id;
-    console.log(`✓ Practice exists: ${PRACTICE_NAME} (${practiceId})`);
+  if (anyPractice) {
+    practiceId = anyPractice.id;
+    console.log(`✓ Reusing existing practice: ${anyPractice.name} (${practiceId})`);
   } else {
     const { data, error } = await supabase
       .from('practices')
@@ -253,13 +253,13 @@ async function upsertPracticeMember(
       practice_id: practiceId,
       user_id: userId,
       practice_role_id: roleType?.id ?? null,
-      employee_status: persona.employee_status,
+      employee_type: persona.employee_type,
       shift: persona.shift,
       is_active: true,
     }, { onConflict: 'practice_id,user_id' });
 
   if (error) throw new Error(`Failed to upsert practice_member for ${persona.email}: ${error.message}`);
-  console.log(`  ✓ Member: ${persona.practice_role_name} / ${persona.employee_status} / shift=${persona.shift ?? 'none'}`);
+  console.log(`  ✓ Member: ${persona.practice_role_name} / ${persona.employee_type} / shift=${persona.shift ?? 'none'}`);
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────

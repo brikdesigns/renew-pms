@@ -42,6 +42,7 @@ export default async function AuthLayout({
   const { first_name, email, full_name } = authUser.profile;
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
   const userDepartment = authUser.membership?.department ?? null;
+  const practiceName = authUser.membership?.organization ?? undefined;
 
   return (
     <ToastProvider>
@@ -49,7 +50,7 @@ export default async function AuthLayout({
         <AppSidebar userRole={authUser.profile.system_role} />
         <div style={mainStyle}>
           <AuthLayoutInner
-            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} />}
+            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} practiceName={practiceName} />}
           >
             {children}
           </AuthLayoutInner>

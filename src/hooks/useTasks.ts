@@ -26,6 +26,8 @@ export interface TaskRow {
   member_role: string;
   member_department: string;
   member_department_color: string;
+  checklist_total: number;
+  checklist_completed: number;
 }
 
 export function useTasks(date?: Date) {

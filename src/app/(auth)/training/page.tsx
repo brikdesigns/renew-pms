@@ -20,7 +20,6 @@ const headerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: `${space.md} 0`,
-  borderBottom: `1px solid ${color.border.muted}`,
 };
 
 const headerLeftStyle: React.CSSProperties = {
@@ -39,7 +38,7 @@ const titleStyle: React.CSSProperties = {
 
 const countBadgeStyle: React.CSSProperties = {
   fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
+  fontSize: font.size.body.xs,
   fontWeight: font.weight.medium,
   color: color.text.secondary,
   backgroundColor: color.surface.secondary,

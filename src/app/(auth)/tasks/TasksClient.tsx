@@ -33,6 +33,9 @@ interface MockTask {
   // Context relations (nullable — mirrors DB FKs)
   room?: string;
   equipment?: string;
+  // Checklist progress (nested subtasks)
+  checklistTotal: number;
+  checklistCompleted: number;
 }
 
 // ─── Priority map ─────────────────────────────────────────────────────────────
@@ -58,7 +61,6 @@ const TYPE_FILTER_MAP: Record<string, string> = {
   'Compliance': 'compliance',
   'Skill Training': 'skill_training',
   'Onboarding': 'onboarding',
-  'Request': 'request',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,6 +88,20 @@ function formatDue(dueDate: string | null, isOverdue: boolean): string {
   return 'Due today';
 }
 
+// ─── Checklist progress tag ──────────────────────────────────────────────────
+
+function ChecklistProgress({ completed, total }: { completed: number; total: number }) {
+  if (total === 0) return null;
+  return (
+    <Tooltip content={`${completed} of ${total} items done`} placement="top">
+      <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+        <Icon icon={icon.typeChecklist} style={{ fontSize: font.size.body.xs } as React.CSSProperties & Record<string, string>} />
+        {completed}/{total}
+      </Tag>
+    </Tooltip>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface TasksClientProps {
@@ -99,7 +115,6 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
   const [selectedFrequency, setSelectedFrequency] = useState('All Frequencies');
   const [selectedPriority, setSelectedPriority] = useState('All Priorities');
   const [selectedType, setSelectedType] = useState('All Types');
-  const [selectedTemplate, setSelectedTemplate] = useState('All Templates');
   const [showResolved, setShowResolved] = useState(false);
   const [showOverdue, setShowOverdue] = useState(false);
   const [viewingTask, setViewingTask] = useState<TaskViewData | null>(null);
@@ -152,17 +167,13 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
           assignmentValue: t.member_role,
           room: t.room_name ?? undefined,
           equipment: t.equipment_name ?? undefined,
+          checklistTotal: t.checklist_total ?? 0,
+          checklistCompleted: t.checklist_completed ?? 0,
         };
       });
       return { person, tasks: mappedTasks };
     });
   }, [tasks]);
-
-  // Derive unique template names from live data for the template filter
-  const allTemplates = useMemo(
-    () => Array.from(new Set(board.flatMap((col) => col.tasks.map((t) => t.template)))).sort(),
-    [board]
-  );
 
   // ── Apply filters ─────────────────────────────────────────────────────────
 
@@ -178,7 +189,6 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
         if (selectedFrequency !== 'All Frequencies' && t.freq !== selectedFrequency) return false;
         if (selectedPriority !== 'All Priorities' && t.priority !== PRIORITY_FILTER_MAP[selectedPriority]) return false;
         if (selectedType !== 'All Types' && t.type !== TYPE_FILTER_MAP[selectedType]) return false;
-        if (selectedTemplate !== 'All Templates' && t.template !== selectedTemplate) return false;
         if (showOverdue && !t.overdue) return false;
         return true;
       });
@@ -194,7 +204,7 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
-      <div style={{ paddingRight: space.xl, display: 'flex', alignItems: 'flex-start', gap: gap.lg }}>
+      <div style={{ paddingRight: space.xl, display: 'flex', alignItems: 'center', gap: gap.md }}>
       <TaskFilterBar
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
@@ -206,15 +216,12 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
         onPriorityChange={setSelectedPriority}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
-        selectedTemplate={selectedTemplate}
-        onTemplateChange={setSelectedTemplate}
-        templates={allTemplates}
         showResolved={showResolved}
         onShowResolvedChange={setShowResolved}
         showOverdue={showOverdue}
         onShowOverdueChange={setShowOverdue}
       />
-      {canAddTask && <Button variant="primary" size="sm" onClick={() => setAddSheetOpen(true)} style={{ flexShrink: 0, marginTop: space.md }}>Add Task</Button>}
+      {canAddTask && <Button variant="primary" size="sm" onClick={() => setAddSheetOpen(true)} style={{ flexShrink: 0 }}>Add Task</Button>}
       </div>
       <Board style={{ flex: 1, minHeight: 0 }}>
       {filteredBoard.map((col) => {
@@ -271,11 +278,12 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
                         room: task.room,
                         equipment: task.equipment,
                       })}
-                      style={{ backgroundColor: color.surface.warning, boxShadow: shadow.sm, cursor: 'pointer' }}
+                      style={{ backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)', boxShadow: shadow.sm, cursor: 'pointer' } as React.CSSProperties} // token-audit-ignore — CSS custom property override
                       tags={
                         <>
                           <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-                          <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
+                          <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{task.freq}</Tag>
+                          <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
                           <Tooltip content="Overdue" placement="top">
                             <Badge
                               status="warning"
@@ -337,7 +345,8 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
                   tags={
                     <>
                       <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-                      <Tag size="sm" style={{ flexShrink: 0 }}>{task.freq}</Tag>
+                      <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.primary, flexShrink: 0 }}>{task.freq}</Tag>
+                      <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
                     </>
                   }
                   trailingTag={

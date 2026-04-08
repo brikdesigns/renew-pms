@@ -26,12 +26,12 @@ interface TesterGroup {
 
 // Persona templates — same 6 roles for every tester
 const PERSONA_DEFS: Omit<Persona, 'key' | 'email'>[] = [
-  { label: 'Brik Admin',       sublabel: 'platform_admin',             badge: 'PLATFORM',  badgeColor: '#e74c3c' },
-  { label: 'Sarah Mitchell',   sublabel: 'practice_admin · active',    badge: 'ADMIN',     badgeColor: '#f39c12' },
-  { label: 'Emily Rivera',     sublabel: 'staff · new · opening',      badge: 'NEW',       badgeColor: '#3498db' },
-  { label: 'Tyler Nguyen',     sublabel: 'staff · maturing · closing', badge: 'MATURING',  badgeColor: '#9b59b6' },
-  { label: 'Amanda Chen',      sublabel: 'staff · active · opening',   badge: 'ACTIVE',    badgeColor: '#27ae60' },
-  { label: 'Rachel Foster',    sublabel: 'staff · active · full_day',  badge: 'ACTIVE',    badgeColor: '#27ae60' },
+  { label: 'Brik Admin',       sublabel: 'platform_admin',                badge: 'PLATFORM',   badgeColor: '#e74c3c' },
+  { label: 'Sarah Mitchell',   sublabel: 'practice_admin · proficient',   badge: 'ADMIN',      badgeColor: '#f39c12' },
+  { label: 'Emily Rivera',     sublabel: 'staff · new · opening',         badge: 'NEW',        badgeColor: '#3498db' },
+  { label: 'Tyler Nguyen',     sublabel: 'staff · maturing · closing',    badge: 'MATURING',   badgeColor: '#9b59b6' },
+  { label: 'Amanda Chen',      sublabel: 'staff · proficient · opening',  badge: 'PROFICIENT', badgeColor: '#27ae60' },
+  { label: 'Rachel Foster',    sublabel: 'staff · proficient · full_day', badge: 'PROFICIENT', badgeColor: '#27ae60' },
 ];
 
 const ALIASES = ['brikadmin', 'owner', 'newhire', 'maturing', 'hygienist', 'frontdesk'];

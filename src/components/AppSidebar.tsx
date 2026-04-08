@@ -119,6 +119,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', icon: icon.home,      label: 'Dashboard', match: (p) => p === '/dashboard' || p === '/' },
   { href: '/schedule',  icon: icon.calendar,  label: 'Schedule',  match: (p) => p.startsWith('/schedule'), adminOnly: true },
   { href: '/tasks',     icon: icon.tasks,     label: 'Tasks',     match: (p) => p.startsWith('/tasks') },
+  { href: '/requests',  icon: icon.requests,  label: 'Requests',  match: (p) => p.startsWith('/requests') },
   { href: '/training',  icon: icon.training,  label: 'Training',  match: (p) => p.startsWith('/training') },
   { href: '/documents', icon: icon.documents, label: 'Documents', match: (p) => p.startsWith('/documents'), adminOnly: true },
   { href: '/analytics', icon: icon.analytics, label: 'Analytics', match: (p) => p.startsWith('/analytics'), adminOnly: true },
@@ -137,7 +138,7 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [hoveredTheme, setHoveredTheme] = useState(false);
-  const [hoveredLogout, setHoveredLogout] = useState(false);
+  const [hoveredHelp, setHoveredHelp] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
@@ -190,12 +191,13 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
           <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
         <button
-          style={bottomBtnStyle(hoveredLogout)}
-          aria-label="Log out"
-          onMouseEnter={() => setHoveredLogout(true)}
-          onMouseLeave={() => setHoveredLogout(false)}
+          onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
+          style={bottomBtnStyle(hoveredHelp)}
+          aria-label="Help & User Guide"
+          onMouseEnter={() => setHoveredHelp(true)}
+          onMouseLeave={() => setHoveredHelp(false)}
         >
-          <Icon icon={icon.power} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
+          <Icon icon={icon.help} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
         </button>
       </div>
     </aside>
