@@ -87,6 +87,7 @@ export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
   { href: '/settings/teams',        icon: icon.teams,        label: 'Teams',        adminOnly: true },
   { href: '/settings/roles',        icon: icon.permissions,  label: 'Roles',        adminOnly: true },
   { href: '/settings/users',        icon: icon.invite,       label: 'Users',        adminOnly: true },
+  { href: '/settings/contacts',     icon: icon.contacts,     label: 'Contacts',     adminOnly: true },
   { href: '/settings/inventory',    icon: icon.rooms,        label: 'Inventory',    adminOnly: true },
 ];
 
