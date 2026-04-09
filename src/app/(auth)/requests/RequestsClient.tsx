@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
 import { Tag, Badge, Chip, Button } from '@bds/components';
 import { Menu } from '@bds/components';
@@ -8,8 +10,11 @@ import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
+import { useMembers, type Member } from '@/hooks/useMembers';
 import { SubmitRequestSheet } from '@/components/SubmitRequestSheet';
 import { ViewRequestSheet } from '@/components/ViewRequestSheet';
+import { UserAvatar } from '@/components/UserAvatar';
+import { useToast } from '@/components/ToastProvider';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Status pipeline ────────────────────────────────────────────────────────
@@ -35,6 +40,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   equipment_issue:       'Equipment',
   facility_maintenance:  'Facility',
 };
+
+const ADD_MENU_CATEGORIES = [
+  { id: 'device_issue',         label: 'Device Issue',            desc: 'Computers, tablets, printers',    icon: 'ph:desktop-fill' },
+  { id: 'equipment_issue',      label: 'Equipment Issue',         desc: 'Dental chairs, autoclaves, X-ray', icon: 'ph:wrench-fill' },
+  { id: 'facility_maintenance', label: 'Facility / Maintenance',  desc: 'Building, plumbing, HVAC',        icon: 'ph:buildings-fill' },
+] as const;
 
 // ─── Filters ────────────────────────────────────────────────────────────────
 
@@ -130,6 +141,227 @@ const columnStyle: CSSProperties = {
   minWidth: 0,
 };
 
+// ─── Assignee menu constants ────────────────────────────────────────────────
+
+const ASSIGN_MENU_WIDTH = 220;
+const ASSIGN_MENU_MAX_H = 280;
+
+const unassignedAvatarStyle: CSSProperties = {
+  width: 28, height: 28, borderRadius: border.radius.pill,
+  backgroundColor: color.surface.secondary,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  flexShrink: 0,
+};
+
+// ─── Assignee avatar with portal-based reassign menu ────────────────────────
+
+function AssigneeAvatar({
+  requestId, assigneeId, assigneeName, members, onAssigned,
+}: {
+  requestId: string;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  members: Member[];
+  onAssigned: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
+
+  // Compute position synchronously on open — no flash
+  const openMenu = useCallback(() => {
+    if (!avatarRef.current) return;
+    const rect = avatarRef.current.getBoundingClientRect();
+
+    // Default: below avatar, left-aligned with avatar left edge
+    let top = rect.bottom + 4;
+    let left = rect.left;
+
+    // Flip above if it would overflow viewport bottom
+    if (top + ASSIGN_MENU_MAX_H > window.innerHeight - 8) {
+      top = rect.top - ASSIGN_MENU_MAX_H - 4;
+      if (top < 8) top = 8;
+    }
+
+    // Clamp right edge to viewport
+    if (left + ASSIGN_MENU_WIDTH > window.innerWidth - 8) {
+      left = window.innerWidth - ASSIGN_MENU_WIDTH - 8;
+    }
+    if (left < 8) left = 8;
+
+    setPos({ top, left });
+    setOpen(true);
+  }, []);
+
+  const close = useCallback(() => { setOpen(false); setPos(null); }, []);
+
+  // Click-outside: close if click is outside both the avatar and the menu
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (avatarRef.current?.contains(target)) return; // avatar toggle handles itself
+      if (menuRef.current?.contains(target)) return;   // click inside menu
+      close();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, close]);
+
+  // Close on external scroll (board horizontal, column items vertical)
+  // but NOT when the user scrolls inside the menu itself
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: Event) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      close();
+    };
+    window.addEventListener('scroll', handler, true);
+    return () => window.removeEventListener('scroll', handler, true);
+  }, [open, close]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, close]);
+
+  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (open) { close(); } else { openMenu(); }
+  };
+
+  const handleAssign = async (memberId: string | null, memberName: string | null) => {
+    close();
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_to: memberId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to assign');
+      }
+      showToast({
+        title: memberName ? 'Request assigned' : 'Request unassigned',
+        description: memberName ? `Assigned to ${memberName}.` : 'Assignee removed.',
+        variant: 'success',
+      });
+      onAssigned();
+    } catch (err) {
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to assign', variant: 'error' });
+    }
+  };
+
+  const activeMembers = members.filter(m => m.is_active);
+
+  return (
+    <>
+      <div
+        ref={avatarRef}
+        title={assigneeName ?? 'Unassigned'}
+        style={{ cursor: 'pointer' }}
+        onClick={handleToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
+      >
+        {assigneeName ? (
+          <UserAvatar name={assigneeName} size="sm" />
+        ) : (
+          <div style={unassignedAvatarStyle}>
+            <Icon icon={icon.profile} style={{ fontSize: '14px', color: color.text.muted } as CSSProperties & Record<string, string>} />
+          </div>
+        )}
+      </div>
+      {open && pos && createPortal(
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+        <div
+          ref={menuRef}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            zIndex: 9999,
+            width: ASSIGN_MENU_WIDTH,
+            maxHeight: ASSIGN_MENU_MAX_H,
+            overflowY: 'auto',
+            backgroundColor: color.surface.primary,
+            borderRadius: border.radius.md,
+            border: `1px solid ${color.border.muted}`,
+            boxShadow: shadow.lg,
+            padding: `${gap.xs} 0`,
+          }}
+        >
+          <AssignMenuItem
+            active={!assigneeId}
+            onClick={() => handleAssign(null, null)}
+            avatar={
+              <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
+                <Icon icon={icon.profile} style={{ fontSize: '12px', color: color.text.muted } as CSSProperties & Record<string, string>} />
+              </div>
+            }
+            label="Unassigned"
+          />
+          {activeMembers.map(m => {
+            const name = `${m.first_name} ${m.last_name}`.trim();
+            return (
+              <AssignMenuItem
+                key={m.id}
+                active={m.id === assigneeId}
+                onClick={() => handleAssign(m.id, name)}
+                avatar={<UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />}
+                label={name}
+              />
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+/** Single menu item — stops React synthetic event propagation so portal clicks don't reach BoardCard */
+function AssignMenuItem({ active, onClick, avatar, label }: {
+  active: boolean;
+  onClick: () => void;
+  avatar: React.ReactNode;
+  label: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const highlighted = active || hovered;
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: gap.md,
+        width: '100%', padding: `${space.xs} ${space.md}`,
+        backgroundColor: highlighted ? color.surface.accent : 'transparent',
+        border: 'none', cursor: 'pointer',
+        fontFamily: font.family.label, fontSize: font.size.label.sm,
+        fontWeight: active ? font.weight.semibold : font.weight.medium,
+        color: color.text.primary, textAlign: 'left',
+      }}
+    >
+      {avatar}
+      {label}
+    </button>
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface RequestsClientProps {
@@ -137,12 +369,40 @@ interface RequestsClientProps {
   isAdmin: boolean;
 }
 
-export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProps) {
+export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const { requests, refetch } = useRequests();
+  const { members } = useMembers();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [submitCategory, setSubmitCategory] = useState('');
   const [viewing, setViewing] = useState<RequestRow | null>(null);
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterPriority, setFilterPriority] = useState('All Priorities');
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const { showToast: showToastTop } = useToast();
+
+  // Drag-and-drop state
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
+  const [settling, setSettling] = useState(false);
+
+  // Auto-open request sheet from ?open=<id> (e.g., notification click)
+  // Auto-open submit form from ?submit=true (e.g., plus button in utility bar)
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId && requests.length > 0) {
+      const match = requests.find(r => r.id === openId);
+      if (match) {
+        setViewing(match);
+        router.replace('/requests', { scroll: false });
+      }
+    }
+    if (searchParams.get('submit') === 'true') {
+      setSubmitOpen(true);
+      router.replace('/requests', { scroll: false });
+    }
+  }, [searchParams, requests, router]);
 
   const filtered = useMemo(() => {
     return requests.filter(r => {
@@ -166,6 +426,74 @@ export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProp
       }));
   }, [filtered]);
 
+  // ── Drag-and-drop handlers ──────────────────────────────────────────────────
+
+  const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, requestId: string) => {
+    setDraggingId(requestId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', requestId);
+
+    // Apply drag-preview class so browser captures tilted snapshot
+    const card = e.currentTarget;
+    card.classList.add('bds-board-card--drag-preview');
+    requestAnimationFrame(() => {
+      card.classList.remove('bds-board-card--drag-preview');
+    });
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingId(null);
+    setDropTargetKey(null);
+  }, []);
+
+  const handleColumnDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleColumnDragEnter = useCallback((_e: React.DragEvent<HTMLDivElement>, statusKey: string) => {
+    setDropTargetKey(statusKey);
+  }, []);
+
+  const handleColumnDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>, statusKey: string) => {
+    // Only clear if truly leaving the column, not entering a child element
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) return;
+    setDropTargetKey(prev => prev === statusKey ? null : prev);
+  }, []);
+
+  const handleColumnDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>, targetStatusKey: string) => {
+    e.preventDefault();
+    const requestId = e.dataTransfer.getData('text/plain');
+    setDraggingId(null);
+    setDropTargetKey(null);
+
+    if (!requestId) return;
+
+    const request = requests.find(r => r.id === requestId);
+    if (!request || request.status === targetStatusKey) return;
+
+    const targetLabel = STATUS_PIPELINE.find(s => s.key === targetStatusKey)?.label ?? targetStatusKey;
+
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: targetStatusKey }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to update status');
+      }
+      showToastTop({ title: 'Status updated', description: `Moved to ${targetLabel}.`, variant: 'success' });
+      setSettling(true);
+      refetch();
+      setTimeout(() => setSettling(false), 400);
+    } catch (err) {
+      showToastTop({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to update status', variant: 'error' });
+    }
+  }, [requests, refetch, showToastTop]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
       <div style={headerStyle}>
@@ -176,15 +504,56 @@ export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProp
         <div style={filterBarStyle}>
           <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
           <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
-          <Button variant="primary" size="sm" onClick={() => setSubmitOpen(true)}>
-            Add Request
-          </Button>
+          <div style={{ position: 'relative' }}>
+            <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+              Add Request
+            </Button>
+            {addMenuOpen && (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
+                backgroundColor: color.surface.primary, borderRadius: border.radius.md,
+                border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
+                minWidth: 280, overflow: 'hidden',
+              }}>
+                {ADD_MENU_CATEGORIES.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: gap.md,
+                      width: '100%', padding: `${space.sm} ${space.md}`,
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: font.family.label, fontSize: font.size.label.sm,
+                      color: color.text.primary, textAlign: 'left',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <Icon icon={c.icon} style={{ width: 16, color: color.text.brand }} />
+                    <div>
+                      <div style={{ fontWeight: font.weight.semibold }}>{c.label}</div>
+                      <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{c.desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <Board style={{ flex: 1, minHeight: 0 }}>
+      <Board style={{ flex: 1, minHeight: 0 }} className={settling ? 'bds-board--settling' : undefined}>
         {columns.map(col => (
-          <BoardColumn key={col.key} style={columnStyle as CSSProperties}>
+          <BoardColumn
+            key={col.key}
+            style={columnStyle as CSSProperties}
+            className={dropTargetKey === col.key ? 'bds-board-column--drop-target' : undefined}
+            onDragOver={handleColumnDragOver}
+            onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragEnter(e, col.key)}
+            onDragLeave={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragLeave(e, col.key)}
+            onDrop={(e: React.DragEvent<HTMLDivElement>) => handleColumnDrop(e, col.key)}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
               <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, color: color.text.primary }}>
                 {col.label}
@@ -200,21 +569,32 @@ export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProp
                   title={req.title}
                   subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
                   onClick={() => setViewing(req)}
-                  style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
+                  draggable
+                  onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
+                  onDragEnd={handleDragEnd}
+                  className={`bds-board-card--draggable${draggingId === req.id ? ' bds-board-card--dragging' : ''}`}
+                  style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm }}
                   tags={
                     <>
                       <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
                       <Badge status={priority.status} size="xs" variant="dark" icon={<Icon icon={priority.icon} />} style={{ flexShrink: 0 }}>
                         {priority.label}
                       </Badge>
+                      {req.vendor_name && (
+                        <Tag size="sm" style={{ backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
+                          {req.vendor_name}
+                        </Tag>
+                      )}
                     </>
                   }
                   trailingTag={
-                    req.vendor_name ? (
-                      <Tag size="sm" style={{ backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
-                        {req.vendor_name}
-                      </Tag>
-                    ) : undefined
+                    <AssigneeAvatar
+                      requestId={req.id}
+                      assigneeId={req.assignee_id}
+                      assigneeName={req.assignee_name}
+                      members={members}
+                      onAssigned={refetch}
+                    />
                   }
                 />
               );
@@ -230,13 +610,16 @@ export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProp
 
       <SubmitRequestSheet
         isOpen={submitOpen}
-        onClose={() => setSubmitOpen(false)}
+        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
         onSaved={refetch}
+        defaultCategory={submitCategory}
       />
       <ViewRequestSheet
         isOpen={viewing !== null}
         onClose={() => setViewing(null)}
         request={viewing}
+        isAdmin={isAdmin}
+        onUpdated={refetch}
       />
     </div>
   );

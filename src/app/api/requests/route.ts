@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { createNotifications, getPracticeAdminUserIds } from '@/lib/notifications';
+import { sendEmail, getPracticeAdminEmails } from '@/lib/email';
 
 // ─── Join types ─────────────────────────────────────────────────────────────
 
@@ -173,8 +175,14 @@ export async function POST(request: Request) {
     .select('id')
     .eq('user_id', authUser.profile.id)
     .eq('practice_id', practiceId)
+    .eq('is_active', true)
     .limit(1)
     .single();
+
+  if (!member) {
+    console.error('[POST /api/requests] No practice_member found for user:', authUser.profile.id, 'practice:', practiceId);
+    return NextResponse.json({ error: 'No practice membership found for current user' }, { status: 403 });
+  }
 
   const body = await request.json();
 
@@ -196,12 +204,38 @@ export async function POST(request: Request) {
       location_description: body.location_description?.trim() || null,
       room_id: body.room_id || null,
       equipment_id: body.equipment_id || null,
-      submitted_by: member?.id ?? authUser.profile.id,
+      vendor_id: body.vendor_id || null,
+      vendor_contact_id: body.vendor_contact_id || null,
+      submitted_by: member.id,
     })
     .select('id')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // ── Notifications (fire and forget) ────────────────────────────────────────
+  const catLabels: Record<string, string> = { device_issue: 'Device Issue', equipment_issue: 'Equipment Issue', facility_maintenance: 'Facility / Maintenance' };
+  const priLabels: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
+  const who = `${authUser.profile.first_name ?? ''} ${authUser.profile.last_name ?? ''}`.trim() || (authUser.profile.email ?? 'Staff');
+  const notifBody = `${who} submitted a ${priLabels[body.urgency] ?? 'medium'} priority ${catLabels[body.category] ?? ''} request`;
+
+  // Email admins
+  getPracticeAdminEmails(practiceId).then(emails => {
+    if (emails.length === 0) return;
+    return sendEmail({
+      to: emails,
+      subject: `New Request: ${body.title.trim()}`,
+      html: `<h2>New Request Submitted</h2><p><strong>${body.title.trim()}</strong></p><p>${notifBody}</p>${body.description ? `<p>${body.description.trim()}</p>` : ''}<p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/requests">View in Renew PMS</a></p>`,
+      practiceId,
+      template: 'new_request',
+    });
+  }).catch(err => console.error('[email]', err));
+
+  // In-app notify admins
+  getPracticeAdminUserIds(practiceId).then(ids => {
+    if (ids.length === 0) return;
+    return createNotifications({ practiceId, userIds: ids, type: 'request_new', title: `New Request: ${body.title.trim()}`, body: notifBody, link: `/requests?open=${data.id}` });
+  }).catch(err => console.error('[notification]', err));
 
   return NextResponse.json(data, { status: 201 });
 }

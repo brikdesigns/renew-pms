@@ -22,12 +22,28 @@ interface RequestFormData {
   room_id: string;
   equipment_id: string;
   location_description: string;
+  vendor_id: string;
+  vendor_contact_id: string;
+}
+
+interface VendorOption {
+  id: string;
+  name: string;
+  type: string;
+  is_active: boolean;
+}
+
+interface VendorContactOption {
+  id: string;
+  name: string;
+  role: string | null;
 }
 
 interface SubmitRequestSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
+  defaultCategory?: string;
 }
 
 // ─── Options ────────────────────────────────────────────────────────────────
@@ -54,6 +70,8 @@ const EMPTY_FORM: RequestFormData = {
   room_id: '',
   equipment_id: '',
   location_description: '',
+  vendor_id: '',
+  vendor_contact_id: '',
 };
 
 const formRowStyle: React.CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
@@ -61,16 +79,38 @@ const formRowHalf: React.CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSheetProps) {
+export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }: SubmitRequestSheetProps) {
   const { showToast } = useToast();
   const { rooms } = useRooms();
   const { equipment } = useEquipment();
   const [form, setForm] = useState<RequestFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [vendors, setVendors] = useState<VendorOption[]>([]);
+  const [vendorContacts, setVendorContacts] = useState<VendorContactOption[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setForm(EMPTY_FORM);
+    if (isOpen) setForm({ ...EMPTY_FORM, category: defaultCategory ?? '' });
   }, [isOpen]);
+
+  // Fetch vendors once
+  useEffect(() => {
+    fetch('/api/vendors')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setVendors(data); })
+      .catch(err => console.error('[SubmitRequestSheet] failed to load vendors:', err));
+  }, []);
+
+  // Fetch contacts when vendor changes
+  useEffect(() => {
+    if (!form.vendor_id) { setVendorContacts([]); return; }
+    setContactsLoading(true);
+    fetch(`/api/vendors/${form.vendor_id}/contacts`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setVendorContacts(data); })
+      .catch(err => console.error('[SubmitRequestSheet] failed to load contacts:', err))
+      .finally(() => setContactsLoading(false));
+  }, [form.vendor_id]);
 
   const showEquipment = form.category === 'device_issue' || form.category === 'equipment_issue';
 
@@ -89,6 +129,16 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSh
     ];
   }, [equipment, form.room_id]);
 
+  const vendorOptions = useMemo(() => [
+    { label: 'Select option', value: '' },
+    ...vendors.filter(v => v.is_active).map(v => ({ label: v.name, value: v.id })),
+  ], [vendors]);
+
+  const contactOptions = useMemo(() => [
+    { label: contactsLoading ? 'Loading…' : 'Select option', value: '' },
+    ...vendorContacts.map(c => ({ label: c.role ? `${c.name} (${c.role})` : c.name, value: c.id })),
+  ], [vendorContacts, contactsLoading]);
+
   const updateText = (field: keyof RequestFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }));
   };
@@ -97,6 +147,7 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSh
     const next = { ...form, [field]: e.target.value };
     if (field === 'room_id') next.equipment_id = '';
     if (field === 'category' && e.target.value === 'facility_maintenance') next.equipment_id = '';
+    if (field === 'vendor_id') next.vendor_contact_id = '';
     setForm(next);
   };
 
@@ -117,6 +168,8 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSh
           room_id: form.room_id || null,
           equipment_id: form.equipment_id || null,
           location_description: form.location_description.trim() || null,
+          vendor_id: form.vendor_id || null,
+          vendor_contact_id: form.vendor_contact_id || null,
         }),
       });
 
@@ -158,7 +211,7 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSh
             <TextInput label="Title" size="sm" value={form.title} onChange={updateText('title')} placeholder="Brief description of the issue" fullWidth required />
             <div style={formRowStyle}>
               <div style={formRowHalf}>
-                <Select label="Category" size="sm" options={CATEGORY_OPTIONS} value={form.category} onChange={updateSelect('category')} fullWidth required />
+                <Select label="Category" size="sm" options={CATEGORY_OPTIONS} value={form.category} onChange={updateSelect('category')} fullWidth required disabled={!!defaultCategory} />
               </div>
               <div style={formRowHalf}>
                 <Select label="Priority" size="sm" options={PRIORITY_OPTIONS} value={form.urgency} onChange={updateSelect('urgency')} fullWidth />
@@ -180,6 +233,20 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved }: SubmitRequestSh
               )}
             </div>
             <TextInput label="Location Details" size="sm" value={form.location_description} onChange={updateText('location_description')} placeholder="e.g. Front desk printer, Operatory 3 chair" fullWidth />
+          </div>
+
+          <h3 style={sheetSectionTitle}>Vendor & Contact</h3>
+          <div style={sheetFormGroup}>
+            <div style={formRowStyle}>
+              <div style={formRowHalf}>
+                <Select label="Vendor" size="sm" options={vendorOptions} value={form.vendor_id} onChange={updateSelect('vendor_id')} fullWidth />
+              </div>
+              {form.vendor_id && (
+                <div style={formRowHalf}>
+                  <Select label="Contact" size="sm" options={contactOptions} value={form.vendor_contact_id} onChange={updateSelect('vendor_contact_id')} fullWidth disabled={contactsLoading} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </form>
