@@ -1,44 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
+import { requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 
-/**
- * GET /api/vendors/[id]/contacts
- * Returns contacts for a specific vendor.
- */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const supabase = await createClient();
-  const authResult = await requireAuth(supabase);
-  if (authResult instanceof NextResponse) return authResult;
-  const authUser = authResult as AuthUser;
-
-  const practiceId = await getPracticeId(supabase, authUser);
-  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
-
-  const { data, error } = await supabase
-    .from('vendor_contacts')
-    .select('id, name, role, phone, email, is_primary')
-    .eq('vendor_id', id)
-    .eq('practice_id', practiceId)
-    .order('is_primary', { ascending: false })
-    .order('name');
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json(data ?? []);
-}
+const ALLOWED_FIELDS = [
+  'name', 'type', 'phone', 'email', 'website_url', 'address', 'notes', 'is_active',
+] as const;
 
 /**
- * POST /api/vendors/[id]/contacts
- * Add a contact to a vendor. Requires practice_admin or platform_admin.
+ * PATCH /api/vendors/[id]
+ * Update a vendor. Requires practice_admin or platform_admin.
  */
-export async function POST(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -52,24 +26,53 @@ export async function POST(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
+  const updates: Record<string, unknown> = {};
+  for (const key of ALLOWED_FIELDS) {
+    if (key in body) updates[key] = body[key];
+  }
 
-  if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+  }
 
   const { data, error } = await supabase
-    .from('vendor_contacts')
-    .insert({
-      vendor_id: id,
-      practice_id: practiceId,
-      name: body.name.trim(),
-      role: body.role?.trim() || null,
-      phone: body.phone?.trim() || null,
-      email: body.email?.trim() || null,
-      is_primary: body.is_primary ?? false,
-    })
-    .select('id, name, role, phone, email, is_primary')
-    .single();
+    .from('vendors')
+    .update(updates)
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .select('id, name, type, phone, email, website_url, address, notes, is_active, created_at')
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+
+  return NextResponse.json(data);
+}
+
+/**
+ * DELETE /api/vendors/[id]
+ * Delete a vendor. Requires practice_admin or platform_admin.
+ */
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requirePracticeAdmin(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const { error } = await supabase
+    .from('vendors')
+    .delete()
+    .eq('id', id)
+    .eq('practice_id', practiceId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json({ success: true });
 }
