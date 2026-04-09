@@ -210,6 +210,34 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
 - No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
+## Branching Model
+
+```text
+main (production — protected, merges from staging only via PR)
+  └── staging (integration — working branch, deploys to staging URL)
+        ├── feat/<name>     — new features
+        ├── fix/<name>      — bug fixes
+        └── chore/<name>    — infra, docs, config
+```
+
+### Rules
+
+1. **`main` is locked.** Only receives merges from `staging` via PR. Deploys to production.
+2. **`staging` is the working base.** Branch from it, merge back to it. Deploys to staging URL.
+3. **Feature branches for anything > 1 commit.** One concern per branch.
+4. **Hotfixes** (single obvious commit) can go directly to staging.
+5. **Never mix concerns.** If a session unearths a new need (bug, missing feature), note it — don't start it in the current branch. Create a separate branch.
+
+### Session Discipline
+
+- **Start:** Check out or create a feature branch from `staging`.
+- **End:** Commit your work. Never leave changes floating in the working tree across sessions.
+- **Context switch:** Stash or commit current branch, switch to a new one.
+
+### Merge Order (when multiple branches exist)
+
+Infra/config first (other branches depend on it), then enhancements, then new features. Always PR to `staging`, never directly to `main`.
+
 ## Commands
 
 ```bash
