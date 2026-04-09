@@ -26,12 +26,22 @@ interface Template {
   department_id: string | null;
   task_category_id: string | null;
   status: string;
+  assignment_mode: 'individual' | 'role' | 'department' | 'pool';
 }
+
+const ASSIGNMENT_MODE_LABELS: Record<string, string> = {
+  individual: 'Individual',
+  role: 'Role',
+  department: 'Department',
+  pool: 'Pool (Anyone)',
+};
 
 interface AddTaskSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
+  /** Pre-filter templates by type (e.g., 'checklist', 'procedure') */
+  defaultType?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -100,7 +110,7 @@ const emptyStateStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
+export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskSheetProps) {
   const { showToast } = useToast();
   const { members } = useMembers();
   const { departments } = useDepartments();
@@ -122,7 +132,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
           setTemplates(data.filter((t: Template) => t.status === 'active'));
         }
       })
-      .catch(() => {});
+      .catch(err => console.error('[AddTaskSheet] failed to load templates:', err));
   }, [isOpen]);
 
   // Reset form on open
@@ -144,10 +154,15 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
     }
   }, [selectedTemplate]);
 
+  const filteredTemplates = useMemo(() =>
+    defaultType ? templates.filter(t => t.type === defaultType) : templates,
+    [templates, defaultType]
+  );
+
   const templateOptions = useMemo(() => [
     { label: 'Select option', value: '' },
-    ...templates.map(t => ({ label: t.name, value: t.id })),
-  ], [templates]);
+    ...filteredTemplates.map(t => ({ label: t.name, value: t.id })),
+  ], [filteredTemplates]);
 
   const staffOptions = useMemo(() => [
     { label: 'Select option', value: '' },
@@ -177,6 +192,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
         body: JSON.stringify({
           title: selectedTemplate.name,
           description: selectedTemplate.description || null,
+          template_id: selectedTemplate.id,
           task_type_id: selectedTemplate.task_category_id || null,
           priority: selectedTemplate.priority,
           frequency: selectedTemplate.frequency || null,
@@ -192,7 +208,10 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
         throw new Error(data.error ?? 'Failed to create task');
       }
 
-      showToast({ title: 'Task created', description: `${selectedTemplate.name} has been assigned.`, variant: 'success' });
+      const desc = selectedTemplate.assignment_mode === 'pool'
+        ? `${selectedTemplate.name} has been added to the pool.`
+        : `${selectedTemplate.name} has been assigned.`;
+      showToast({ title: 'Task created', description: desc, variant: 'success' });
       onSaved();
       onClose();
     } catch (err: unknown) {
@@ -202,7 +221,12 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
     }
   };
 
-  const canSave = !!selectedTemplate && !!assignedTo;
+  const canSave = !!selectedTemplate && (
+    selectedTemplate.assignment_mode === 'pool' ||
+    selectedTemplate.assignment_mode === 'role' ||
+    selectedTemplate.assignment_mode === 'department' ||
+    !!assignedTo
+  );
 
   return (
     <Sheet
@@ -250,6 +274,10 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
                   <span style={previewLabelStyle}>Frequency</span>
                   <span style={previewFieldStyle}>{selectedTemplate.frequency ? (FREQUENCY_LABELS[selectedTemplate.frequency] ?? selectedTemplate.frequency) : 'One-time'}</span>
                 </div>
+                <div style={previewRowStyle}>
+                  <span style={previewLabelStyle}>Assignment</span>
+                  <span style={previewFieldStyle}>{ASSIGNMENT_MODE_LABELS[selectedTemplate.assignment_mode] ?? 'Individual'}</span>
+                </div>
                 {selectedTemplate.description && (
                   <div style={{ ...previewRowStyle, gridColumn: '1 / -1' }}>
                     <span style={previewLabelStyle}>Description</span>
@@ -261,14 +289,33 @@ export function AddTaskSheet({ isOpen, onClose, onSaved }: AddTaskSheetProps) {
               {/* Step 2: Assignment + scheduling */}
               <h3 style={sheetSectionTitle}>Assignment</h3>
               <div style={sheetFormGroup}>
-                <div style={formRowStyle}>
-                  <div style={formRowHalf}>
-                    <Select label="Assign To" size="sm" options={staffOptions} value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} fullWidth required />
+                {selectedTemplate.assignment_mode === 'individual' && (
+                  <div style={formRowStyle}>
+                    <div style={formRowHalf}>
+                      <Select label="Assign To" size="sm" options={staffOptions} value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} fullWidth required />
+                    </div>
+                    <div style={formRowHalf}>
+                      <Select label="Department" size="sm" options={deptOptions} value={assignedDepartment} onChange={(e) => setAssignedDepartment(e.target.value)} fullWidth />
+                    </div>
                   </div>
-                  <div style={formRowHalf}>
-                    <Select label="Department" size="sm" options={deptOptions} value={assignedDepartment} onChange={(e) => setAssignedDepartment(e.target.value)} fullWidth />
+                )}
+                {selectedTemplate.assignment_mode === 'pool' && (
+                  <div style={previewRowStyle}>
+                    <span style={previewFieldStyle}>This task will be added to the shared pool. Any staff member can work on it from the Open Tasks view.</span>
                   </div>
-                </div>
+                )}
+                {selectedTemplate.assignment_mode === 'role' && (
+                  <div style={previewRowStyle}>
+                    <span style={previewFieldStyle}>This task will be assigned to all members with the template&apos;s designated role.</span>
+                  </div>
+                )}
+                {selectedTemplate.assignment_mode === 'department' && (
+                  <div style={formRowStyle}>
+                    <div style={formRowHalf}>
+                      <Select label="Department" size="sm" options={deptOptions} value={assignedDepartment} onChange={(e) => setAssignedDepartment(e.target.value)} fullWidth required />
+                    </div>
+                  </div>
+                )}
                 <TextInput label="Due Date" size="sm" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} fullWidth required />
               </div>
             </>

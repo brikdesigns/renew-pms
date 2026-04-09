@@ -153,10 +153,15 @@ export function UsersTable() {
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (m: Member) => { setEditing(m); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/members/${deleteTarget.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      showToast({ title: 'Error', description: 'Failed to delete user', variant: 'error' });
+      return;
+    }
+    setMembers(prev => prev.filter(m => m.id !== deleteTarget.id));
+    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
     setDeleteTarget(null);
   };
 
@@ -183,9 +188,35 @@ export function UsersTable() {
       if (res.ok) {
         const updated: Member = await res.json();
         setMembers((prev) => prev.map((m) => m.id === editing.id ? updated : m));
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Failed to update user' }));
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
+      }
+    } else {
+      // Invite new user
+      const res = await fetch('/api/members/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          system_role: data.system_role,
+          practice_role_id: data.practice_role_id || null,
+          employee_type: data.employee_type,
+          shift: data.shift || null,
+        }),
+      });
+      if (res.ok) {
+        const newMember: Member = await res.json();
+        setMembers((prev) => [...prev, newMember]);
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Failed to invite user' }));
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
+        throw new Error(err.error); // Prevent the success toast in EditUserSheet
       }
     }
-    // POST (invite) flow is handled separately — no optimistic add here
   };
 
   const sheetData: UserFormData | null = editing

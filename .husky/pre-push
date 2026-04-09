@@ -1,0 +1,72 @@
+#!/usr/bin/env sh
+
+# ── Dependency file check ──
+# Ensures package.json/lock file changes are committed before pushing.
+DIRTY_PKG=$(git diff --name-only -- package.json package-lock.json)
+if [ -n "$DIRTY_PKG" ]; then
+  echo "ERROR: Uncommitted changes in dependency files:"
+  echo "$DIRTY_PKG"
+  echo "Commit these before pushing or Netlify build will fail."
+  exit 1
+fi
+
+# ── Migration conflict detection ──
+# Catches the most dangerous multi-agent scenario: two branches create the
+# same migration number. Detected at push time before CI gets involved.
+echo "Checking for migration number conflicts..."
+
+REMOTE_REF=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
+REMOTE_BRANCH="${REMOTE_REF#origin/}"
+
+# Fetch latest remote state (quiet, don't fail if offline)
+git fetch origin "$REMOTE_BRANCH" --quiet 2>/dev/null || true
+
+MERGE_BASE=$(git merge-base HEAD "origin/$REMOTE_BRANCH" 2>/dev/null || echo "")
+if [ -n "$MERGE_BASE" ]; then
+  LOCAL_MIGRATIONS=$(ls supabase/migrations/*.sql 2>/dev/null | xargs -I{} basename {} | sort)
+  BASE_MIGRATIONS=$(git ls-tree -r --name-only "$MERGE_BASE" -- supabase/migrations/ 2>/dev/null | xargs -I{} basename {} | sort)
+  REMOTE_MIGRATIONS=$(git ls-tree -r --name-only "origin/$REMOTE_BRANCH" -- supabase/migrations/ 2>/dev/null | xargs -I{} basename {} | sort)
+
+  TMPDIR_HOOK=$(mktemp -d)
+  echo "$LOCAL_MIGRATIONS" > "$TMPDIR_HOOK/local"
+  echo "$BASE_MIGRATIONS" > "$TMPDIR_HOOK/base"
+  echo "$REMOTE_MIGRATIONS" > "$TMPDIR_HOOK/remote"
+
+  NEW_LOCAL=$(comm -23 "$TMPDIR_HOOK/local" "$TMPDIR_HOOK/base" 2>/dev/null || true)
+  NEW_REMOTE=$(comm -23 "$TMPDIR_HOOK/remote" "$TMPDIR_HOOK/base" 2>/dev/null || true)
+
+  if [ -n "$NEW_LOCAL" ] && [ -n "$NEW_REMOTE" ]; then
+    echo "$NEW_LOCAL" | sed 's/_.*//' | sort -u > "$TMPDIR_HOOK/local_nums"
+    echo "$NEW_REMOTE" | sed 's/_.*//' | sort -u > "$TMPDIR_HOOK/remote_nums"
+    CONFLICTS=$(comm -12 "$TMPDIR_HOOK/local_nums" "$TMPDIR_HOOK/remote_nums" 2>/dev/null || true)
+
+    if [ -n "$CONFLICTS" ]; then
+      echo ""
+      echo "ERROR: Migration number conflict detected!"
+      echo "These numbers exist on both your branch and origin/$REMOTE_BRANCH:"
+      echo "$CONFLICTS"
+      echo ""
+      NEXT_NUM=$(echo "$REMOTE_MIGRATIONS" "$LOCAL_MIGRATIONS" | sed 's/_.*//' | sort -u | tail -1 | awk '{printf "%05d", $1+1}')
+      echo "Renumber your migration(s). Next available: $NEXT_NUM"
+      rm -rf "$TMPDIR_HOOK"
+      exit 1
+    fi
+  fi
+
+  rm -rf "$TMPDIR_HOOK"
+fi
+echo "No migration conflicts."
+
+echo "Running tests before push..."
+npx vitest run --reporter=verbose
+echo "Tests passed."
+
+echo "Running clean build check before push..."
+
+# Build into a separate directory so we don't destroy the running dev server's .next cache.
+rm -rf .next-prepush
+trap 'rm -rf .next-prepush' EXIT
+
+NEXT_BUILD_OUTPUT_DIR=".next-prepush" npm run build
+
+echo "Build passed (dev server cache untouched)."

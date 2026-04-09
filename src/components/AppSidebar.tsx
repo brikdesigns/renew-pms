@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
+import { Tooltip } from '@bds/components';
 import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
@@ -158,22 +159,28 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
             const active = item.match(pathname);
             const hovered = hoveredItem === item.href;
             return (
-              <Link
+              <Tooltip
                 key={item.href}
-                href={item.href}
-                style={navItemStyle(active, hovered)}
-                aria-label={item.label}
-                onMouseEnter={() => setHoveredItem(item.href)}
-                onMouseLeave={() => setHoveredItem(null)}
+                content={item.label}
+                placement="right"
+                style={{ display: 'block', width: '100%' }}
               >
-                <Icon
-                  icon={item.icon}
-                  style={{
-                    fontSize: font.size.body.xl,
-                    color: navIconColor(active, hovered),
-                  }}
-                />
-              </Link>
+                <Link
+                  href={item.href}
+                  style={navItemStyle(active, hovered)}
+                  aria-label={item.label}
+                  onMouseEnter={() => setHoveredItem(item.href)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  <Icon
+                    icon={item.icon}
+                    style={{
+                      fontSize: font.size.body.xl,
+                      color: navIconColor(active, hovered),
+                    }}
+                  />
+                </Link>
+              </Tooltip>
             );
           })}
         </nav>
@@ -181,24 +188,28 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
 
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
-        <button
-          onClick={toggle}
-          style={bottomBtnStyle(hoveredTheme)}
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          onMouseEnter={() => setHoveredTheme(true)}
-          onMouseLeave={() => setHoveredTheme(false)}
-        >
-          <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
-        </button>
-        <button
-          onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
-          style={bottomBtnStyle(hoveredHelp)}
-          aria-label="Help & User Guide"
-          onMouseEnter={() => setHoveredHelp(true)}
-          onMouseLeave={() => setHoveredHelp(false)}
-        >
-          <Icon icon={icon.help} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
-        </button>
+        <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right">
+          <button
+            onClick={toggle}
+            style={bottomBtnStyle(hoveredTheme)}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            onMouseEnter={() => setHoveredTheme(true)}
+            onMouseLeave={() => setHoveredTheme(false)}
+          >
+            <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
+          </button>
+        </Tooltip>
+        <Tooltip content="Help & User Guide" placement="right">
+          <button
+            onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
+            style={bottomBtnStyle(hoveredHelp)}
+            aria-label="Help & User Guide"
+            onMouseEnter={() => setHoveredHelp(true)}
+            onMouseLeave={() => setHoveredHelp(false)}
+          >
+            <Icon icon={icon.help} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
+          </button>
+        </Tooltip>
       </div>
     </aside>
   );
