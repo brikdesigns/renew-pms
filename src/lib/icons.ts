@@ -32,6 +32,7 @@ export const icon = {
   inventory:    'ph:archive',
   teams:        'ph:users-three',
   permissions:  'ph:shield-check',
+  plus:         'ph:plus',
   invite:       'ph:user-plus',
   rooms:        'ph:warehouse',
 

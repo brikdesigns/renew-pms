@@ -80,10 +80,11 @@ create policy "requests_insert" on public.requests
     practice_id in (select public.user_practice_ids(auth.uid()))
   );
 
--- Staff can update their own requests; admins can update any
+-- Practice members can update requests; admins can update any
 create policy "requests_update" on public.requests
   for update using (
     practice_id in (select public.user_practice_ids(auth.uid()))
+    or public.get_my_system_role() in ('platform_admin', 'practice_admin')
   );
 
 -- Only admins can delete
