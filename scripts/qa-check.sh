@@ -63,8 +63,11 @@ cd "$PROJECT_ROOT"
 if [ -f ".env.local" ]; then
   # shellcheck source=/dev/null
   source .env.local 2>/dev/null || true
+elif [ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
+  # CI: env vars already injected by GitHub Actions
+  true
 else
-  echo -e "${RED}ERROR: .env.local not found${NC}"
+  echo -e "${RED}ERROR: .env.local not found and no env vars set${NC}"
   exit 1
 fi
 

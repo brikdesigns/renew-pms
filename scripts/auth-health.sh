@@ -70,8 +70,11 @@ if [ -f "$ENV_FILE" ]; then
   # shellcheck source=/dev/null
   source "$ENV_FILE" 2>/dev/null || true
   set -u
+elif [ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
+  # CI: env vars already injected by GitHub Actions
+  true
 else
-  echo -e "${RED}ERROR: $ENV_FILE not found${NC}"
+  echo -e "${RED}ERROR: $ENV_FILE not found and no env vars set${NC}"
   exit 1
 fi
 
