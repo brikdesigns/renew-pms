@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useMemo, type CSSProperties } from 'react';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
-import { Chip, IconButton } from '@bds/components';
+import { Chip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { color, font, space, gap } from '@/lib/tokens';
+import { color, gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
@@ -38,8 +36,6 @@ const TEMPLATE_TYPES = [
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TaskFilterBarProps {
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
   selectedDepartment: string;
   onDepartmentChange: (dept: string) => void;
   selectedFrequency: string;
@@ -54,52 +50,14 @@ interface TaskFilterBarProps {
   onShowOverdueChange: (show: boolean) => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function shiftDate(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const barStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${space.md} 0`,
-  minHeight: 0,
-  flex: 1,
-};
 
 const chipGroupStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
   flexWrap: 'wrap',
-};
-
-const datePickerStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.sm,
-};
-
-const dateLabelStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold,
-  color: color.text.primary,
-  whiteSpace: 'nowrap',
+  padding: `0 0`,
 };
 
 const chipWrapperStyle: CSSProperties = {
@@ -122,7 +80,7 @@ function ChipFilter({
   selected,
   onChange,
 }: {
-  label?: string; // reserved for future accessibility use
+  label?: string;
   options: readonly string[];
   selected: string;
   onChange: (value: string) => void;
@@ -163,8 +121,6 @@ function ChipFilter({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TaskFilterBar({
-  selectedDate,
-  onDateChange,
   selectedDepartment,
   onDepartmentChange,
   selectedFrequency,
@@ -184,57 +140,44 @@ export function TaskFilterBar({
     [departments]
   );
 
-  const handlePrev = () => onDateChange(shiftDate(selectedDate, -1));
-  const handleNext = () => onDateChange(shiftDate(selectedDate, 1));
-
   return (
-    <div style={barStyle}>
-      {/* Date navigation */}
-      <div style={datePickerStyle}>
-        <span style={dateLabelStyle}>{formatDate(selectedDate)}</span>
-        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={handlePrev} />
-        <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={handleNext} />
-      </div>
-
-      {/* Filter chips */}
-      <div style={chipGroupStyle}>
-        <ChipFilter
-          label="Type"
-          options={TEMPLATE_TYPES}
-          selected={selectedType}
-          onChange={onTypeChange}
-        />
-        <ChipFilter
-          label="Department"
-          options={departmentOptions}
-          selected={selectedDepartment}
-          onChange={onDepartmentChange}
-        />
-        <ChipFilter
-          label="Frequency"
-          options={FREQUENCIES}
-          selected={selectedFrequency}
-          onChange={onFrequencyChange}
-        />
-        <ChipFilter
-          label="Priority"
-          options={PRIORITIES}
-          selected={selectedPriority}
-          onChange={onPriorityChange}
-        />
-        <Chip
-          label="Show Overdue"
-          variant={showOverdue ? 'primary' : 'secondary'}
-          appearance={showOverdue ? 'solid' : 'light'}
-          onChipClick={() => onShowOverdueChange(!showOverdue)}
-        />
-        <Chip
-          label="Show Resolved"
-          variant={showResolved ? 'primary' : 'secondary'}
-          appearance={showResolved ? 'solid' : 'light'}
-          onChipClick={() => onShowResolvedChange(!showResolved)}
-        />
-      </div>
+    <div style={chipGroupStyle}>
+      <ChipFilter
+        label="Type"
+        options={TEMPLATE_TYPES}
+        selected={selectedType}
+        onChange={onTypeChange}
+      />
+      <ChipFilter
+        label="Department"
+        options={departmentOptions}
+        selected={selectedDepartment}
+        onChange={onDepartmentChange}
+      />
+      <ChipFilter
+        label="Frequency"
+        options={FREQUENCIES}
+        selected={selectedFrequency}
+        onChange={onFrequencyChange}
+      />
+      <ChipFilter
+        label="Priority"
+        options={PRIORITIES}
+        selected={selectedPriority}
+        onChange={onPriorityChange}
+      />
+      <Chip
+        label="Show Overdue"
+        variant={showOverdue ? 'primary' : 'secondary'}
+        appearance={showOverdue ? 'solid' : 'light'}
+        onChipClick={() => onShowOverdueChange(!showOverdue)}
+      />
+      <Chip
+        label="Show Resolved"
+        variant={showResolved ? 'primary' : 'secondary'}
+        appearance={showResolved ? 'solid' : 'light'}
+        onChipClick={() => onShowResolvedChange(!showResolved)}
+      />
     </div>
   );
 }
