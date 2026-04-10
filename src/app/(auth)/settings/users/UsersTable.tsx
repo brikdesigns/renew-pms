@@ -21,8 +21,8 @@ import { useRoles } from '@/hooks/useRoles';
 const TEXT_SECONDARY = color.text.secondary;
 
 const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  platform_admin: 'Platform Admin',
-  practice_admin: 'Practice Admin',
+  brik_admin: 'Platform Admin',
+  admin: 'Practice Admin',
   staff: 'Staff',
 };
 

@@ -36,7 +36,7 @@ export async function GET(
 
 /**
  * POST /api/vendors/[id]/contacts
- * Add a contact to a vendor. Requires practice_admin or platform_admin.
+ * Add a contact to a vendor. Requires admin or brik_admin.
  */
 export async function POST(
   request: Request,

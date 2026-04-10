@@ -77,7 +77,7 @@ export async function GET() {
 /**
  * POST /api/members
  * Adds an existing user (by email) to the practice.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();

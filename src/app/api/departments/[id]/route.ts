@@ -7,7 +7,7 @@ import { getPracticeId } from '@/lib/practice';
 /**
  * PATCH /api/departments/[id]
  * Updates a department's name, color, is_active, or sort_order.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function PATCH(
   request: Request,
@@ -53,7 +53,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/departments/[id]
- * Deletes a department. Requires practice_admin or platform_admin.
+ * Deletes a department. Requires admin or brik_admin.
  */
 export async function DELETE(
   _req: Request,

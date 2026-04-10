@@ -72,7 +72,7 @@ export async function GET() {
 /**
  * POST /api/departments
  * Creates a new department for the current user's practice.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();

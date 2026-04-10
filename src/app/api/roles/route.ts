@@ -62,7 +62,7 @@ export async function GET() {
 
 /**
  * POST /api/roles
- * Creates a new practice role type. Requires practice_admin or platform_admin.
+ * Creates a new practice role type. Requires admin or brik_admin.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();

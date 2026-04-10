@@ -135,7 +135,7 @@ interface AppSidebarProps {
 export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const pathname = usePathname();
   const { isDark, toggle } = useTheme();
-  const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
+  const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [hoveredTheme, setHoveredTheme] = useState(false);
   const [hoveredHelp, setHoveredHelp] = useState(false);

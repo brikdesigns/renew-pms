@@ -6,7 +6,7 @@ import { getPracticeId } from '@/lib/practice';
 
 /**
  * PATCH /api/contacts/[id]
- * Update a vendor contact. Requires practice_admin or platform_admin.
+ * Update a vendor contact. Requires admin or brik_admin.
  */
 export async function PATCH(
   request: Request,
@@ -56,7 +56,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/contacts/[id]
- * Delete a vendor contact. Requires practice_admin or platform_admin.
+ * Delete a vendor contact. Requires admin or brik_admin.
  */
 export async function DELETE(
   _request: Request,

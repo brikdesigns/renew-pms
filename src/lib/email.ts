@@ -28,7 +28,7 @@ export async function getPracticeAdminEmails(practiceId: string): Promise<string
     .select('profiles(email)')
     .eq('practice_id', practiceId)
     .eq('is_active', true)
-    .in('profiles.system_role', ['practice_admin', 'platform_admin']);
+    .in('profiles.system_role', ['admin', 'brik_admin']);
 
   if (error) {
     console.error('[email] failed to fetch admin emails:', error);

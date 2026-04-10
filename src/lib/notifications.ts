@@ -45,7 +45,7 @@ export async function getPracticeAdminUserIds(practiceId: string): Promise<strin
   for (const member of data) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = Array.isArray(member.profiles) ? member.profiles[0] : member.profiles as any;
-    if (profile?.system_role === 'practice_admin' || profile?.system_role === 'platform_admin') ids.push(member.user_id);
+    if (profile?.system_role === 'admin' || profile?.system_role === 'brik_admin') ids.push(member.user_id);
   }
   return ids;
 }

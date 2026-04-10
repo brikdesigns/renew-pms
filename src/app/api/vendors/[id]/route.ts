@@ -10,7 +10,7 @@ const ALLOWED_FIELDS = [
 
 /**
  * PATCH /api/vendors/[id]
- * Update a vendor. Requires practice_admin or platform_admin.
+ * Update a vendor. Requires admin or brik_admin.
  */
 export async function PATCH(
   request: Request,
@@ -51,7 +51,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/vendors/[id]
- * Delete a vendor. Requires practice_admin or platform_admin.
+ * Delete a vendor. Requires admin or brik_admin.
  */
 export async function DELETE(
   _request: Request,

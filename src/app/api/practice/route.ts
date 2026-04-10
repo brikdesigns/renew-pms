@@ -40,7 +40,7 @@ export async function GET() {
 
 /**
  * PATCH /api/practice — update the current user's practice data.
- * Only practice_admin and platform_admin can update.
+ * Only admin and brik_admin can update.
  */
 export async function PATCH(request: Request) {
   const supabase = await createClient();

@@ -36,7 +36,7 @@ export async function GET() {
 
 /**
  * POST /api/vendors
- * Create a new vendor. Requires practice_admin or platform_admin.
+ * Create a new vendor. Requires admin or brik_admin.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();

@@ -45,7 +45,7 @@ Members of the practice can read. Platform admins can read everything.
 create policy "table_select" on public.some_table
   for select using (
     practice_id in (select public.user_practice_ids(auth.uid()))
-    or public.get_my_system_role() = 'platform_admin'
+    or public.get_my_system_role() = 'brik_admin'
   );
 ```
 
@@ -57,7 +57,7 @@ Practice admins and platform admins can insert/update/delete.
 create policy "table_admin_manage" on public.some_table
   for all using (
     practice_id in (select public.user_practice_ids(auth.uid()))
-    and public.get_my_system_role() in ('platform_admin', 'practice_admin')
+    and public.get_my_system_role() in ('brik_admin', 'admin')
   );
 ```
 
@@ -90,7 +90,7 @@ Bad:
 -- DO NOT DO THIS — infinite recursion
 create policy "profiles_select" on public.profiles
   for select using (
-    (select system_role from public.profiles where id = auth.uid()) = 'platform_admin'
+    (select system_role from public.profiles where id = auth.uid()) = 'brik_admin'
   );
 ```
 
@@ -100,6 +100,6 @@ Good:
 create policy "profiles_select" on public.profiles
   for select using (
     auth.uid() = id
-    or public.get_my_system_role() = 'platform_admin'
+    or public.get_my_system_role() = 'brik_admin'
   );
 ```

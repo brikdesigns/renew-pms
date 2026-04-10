@@ -7,7 +7,7 @@ import { getPracticeId } from '@/lib/practice';
 /**
  * PATCH /api/roles/[id]
  * Updates a role's name, department_id, description, is_active, or sort_order.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function PATCH(
   request: Request,
@@ -66,7 +66,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/roles/[id]
- * Deletes a role. Requires practice_admin or platform_admin.
+ * Deletes a role. Requires admin or brik_admin.
  * Note: is_default roles should be deactivated rather than deleted.
  */
 export async function DELETE(

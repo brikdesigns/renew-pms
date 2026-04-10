@@ -48,7 +48,7 @@ function flattenMember(m: {
 /**
  * PATCH /api/members/[id]
  * Updates a member's practice-level fields and/or profile fields.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  *
  * Accepted fields:
  *   practice_members: practice_role_id, employee_type, shift, is_active
@@ -137,7 +137,7 @@ export async function PATCH(
 /**
  * DELETE /api/members/[id]
  * Removes a member from the practice.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function DELETE(
   _req: Request,
