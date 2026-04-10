@@ -39,9 +39,9 @@ interface EditInventorySheetProps {
 // ─── Options ─────────────────────────────────────────────────────────────────
 
 const STATUS_OPTIONS = [
-  { label: 'Active', value: 'Active' },
-  { label: 'Renew Review', value: 'Renew Review' },
-  { label: 'Need to Cancel/Replace', value: 'Need to Cancel/Replace' },
+  { label: 'Active', value: 'active' },
+  { label: 'Needs Service', value: 'needs_service' },
+  { label: 'Out of Service', value: 'out_of_service' },
 ];
 
 const TYPE_OPTIONS = [
@@ -52,7 +52,7 @@ const TYPE_OPTIONS = [
 
 const EMPTY_FORM: InventoryFormData = {
   name: '',
-  status: 'Active',
+  status: 'active',
   department: '',
   department_id: '',
   description: '',

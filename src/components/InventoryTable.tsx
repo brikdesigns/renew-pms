@@ -107,17 +107,19 @@ export function InventoryTable() {
   };
 
   const handleSave = async (data: InventoryFormData) => {
+    const payload = {
+      name: data.name,
+      manufacturer: data.company || null,
+      room_id: data.room || null,
+      status: data.status,
+      notes: data.description || null,
+    };
+
     if (editing) {
       const res = await fetch(`/api/equipment/${editing.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.name,
-          manufacturer: data.company || null,
-          room_id: data.room || null,
-          status: data.status === 'Active' ? 'active' : data.status === 'Renew Review' ? 'needs_service' : 'out_of_service',
-          notes: data.description || null,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Failed to update' }));
@@ -129,13 +131,7 @@ export function InventoryTable() {
       const res = await fetch('/api/equipment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.name,
-          manufacturer: data.company || null,
-          room_id: data.room || null,
-          status: data.status === 'Active' ? 'active' : data.status === 'Renew Review' ? 'needs_service' : 'out_of_service',
-          notes: data.description || null,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Failed to add item' }));
@@ -147,7 +143,7 @@ export function InventoryTable() {
   };
 
   const editFormData: InventoryFormData | null = editing
-    ? { name: editing.name, status: editing.status, department: '', department_id: '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: '', team: '', role_id: '', room: editing.room_id ?? '' }
+    ? { name: editing.name, status: editing.status, department: '', department_id: '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: '', team: '', role_id: '', room: editing.room_id ?? '' } // TODO: vendor_id and department_id need DB columns on equipment table
     : null;
 
   const viewData: InventoryViewData | null = viewing
