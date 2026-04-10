@@ -49,7 +49,7 @@ interface SubmitRequestSheetProps {
 // ─── Options ────────────────────────────────────────────────────────────────
 
 const CATEGORY_OPTIONS = [
-  { label: 'Select option', value: '' },
+  { label: 'Select category', value: '' },
   { label: 'Device Issue', value: 'device_issue' },
   { label: 'Equipment Issue', value: 'equipment_issue' },
   { label: 'Facility / Maintenance', value: 'facility_maintenance' },
@@ -115,7 +115,7 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }
   const showEquipment = form.category === 'device_issue' || form.category === 'equipment_issue';
 
   const roomOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select room', value: '' },
     ...rooms.filter(r => r.is_active).map(r => ({ label: r.name, value: r.id })),
   ], [rooms]);
 
@@ -124,18 +124,18 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }
       ? equipment.filter(e => e.room_id === form.room_id || !e.room_id)
       : equipment;
     return [
-      { label: 'Select option', value: '' },
+      { label: 'Select equipment', value: '' },
       ...filtered.map(e => ({ label: e.name, value: e.id })),
     ];
   }, [equipment, form.room_id]);
 
   const vendorOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select vendor', value: '' },
     ...vendors.filter(v => v.is_active).map(v => ({ label: v.name, value: v.id })),
   ], [vendors]);
 
   const contactOptions = useMemo(() => [
-    { label: contactsLoading ? 'Loading…' : 'Select option', value: '' },
+    { label: contactsLoading ? 'Loading…' : 'Select contact', value: '' },
     ...vendorContacts.map(c => ({ label: c.role ? `${c.name} (${c.role})` : c.name, value: c.id })),
   ], [vendorContacts, contactsLoading]);
 

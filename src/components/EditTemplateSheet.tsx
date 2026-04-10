@@ -102,7 +102,7 @@ const TYPE_OPTIONS = [
 ];
 
 const FREQUENCY_OPTIONS = [
-  { label: 'Select option', value: '' },
+  { label: 'Select frequency', value: '' },
   { label: 'Daily',        value: 'daily' },
   { label: 'Weekly',       value: 'weekly' },
   { label: 'Bi-Weekly',    value: 'bi_weekly' },
@@ -337,7 +337,7 @@ export function EditTemplateSheet({
   // ─── Reference select options ─────────────────────────────────────────────
 
   const roomOptions = [
-    { label: 'Select option', value: '' },
+    { label: 'Select room', value: '' },
     ...rooms.map((r) => ({ label: r.name, value: r.id })),
   ];
 
@@ -347,18 +347,18 @@ export function EditTemplateSheet({
       ? equipment.filter((e) => e.room_id === roomId || !e.room_id)
       : equipment;
     return [
-      { label: 'Select option', value: '' },
+      { label: 'Select equipment', value: '' },
       ...filtered.map((e) => ({ label: e.name, value: e.id })),
     ];
   }
 
   const supplyCategoryOptions = [
-    { label: 'Select option', value: '' },
+    { label: 'Select supply category', value: '' },
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
 
   const departmentOptions = [
-    { label: 'Select option', value: '' },
+    { label: 'Select department', value: '' },
     ...departments.map((d) => ({ label: d.name, value: d.id })),
   ];
 
@@ -368,12 +368,12 @@ export function EditTemplateSheet({
   ];
 
   const categoryOptions = [
-    { label: 'Select option', value: '' },
+    { label: 'Select category', value: '' },
     ...taskCategories.map((c) => ({ label: c.name, value: c.id })),
   ];
 
   const complianceOptions = [
-    { label: 'Select option', value: '' },
+    { label: 'Select compliance type', value: '' },
     ...complianceTypes.map((c) => ({ label: c.name, value: c.id })),
   ];
 

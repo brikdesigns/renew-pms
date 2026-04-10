@@ -54,7 +54,7 @@ const EMPLOYEE_TYPE_OPTIONS = [
 ];
 
 const SHIFT_OPTIONS = [
-  { label: 'Select option', value: '' },
+  { label: 'Select shift', value: '' },
   { label: 'Opening', value: 'opening' },
   { label: 'Closing', value: 'closing' },
   { label: 'Evening', value: 'evening' },
@@ -106,7 +106,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   const { roles } = useRoles();
 
   const practiceRoleOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select role', value: '' },
     ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id })),
   ], [roles]);
 
@@ -118,7 +118,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
   }, [form.practice_role_id, roles]);
 
   const departmentOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select department', value: '' },
     ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
   ], [departments]);
 

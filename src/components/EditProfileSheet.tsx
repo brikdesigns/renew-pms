@@ -49,14 +49,14 @@ const SYSTEM_ROLE_OPTIONS = [
 
 
 const EMPLOYEE_TYPE_OPTIONS = [
-  { label: 'Select option', value: '' },
+  { label: 'Select type', value: '' },
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
   { label: 'Proficient', value: 'proficient' },
 ];
 
 const SHIFT_OPTIONS = [
-  { label: 'Select option', value: '' },
+  { label: 'Select shift', value: '' },
   { label: 'Opening', value: 'opening' },
   { label: 'Closing', value: 'closing' },
   { label: 'Evening', value: 'evening' },
@@ -77,12 +77,12 @@ export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdm
   const { roles } = useRoles();
 
   const practiceRoleOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select role', value: '' },
     ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id })),
   ], [roles]);
 
   const departmentOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select department', value: '' },
     ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.name })),
   ], [departments]);
 
@@ -254,7 +254,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdm
                 <Select
                   label="Team"
                   size="sm"
-                  options={[{ label: 'Select option', value: '' }]}
+                  options={[{ label: 'Select team', value: '' }]}
                   value={form.team}
                   onChange={updateSelect('team')}
                   fullWidth
