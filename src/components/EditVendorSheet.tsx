@@ -77,10 +77,23 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
         address: initialData.address ?? '',
         notes: initialData.notes ?? '',
         is_active: initialData.is_active,
-        equipment_ids: [],
+        equipment_ids: equipment
+          .filter(e => e.vendor_id === initialData.id)
+          .map(e => e.id),
       } : EMPTY_FORM);
     }
   }, [isOpen, initialData]);
+
+  // Sync equipment_ids when equipment loads after the sheet is already open
+  useEffect(() => {
+    if (isOpen && initialData && equipment.length > 0) {
+      setForm(prev => {
+        if (prev.equipment_ids.length > 0) return prev; // already populated or user-edited
+        const linked = equipment.filter(e => e.vendor_id === initialData.id).map(e => e.id);
+        return linked.length > 0 ? { ...prev, equipment_ids: linked } : prev;
+      });
+    }
+  }, [isOpen, initialData, equipment]);
 
   const isEdit = !!initialData;
   const canSave = !!form.name.trim() && !!form.type;

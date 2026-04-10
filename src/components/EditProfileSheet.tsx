@@ -49,6 +49,7 @@ const SYSTEM_ROLE_OPTIONS = [
 
 
 const EMPLOYEE_TYPE_OPTIONS = [
+  { label: 'Select option', value: '' },
   { label: 'New', value: 'new' },
   { label: 'Maturing', value: 'maturing' },
   { label: 'Proficient', value: 'proficient' },

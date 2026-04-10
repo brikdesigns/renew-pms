@@ -79,7 +79,7 @@ export function AddContactSheet({ isOpen, onClose, onSaved, initialData }: AddCo
     } else if (isOpen) {
       setForm(EMPTY_FORM);
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   useEffect(() => {
     fetch('/api/vendors')

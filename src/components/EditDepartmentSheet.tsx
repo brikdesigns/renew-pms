@@ -40,7 +40,7 @@ const STATUS_OPTIONS = [
 ];
 
 const COLOR_OPTIONS = [
-  { label: 'None', value: '' },
+  { label: 'Select color', value: '' },
   { label: 'Blue', value: 'blue' },
   { label: 'Green', value: 'green' },
   { label: 'Red', value: 'red' },

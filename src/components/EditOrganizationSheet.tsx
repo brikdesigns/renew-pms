@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Sheet, Button, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
@@ -78,6 +78,10 @@ export function EditOrganizationSheet({ isOpen, onClose, initialData, onSave }: 
   const { showToast } = useToast();
   const [form, setForm] = useState<OrganizationData>(initialData);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setForm(initialData);
+  }, [isOpen, initialData]);
 
   const updateText = (field: keyof OrganizationData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));

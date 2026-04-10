@@ -76,7 +76,7 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave, members: a
 
   const { departments } = useDepartments();
   const departmentOptions = useMemo(() => [
-    { label: 'None', value: '' },
+    { label: 'Select department', value: '' },
     ...departments.filter((d) => d.is_active).map((d) => ({ label: d.name, value: d.id })),
   ], [departments]);
 
