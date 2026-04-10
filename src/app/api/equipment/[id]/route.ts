@@ -25,9 +25,11 @@ export async function GET(
   const { data, error } = await supabase
     .from('equipment')
     .select(`
-      id, name, room_id, status, manufacturer, notes,
+      id, name, room_id, vendor_id, department_id, status, manufacturer, notes,
       equipment_categories(name),
-      rooms(name)
+      rooms(name),
+      vendors(name),
+      departments(name, color)
     `)
     .eq('id', id)
     .eq('practice_id', practiceId)
@@ -37,17 +39,22 @@ export async function GET(
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const catRaw = data.equipment_categories as any;
-  const cat = (Array.isArray(catRaw) ? catRaw[0] : catRaw) as { name: string } | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const roomRaw = data.rooms as any;
-  const room = (Array.isArray(roomRaw) ? roomRaw[0] : roomRaw) as { name: string } | null;
+  const first = (v: any) => (Array.isArray(v) ? v[0] ?? null : v);
+  const cat = first(data.equipment_categories) as { name: string } | null;
+  const room = first(data.rooms) as { name: string } | null;
+  const vendor = first(data.vendors) as { name: string } | null;
+  const dept = first(data.departments) as { name: string; color: string } | null;
 
   return NextResponse.json({
     id: data.id,
     name: data.name,
     room_id: data.room_id,
     room_name: room?.name ?? null,
+    vendor_id: data.vendor_id,
+    vendor_name: vendor?.name ?? null,
+    department_id: data.department_id,
+    department_name: dept?.name ?? null,
+    department_color: dept?.color ?? null,
     status: data.status,
     manufacturer: data.manufacturer ?? null,
     description: data.notes ?? null,
@@ -73,7 +80,7 @@ export async function PATCH(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
-  const allowed = ['name', 'manufacturer', 'room_id', 'equipment_category_id', 'status', 'notes', 'is_active'] as const;
+  const allowed = ['name', 'manufacturer', 'room_id', 'vendor_id', 'department_id', 'equipment_category_id', 'status', 'notes', 'is_active'] as const;
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
@@ -88,24 +95,29 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .select('id, name, room_id, status, manufacturer, notes, equipment_categories(name), rooms(name)')
+    .select('id, name, room_id, vendor_id, department_id, status, manufacturer, notes, equipment_categories(name), rooms(name), vendors(name), departments(name, color)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const catRaw = data.equipment_categories as any;
-  const cat = (Array.isArray(catRaw) ? catRaw[0] : catRaw) as { name: string } | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const roomRaw = data.rooms as any;
-  const rm = (Array.isArray(roomRaw) ? roomRaw[0] : roomRaw) as { name: string } | null;
+  const f = (v: any) => (Array.isArray(v) ? v[0] ?? null : v);
+  const cat = f(data.equipment_categories) as { name: string } | null;
+  const rm = f(data.rooms) as { name: string } | null;
+  const vnd = f(data.vendors) as { name: string } | null;
+  const dp = f(data.departments) as { name: string; color: string } | null;
 
   return NextResponse.json({
     id: data.id,
     name: data.name,
     room_id: data.room_id,
     room_name: rm?.name ?? null,
+    vendor_id: data.vendor_id,
+    vendor_name: vnd?.name ?? null,
+    department_id: data.department_id,
+    department_name: dp?.name ?? null,
+    department_color: dp?.color ?? null,
     status: data.status,
     manufacturer: data.manufacturer ?? null,
     description: data.notes ?? null,

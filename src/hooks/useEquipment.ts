@@ -7,6 +7,11 @@ export interface EquipmentItem {
   name: string;
   room_id: string | null;
   room_name: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  department_color: string | null;
   status: string;
   manufacturer: string | null;
   description: string | null;

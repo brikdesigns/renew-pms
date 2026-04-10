@@ -111,6 +111,8 @@ export function InventoryTable() {
       name: data.name,
       manufacturer: data.company || null,
       room_id: data.room || null,
+      vendor_id: data.vendor_id || null,
+      department_id: data.department_id || null,
       status: data.status,
       notes: data.description || null,
     };
@@ -143,7 +145,7 @@ export function InventoryTable() {
   };
 
   const editFormData: InventoryFormData | null = editing
-    ? { name: editing.name, status: editing.status, department: '', department_id: '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: '', team: '', role_id: '', room: editing.room_id ?? '' } // TODO: vendor_id and department_id need DB columns on equipment table
+    ? { name: editing.name, status: editing.status, department: editing.department_name ?? '', department_id: editing.department_id ?? '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: editing.vendor_id ?? '', team: '', role_id: '', room: editing.room_id ?? '' }
     : null;
 
   const viewData: InventoryViewData | null = viewing

@@ -22,9 +22,11 @@ export async function GET() {
   const { data, error } = await supabase
     .from('equipment')
     .select(`
-      id, name, room_id, status, manufacturer, notes,
+      id, name, room_id, vendor_id, department_id, status, manufacturer, notes,
       equipment_categories(name),
-      rooms(name)
+      rooms(name),
+      vendors(name),
+      departments(name, color)
     `)
     .eq('practice_id', practiceId)
     .eq('is_active', true)
@@ -32,18 +34,24 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const first = (v: any) => (Array.isArray(v) ? v[0] ?? null : v);
+
   const result = (data ?? []).map((e) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const catRaw = e.equipment_categories as any;
-    const cat = (Array.isArray(catRaw) ? catRaw[0] : catRaw) as { name: string } | null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const roomRaw = e.rooms as any;
-    const room = (Array.isArray(roomRaw) ? roomRaw[0] : roomRaw) as { name: string } | null;
+    const cat = first(e.equipment_categories) as { name: string } | null;
+    const room = first(e.rooms) as { name: string } | null;
+    const vendor = first(e.vendors) as { name: string } | null;
+    const dept = first(e.departments) as { name: string; color: string } | null;
     return {
       id: e.id,
       name: e.name,
       room_id: e.room_id,
       room_name: room?.name ?? null,
+      vendor_id: e.vendor_id,
+      vendor_name: vendor?.name ?? null,
+      department_id: e.department_id,
+      department_name: dept?.name ?? null,
+      department_color: dept?.color ?? null,
       status: e.status,
       manufacturer: e.manufacturer ?? null,
       description: e.notes ?? null,
@@ -88,12 +96,14 @@ export async function POST(request: Request) {
       name: body.name.trim(),
       manufacturer: body.manufacturer?.trim() || null,
       room_id: body.room_id || null,
+      vendor_id: body.vendor_id || null,
+      department_id: body.department_id || null,
       equipment_category_id: body.equipment_category_id || null,
       status: body.status ?? 'active',
       notes: body.notes?.trim() || null,
       created_by: authUser.profile.id,
     })
-    .select('id, name, room_id, status, manufacturer, notes')
+    .select('id, name, room_id, vendor_id, department_id, status, manufacturer, notes')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -103,6 +113,11 @@ export async function POST(request: Request) {
     name: data.name,
     room_id: data.room_id,
     room_name: null,
+    vendor_id: data.vendor_id,
+    vendor_name: null,
+    department_id: data.department_id,
+    department_name: null,
+    department_color: null,
     status: data.status,
     manufacturer: data.manufacturer,
     description: data.notes,
