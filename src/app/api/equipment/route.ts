@@ -22,11 +22,12 @@ export async function GET() {
   const { data, error } = await supabase
     .from('equipment')
     .select(`
-      id, name, room_id, vendor_id, department_id, status, manufacturer, notes,
+      id, name, room_id, vendor_id, department_id, team_id, status, manufacturer, notes,
       equipment_categories(name),
       rooms(name),
       vendors(name),
-      departments(name, color)
+      departments(name, color),
+      teams(name)
     `)
     .eq('practice_id', practiceId)
     .eq('is_active', true)
@@ -42,6 +43,7 @@ export async function GET() {
     const room = first(e.rooms) as { name: string } | null;
     const vendor = first(e.vendors) as { name: string } | null;
     const dept = first(e.departments) as { name: string; color: string } | null;
+    const team = first(e.teams) as { name: string } | null;
     return {
       id: e.id,
       name: e.name,
@@ -52,6 +54,8 @@ export async function GET() {
       department_id: e.department_id,
       department_name: dept?.name ?? null,
       department_color: dept?.color ?? null,
+      team_id: e.team_id,
+      team_name: team?.name ?? null,
       status: e.status,
       manufacturer: e.manufacturer ?? null,
       description: e.notes ?? null,
@@ -98,12 +102,13 @@ export async function POST(request: Request) {
       room_id: body.room_id || null,
       vendor_id: body.vendor_id || null,
       department_id: body.department_id || null,
+      team_id: body.team_id || null,
       equipment_category_id: body.equipment_category_id || null,
       status: body.status ?? 'active',
       notes: body.notes?.trim() || null,
       created_by: authUser.profile.id,
     })
-    .select('id, name, room_id, vendor_id, department_id, status, manufacturer, notes')
+    .select('id, name, room_id, vendor_id, department_id, team_id, status, manufacturer, notes')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -118,6 +123,8 @@ export async function POST(request: Request) {
     department_id: data.department_id,
     department_name: null,
     department_color: null,
+    team_id: data.team_id,
+    team_name: null,
     status: data.status,
     manufacturer: data.manufacturer,
     description: data.notes,

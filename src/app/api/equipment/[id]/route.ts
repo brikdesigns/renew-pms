@@ -25,11 +25,12 @@ export async function GET(
   const { data, error } = await supabase
     .from('equipment')
     .select(`
-      id, name, room_id, vendor_id, department_id, status, manufacturer, notes,
+      id, name, room_id, vendor_id, department_id, team_id, status, manufacturer, notes,
       equipment_categories(name),
       rooms(name),
       vendors(name),
-      departments(name, color)
+      departments(name, color),
+      teams(name)
     `)
     .eq('id', id)
     .eq('practice_id', practiceId)
@@ -44,6 +45,7 @@ export async function GET(
   const room = first(data.rooms) as { name: string } | null;
   const vendor = first(data.vendors) as { name: string } | null;
   const dept = first(data.departments) as { name: string; color: string } | null;
+  const team = first(data.teams) as { name: string } | null;
 
   return NextResponse.json({
     id: data.id,
@@ -55,6 +57,8 @@ export async function GET(
     department_id: data.department_id,
     department_name: dept?.name ?? null,
     department_color: dept?.color ?? null,
+    team_id: data.team_id,
+    team_name: team?.name ?? null,
     status: data.status,
     manufacturer: data.manufacturer ?? null,
     description: data.notes ?? null,
@@ -80,7 +84,7 @@ export async function PATCH(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
-  const allowed = ['name', 'manufacturer', 'room_id', 'vendor_id', 'department_id', 'equipment_category_id', 'status', 'notes', 'is_active'] as const;
+  const allowed = ['name', 'manufacturer', 'room_id', 'vendor_id', 'department_id', 'team_id', 'equipment_category_id', 'status', 'notes', 'is_active'] as const;
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
@@ -95,7 +99,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .select('id, name, room_id, vendor_id, department_id, status, manufacturer, notes, equipment_categories(name), rooms(name), vendors(name), departments(name, color)')
+    .select('id, name, room_id, vendor_id, department_id, team_id, status, manufacturer, notes, equipment_categories(name), rooms(name), vendors(name), departments(name, color), teams(name)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -107,6 +111,7 @@ export async function PATCH(
   const rm = f(data.rooms) as { name: string } | null;
   const vnd = f(data.vendors) as { name: string } | null;
   const dp = f(data.departments) as { name: string; color: string } | null;
+  const tm = f(data.teams) as { name: string } | null;
 
   return NextResponse.json({
     id: data.id,
@@ -118,6 +123,8 @@ export async function PATCH(
     department_id: data.department_id,
     department_name: dp?.name ?? null,
     department_color: dp?.color ?? null,
+    team_id: data.team_id,
+    team_name: tm?.name ?? null,
     status: data.status,
     manufacturer: data.manufacturer ?? null,
     description: data.notes ?? null,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -69,7 +70,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  // Use admin client — app-level auth (requirePracticeAdmin) already validates.
+  // The user-session client's RLS policy evaluation can fail to return the updated
+  // row even though the update succeeds.
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('vendors')
     .update(updates)
     .eq('id', id)
@@ -100,7 +105,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
     .from('vendors')
     .delete()
     .eq('id', id)

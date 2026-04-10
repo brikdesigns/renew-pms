@@ -113,6 +113,7 @@ export function InventoryTable() {
       room_id: data.room || null,
       vendor_id: data.vendor_id || null,
       department_id: data.department_id || null,
+      team_id: data.team_id || null,
       status: data.status,
       notes: data.description || null,
     };
@@ -145,11 +146,11 @@ export function InventoryTable() {
   };
 
   const editFormData: InventoryFormData | null = editing
-    ? { name: editing.name, status: editing.status, department: editing.department_name ?? '', department_id: editing.department_id ?? '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: editing.vendor_id ?? '', team: '', role_id: '', room: editing.room_id ?? '' }
+    ? { name: editing.name, status: editing.status, department: editing.department_name ?? '', department_id: editing.department_id ?? '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: editing.vendor_id ?? '', team: editing.team_name ?? '', team_id: editing.team_id ?? '', room: editing.room_id ?? '' }
     : null;
 
   const viewData: InventoryViewData | null = viewing
-    ? { id: viewing.id, name: viewing.name, status: viewing.status, department: '', departmentColor: 'blue', description: viewing.description ?? '', type: viewing.category ?? '', company: viewing.manufacturer ?? '', team: '', room: viewing.room_name ?? '' }
+    ? { id: viewing.id, name: viewing.name, status: viewing.status, department: viewing.department_name ?? '', departmentColor: viewing.department_color ?? 'blue', description: viewing.description ?? '', type: viewing.category ?? '', company: viewing.manufacturer ?? '', team: viewing.team_name ?? '', room: viewing.room_name ?? '' }
     : null;
 
   return (

@@ -10,7 +10,7 @@ import {
 } from '@/app/(auth)/settings/_sheetStyles';
 import { useRooms } from '@/hooks/useRooms';
 import { useDepartments } from '@/hooks/useDepartments';
-import { useRoles } from '@/hooks/useRoles';
+import { useTeams } from '@/hooks/useTeams';
 import { useVendors } from '@/hooks/useVendors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ export interface InventoryFormData {
   company: string;
   vendor_id: string;
   team: string;
-  role_id: string;
+  team_id: string;
   room: string;
 }
 
@@ -60,7 +60,7 @@ const EMPTY_FORM: InventoryFormData = {
   company: '',
   vendor_id: '',
   team: '',
-  role_id: '',
+  team_id: '',
   room: '',
 };
 
@@ -70,29 +70,29 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
   const { showToast } = useToast();
   const { rooms } = useRooms();
   const { departments } = useDepartments();
-  const { roles } = useRoles();
+  const { teams } = useTeams();
   const { vendors } = useVendors();
 
   const [form, setForm] = useState<InventoryFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  const roomOptions = [{ label: '— None —', value: '' }, ...rooms.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id }))];
+  const roomOptions = [{ label: 'Select room', value: '' }, ...rooms.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id }))];
 
   const departmentOptions = useMemo(() => [
     { label: 'Select department', value: '' },
     ...departments.filter((d) => d.is_active && d.name !== '(G) All Departments').map((d) => ({ label: d.name, value: d.id })),
   ], [departments]);
 
-  /** Roles filtered by selected department */
+  /** Teams filtered by selected department */
   const teamOptions = useMemo(() => {
     const filtered = form.department_id
-      ? roles.filter((r) => r.is_active && r.department_id === form.department_id)
-      : roles.filter((r) => r.is_active);
+      ? teams.filter((t) => t.is_active && t.department_id === form.department_id)
+      : teams.filter((t) => t.is_active);
     return [
-      { label: 'Select team / role', value: '' },
-      ...filtered.map((r) => ({ label: r.name, value: r.id })),
+      { label: 'Select team', value: '' },
+      ...filtered.map((t) => ({ label: t.name, value: t.id })),
     ];
-  }, [roles, form.department_id]);
+  }, [teams, form.department_id]);
 
   const vendorOptions = useMemo(() => [
     { label: 'Select vendor', value: '' },
@@ -184,7 +184,7 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
               onChange={(e) => {
                 const deptId = e.target.value;
                 const dept = departments.find((d) => d.id === deptId);
-                setForm((prev) => ({ ...prev, department_id: deptId, department: dept?.name ?? '', role_id: '', team: '' }));
+                setForm((prev) => ({ ...prev, department_id: deptId, department: dept?.name ?? '', team_id: '', team: '' }));
               }}
               fullWidth
             />
@@ -192,11 +192,11 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
               label="Team"
               size="sm"
               options={teamOptions}
-              value={form.role_id}
+              value={form.team_id}
               onChange={(e) => {
-                const roleId = e.target.value;
-                const role = roles.find((r) => r.id === roleId);
-                setForm((prev) => ({ ...prev, role_id: roleId, team: role?.name ?? '' }));
+                const teamId = e.target.value;
+                const team = teams.find((t) => t.id === teamId);
+                setForm((prev) => ({ ...prev, team_id: teamId, team: team?.name ?? '' }));
               }}
               fullWidth
               disabled={!form.department_id}
