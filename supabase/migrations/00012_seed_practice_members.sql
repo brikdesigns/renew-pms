@@ -48,7 +48,10 @@ create extension if not exists pgcrypto with schema extensions;
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
   email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-  created_at, updated_at
+  created_at, updated_at,
+  -- GoTrue expects these as empty strings, not NULL
+  confirmation_token, recovery_token, email_change_token_new,
+  email_change, email_change_token_current, reauthentication_token
 )
 values
 
@@ -60,7 +63,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Dani","last_name":"Gray","system_role":"practice_admin"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 2. Chris Gray — COO (mapped: Owner) — practice_admin
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -70,7 +74,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Chris","last_name":"Gray","system_role":"practice_admin"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 3. Sylvia Salazar — Office Admin → Office Manager — practice_admin
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -80,7 +85,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Sylvia","last_name":"Salazar","system_role":"practice_admin"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 4. Autumn Weimer — Clinical Manager — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -90,7 +96,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Autumn","last_name":"Weimer","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 5. Dr. Rachel Stein — Dentist — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -100,7 +107,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Rachel","last_name":"Stein","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 6. Dr. Phillip Ray — Dentist — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -110,7 +118,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Phillip","last_name":"Ray","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 7. Tessa Hernandez — Lead Admin → Lead Business Administrator — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -120,7 +129,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Tessa","last_name":"Hernandez","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 8. Konner Rudolph — Administrative Assistant → Business Administrator — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -130,7 +140,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Konner","last_name":"Rudolph","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 9. Samantha Rodriguez — Administrative Assistant → Business Administrator — staff
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -140,7 +151,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Samantha","last_name":"Rodriguez","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 10. Avilina Igitol — Registered Dental Assistant — staff (active: 2022)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -150,7 +162,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Avilina","last_name":"Igitol","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 11. Elizabeth Carrillo — Registered Dental Assistant — staff (maturing: 2023)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -160,7 +173,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Elizabeth","last_name":"Carrillo","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 12. Destiny Mora — Registered Dental Hygienist — staff (active: 2022)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -170,7 +184,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Destiny","last_name":"Mora","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 13. Olivia Biggs — Registered Dental Hygienist — staff (maturing: 2024)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -180,7 +195,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Olivia","last_name":"Biggs","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 14. Jo Cleasby — Registered Dental Hygienist — staff (maturing: 2024)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -190,7 +206,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Jo","last_name":"Cleasby","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 15. Nadiya Achuff — Registered Dental Assistant — staff (new: 2025)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -200,7 +217,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Nadiya","last_name":"Achuff","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 16. Josalyn Bibee — Registered Dental Hygienist — staff (new: 2025)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -210,7 +228,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Josalyn","last_name":"Bibee","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 17. Jordan Johnston — Registered Dental Assistant — staff (new: 2025)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -220,7 +239,8 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Jordan","last_name":"Johnston","system_role":"staff"}'::jsonb,
-   now(), now()),
+   now(), now(),
+   '', '', '', '', '', ''),
 
   -- 18. Kelly Schumacher — Registered Dental Hygienist — staff (new: 2026)
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000',
@@ -230,7 +250,33 @@ values
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"first_name":"Kelly","last_name":"Schumacher","system_role":"staff"}'::jsonb,
-   now(), now());
+   now(), now(),
+   '', '', '', '', '', '');
+
+
+-- ── Step 1b: Create auth.identities for each user ────────────────────────────
+-- GoTrue requires an identity record for email/password sign-in.
+-- Without this, the admin list users API returns 500 when these users
+-- are included in the result set (GoTrue's GORM preload fails).
+
+insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select
+  gen_random_uuid(),
+  u.id::text,
+  u.id,
+  jsonb_build_object(
+    'sub', u.id::text,
+    'email', u.email,
+    'email_verified', true,
+    'phone_verified', false
+  ),
+  'email',
+  u.created_at,
+  u.created_at,
+  u.created_at
+from auth.users u
+where u.email like 'test+%@brikdesigns.com'
+  and not exists (select 1 from auth.identities i where i.user_id = u.id);
 
 
 -- ── Step 2: Create practice_members linking profiles → practice ───────────────

@@ -182,6 +182,9 @@ export function UsersTable() {
       if (res.ok) {
         const updated: Member = await res.json();
         setMembers((prev) => prev.map((m) => m.id === editing.id ? updated : m));
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Failed to update user' }));
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
       }
     } else {
       // Invite new user
@@ -194,17 +197,18 @@ export function UsersTable() {
           email: data.email,
           phone: data.phone,
           system_role: data.system_role,
-          practice_role_id: data.practice_role_id,
+          practice_role_id: data.practice_role_id || null,
           employee_type: data.employee_type,
           shift: data.shift || null,
         }),
       });
       if (res.ok) {
-        const created: Member = await res.json();
-        setMembers((prev) => [...prev, created]);
+        const newMember: Member = await res.json();
+        setMembers((prev) => [...prev, newMember]);
       } else {
         const err = await res.json().catch(() => ({ error: 'Failed to invite user' }));
-        showToast({ title: 'Invite failed', description: err.error, variant: 'error' });
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
+        throw new Error(err.error); // Prevent the success toast in EditUserSheet
       }
     }
   };

@@ -7,6 +7,15 @@ export default defineConfig({
     exclude: ['tests/e2e/**', 'node_modules/**'],
     passWithNoTests: true,
     environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/__tests__/**',
+      ],
+    },
   },
   resolve: {
     alias: {

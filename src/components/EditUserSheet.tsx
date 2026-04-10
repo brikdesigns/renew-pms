@@ -144,15 +144,20 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
     if (!form.first_name.trim() || !form.email.trim()) return;
 
     setSaving(true);
-    await onSave(form);
-    setSaving(false);
-    const name = `${form.first_name} ${form.last_name}`.trim();
-    showToast({
-      title: isEdit ? 'User updated' : 'User invited',
-      description: isEdit ? `${name} has been updated.` : `${name} has been invited.`,
-      variant: 'success',
-    });
-    onClose();
+    try {
+      await onSave(form);
+      const name = `${form.first_name} ${form.last_name}`.trim();
+      showToast({
+        title: isEdit ? 'User updated' : 'User invited',
+        description: isEdit ? `${name} has been updated.` : `${name} has been invited.`,
+        variant: 'success',
+      });
+      onClose();
+    } catch {
+      // Error toast is shown by the caller — just reset saving state
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ─── Associated data (edit mode only) ───────────────────────────────────
