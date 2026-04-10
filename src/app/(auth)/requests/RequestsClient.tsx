@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
-import { Tag, Badge, Chip, Button, Tooltip } from '@bds/components';
+import { Tag, Badge, Chip, Button, Tooltip, useSheetStack } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
@@ -391,6 +391,7 @@ interface RequestsClientProps {
 export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const { requests, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
+  const { pushSheet } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -685,6 +686,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         isAdmin={isAdmin}
         onUpdated={refetch}
         onEdit={(r) => { setViewing(null); setEditing(r); }}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
     </div>
   );

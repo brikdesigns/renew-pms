@@ -44,10 +44,12 @@ export default async function AuthLayout({
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
   const userDepartment = authUser.membership?.department ?? null;
   const practiceName = authUser.membership?.organization ?? undefined;
+  const role = authUser.profile.system_role;
+  const isAdmin = role === 'brik_admin' || role === 'admin' || role === 'manager';
 
   return (
     <ToastProvider>
-      <AppSheetProvider>
+      <AppSheetProvider isAdmin={isAdmin}>
         <div style={shellStyle}>
           <AppSidebar userRole={authUser.profile.system_role} />
           <div style={mainStyle}>

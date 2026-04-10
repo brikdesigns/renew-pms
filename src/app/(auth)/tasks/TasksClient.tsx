@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton } from '@bds/components';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, useSheetStack } from '@bds/components';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -206,6 +206,7 @@ const ADD_TASK_TYPES = [
 ] as const;
 
 export default function TasksClient({ canAddTask, currentMemberId }: TasksClientProps) {
+  const { pushSheet } = useSheetStack();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
@@ -818,6 +819,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         onClose={() => setViewingTask(null)}
         task={viewingTask}
         onTaskCompleted={() => { refetchAll(); setViewingTask(null); }}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <AddTaskSheet
         isOpen={addSheetOpen}

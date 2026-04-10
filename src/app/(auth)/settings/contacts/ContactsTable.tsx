@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu } from '@bds/components';
+import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
@@ -86,7 +86,7 @@ const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, m
 
 const recordTypeBarStyle: CSSProperties = {
   display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: '2px',
+  borderRadius: border.radius.sm, padding: space.tiny,
 };
 
 const recordTypeBtnStyle = (active: boolean): CSSProperties => ({
@@ -99,7 +99,7 @@ const recordTypeBtnStyle = (active: boolean): CSSProperties => ({
   fontWeight: active ? font.weight.semibold : font.weight.medium,
   color: active ? color.text.primary : color.text.secondary,
   backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+  boxShadow: active ? shadow.sm : 'none',
   transition: 'all 0.15s ease',
 });
 
@@ -308,6 +308,7 @@ function ContactsView({
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function ContactsTable() {
+  const { pushSheet } = useSheetStack();
   const { showToast } = useToast();
   const [recordType, setRecordType] = useState<RecordType>('companies');
 
@@ -527,6 +528,7 @@ export function ContactsTable() {
         onClose={() => { setViewOpen(false); setViewing(null); }}
         vendor={viewing}
         onEdit={(v) => { setViewOpen(false); setViewing(null); handleEdit(v); }}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <AddContactSheet
         isOpen={addContactOpen}

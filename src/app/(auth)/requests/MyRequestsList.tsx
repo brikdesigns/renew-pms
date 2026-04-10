@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Tag, Button } from '@bds/components';
+import { Badge, Tag, Button, useSheetStack } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
@@ -149,6 +149,7 @@ interface MyRequestsListProps {
 
 export function MyRequestsList({ memberId }: MyRequestsListProps) {
   const { requests, loading, refetch } = useRequests({ mine: memberId });
+  const { pushSheet } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -289,6 +290,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         isAdmin={false}
         onUpdated={refetch}
         onEdit={(r) => { setViewing(null); setEditing(r); }}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
     </div>
   );

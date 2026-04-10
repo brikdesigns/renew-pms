@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, FilterButton, SegmentedControl } from '@bds/components';
+import { Badge, Button, IconButton, FilterButton, SegmentedControl, useSheetStack } from '@bds/components';
 import type { FilterButtonOption } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -57,6 +57,7 @@ const INVENTORY_SEGMENTS = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function InventoryTable() {
+  const { pushSheet } = useSheetStack();
   const [view, setView] = useState('equipment');
   const { equipment, setEquipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
@@ -284,7 +285,7 @@ export function InventoryTable() {
       </div>}
 
       <EditInventorySheet isOpen={editSheetOpen} onClose={handleEditClose} initialData={editFormData} onSave={handleSave} />
-      <ViewInventorySheet isOpen={viewSheetOpen} onClose={handleViewClose} item={viewData} onEdit={handleViewEdit} />
+      <ViewInventorySheet isOpen={viewSheetOpen} onClose={handleViewClose} item={viewData} onEdit={handleViewEdit} onNavigate={(type, props, opts) => pushSheet(type, props, opts)} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

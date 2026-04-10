@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditRoleSheet, type RoleFormData } from '@/components/EditRoleSheet';
@@ -39,6 +39,7 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 export function RolesTable() {
   const { roles, setRoles, loading } = useRoles();
   const { members } = useMembers();
+  const { pushSheet } = useSheetStack();
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Role | null>(null);
@@ -161,7 +162,7 @@ export function RolesTable() {
       </div>
 
       <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} members={members} />
-      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} />
+      <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} onNavigate={(type, props, opts) => pushSheet(type, props, opts)} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

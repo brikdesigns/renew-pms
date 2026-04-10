@@ -11,7 +11,7 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { useRooms, type Room } from '@/hooks/useRooms';
@@ -131,6 +131,7 @@ function StatusIndicator({ active }: { active: boolean }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function OfficeRoomsTab() {
+  const { pushSheet } = useSheetStack();
   const { rooms: apiRooms, setRooms, loading: roomsLoading } = useRooms();
   const rooms: RoomRow[] = apiRooms.map((r) => ({ ...r, description: '', is_custom: false }));
   const { showToast } = useToast();
@@ -286,6 +287,7 @@ export function OfficeRoomsTab() {
           is_custom: viewingRoom.is_custom,
           is_active: viewingRoom.is_active,
         } : null}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

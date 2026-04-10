@@ -4,7 +4,7 @@ import { useState, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu } from '@bds/components';
+import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -76,6 +76,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function UsersTable() {
+  const { pushSheet } = useSheetStack();
   const { members, setMembers, loading } = useMembers();
   const { departments } = useDepartments();
   const { roles } = useRoles();
@@ -340,7 +341,7 @@ export function UsersTable() {
       </div>
 
       <EditUserSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
-      <ViewUserSheet isOpen={viewOpen} onClose={handleViewClose} user={viewData} onEdit={handleViewEdit} />
+      <ViewUserSheet isOpen={viewOpen} onClose={handleViewClose} user={viewData} onEdit={handleViewEdit} onNavigate={(type, props, opts) => pushSheet(type, props, opts)} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

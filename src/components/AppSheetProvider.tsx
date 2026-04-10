@@ -29,6 +29,8 @@ function SheetSkeleton() {
 
 interface AppSheetProviderProps {
   children: ReactNode;
+  /** User has admin/manager privileges — passed to all globally-rendered sheets */
+  isAdmin?: boolean;
 }
 
 /**
@@ -37,7 +39,7 @@ interface AppSheetProviderProps {
  * Place once in the auth layout. Renders the global sheet portal for the
  * navigation stack (view sheets opened from notifications, dashboard, etc.).
  */
-export function AppSheetProvider({ children }: AppSheetProviderProps) {
+export function AppSheetProvider({ children, isAdmin = false }: AppSheetProviderProps) {
   return (
     <SheetStackProvider>
       {children}
@@ -54,6 +56,7 @@ export function AppSheetProvider({ children }: AppSheetProviderProps) {
               <Component
                 {...frame.props}
                 isOpen
+                isAdmin={isAdmin}
                 onClose={ctx.closeAll}
                 onNavigate={(type: string, props: Record<string, unknown>, opts?: { title?: string }) => {
                   ctx.pushSheet(type, props, opts);

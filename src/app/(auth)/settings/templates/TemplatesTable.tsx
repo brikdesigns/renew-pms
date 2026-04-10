@@ -11,7 +11,7 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton, Tag } from '@bds/components';
+import { Badge, Button, IconButton, Tag, useSheetStack } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -153,6 +153,7 @@ interface TemplatesTableProps {
 }
 
 export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
+  const { pushSheet } = useSheetStack();
   const { templates, setTemplates, loading } = useTemplates();
 
   // Reference data for form selects
@@ -496,6 +497,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
         isOpen={viewSheetOpen}
         onClose={handleViewClose}
         template={viewingTemplate ? buildViewTemplate(viewingTemplate) : null}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

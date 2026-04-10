@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
@@ -42,6 +42,7 @@ const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: b
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
+  const { pushSheet } = useSheetStack();
   const { departments, setDepartments, loading } = useDepartments();
   const { roles } = useRoles();
   const { members } = useMembers();
@@ -182,6 +183,7 @@ export function DepartmentsTable() {
         onEdit={handleViewEdit}
         roles={roles}
         members={members}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

@@ -29,4 +29,6 @@ export interface GlobalSheetProps {
   onClose: () => void;
   /** Navigate to a related entity (pushes onto the stack) */
   onNavigate: (type: SheetType, props: Record<string, unknown>, opts?: { title?: string }) => void;
+  /** User has admin/manager privileges — injected by AppSheetProvider */
+  isAdmin?: boolean;
 }
