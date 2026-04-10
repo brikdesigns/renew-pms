@@ -6,7 +6,7 @@ import { gap } from '@/lib/tokens';
 
 // ─── Only render in development ─────────────────────────────────────────────
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_PERSONAS === 'true';
 
 // ─── Persona definitions (must match seed script) ───────────────────────────
 
