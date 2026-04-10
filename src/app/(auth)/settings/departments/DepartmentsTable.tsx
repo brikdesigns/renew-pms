@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, SegmentedControl } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
@@ -16,6 +16,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { TeamsTable, type TeamsTableHandle } from './TeamsTable';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -28,10 +29,6 @@ const subHeaderStyle: CSSProperties = {
 
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
-
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
@@ -43,9 +40,16 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 
+const DEPT_SEGMENTS = [
+  { label: 'Departments', value: 'departments' },
+  { label: 'Teams', value: 'teams' },
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
+  const [view, setView] = useState<'departments' | 'teams'>('departments');
+  const [teamsHandle, setTeamsHandle] = useState<TeamsTableHandle | null>(null);
   const { departments, setDepartments, loading } = useDepartments();
   const { roles } = useRoles();
   const { members } = useMembers();
@@ -97,17 +101,26 @@ export function DepartmentsTable() {
     ? { id: editing.id, name: editing.name, color: editing.color, is_active: editing.is_active }
     : null;
 
+  const visibleDepts = departments.filter((d) => d.name !== '(G) All Departments');
+
+  const isDepartments = view === 'departments';
+
   return (
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Departments</h3>
-          <span style={countBadge}>{loading ? '–' : departments.filter((d) => d.name !== '(G) All Departments').length}</span>
+          <SegmentedControl items={DEPT_SEGMENTS} value={view} onChange={(v) => setView(v as 'departments' | 'teams')} size="sm" />
+          <span style={countBadge}>{isDepartments ? (loading ? '–' : visibleDepts.length) : (teamsHandle?.count ?? '–')}</span>
         </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
+        {isDepartments
+          ? <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
+          : <Button variant="primary" size="sm" onClick={() => teamsHandle?.openAdd()}>Add Team</Button>
+        }
       </div>
 
-      <div style={tableWrap}>
+      {view === 'teams' && <TeamsTable embedded onReady={setTeamsHandle} />}
+
+      {view === 'departments' && <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
             <TableRow>
@@ -125,7 +138,7 @@ export function DepartmentsTable() {
                   Loading departments…
                 </TableCell>
               </TableRow>
-            ) : departments.filter((d) => d.name !== '(G) All Departments').map((d) => (
+            ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
@@ -155,7 +168,7 @@ export function DepartmentsTable() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </div>}
 
       <EditDepartmentSheet
         isOpen={sheetOpen}

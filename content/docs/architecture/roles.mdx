@@ -1,54 +1,99 @@
 ---
-title: Role Model
-description: Two-layer role system — system roles (permissions) vs practice roles (job function).
+title: Roles & Permissions
+description: Two-layer role system, permission scoping rules, and feature-level access control.
 ---
 
 Renew uses two distinct role layers. Keep them separate in your mental model.
 
-## System role — what you can DO
+## Layer 1: System role — permission tier
 
-Stored on `profiles.system_role`. Controls permissions and data access.
+Stored on `profiles.system_role`. This is the **modifier** — it determines your permission tier, not your identity. An Owner has admin access. A Clinical Manager can have admin access. A Dental Assistant has staff access. The modifier is independent of what your job is.
 
-| Role | Access |
-|------|--------|
-| `platform_admin` | Brik staff. Full access across all practices. |
-| `practice_admin` | Manages their practice. Invites staff, configures settings. |
-| `staff` | Standard team member. Scoped to their practice data. |
+| System role | Who gets it | Access |
+|-------------|-------------|--------|
+| `brik_admin` | Brik staff | Full access across all practices |
+| `admin` | Owners, Office Managers, and anyone the practice designates as admin | Practice-wide access — settings, all departments, all work items |
+| `manager` | Clinical Managers, Lead BAs, and department leads | Department-level elevated access — triage, approve, team metrics. No settings. |
+| `staff` | Standard team members | Scoped to their own work and their department |
 
-System role is an **enum** — app logic depends on these values. Not user-renameable.
+System role is a `text` column with a `CHECK` constraint — app logic depends on these values. Not user-renameable.
 
-## Practice role — what you ARE
+**Key insight:** "Admin" is not a job function. It's a capability modifier applied to any role. An Owner is an admin. A Manager can be an admin. The `system_role` field carries this — practice roles never should.
 
-Stored via `practice_members.practice_role_id` → `practice_role_types`. Represents job function/title.
+Each practice role has a `default_system_role` column that suggests the appropriate permission tier when inviting a new user. The admin can always override this at invite time.
 
-Default seeded roles:
+## Layer 2: Practice role — job function
 
-| Role | Department |
-|------|-----------|
-| Owner | Clinical |
-| Office Manager | Administration |
-| Dental Hygienist | Clinical |
-| Dental Assistant | Clinical |
-| Receptionist | Front Desk |
-| Treatment Coordinator | Front Desk |
-| Insurance Coordinator | Front Desk |
-| Engineer | Engineering |
-| Inventory Manager | Engineering |
-| Manager | Global |
-| Admin | Global |
-| Staff | Global |
+Stored via `practice_members.practice_role_id` → `practice_role_types`. This is **what you are** — your job function at the practice.
 
-Practice roles live in a **reference table** — practice admins can rename, add, or deactivate them. Never hardcode role type values in app logic.
+Current seeded roles (from Notion content mapping spec):
+
+| Role | Department | Default tier | Description |
+|------|-----------|:---:|-------------|
+| (O) Owner | Leadership | `admin` | Business owner. Ultimate decision-maker. |
+| (D) Doctor | Clinical | `admin` | Licensed dentist. Diagnosis, treatment planning, care delivery. |
+| Office Manager | Management | `admin` | Day-to-day admin and operations. Liaison between leadership and staff. |
+| Lead Business Administrator | Business Administration | `manager` | Senior front-office. Manages the BA team. |
+| Business Administrator | Business Administration | `staff` | Scheduling, billing, administrative support. |
+| Insurance Coordinator | Business Administration | `staff` | Claims, verifications, insurance billing. Also spans Finance. |
+| Clinical Manager | Clinical | `manager` | Supervises clinical ops and staff. Quality and compliance. Also spans Management. |
+| (H) Dental Hygienist | Clinical | `staff` | Preventive oral health care and patient education. |
+| (A) Dental Assistant | Clinical | `staff` | Supports doctors and hygienists in procedures. |
+| Third Party | IT | `staff` | External vendors, contractors, consultants. Also spans Finance, Marketing, Facilities. |
+| Everyone | (G) All Departments | `staff` | Applies to all team members. Used for practice-wide task/template assignment. |
+
+Practice roles live in a **reference table** — practice admins can rename, add, or deactivate them. Never hardcode role name values in app logic.
+
+**What doesn't belong here:** Generic labels like "Admin", "Staff", or "Manager" without a department context. These describe permission levels or vague organizational tiers, not job functions. If a practice needs a "Manager" role, it should be scoped — "Clinical Manager", "Front Office Manager", etc.
 
 ### Role → department → color
 
-Each role has a `department_id` FK pointing to `departments`. The department's `color` column (e.g. `"blue"`, `"green"`) drives UI color throughout the app:
+Each role has a `department_id` FK pointing to `departments`. The department's `color` column (e.g. `"blue"`, `"gold"`) drives UI color throughout the app:
 
 - **Role card avatars** use the department's light color as the background
 - **User card avatars** inherit color through: `practice_members.practice_role_id` → `practice_role_types.department_id` → `departments.color`
 - **Department tags** on user cards use the same light + text token pair
 
 This is a single FK chain — changing a department's color automatically updates every role and user that belongs to it. See [Design Tokens](/docs/architecture/design-tokens) for the full color derivation chain and token reference.
+
+## Department scoping
+
+Departments determine **what's relevant to you**. System role determines **what you're allowed to see**.
+
+Current seeded departments:
+
+| Department | Color | Scope |
+|-----------|-------|-------|
+| (G) All Departments | taupe | Global — members bypass department filtering |
+| (L) Leadership | gold | Global — practice-wide visibility |
+| (M) Management | purple | Global — practice-wide visibility |
+| (BA) Business Administration | green | Department-scoped |
+| (C) Clinical | blue | Department-scoped |
+| HR (Human Resources) | brown | Department-scoped |
+| IT (Information Technology) | taupe | Department-scoped |
+| Marketing | red | Department-scoped |
+| Finance | gold | Department-scoped |
+| Facilities | taupe | Department-scoped |
+
+### Global departments
+
+Some departments are inherently cross-departmental: Leadership, Management, and the "(G) All Departments" catch-all. Members of these departments are not filtered to a single department — they see work items across the practice.
+
+**Rule:** When a user's practice role points to a global department, department-based content filtering is bypassed. Their visibility is practice-wide (subject to their system role tier).
+
+Global visibility applies to: **(G) All Departments**, **(L) Leadership**, **(M) Management**
+
+This will be formalized with an `is_global` flag on the `departments` table. Until then, the app checks department name conventions (prefix-based).
+
+### Scoping matrix
+
+| System role | Global department | Department-scoped |
+|-------------|-------------------|-------------------|
+| `admin` | Full practice access | Full practice access (admin trumps dept) |
+| `manager` | Cross-department team oversight, no settings | Own department's team oversight, triage, approve |
+| `staff` | Cross-department work items, no settings | Own department's work items only |
+
+A Clinical Manager with `manager` system role sees Clinical department work items + team metrics, can triage requests and reassign tasks within Clinical. Promote to `admin` to grant settings access and practice-wide visibility.
 
 ## Employee status
 
@@ -58,7 +103,7 @@ Stored on `practice_members.employee_status`. Drives Trainual sync and task pers
 |--------|---------|
 | `new` | Recently onboarded |
 | `maturing` | Progressing through training |
-| `active` | Fully ramped |
+| `proficient` | Fully ramped |
 
 This is an **enum** — app logic depends on these values.
 
@@ -67,3 +112,218 @@ This is an **enum** — app logic depends on these values.
 Stored on `practice_members.shift`. Not all practices use shift-based scheduling.
 
 Values: `opening`, `closing`, `evening`, `full_day` (nullable)
+
+---
+
+## Feature permissions
+
+Every feature is scoped by **system role** (permission tier) and **department/assignment** (relevance). The general rule: staff see only what's assigned to them or their department; admins see everything.
+
+### Scoping dimensions
+
+| Dimension | Source | Purpose |
+|-----------|--------|---------|
+| System role | `profiles.system_role` | Broad permission tier (admin vs staff) |
+| Department | `practice_members` → `practice_role_types.department_id` | Content filtering — what's relevant |
+| Global dept | Department `is_global` flag (Leadership, Management, All) | Bypasses department filtering |
+| Assignment | `tasks.assignee_id`, `requests.assignee_id` | Direct ownership of work items |
+| User | `profiles.id` | Individual-level filtering (notifications, dashboard) |
+
+### Notifications
+
+Scoped by role, department, and user. A staff member should never see notifications intended for admins.
+
+| System role | Sees |
+|-------------|------|
+| `brik_admin` | All notifications across all practices |
+| `admin` | All notifications within their practice |
+| `manager` | Department-level notifications + direct (assigned/submitted) notifications |
+| `staff` | Only direct notifications: assigned tasks, requests they submitted or are assigned to |
+
+**Rules:**
+- Admin-level notifications (new user signups, system alerts, settings changes) are never visible to `staff`
+- Department-scoped notifications (e.g. "new task in Clinical") are visible to members of that department + members of global departments
+- Direct notifications (task assigned, request status change) are visible to the assigned user and the submitter
+
+### Dashboard
+
+User-specific view based on role and department. Staff see their own work; admins see the full picture.
+
+| System role | Dashboard content |
+|-------------|-------------------|
+| `brik_admin` | Cross-practice overview. All tasks, requests, and metrics. |
+| `admin` | Practice-wide view. All tasks, requests, events, and team metrics. |
+| `manager` | Department view. Tasks and requests for their department + their own. Team metrics for their department. |
+| `staff` (dept-scoped) | Personal view. Tasks assigned to them, requests they submitted/assigned, events for their department. |
+| `staff` (global dept) | Personal view + cross-department work items. Still no settings or admin features. |
+
+**Rules:**
+- Staff dashboard shows: my tasks, my requests, my department's events (or cross-dept if global)
+- Admin dashboard shows: all tasks (filterable by assignee/department), all requests (full pipeline), all events, team-level metrics
+- Counts and summaries reflect the scoped data — staff counts exclude items outside their scope
+
+### Workday features (Tasks, Requests, Events)
+
+Work items are scoped by assignment and department. Staff operate within their lane; admins have full visibility.
+
+#### Tasks
+
+| System role | Sees | Can do |
+|-------------|------|--------|
+| `brik_admin` | All tasks across all practices | Full CRUD, reassign anyone |
+| `admin` | All tasks within their practice | Full CRUD, reassign anyone in practice |
+| `manager` | Tasks in their department + tasks assigned to them | Update status, reassign within their department |
+| `staff` (dept-scoped) | Tasks assigned to them or their department | Update status on assigned tasks, cannot reassign |
+| `staff` (global dept) | Tasks across all departments | Update status on assigned tasks, cannot reassign |
+
+#### Requests
+
+Two distinct UI experiences based on system role (Option C):
+
+**Admin / Manager view — Kanban board:**
+
+| System role | Sees | Can do |
+|-------------|------|--------|
+| `brik_admin` | All requests across all practices | Full CRUD, assign, triage, status pipeline |
+| `admin` | All requests within their practice | Full CRUD, assign, triage, status pipeline |
+| `manager` | Requests in their department | Triage, assign within department, change status |
+
+Admins and managers see the request board with status columns. This is an operational triage tool — assign requests, move them through the pipeline, manage the queue. Managers see a department-filtered view.
+
+**Staff view — "My Requests" list:**
+
+| System role | Sees | Can do |
+|-------------|------|--------|
+| `staff` | Requests they submitted + requests assigned to them | Submit new requests, add comments to their own, view status updates |
+
+Staff see a flat list with status badges — not a board. This is a submit-and-track interface. They can see where their request is in the pipeline but cannot triage, reassign, or see other people's requests.
+
+**Why two views:** The Kanban board is an operational tool for people managing the request queue. For a dental assistant who submits a broken equipment request once a month, a full board with mostly-empty columns is confusing. A simple "My Requests" list with status is the right UX. Different tools for different jobs.
+
+#### Events
+
+| System role | Sees |
+|-------------|------|
+| `brik_admin` | All events across all practices |
+| `admin` | All events within their practice |
+| `manager` | Events for their department + events they are directly invited to |
+| `staff` (dept-scoped) | Events for their department + events they are directly invited to |
+| `staff` (global dept) | Events across all departments + events they are directly invited to |
+
+### Analytics
+
+Visibility is tiered. Staff see personal and team-level metrics only; admins get the full analytics suite.
+
+| System role | Sees |
+|-------------|------|
+| `brik_admin` | Full analytics across all practices |
+| `admin` | Practice-wide analytics: all departments, all team members, all metrics |
+| `manager` | Department analytics: team member metrics within their department, department-level summaries |
+| `staff` | Personal metrics only: their task completion, request activity, and event participation. Department-level summaries for their own department (or cross-dept if global). |
+
+**Rules:**
+- Staff cannot see individual metrics for other team members
+- Staff can see aggregate department metrics for departments they belong to (e.g. "Clinical department completed 42 tasks this week")
+- Revenue, billing, and operational cost metrics are admin-only
+- Admins can drill down to individual team member performance
+
+### Settings
+
+Admin-only with one exception. Staff see only their account settings.
+
+| Setting page | `brik_admin` | `admin` | `manager` | `staff` |
+|-------------|:-:|:-:|:-:|:-:|
+| Account | Yes | Yes | Yes | Yes |
+| Organization | Yes | Yes | No | No |
+| Departments | Yes | Yes | No | No |
+| Roles | Yes | Yes | No | No |
+| Users | Yes | Yes | No | No |
+| Contacts | Yes | Yes | No | No |
+| Inventory | Yes | Yes | No | No |
+| Templates | Yes | Yes | No | No |
+
+**Rules:**
+- Non-admin users (`manager`, `staff`) navigating to any admin setting page are redirected to `/settings/account`
+- The settings sub-nav hides admin-only items for `staff` users (already implemented via `adminOnly` flag on nav items)
+- Within admin settings, `admin` has full control over their practice; `brik_admin` can access any practice
+
+---
+
+## Implementation notes
+
+These rules are enforced at two levels:
+
+1. **Server-side (RLS + API routes):** Supabase RLS policies and API route guards ensure data never leaks regardless of client behavior. This is the security boundary.
+2. **Client-side (UI filtering):** Components conditionally render based on the user's system role and department membership. This is the UX layer — it shapes what staff see but is not the security enforcement.
+
+**Key principle:** Never rely on client-side filtering alone for access control. Every data query must be scoped by RLS or API-level checks. The client UI reflects these boundaries but does not enforce them.
+
+### What's implemented
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| System role enum (`brik_admin`, `admin`, `manager`, `staff`) | Done | Migration 00033. CHECK constraint on `profiles.system_role`. |
+| `default_system_role` on practice roles | Done | Column on `practice_role_types`. Suggests tier at invite time. |
+| `isAdmin()` helper | Done | `src/lib/auth.ts`. Use instead of inline role checks. |
+| Settings guards (admin-only redirect) | Done | All settings pages use `!isAdmin()`. Managers and staff redirect to Account. |
+| Request board vs list (Option C) | Done | `brik_admin`/`admin`/`manager` → Kanban board. `staff` → "My Requests" list filtered to submitted + assigned. |
+| RLS policy updates | Done | All policies updated to new role names. |
+| Notifications scoping | Not yet | Currently all notifications visible to all. Needs role + department filtering. |
+| Dashboard scoping | Not yet | Same dashboard for all roles. Needs role-aware content. |
+| Task scoping | Not yet | All tasks visible. Needs assignment + department filtering for staff. |
+| Analytics scoping | Not yet | Analytics page not yet built. |
+| `get_user_context()` SQL function | Not yet | Recommended before adding more RLS complexity. |
+
+### Recommended: `get_user_context()` SQL function
+
+Create a single `SECURITY DEFINER` function that returns `{ system_role, practice_id, department_id, is_global_dept, user_id }`. Use it in every RLS policy instead of repeating subqueries. This gives one place to extend when capability flags arrive in V2.
+
+---
+
+## V2 Roadmap — Granular feature permissions
+
+The current three-tier model (`admin` / `manager` / `staff`) covers most dental practice needs. As the product matures, practices may need finer control: a manager who can approve requests but not access billing, an admin who can manage users but not delete templates.
+
+### The gap
+
+The three tiers handle 90% of cases, but the remaining 10% will need per-feature granularity. A Clinical Manager (`manager`) can triage within their department, but what if they also need read-only access to another department's analytics? That's where feature permissions come in.
+
+### Planned model
+
+A `feature_permissions` table that grants granular CRUD + visibility per feature, assignable to roles, departments, or individual users:
+
+```
+feature_permissions
+  id              uuid
+  practice_id     uuid
+  target_type     text ('role' | 'department' | 'user')
+  target_id       uuid (FK to role/dept/user)
+  feature         text ('requests' | 'tasks' | 'analytics' | 'settings.users' | ...)
+  can_view        boolean default false
+  can_create      boolean default false
+  can_edit        boolean default false
+  can_delete      boolean default false
+```
+
+### Resolution order
+
+When checking permissions for a user on a feature:
+
+1. **User override** — most specific, wins if present
+2. **Department permission** — applies to all members of a department
+3. **Role permission** — applies to all members holding a practice role
+4. **System role default** — `admin` gets full access, `manager` gets department access, `staff` gets scoped access
+
+Each level can grant or restrict. More specific levels override less specific ones.
+
+### When to build this
+
+Not until: (a) the first client requests it, or (b) we have a concrete use case where the three tiers are genuinely blocking a workflow. The three-tier model covers 90% of dental practice needs. Build the 10% when the 10% asks for it.
+
+### Preparing now
+
+Even though V2 permissions are deferred, the V1 codebase should be ready:
+
+- **Centralize permission checks** — use helper functions (`isAdmin()`, `canAccessFeature()`) not inline `system_role === 'admin'` checks. When V2 arrives, you update the helper, not every call site. The `isAdmin()` helper is already implemented in `src/lib/auth.ts`.
+- **Build the `get_user_context()` SQL function** — one place to extend with capability flags later.
+- **Keep system_role as the coarse gate** — V2 feature_permissions refine it, never replace it. RLS policies should always check system_role first, then layer on feature permissions.

@@ -35,6 +35,9 @@ export const icon = {
   plus:         'ph:plus',
   invite:       'ph:user-plus',
   rooms:        'ph:warehouse',
+  contacts:     'ph:address-book',
+  filter:       'ph:funnel',
+  check:        'ph:check-fill',
 
   // Actions
   eye:          'ph:eye-fill',
@@ -86,6 +89,9 @@ export const icon = {
   roomStorage:        'ph:package-fill',
   roomBreak:          'ph:coffee-fill',
   roomRestroom:       'ph:toilet-fill',
+
+  // Vendor / external
+  wrench:             'ph:wrench-fill',
 } as const;
 
 export type IconName = typeof icon[keyof typeof icon];

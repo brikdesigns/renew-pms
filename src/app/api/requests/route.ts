@@ -144,10 +144,16 @@ export async function GET(request: Request) {
   const status = searchParams.get('status');
   const category = searchParams.get('category');
   const urgency = searchParams.get('urgency');
+  const mine = searchParams.get('mine');
 
   if (status) query = query.eq('status', status);
   if (category) query = query.eq('category', category);
   if (urgency) query = query.eq('urgency', urgency);
+
+  // Staff filter: only requests submitted by or assigned to this member
+  if (mine) {
+    query = query.or(`submitted_by.eq.${mine},assigned_to.eq.${mine}`);
+  }
 
   const { data, error } = await query;
 

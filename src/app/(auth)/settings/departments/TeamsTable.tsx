@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
@@ -60,7 +60,12 @@ const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function TeamsTable() {
+export interface TeamsTableHandle {
+  count: number;
+  openAdd: () => void;
+}
+
+export function TeamsTable({ embedded, onReady }: { embedded?: boolean; onReady?: (handle: TeamsTableHandle) => void }) {
   const [teams, setTeams] = useState<TeamRow[]>(SEED_TEAMS);
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -70,6 +75,11 @@ export function TeamsTable() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
+
+  useEffect(() => {
+    onReady?.({ count: teams.length, openAdd: handleAdd });
+  }, [teams.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleEdit = (t: TeamRow) => { setEditing(t); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
   const handleDelete = () => {
@@ -104,15 +114,16 @@ export function TeamsTable() {
     : null;
 
   return (
-    <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Teams</h3>
-          <span style={countBadge}>{teams.length}</span>
+    <div style={embedded ? { display: 'flex', flexDirection: 'column', flex: 1 } : wrapStyle}>
+      {!embedded && (
+        <div style={subHeaderStyle}>
+          <div style={subHeaderLeftStyle}>
+            <h3 style={subHeaderTitleStyle}>Teams</h3>
+            <span style={countBadge}>{teams.length}</span>
+          </div>
+          <Button variant="primary" size="sm" onClick={handleAdd}>Add Team</Button>
         </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Team</Button>
-      </div>
-
+      )}
       <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>

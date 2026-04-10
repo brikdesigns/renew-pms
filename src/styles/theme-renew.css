@@ -191,7 +191,7 @@
   --background-brand-primary-pressed:   var(--color-purple-darker);
   --background-brand-secondary-hover:   var(--color-gold-darker);
   --background-brand-secondary-pressed: var(--color-gold-darkest);
-  --background-disabled:                var(--color-grayscale-light);
+  --background-disabled:                var(--color-grayscale-lighter);
   --state-disabled-opacity:             0.4;
 
   /* ── Border ────────────────────────────────────────────── */
@@ -203,6 +203,7 @@
   --border-brand-primary:   var(--color-purple-base);
   --border-brand-secondary: var(--color-gold-base);
   --border-focus:           var(--color-purple-base);
+  --border-disabled:        transparent;
 
   --border-negative: var(--color-system-error);
   --border-positive: var(--color-system-green);

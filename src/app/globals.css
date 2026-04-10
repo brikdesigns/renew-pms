@@ -56,7 +56,6 @@ html,
 body {
   height: 100%;
   margin: 0;
-  overflow: hidden;
 }
 
 body {
@@ -196,7 +195,7 @@ body {
   .bds-tag,
   .bds-badge {
     text-transform: uppercase;
-    font-size: var(--body-xs);
+    font-size: var(--label-tiny);
     font-weight: var(--font-weight-semi-bold);
   }
 
@@ -223,6 +222,11 @@ body {
     opacity: 1;
   }
 
+  /* Sheet: standardize body padding to lg */
+  .bds-sheet__body {
+    padding: var(--padding-lg);
+  }
+
   /* Sheet: top-align close button with heading */
   .bds-sheet__header,
   .bds-sheet__header-top {
@@ -232,6 +236,7 @@ body {
   .bds-sheet__close {
     padding-top: 0;
   }
+
 
   /*
    * Table/list cell link — hover turns brand-primary.
@@ -295,10 +300,27 @@ body {
     overflow-x: hidden;
   }
 
+  /* Drag preview — browser captures this snapshot before RAF removes it */
+  .bds-board-card--drag-preview {
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    opacity: 0.95;
+  }
+
   /* Toast: tighter right padding — pin close button to the edge */
   .bds-toast__close {
     padding-right: 0;
   }
+}
+
+/* ── Unlayered BDS overrides ─────────────────────────────────────────────────
+   BDS component CSS is unlayered (imported by React components at runtime),
+   so layered rules can't beat them. These overrides must also be unlayered.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Sheet: tighten footer vertical padding */
+.bds-sheet__footer {
+  padding: var(--padding-md) var(--padding-lg);
 }
 
 /* ── Settings sub-nav entrance animation ── */

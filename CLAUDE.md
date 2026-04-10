@@ -39,11 +39,13 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ### Role model (two layers — keep distinct)
 
-- **System role** (`profiles.system_role`) — controls permissions
-  - `platform_admin` → Brik staff; full cross-practice access
-  - `practice_admin` → manages their practice, invites staff
-  - `staff` → scoped to their practice
-- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice
+- **System role** (`profiles.system_role`) — permission tier modifier
+  - `brik_admin` → Brik staff; full cross-practice access
+  - `admin` → practice owner/manager; settings, all departments, all work items
+  - `manager` → department lead; triage, approve, team metrics within their department. No settings.
+  - `staff` → individual contributor; scoped to own work and department
+- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice. Each role has a `default_system_role` that suggests the permission tier at invite time.
+- **Permission check helper:** Use `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks
 
 ### Reference tables (user-renameable — never hardcode values in app logic)
 
@@ -51,7 +53,7 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ### Enum fields (app logic depends on these)
 
-- `profiles.system_role` — `platform_admin | practice_admin | staff`
+- `profiles.system_role` — `brik_admin | admin | manager | staff`
 - `practice_members.employee_type` — `new | maturing | proficient`
 - `tasks.status` — `not_started | in_progress | awaiting_approval | completed | blocked | skipped | overdue`
 - `tasks.priority` — `low | medium | high | critical`
@@ -212,31 +214,23 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 
 ## Branching Model
 
+Pre-launch, single developer — keep it simple.
+
 ```text
-main (production — protected, merges from staging only via PR)
-  └── staging (integration — working branch, deploys to staging URL)
-        ├── feat/<name>     — new features
-        ├── fix/<name>      — bug fixes
-        └── chore/<name>    — infra, docs, config
+main (production — protected, deploys to production)
+  └── staging (daily working branch — all work happens here)
 ```
 
 ### Rules
 
-1. **`main` is locked.** Only receives merges from `staging` via PR. Deploys to production.
-2. **`staging` is the working base.** Branch from it, merge back to it. Deploys to staging URL.
-3. **Feature branches for anything > 1 commit.** One concern per branch.
-4. **Hotfixes** (single obvious commit) can go directly to staging.
-5. **Never mix concerns.** If a session unearths a new need (bug, missing feature), note it — don't start it in the current branch. Create a separate branch.
+1. **Work directly on `staging`.** No feature branches until there are multiple contributors or a live production environment to protect.
+2. **`main` is locked.** Only receives merges from `staging` via PR when ready to ship to production.
+3. **Commit often, push deliberately.** Pushes trigger builds.
+4. **Never leave changes floating in the working tree across sessions.** Commit before ending a session.
 
-### Session Discipline
+### When to revisit
 
-- **Start:** Check out or create a feature branch from `staging`.
-- **End:** Commit your work. Never leave changes floating in the working tree across sessions.
-- **Context switch:** Stash or commit current branch, switch to a new one.
-
-### Merge Order (when multiple branches exist)
-
-Infra/config first (other branches depend on it), then enhancements, then new features. Always PR to `staging`, never directly to `main`.
+Add feature branches when: (a) a second developer joins, (b) production is live with real users, or (c) a feature genuinely needs isolated testing. Until then, branches add overhead and risk losing work.
 
 ## Commands
 

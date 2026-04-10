@@ -1,13 +1,9 @@
-import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+'use client';
+
 import { PageHeader } from '@/components/PageHeader';
 import { DepartmentsTable } from './DepartmentsTable';
 
-export default async function DepartmentsSettingsPage() {
-  const authUser = await getAuthUser();
-  if (!authUser) redirect('/login');
-  if (authUser.profile.system_role === 'staff') redirect('/settings/account');
-
+export default function DepartmentsSettingsPage() {
   return (
     <>
       <PageHeader title="Departments" />

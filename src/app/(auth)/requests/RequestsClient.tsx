@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
-import { Tag, Badge, Chip, Button } from '@bds/components';
+import { Tag, Badge, Chip, Button, Tooltip } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
@@ -135,10 +135,20 @@ const filterBarStyle: CSSProperties = {
   gap: gap.md,
 };
 
-const columnStyle: CSSProperties = {
+const columnBaseStyle: CSSProperties = {
   backgroundColor: color.surface.primary,
   flex: 1,
   minWidth: 0,
+  transition: 'outline 0.15s ease, background-color 0.15s ease',
+  outline: '2px solid transparent',
+  outlineOffset: '-2px',
+  borderRadius: border.radius.md,
+};
+
+const columnDropTargetStyle: CSSProperties = {
+  ...columnBaseStyle,
+  outline: `2px dashed ${color.border.secondary}`,
+  backgroundColor: color.surface.secondary,
 };
 
 // ─── Assignee menu constants ────────────────────────────────────────────────
@@ -276,7 +286,7 @@ function AssigneeAvatar({
           <UserAvatar name={assigneeName} size="sm" />
         ) : (
           <div style={unassignedAvatarStyle}>
-            <Icon icon={icon.profile} style={{ fontSize: '14px', color: color.text.muted } as CSSProperties & Record<string, string>} />
+            <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
           </div>
         )}
       </div>
@@ -306,7 +316,7 @@ function AssigneeAvatar({
             onClick={() => handleAssign(null, null)}
             avatar={
               <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
-                <Icon icon={icon.profile} style={{ fontSize: '12px', color: color.text.muted } as CSSProperties & Record<string, string>} />
+                <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
               </div>
             }
             label="Unassigned"
@@ -370,7 +380,7 @@ interface RequestsClientProps {
 }
 
 export default function RequestsClient({ isAdmin }: RequestsClientProps) {
-  const { requests, refetch } = useRequests();
+  const { requests, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -386,6 +396,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
   const [settling, setSettling] = useState(false);
+  const isDragging = useRef(false);
 
   // Auto-open request sheet from ?open=<id> (e.g., notification click)
   // Auto-open submit form from ?submit=true (e.g., plus button in utility bar)
@@ -429,6 +440,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   // ── Drag-and-drop handlers ──────────────────────────────────────────────────
 
   const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, requestId: string) => {
+    isDragging.current = true;
     setDraggingId(requestId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', requestId);
@@ -444,6 +456,8 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const handleDragEnd = useCallback(() => {
     setDraggingId(null);
     setDropTargetKey(null);
+    // Delay clearing so the subsequent click event (if any) is still suppressed
+    setTimeout(() => { isDragging.current = false; }, 0);
   }, []);
 
   const handleColumnDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -474,6 +488,12 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     if (!request || request.status === targetStatusKey) return;
 
     const targetLabel = STATUS_PIPELINE.find(s => s.key === targetStatusKey)?.label ?? targetStatusKey;
+    const previousStatus = request.status;
+
+    // Optimistic: move card to new column immediately
+    updateOptimistic(requestId, { status: targetStatusKey });
+    setSettling(true);
+    setTimeout(() => setSettling(false), 400);
 
     try {
       const res = await fetch(`/api/requests/${requestId}`, {
@@ -486,13 +506,13 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         throw new Error(data.error ?? 'Failed to update status');
       }
       showToastTop({ title: 'Status updated', description: `Moved to ${targetLabel}.`, variant: 'success' });
-      setSettling(true);
       refetch();
-      setTimeout(() => setSettling(false), 400);
     } catch (err) {
+      // Revert optimistic update on failure
+      updateOptimistic(requestId, { status: previousStatus });
       showToastTop({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to update status', variant: 'error' });
     }
-  }, [requests, refetch, showToastTop]);
+  }, [requests, refetch, updateOptimistic, showToastTop]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
@@ -543,12 +563,11 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         </div>
       </div>
 
-      <Board style={{ flex: 1, minHeight: 0 }} className={settling ? 'bds-board--settling' : undefined}>
+      <Board style={{ flex: 1, minHeight: 0 }}>
         {columns.map(col => (
           <BoardColumn
             key={col.key}
-            style={columnStyle as CSSProperties}
-            className={dropTargetKey === col.key ? 'bds-board-column--drop-target' : undefined}
+            style={dropTargetKey === col.key ? columnDropTargetStyle : columnBaseStyle}
             onDragOver={handleColumnDragOver}
             onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragEnter(e, col.key)}
             onDragLeave={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragLeave(e, col.key)}
@@ -568,12 +587,16 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                   key={req.id}
                   title={req.title}
                   subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
-                  onClick={() => setViewing(req)}
+                  onClick={() => { if (!isDragging.current) setViewing(req); }}
                   draggable
                   onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
                   onDragEnd={handleDragEnd}
-                  className={`bds-board-card--draggable${draggingId === req.id ? ' bds-board-card--dragging' : ''}`}
-                  style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm }}
+                  style={{
+                    backgroundColor: color.surface.overlay,
+                    boxShadow: shadow.sm,
+                    cursor: 'grab',
+                    ...(draggingId === req.id ? { opacity: 0.35, pointerEvents: 'none' as const } : {}),
+                  }}
                   tags={
                     <>
                       <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
@@ -581,9 +604,11 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                         {priority.label}
                       </Badge>
                       {req.vendor_name && (
-                        <Tag size="sm" style={{ backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
-                          {req.vendor_name}
-                        </Tag>
+                        <Tooltip content="Has Vendor">
+                          <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
+                            <Icon icon={icon.wrench} width={14} height={14} />
+                          </span>
+                        </Tooltip>
                       )}
                     </>
                   }

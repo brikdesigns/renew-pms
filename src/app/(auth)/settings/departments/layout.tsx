@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser, isAdmin } from '@/lib/auth';
-import { PageHeader } from '@/components/PageHeader';
-import { UsersTable } from './UsersTable';
 
-export default async function UsersSettingsPage() {
+export default async function DepartmentsGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const authUser = await getAuthUser();
   if (!authUser) redirect('/login');
   if (!isAdmin(authUser.profile.system_role)) redirect('/settings/account');
 
-  return (
-    <>
-      <PageHeader title="Users" />
-      <UsersTable />
-    </>
-  );
+  return <>{children}</>;
 }

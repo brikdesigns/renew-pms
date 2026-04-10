@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, FilterButton } from '@bds/components';
+import { Badge, Button, IconButton, FilterButton, SegmentedControl } from '@bds/components';
 import type { FilterButtonOption } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -33,15 +33,11 @@ const subHeaderStyle: CSSProperties = {
   gap: gap.md,
 };
 
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 };
-
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
+const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm, flexShrink: 0 };
 
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `${gap.tiny} ${gap.md}`, borderRadius: border.radius.xs,
+  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
 const filterGroupStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
@@ -53,9 +49,15 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 const nameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
 const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
 
+const INVENTORY_SEGMENTS = [
+  { label: 'Equipment', value: 'equipment' },
+  { label: 'Supplies', value: 'supplies' },
+];
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function InventoryTable() {
+  const [view, setView] = useState('equipment');
   const { equipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editing, setEditing] = useState<EquipmentItem | null>(null);
@@ -115,36 +117,73 @@ export function InventoryTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Equipment</h3>
-          <span style={countBadge}>{filteredItems.length}{filteredItems.length !== equipment.length && ` / ${equipment.length}`}</span>
+          <SegmentedControl items={INVENTORY_SEGMENTS} value={view} onChange={setView} size="sm" />
+          <span style={countBadge}>
+            {view === 'equipment'
+              ? <>{filteredItems.length}{filteredItems.length !== equipment.length && ` / ${equipment.length}`}</>
+              : '0'}
+          </span>
         </div>
-        <div style={filterGroupStyle}>
-          <FilterButton
-            label="Status"
-            size="sm"
-            options={statusOptions}
-            value={filterStatus}
-            onChange={setFilterStatus}
-          />
-          <FilterButton
-            label="Category"
-            size="sm"
-            options={categoryOptions}
-            value={filterCategory}
-            onChange={setFilterCategory}
-          />
-          <FilterButton
-            label="Manufacturer"
-            size="sm"
-            options={companyOptions}
-            value={filterCompany}
-            onChange={setFilterCompany}
-          />
-          <Button variant="primary" size="sm" onClick={handleAdd}>Add Item</Button>
-        </div>
+        {view === 'equipment' && (
+          <div style={filterGroupStyle}>
+            <FilterButton
+              label="Status"
+              size="sm"
+              options={statusOptions}
+              value={filterStatus}
+              onChange={setFilterStatus}
+            />
+            <FilterButton
+              label="Category"
+              size="sm"
+              options={categoryOptions}
+              value={filterCategory}
+              onChange={setFilterCategory}
+            />
+            <FilterButton
+              label="Manufacturer"
+              size="sm"
+              options={companyOptions}
+              value={filterCompany}
+              onChange={setFilterCompany}
+            />
+            <Button variant="primary" size="sm" onClick={handleAdd}>Add Item</Button>
+          </div>
+        )}
       </div>
 
-      <div style={tableWrap}>
+      {view === 'supplies' && (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          gap: gap.lg,
+          padding: space.xl,
+          minHeight: '40vh',
+        }}>
+          <h2 style={{
+            fontFamily: font.family.heading,
+            fontSize: font.size.heading.medium,
+            fontWeight: font.weight.bold,
+            color: color.text.primary,
+            margin: 0,
+          }}>No Supplies Tracked Yet</h2>
+          <p style={{
+            fontFamily: font.family.body,
+            fontSize: font.size.body.md,
+            color: color.text.secondary,
+            textAlign: 'center',
+            maxWidth: '400px',
+            lineHeight: font.lineHeight.normal,
+          }}>
+            Track consumable supplies like PPE, instruments, disposables, and autoclave bags here.
+          </p>
+        </div>
+      )}
+
+      {view === 'equipment' && <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
             <TableRow>
@@ -202,7 +241,7 @@ export function InventoryTable() {
             })}
           </TableBody>
         </Table>
-      </div>
+      </div>}
 
       <EditInventorySheet isOpen={editSheetOpen} onClose={handleEditClose} initialData={editFormData} onSave={handleSave} />
       <ViewInventorySheet isOpen={viewSheetOpen} onClose={handleViewClose} item={viewData} onEdit={handleViewEdit} />

@@ -38,6 +38,8 @@ interface UseRequestsFilters {
   status?: string;
   category?: string;
   urgency?: string;
+  /** Pass practice_member ID to filter to only submitted/assigned requests */
+  mine?: string;
 }
 
 export function useRequests(filters?: UseRequestsFilters) {
@@ -57,6 +59,7 @@ export function useRequests(filters?: UseRequestsFilters) {
     if (filters?.status) params.set('status', filters.status);
     if (filters?.category) params.set('category', filters.category);
     if (filters?.urgency) params.set('urgency', filters.urgency);
+    if (filters?.mine) params.set('mine', filters.mine);
 
     fetch(`/api/requests?${params}`)
       .then(r => r.json())
@@ -74,7 +77,12 @@ export function useRequests(filters?: UseRequestsFilters) {
       });
 
     return () => { cancelled = true; };
-  }, [filters?.status, filters?.category, filters?.urgency, refreshKey]);
+  }, [filters?.status, filters?.category, filters?.urgency, filters?.mine, refreshKey]);
 
-  return { requests, loading, error, refetch };
+  /** Optimistically patch a request in local state (before API confirms). */
+  const updateOptimistic = useCallback((id: string, updates: Partial<RequestRow>) => {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  return { requests, loading, error, refetch, updateOptimistic };
 }
