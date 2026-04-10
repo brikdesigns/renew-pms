@@ -4,11 +4,16 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
  * System-level roles (profiles.role)
- * platform_admin = Renew PMS platform operators
- * practice_admin = Practice owner/manager (highest practice-level role)
+ * brik_admin = Renew PMS platform operators
+ * admin = Practice owner/manager (highest practice-level role)
  * staff = Practice staff member
  */
-export type SystemRole = 'platform_admin' | 'practice_admin' | 'staff';
+export type SystemRole = 'brik_admin' | 'admin' | 'manager' | 'staff';
+
+/** Returns true if the system role has admin-level access (settings, user management) */
+export function isAdmin(role: SystemRole): boolean {
+  return role === 'brik_admin' || role === 'admin';
+}
 
 /**
  * Practice-level roles (practice_members.role)
@@ -141,7 +146,7 @@ export async function requirePlatformAdmin(supabase?: SupabaseClient): Promise<A
   const result = await requireAuth(supabase);
   if (result instanceof NextResponse) return result;
 
-  if (result.profile.system_role !== 'platform_admin') {
+  if (result.profile.system_role !== 'brik_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return result;
@@ -154,7 +159,7 @@ export async function requirePracticeAdmin(supabase?: SupabaseClient): Promise<A
   const result = await requireAuth(supabase);
   if (result instanceof NextResponse) return result;
 
-  if (!['platform_admin', 'practice_admin'].includes(result.profile.system_role)) {
+  if (!['brik_admin', 'admin'].includes(result.profile.system_role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return result;
@@ -164,7 +169,7 @@ export async function requirePracticeAdmin(supabase?: SupabaseClient): Promise<A
  * Check if an AuthUser is a platform admin.
  */
 export function isPlatformAdmin(authUser: AuthUser): boolean {
-  return authUser.profile.system_role === 'platform_admin';
+  return authUser.profile.system_role === 'brik_admin';
 }
 
 /**

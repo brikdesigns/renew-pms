@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser, isAdmin } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { UsersTable } from './UsersTable';
 
 export default async function UsersSettingsPage() {
   const authUser = await getAuthUser();
   if (!authUser) redirect('/login');
-  if (authUser.profile.system_role === 'staff') redirect('/settings/account');
+  if (!isAdmin(authUser.profile.system_role)) redirect('/settings/account');
 
   return (
     <>

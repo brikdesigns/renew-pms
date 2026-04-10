@@ -10,7 +10,7 @@ export default async function AccountSettingsPage() {
   }
 
   const { profile, membership } = authUser;
-  const isAdmin = profile.system_role === 'platform_admin' || profile.system_role === 'practice_admin';
+  const isAdmin = profile.system_role === 'brik_admin' || profile.system_role === 'admin';
 
   return (
     <AccountSettingsClient

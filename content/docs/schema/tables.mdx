@@ -12,7 +12,7 @@ Extends Supabase `auth.users`. One row per user across all practices.
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | uuid (PK) | References `auth.users(id)` |
-| `system_role` | text | `platform_admin`, `practice_admin`, `staff` |
+| `system_role` | text | `brik_admin`, `admin`, `manager`, `staff` |
 | `first_name` | text | |
 | `last_name` | text | |
 | `full_name` | text | Generated column (`first_name + last_name`) |

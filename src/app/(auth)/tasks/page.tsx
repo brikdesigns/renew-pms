@@ -7,7 +7,8 @@ export default async function TasksPage() {
   if (!authUser) redirect('/login');
 
   const role = authUser.profile.system_role;
-  const canAddTask = role === 'platform_admin' || role === 'practice_admin';
+  const canAddTask = role === 'brik_admin' || role === 'admin';
+  const memberId = authUser.membership?.memberId ?? null;
 
-  return <TasksClient canAddTask={canAddTask} />;
+  return <TasksClient canAddTask={canAddTask} currentMemberId={memberId} />;
 }

@@ -6,8 +6,6 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -48,8 +46,8 @@ const COLOR_OPTIONS = [
   { label: 'Red', value: 'red' },
   { label: 'Purple', value: 'purple' },
   { label: 'Gold', value: 'gold' },
-  { label: 'Teal', value: 'teal' },
-  { label: 'Pink', value: 'pink' },
+  { label: 'Taupe', value: 'taupe' },
+  { label: 'Brown', value: 'brown' },
 ];
 
 const EMPTY_FORM: DepartmentFormData = {
@@ -60,7 +58,7 @@ const EMPTY_FORM: DepartmentFormData = {
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, space, border } from '@/lib/tokens';
+import { font, color, space } from '@/lib/tokens';
 import type { Role } from '@/hooks/useRoles';
 import type { Member } from '@/hooks/useMembers';
 
@@ -68,20 +66,6 @@ const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const removeBtn: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '28px',
-  height: '28px',
-  borderRadius: border.radius.sm,
-  backgroundColor: 'transparent',
-  color: color.system.red,
-  border: `1px solid ${color.system.red}`,
-  cursor: 'pointer',
-  fontSize: font.size.body.xs,
-};
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -98,34 +82,19 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
   const [form, setForm] = useState<DepartmentFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
-  const [removedRoleIds, setRemovedRoleIds] = useState<Set<string>>(new Set());
-  const [removedUserIds, setRemovedUserIds] = useState<Set<string>>(new Set());
-
   const isEdit = initialData !== null;
 
   useEffect(() => {
     if (isOpen) {
       setForm(initialData ?? EMPTY_FORM);
       setActiveTab('details');
-      setRemovedRoleIds(new Set());
-      setRemovedUserIds(new Set());
     }
   }, [isOpen, initialData]);
 
   // Filter real data to this department by ID; fall back to empty when adding new
   const deptId = initialData?.id ?? '';
-  const roles = allRoles.filter((r) => r.department_id === deptId && !removedRoleIds.has(r.id));
-  const users = allMembers.filter((m) => m.department_id === deptId && !removedUserIds.has(m.id));
-
-  const handleRemoveRole = (id: string, name: string) => {
-    setRemovedRoleIds((prev) => new Set(prev).add(id));
-    showToast({ title: 'Role removed', description: `${name} removed from this department.`, variant: 'info' });
-  };
-
-  const handleRemoveUser = (id: string, name: string) => {
-    setRemovedUserIds((prev) => new Set(prev).add(id));
-    showToast({ title: 'User removed', description: `${name} removed from this department.`, variant: 'info' });
-  };
+  const roles = allRoles.filter((r) => r.department_id === deptId);
+  const users = allMembers.filter((m) => m.department_id === deptId);
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -192,7 +161,6 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
             <TableRow>
               <TableHead>Role</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead style={{ width: '50px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -204,19 +172,8 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{r.description}</span>
                 </TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    style={removeBtn}
-                    onClick={() => handleRemoveRole(r.id, r.name)}
-                    aria-label={`Remove ${r.name} from department`}
-                  >
-                    <Icon icon={icon.close} />
-                  </button>
-                </TableCell>
               </TableRow>
             ))}
-
           </TableBody>
         </Table>
       )}
@@ -237,7 +194,6 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead style={{ width: '50px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -250,16 +206,6 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
                   </TableCell>
                   <TableCell>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{u.practice_role}</span>
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      style={removeBtn}
-                      onClick={() => handleRemoveUser(u.id, fullName)}
-                      aria-label={`Remove ${fullName} from department`}
-                    >
-                      <Icon icon={icon.close} />
-                    </button>
                   </TableCell>
                 </TableRow>
               );

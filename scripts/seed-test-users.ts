@@ -61,15 +61,16 @@ interface PersonaTemplate {
   alias: string;           // appended via + to base email
   first_name: string;
   last_name: string;
-  system_role: 'platform_admin' | 'practice_admin' | 'staff';
+  system_role: 'brik_admin' | 'admin' | 'manager' | 'staff';
   employee_type: 'new' | 'maturing' | 'proficient';
   shift: string | null;
   practice_role_name: string;
 }
 
 const PERSONA_TEMPLATES: PersonaTemplate[] = [
-  { key: 'brik_admin',       alias: 'brikadmin',  first_name: 'Brik',    last_name: 'Admin',    system_role: 'platform_admin', employee_type: 'proficient', shift: null,       practice_role_name: '(O) Owner' },
-  { key: 'practice_owner',   alias: 'owner',      first_name: 'Sarah',   last_name: 'Mitchell', system_role: 'practice_admin', employee_type: 'proficient', shift: 'full_day', practice_role_name: '(O) Owner' },
+  { key: 'brik_admin',       alias: 'brikadmin',  first_name: 'Brik',    last_name: 'Admin',    system_role: 'brik_admin',     employee_type: 'proficient', shift: null,       practice_role_name: '(O) Owner' },
+  { key: 'practice_owner',   alias: 'owner',      first_name: 'Sarah',   last_name: 'Mitchell', system_role: 'admin',          employee_type: 'proficient', shift: 'full_day', practice_role_name: '(O) Owner' },
+  { key: 'dept_manager',     alias: 'manager',    first_name: 'Jessica', last_name: 'Torres',   system_role: 'manager',        employee_type: 'proficient', shift: 'full_day', practice_role_name: 'Clinical Manager' },
   { key: 'new_hire',         alias: 'newhire',    first_name: 'Emily',   last_name: 'Rivera',   system_role: 'staff',          employee_type: 'new',        shift: 'opening',  practice_role_name: '(A) Dental Assistant' },
   { key: 'maturing_staff',   alias: 'maturing',   first_name: 'Tyler',   last_name: 'Nguyen',   system_role: 'staff',          employee_type: 'maturing',   shift: 'closing',  practice_role_name: '(A) Dental Assistant' },
   { key: 'active_hygienist', alias: 'hygienist',  first_name: 'Amanda',  last_name: 'Chen',     system_role: 'staff',          employee_type: 'proficient', shift: 'opening',  practice_role_name: '(H) Dental Hygienist' },
@@ -84,7 +85,7 @@ interface Persona {
   email: string;
   first_name: string;
   last_name: string;
-  system_role: 'platform_admin' | 'practice_admin' | 'staff';
+  system_role: 'brik_admin' | 'admin' | 'manager' | 'staff';
   employee_type: 'new' | 'maturing' | 'proficient';
   shift: string | null;
   practice_role_name: string;
@@ -233,9 +234,9 @@ async function upsertPracticeMember(
   practiceId: string,
   persona: Persona,
 ): Promise<void> {
-  // Skip practice membership for platform_admin (Brik staff — cross-practice)
-  if (persona.system_role === 'platform_admin') {
-    console.log(`  ⏭ Skipping practice_member for platform_admin`);
+  // Skip practice membership for brik_admin (Brik staff — cross-practice)
+  if (persona.system_role === 'brik_admin') {
+    console.log(`  ⏭ Skipping practice_member for brik_admin`);
     return;
   }
 

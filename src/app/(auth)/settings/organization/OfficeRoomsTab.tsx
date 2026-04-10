@@ -14,7 +14,7 @@ import { icon } from '@/lib/icons';
 import { Badge, Button, IconButton } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { ViewRoomSheet } from '@/components/ViewRoomSheet';
-import { SEED_ROOMS, type SeedRoom } from '@/lib/seed-rooms';
+import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -38,7 +38,15 @@ const ROOM_TYPE_META: Record<string, { label: string; icon: string }> = {
 
 // ─── Local room type alias ──────────────────────────────────────────────────
 
-type RoomRow = SeedRoom;
+interface RoomRow {
+  id: string;
+  name: string;
+  room_type: string;
+  description: string;
+  is_custom: boolean;
+  is_active: boolean;
+  sort_order: number;
+}
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -123,7 +131,8 @@ function StatusIndicator({ active }: { active: boolean }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function OfficeRoomsTab() {
-  const [rooms, setRooms] = useState<RoomRow[]>(SEED_ROOMS);
+  const { rooms: apiRooms, setRooms, loading: roomsLoading } = useRooms();
+  const rooms: RoomRow[] = apiRooms.map((r) => ({ ...r, description: '', is_custom: false }));
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<RoomRow | null>(null);
@@ -155,35 +164,44 @@ export function OfficeRoomsTab() {
     setSheetOpen(false);
     setEditingRoom(null);
   };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/rooms/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setRooms((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
 
-  const handleSave = (data: RoomFormData) => {
+  const handleSave = async (data: RoomFormData) => {
     if (editingRoom) {
-      // Edit existing
-      setRooms((prev) =>
-        prev.map((r) =>
-          r.id === editingRoom.id
-            ? { ...r, name: data.name, room_type: data.room_type, is_active: data.is_active, description: data.description }
-            : r
-        )
-      );
+      const res = await fetch(`/api/rooms/${editingRoom.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, room_type: data.room_type, is_active: data.is_active }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to update' }));
+        throw new Error(err.error);
+      }
+      const updated: Room = await res.json();
+      setRooms((prev) => prev.map((r) => r.id === editingRoom.id ? updated : r));
     } else {
-      // Add new
-      const newRoom: RoomRow = {
-        id: crypto.randomUUID(),
-        name: data.name,
-        room_type: data.room_type,
-        description: data.description,
-        is_custom: true,
-        is_active: data.is_active,
-        sort_order: rooms.length + 1,
-      };
-      setRooms((prev) => [...prev, newRoom]);
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, room_type: data.room_type, is_active: data.is_active }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to add room' }));
+        throw new Error(err.error);
+      }
+      const created: Room = await res.json();
+      setRooms((prev) => [...prev, created]);
     }
   };
 

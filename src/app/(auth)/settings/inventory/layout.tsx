@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser, isAdmin } from '@/lib/auth';
 
 export default async function InventoryGuard({
   children,
@@ -8,7 +8,7 @@ export default async function InventoryGuard({
 }) {
   const authUser = await getAuthUser();
   if (!authUser) redirect('/login');
-  if (authUser.profile.system_role === 'staff') redirect('/settings/account');
+  if (!isAdmin(authUser.profile.system_role)) redirect('/settings/account');
 
   return <>{children}</>;
 }

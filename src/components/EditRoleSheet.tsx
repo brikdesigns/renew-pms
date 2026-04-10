@@ -12,7 +12,10 @@ import {
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
 import { font, color, space } from '@/lib/tokens';
+import { departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
+import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
+import type { Member } from '@/hooks/useMembers';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,14 +23,16 @@ export interface RoleFormData {
   name: string;
   department_id: string | null;
   description: string;
+  default_system_role: string;
   is_active: boolean;
 }
 
 interface EditRoleSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: RoleFormData | null;
+  initialData: (RoleFormData & { id?: string }) | null;
   onSave: (data: RoleFormData) => void | Promise<void>;
+  members?: Member[];
 }
 
 // ─── Options ─────────────────────────────────────────────────────────────────
@@ -37,10 +42,17 @@ const STATUS_OPTIONS = [
   { label: 'Inactive', value: 'false' },
 ];
 
+const DEFAULT_SYSTEM_ROLE_OPTIONS = [
+  { label: 'Staff', value: 'staff' },
+  { label: 'Manager', value: 'manager' },
+  { label: 'Practice Admin', value: 'admin' },
+];
+
 const EMPTY_FORM: RoleFormData = {
   name: '',
   department_id: null,
   description: '',
+  default_system_role: 'staff',
   is_active: true,
 };
 
@@ -56,7 +68,7 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRoleSheetProps) {
+export function EditRoleSheet({ isOpen, onClose, initialData, onSave, members: allMembers = [] }: EditRoleSheetProps) {
   const { showToast } = useToast();
   const [form, setForm] = useState<RoleFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -125,6 +137,14 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
             fullWidth
           />
           <Select
+            label="Default Permission Level"
+            size="sm"
+            options={DEFAULT_SYSTEM_ROLE_OPTIONS}
+            value={form.default_system_role}
+            onChange={(e) => setForm((prev) => ({ ...prev, default_system_role: e.target.value }))}
+            fullWidth
+          />
+          <Select
             label="Status"
             size="sm"
             options={STATUS_OPTIONS}
@@ -137,9 +157,30 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
     </form>
   );
 
-  const placeholderContent = (
+  const roleId = initialData?.id ?? '';
+  const users = allMembers.filter((m) => m.practice_role_id === roleId);
+
+  const usersContent = (
     <div style={sheetBodyStyle}>
-      <p style={emptyState}>Members in this role will appear here once users are wired.</p>
+      <h3 style={sheetSectionTitle}>Users</h3>
+      {users.length === 0 ? (
+        <p style={emptyState}>No users assigned to this role.</p>
+      ) : (
+        <div style={profileCardGrid}>
+          {users.map((u) => (
+            <ProfileCard
+              key={u.id}
+              variant="user"
+              name={`${u.first_name} ${u.last_name}`.trim()}
+              subtitle={u.email}
+              role={form.name}
+              department={u.department}
+              departmentBg={departmentColor(u.department_color).light}
+              departmentText={departmentColor(u.department_color).text}
+            />
+          ))}
+        </div>
+      )}
       <form id="edit-role-form" onSubmit={handleSave} style={{ display: 'none' }} />
     </div>
   );
@@ -149,7 +190,7 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave }: EditRole
   const sheetTabs: SheetTab[] | undefined = isEdit
     ? [
         { id: 'details', label: 'Details', content: detailsContent },
-        { id: 'users', label: 'Users', content: placeholderContent },
+        { id: 'users', label: 'Users', content: usersContent },
       ]
     : undefined;
 

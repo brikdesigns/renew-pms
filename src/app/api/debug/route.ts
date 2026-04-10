@@ -16,7 +16,7 @@ export async function GET() {
     .eq('id', user.id)
     .single();
 
-  if (!profile || profile.system_role !== 'platform_admin') {
+  if (!profile || profile.system_role !== 'brik_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

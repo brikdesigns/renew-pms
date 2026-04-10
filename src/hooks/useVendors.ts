@@ -8,7 +8,11 @@ export interface Vendor {
   type: string;
   phone: string | null;
   email: string | null;
+  website_url: string | null;
+  address: string | null;
+  notes: string | null;
   is_active: boolean;
+  contact_count: number;
 }
 
 export function useVendors() {
@@ -31,5 +35,5 @@ export function useVendors() {
     return () => { cancelled = true; };
   }, []);
 
-  return { vendors, loading };
+  return { vendors, setVendors, loading };
 }

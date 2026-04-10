@@ -1,8 +1,51 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requirePracticeAdmin } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+
+/**
+ * GET /api/templates/[id]
+ * Returns a single task template by ID with its checklist items.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requireAuth(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('task_templates')
+    .select(`
+      id, name, description, type, frequency, priority, status,
+      requires_approval, estimated_duration, is_default,
+      task_category_id, compliance_type_id, room_id,
+      assigned_role_id, department_id,
+      assignment_mode, display_mode,
+      created_at, updated_at,
+      checklist_items (
+        id, label, sort_order,
+        room_id, equipment_id, supply_category_id
+      )
+    `)
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  return NextResponse.json(data);
+}
 
 /**
  * PUT /api/templates/[id]
@@ -35,9 +78,12 @@ export async function PUT(
     estimated_duration?: number | null;
     requires_approval?: boolean;
     status?: string;
+    assignment_mode?: string;
+    display_mode?: string;
   };
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('task_templates')
     .update({
       ...(body.name !== undefined && { name: body.name.trim() }),
@@ -53,11 +99,13 @@ export async function PUT(
       ...(body.estimated_duration !== undefined && { estimated_duration: body.estimated_duration }),
       ...(body.requires_approval !== undefined && { requires_approval: body.requires_approval }),
       ...(body.status !== undefined && { status: body.status }),
+      ...(body.assignment_mode !== undefined && { assignment_mode: body.assignment_mode }),
+      ...(body.display_mode !== undefined && { display_mode: body.display_mode }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, assignment_mode, display_mode, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -83,12 +131,13 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('task_templates')
     .delete()
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .eq('is_default', false); // RLS also enforces this; belt-and-suspenders
+    .eq('is_default', false); // belt-and-suspenders; admin client bypasses RLS but we keep this guard
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

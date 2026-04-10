@@ -10,6 +10,7 @@ import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
 import { label as labelStyle } from '@/lib/styles';
+import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
 
 // ─── Mock data (aggregated from tasks + training pages) ──────────────────────
@@ -221,11 +222,18 @@ function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey:
 
 interface DashboardClientProps {
   userName: string;
+  systemRole: SystemRole;
+  employeeType: string;
+  userDepartment: string | null;
 }
 
-export default function DashboardClient({ userName }: DashboardClientProps) {
+export default function DashboardClient({ userName, systemRole, employeeType, userDepartment }: DashboardClientProps) {
   const { departments } = useDepartments();
   const { members } = useMembers();
+
+  const isAdminUser = systemRole === 'brik_admin' || systemRole === 'admin';
+  const isManager = systemRole === 'manager';
+  const isStaff = systemRole === 'staff';
 
   // Map dept name → color key for all rendering that needs dept colors
   const deptColorMap = useMemo(
@@ -233,11 +241,63 @@ export default function DashboardClient({ userName }: DashboardClientProps) {
     [departments]
   );
 
-  // Onboarding members: new hires and maturing staff (not yet fully active)
-  const onboardingMembers = useMemo(
-    () => members.filter((m) => m.employee_type !== 'proficient' && m.is_active),
-    [members]
-  );
+  // Scope overdue tasks by role
+  const scopedOverdueTasks = useMemo(() => {
+    if (isAdminUser) return OVERDUE_TASKS;
+    if (isManager && userDepartment) return OVERDUE_TASKS.filter((t) => t.dept === userDepartment);
+    // Staff: show only tasks assigned to the current user (mock: show first 2 as personal tasks)
+    return OVERDUE_TASKS.slice(0, 2);
+  }, [isAdminUser, isManager, userDepartment]);
+
+  // Scope department completion by role
+  const scopedDeptCompletion = useMemo(() => {
+    if (isAdminUser) return MOCK_DEPT_COMPLETION;
+    if (isManager && userDepartment) {
+      const entry = MOCK_DEPT_COMPLETION[userDepartment];
+      return entry ? { [userDepartment]: entry } : {};
+    }
+    return {};
+  }, [isAdminUser, isManager, userDepartment]);
+
+  // Scope compliance items by role
+  const scopedComplianceItems = useMemo(() => {
+    if (isAdminUser) return COMPLIANCE_ITEMS;
+    if (isManager && userDepartment) {
+      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
+    }
+    // Staff: only items assigned to all staff or their department
+    if (userDepartment) {
+      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
+    }
+    return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff');
+  }, [isAdminUser, isManager, userDepartment]);
+
+  // Onboarding members: scope by role
+  // Staff: hide entirely if proficient (handled in render). If not proficient, show only self.
+  // Manager: filter to their department. Admin: show all.
+  const onboardingMembers = useMemo(() => {
+    const onboarding = members.filter((m) => m.employee_type !== 'proficient' && m.is_active);
+    if (isAdminUser) return onboarding;
+    if (isManager && userDepartment) return onboarding.filter((m) => m.department === userDepartment);
+    // Staff: show only themselves if they're onboarding
+    return onboarding.filter((m) => m.first_name === userName);
+  }, [members, isAdminUser, isManager, userDepartment, userName]);
+
+  // Whether to show onboarding card at all
+  const showOnboarding = isAdminUser || isManager || employeeType !== 'proficient';
+
+  // Progress stats — scope for staff (personal) vs manager (department)
+  const progressStats = useMemo(() => {
+    if (isAdminUser) return { completed: TODAY_COMPLETED, total: TODAY_TOTAL };
+    if (isManager && userDepartment) {
+      const entry = MOCK_DEPT_COMPLETION[userDepartment];
+      return entry ?? { completed: 0, total: 0 };
+    }
+    // Staff: personal task counts (mock subset)
+    return { completed: 3, total: 8 };
+  }, [isAdminUser, isManager, userDepartment]);
+
+  const progressPct = progressStats.total > 0 ? Math.round((progressStats.completed / progressStats.total) * 100) : 0;
 
   const getDeptColors = (deptName: string) => departmentColor(deptColorMap.get(deptName) ?? 'blue');
 
@@ -248,7 +308,13 @@ export default function DashboardClient({ userName }: DashboardClientProps) {
     <div style={pageStyle}>
       <div>
         <h1 style={greetingStyle}>{greeting}, {userName}</h1>
-        <p style={subtitleStyle}>Here&apos;s what needs your attention today.</p>
+        <p style={subtitleStyle}>
+          {isStaff
+            ? 'Here\u2019s your personal summary for today.'
+            : isManager
+              ? `Here\u2019s what\u2019s happening in ${userDepartment ?? 'your department'} today.`
+              : 'Here\u2019s what needs your attention today.'}
+        </p>
       </div>
 
       <div style={gridStyle}>
@@ -257,9 +323,11 @@ export default function DashboardClient({ userName }: DashboardClientProps) {
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>Overdue Tasks</h2>
+              <h2 style={cardTitleStyle}>
+                {isStaff ? 'Your Overdue Tasks' : isManager ? 'Department Overdue Tasks' : 'Overdue Tasks'}
+              </h2>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
-                {OVERDUE_TASKS.length}
+                {scopedOverdueTasks.length}
               </span>
             </div>
             <Link href="/tasks" style={cardLinkStyle}>
@@ -267,7 +335,7 @@ export default function DashboardClient({ userName }: DashboardClientProps) {
             </Link>
           </div>
           <ul style={listStyle}>
-            {OVERDUE_TASKS.map((task) => {
+            {scopedOverdueTasks.map((task) => {
               const pri = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.info;
               const deptColors = getDeptColors(task.dept);
               return (
@@ -295,83 +363,95 @@ export default function DashboardClient({ userName }: DashboardClientProps) {
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>Today&apos;s Progress</h2>
+              <h2 style={cardTitleStyle}>
+                {isStaff ? 'Your Progress' : isManager ? 'Department Progress' : 'Today\u2019s Progress'}
+              </h2>
             </div>
           </div>
           {/* Top row: ring + stats spread across right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: space.xl }}>
-            <ProgressRing pct={TODAY_PCT} />
+            <ProgressRing pct={progressPct} />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.green }}>{TODAY_COMPLETED}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.green }}>{progressStats.completed}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Completed</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.text.primary }}>{TODAY_TOTAL - TODAY_COMPLETED}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.text.primary }}>{progressStats.total - progressStats.completed}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Remaining</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: color.border.muted, flexShrink: 0 }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.red }}>{OVERDUE_TASKS.length}</div>
+                <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.red }}>{scopedOverdueTasks.length}</div>
                 <div style={{ ...labelStyle.subtitle, color: color.text.muted }}>Overdue</div>
               </div>
             </div>
           </div>
-          {/* Department bar chart — driven by departments from Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.lg, flex: 1, justifyContent: 'space-between' }}>
-            <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>By Department</span>
-            {departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => {
-              const counts = MOCK_DEPT_COMPLETION[d.name] ?? { completed: 0, total: 0 };
-              return (
-                <DeptBar key={d.id} dept={d.name} colorKey={d.color} completed={counts.completed} total={counts.total} />
-              );
-            })}
-          </div>
+          {/* Department bar chart — hidden for staff (personal view), scoped for manager */}
+          {!isStaff && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.lg, flex: 1, justifyContent: 'space-between' }}>
+              <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>
+                {isManager ? 'Department Breakdown' : 'By Department'}
+              </span>
+              {departments.filter((d) => d.is_active && d.name !== 'All Departments' && (isAdminUser || d.name === userDepartment)).map((d) => {
+                const counts = scopedDeptCompletion[d.name] ?? { completed: 0, total: 0 };
+                return (
+                  <DeptBar key={d.id} dept={d.name} colorKey={d.color} completed={counts.completed} total={counts.total} />
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── Card 3: Onboarding Status ── */}
-        <div style={cardStyle}>
-          <div style={cardHeaderStyle}>
-            <h2 style={cardTitleStyle}>Onboarding Status</h2>
-            <Link href="/training" style={cardLinkStyle}>
-              View All
-            </Link>
-          </div>
-          <ul style={listStyle}>
-            {onboardingMembers.length === 0 && (
-              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                No members currently onboarding.
-              </li>
-            )}
-            {onboardingMembers.map((m) => {
-              const typeTag = TYPE_TAG[m.employee_type] ?? TYPE_TAG.new;
-              const fullName = `${m.first_name} ${m.last_name}`;
-              return (
-                <li key={m.id} style={listItemStyle}>
-                  <div style={listItemLeftStyle}>
-                    <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={listItemTitleStyle}>{fullName}</div>
-                      <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
-                    <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
-                  </div>
+        {/* ── Card 3: Onboarding Status (hidden for proficient staff) ── */}
+        {showOnboarding && (
+          <div style={cardStyle}>
+            <div style={cardHeaderStyle}>
+              <h2 style={cardTitleStyle}>
+                {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
+              </h2>
+              <Link href="/training" style={cardLinkStyle}>
+                View All
+              </Link>
+            </div>
+            <ul style={listStyle}>
+              {onboardingMembers.length === 0 && (
+                <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                  {isManager ? 'No department members currently onboarding.' : 'No members currently onboarding.'}
                 </li>
-              );
-            })}
-          </ul>
-        </div>
+              )}
+              {onboardingMembers.map((m) => {
+                const typeTag = TYPE_TAG[m.employee_type] ?? TYPE_TAG.new;
+                const fullName = `${m.first_name} ${m.last_name}`;
+                return (
+                  <li key={m.id} style={listItemStyle}>
+                    <div style={listItemLeftStyle}>
+                      <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={listItemTitleStyle}>{fullName}</div>
+                        <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
+                      <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         {/* ── Card 4: Compliance Due ── */}
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
-            <h2 style={cardTitleStyle}>Compliance & Training Due</h2>
+            <h2 style={cardTitleStyle}>
+              {isStaff ? 'Your Compliance & Training' : isManager ? 'Department Compliance' : 'Compliance & Training Due'}
+            </h2>
           </div>
           <ul style={listStyle}>
-            {COMPLIANCE_ITEMS.map((item) => {
+            {scopedComplianceItems.map((item) => {
               const statusMap = {
                 completed: { status: 'positive' as const, label: 'Completed' },
                 due_soon: { status: 'warning' as const, label: 'Due Soon' },

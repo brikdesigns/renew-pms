@@ -43,8 +43,8 @@ interface EditProfileSheetProps {
 
 const SYSTEM_ROLE_OPTIONS = [
   { label: 'Staff', value: 'staff' },
-  { label: 'Practice Admin', value: 'practice_admin' },
-  { label: 'Platform Admin', value: 'platform_admin' },
+  { label: 'Practice Admin', value: 'admin' },
+  { label: 'Platform Admin', value: 'brik_admin' },
 ];
 
 

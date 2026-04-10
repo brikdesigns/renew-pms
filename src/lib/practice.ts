@@ -4,8 +4,8 @@ import type { AuthUser } from '@/lib/auth';
 /**
  * Resolve the practice ID for the current user.
  *
- * - Staff / practice_admin: looks up via practice_members
- * - platform_admin: if no membership, falls back to the first practice
+ * - Staff / admin: looks up via practice_members
+ * - brik_admin: if no membership, falls back to the first practice
  *   (platform admins have cross-practice access)
  */
 export async function getPracticeId(
@@ -23,7 +23,7 @@ export async function getPracticeId(
   if (member?.practice_id) return member.practice_id;
 
   // Platform admin fallback — pick the first practice
-  if (authUser.profile.system_role === 'platform_admin') {
+  if (authUser.profile.system_role === 'brik_admin') {
     const { data: practice } = await supabase
       .from('practices')
       .select('id')

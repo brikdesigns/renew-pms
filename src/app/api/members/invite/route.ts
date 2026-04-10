@@ -61,7 +61,7 @@ interface InviteBody {
  * POST /api/members/invite
  *
  * Creates an auth user (or finds existing by email), sets up their profile,
- * and adds them as a practice member. Requires practice_admin or platform_admin.
+ * and adds them as a practice member. Requires admin or brik_admin.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();

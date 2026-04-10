@@ -5,6 +5,7 @@ import { TopUtilityBar } from '@/components/TopUtilityBar';
 import { AuthLayoutInner } from '@/components/AuthLayoutInner';
 import { ToastProvider } from '@/components/ToastProvider';
 import { DevPersonaSwitcher } from '@/components/DevPersonaSwitcher';
+import { AppSheetProvider } from '@/components/AppSheetProvider';
 import type { CSSProperties } from 'react';
 import { color, font } from '@/lib/tokens';
 
@@ -46,17 +47,19 @@ export default async function AuthLayout({
 
   return (
     <ToastProvider>
-      <div style={shellStyle}>
-        <AppSidebar userRole={authUser.profile.system_role} />
-        <div style={mainStyle}>
-          <AuthLayoutInner
-            topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} practiceName={practiceName} />}
-          >
-            {children}
-          </AuthLayoutInner>
+      <AppSheetProvider>
+        <div style={shellStyle}>
+          <AppSidebar userRole={authUser.profile.system_role} />
+          <div style={mainStyle}>
+            <AuthLayoutInner
+              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} practiceName={practiceName} />}
+            >
+              {children}
+            </AuthLayoutInner>
+          </div>
         </div>
-      </div>
-      <DevPersonaSwitcher />
+        <DevPersonaSwitcher />
+      </AppSheetProvider>
     </ToastProvider>
   );
 }

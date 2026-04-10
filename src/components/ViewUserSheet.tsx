@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
@@ -28,10 +28,16 @@ export interface UserViewData {
 }
 
 interface ViewUserSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  user: UserViewData | null;
+  /** Full user data (page-level mode — skips fetch) */
+  user?: UserViewData | null;
+  /** User ID (global mode — fetches data) */
+  id?: string;
   onEdit?: () => void;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // (No mock data — roles and department are derived directly from the user prop)
@@ -39,8 +45,8 @@ interface ViewUserSheetProps {
 // ─── Label lookups ──────────────────────────────────────────────────────────
 
 const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  platform_admin: 'Platform Admin',
-  practice_admin: 'Practice Admin',
+  brik_admin: 'Platform Admin',
+  admin: 'Practice Admin',
   staff: 'Staff',
 };
 
@@ -80,8 +86,34 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetProps) {
+export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEdit, onNavigate }: ViewUserSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [fetched, setFetched] = useState<UserViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? userProp?.id;
+  useEffect(() => {
+    if (userProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/members/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewUserSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, userProp]);
+
+  const user = userProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!user) return null;
 
@@ -157,6 +189,9 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
           </div>
         </div>
       </div>
+      {user.joined_at && (
+        <ReadOnlyField label="Joined" value={new Date(user.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
+      )}
     </div>
   );
 
@@ -210,6 +245,7 @@ export function ViewUserSheet({ isOpen, onClose, user, onEdit }: ViewUserSheetPr
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={fullName}

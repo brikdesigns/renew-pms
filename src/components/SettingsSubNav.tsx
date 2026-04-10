@@ -87,18 +87,19 @@ export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
   { href: '/settings/teams',        icon: icon.teams,        label: 'Teams',        adminOnly: true },
   { href: '/settings/roles',        icon: icon.permissions,  label: 'Roles',        adminOnly: true },
   { href: '/settings/users',        icon: icon.invite,       label: 'Users',        adminOnly: true },
+  { href: '/settings/contacts',     icon: icon.contacts,     label: 'Contacts',     adminOnly: true },
   { href: '/settings/inventory',    icon: icon.rooms,        label: 'Inventory',    adminOnly: true },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface SettingsSubNavProps {
-  userRole?: 'platform_admin' | 'practice_admin' | 'staff';
+  userRole?: 'brik_admin' | 'admin' | 'manager' | 'staff';
 }
 
 export function SettingsSubNav({ userRole = 'staff' }: SettingsSubNavProps) {
   const pathname = usePathname();
-  const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
+  const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const visibleItems = SETTINGS_NAV_ITEMS.filter(

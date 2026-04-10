@@ -39,11 +39,13 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ### Role model (two layers — keep distinct)
 
-- **System role** (`profiles.system_role`) — controls permissions
-  - `platform_admin` → Brik staff; full cross-practice access
-  - `practice_admin` → manages their practice, invites staff
-  - `staff` → scoped to their practice
-- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice
+- **System role** (`profiles.system_role`) — permission tier modifier
+  - `brik_admin` → Brik staff; full cross-practice access
+  - `admin` → practice owner/manager; settings, all departments, all work items
+  - `manager` → department lead; triage, approve, team metrics within their department. No settings.
+  - `staff` → individual contributor; scoped to own work and department
+- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice. Each role has a `default_system_role` that suggests the permission tier at invite time.
+- **Permission check helper:** Use `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks
 
 ### Reference tables (user-renameable — never hardcode values in app logic)
 
@@ -51,7 +53,7 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ### Enum fields (app logic depends on these)
 
-- `profiles.system_role` — `platform_admin | practice_admin | staff`
+- `profiles.system_role` — `brik_admin | admin | manager | staff`
 - `practice_members.employee_type` — `new | maturing | proficient`
 - `tasks.status` — `not_started | in_progress | awaiting_approval | completed | blocked | skipped | overdue`
 - `tasks.priority` — `low | medium | high | critical`
@@ -210,6 +212,57 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
 - No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
+## Branching Model
+
+Pre-launch, single developer — keep it simple.
+
+```text
+main (production — protected, deploys to production)
+  └── staging (daily working branch — all work happens here)
+```
+
+### Rules
+
+1. **Work directly on `staging`.** No feature branches until there are multiple contributors or a live production environment to protect.
+2. **`main` is locked.** Only receives merges from `staging` via PR when ready to ship to production.
+3. **Commit often, push deliberately.** Pushes trigger builds.
+4. **Never leave changes floating in the working tree across sessions.** Commit before ending a session.
+
+### When to revisit
+
+Add feature branches when: (a) a second developer joins, (b) production is live with real users, or (c) a feature genuinely needs isolated testing. Until then, branches add overhead and risk losing work.
+
+## Session Discipline
+
+Every Claude Code session follows a predictable lifecycle. These rules prevent the two most common failure modes: forgotten commits and scope drift.
+
+### Session start (enforced by `scripts/session-guard.sh` PreToolUse hook)
+
+1. **The hook runs automatically** on your first Edit/Write of the session. If there are uncommitted changes from a prior session, it prints a warning with `git status --short` output.
+2. **Resolve before proceeding.** Commit, stash, or discard prior changes. Do not start new work on top of orphaned changes — that's how mixed commits happen.
+3. **Declare scope.** State what this session will accomplish in one sentence before writing code. If the scope changes mid-session, commit current work first.
+
+### During the session
+
+1. **One concern at a time.** Don't mix feature work, debugging, and docs in the same uncommitted state. If you need to context-switch (e.g., fix a bug discovered while building a feature), commit the feature WIP first.
+2. **Commit at each stable checkpoint.** After completing a logical unit (new component, migration, route wiring), commit immediately. Don't accumulate changes for a single big commit.
+3. **No scope drift without a commit.** If the task expands (e.g., "this also needs a new API route"), commit everything completed so far before starting the expansion.
+
+### Session end
+
+1. **Nothing uncommitted.** Before ending a session, all changes must be committed. Zero tolerance — the working tree must be clean.
+2. **Verify with `git status`.** Explicitly check. Don't assume.
+3. **Don't push unless asked.** Commits are free; pushes trigger builds and cost deploy credits.
+
+### Guardrails in place
+
+| Guard | Type | What it does |
+| ----- | ---- | ------------ |
+| `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty or BDS submodule is out of sync |
+| `.git/hooks/pre-push` | Git pre-push hook | Blocks push if `typecheck` or `build` fails |
+| `.git/hooks/pre-commit` | Git pre-commit hook | Runs `git-secrets` to prevent credential leaks |
+| `scripts/token-audit.sh` | Manual (run before PRs) | Catches 12 categories of token/component violations |
+
 ## Commands
 
 ```bash
@@ -230,6 +283,8 @@ npm run db:seed-test-users  # Seed test user accounts
 ./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
 ./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
 ./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
+./scripts/session-guard.sh   # PreToolUse hook — dirty tree warning (runs automatically)
+./scripts/install-hooks.sh   # Install git hooks after clone (pre-push, etc.)
 ```
 
 **After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.

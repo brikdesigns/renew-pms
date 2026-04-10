@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
@@ -10,6 +10,7 @@ import { departmentColor, color, font, gap, space, border } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import type { Role } from '@/hooks/useRoles';
 import type { Member } from '@/hooks/useMembers';
+import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,19 +19,24 @@ export interface DepartmentViewData {
   name: string;
   color: string;
   is_active: boolean;
-  is_default: boolean;
   member_count: number;
 }
 
 interface ViewDepartmentSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  department: DepartmentViewData | null;
+  /** Full department data (page-level mode — skips fetch) */
+  department?: DepartmentViewData | null;
+  /** Department ID (global mode — fetches data) */
+  id?: string;
   onEdit?: () => void;
   /** All practice roles — filtered to this dept inside the component */
-  roles: Role[];
+  roles?: Role[];
   /** All practice members — filtered to this dept inside the component */
-  members: Member[];
+  members?: Member[];
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Color label lookup ──────────────────────────────────────────────────────
@@ -41,8 +47,8 @@ const COLOR_LABELS: Record<string, string> = {
   red: 'Red',
   purple: 'Purple',
   gold: 'Gold',
-  teal: 'Teal',
-  pink: 'Pink',
+  taupe: 'Taupe',
+  brown: 'Brown',
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -72,20 +78,39 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit, roles: allRoles, members: allMembers }: ViewDepartmentSheetProps) {
+export function ViewDepartmentSheet({ isOpen = true, onClose, department: departmentProp, id, onEdit, roles: allRoles = [], members: allMembers = [], onNavigate }: ViewDepartmentSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [fetched, setFetched] = useState<DepartmentViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? departmentProp?.id;
+  useEffect(() => {
+    if (departmentProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/departments/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewDepartmentSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, departmentProp]);
+
+  const department = departmentProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!department) return null;
 
-  const secondaryRoles: Record<string, string[]> = {
-    'Office Manager':        ['IT (Information Technology)', 'Marketing', 'Finance', 'Facilities'],
-    'Clinical Manager':      ['(M) Management'],
-    'Insurance Coordinator': ['Finance'],
-    'Third Party':           ['Finance', 'Marketing', 'Facilities'],
-  };
-
   const roles = allRoles.filter(
-    (r) => r.department_id === department.id || (secondaryRoles[r.name]?.includes(department.name) ?? false),
+    (r) => r.department_id === department.id || (SECONDARY_DEPTS[r.name]?.includes(department.name) ?? false),
   );
   const roleNames = new Set(roles.map((r) => r.name));
   const users = allMembers.filter(
@@ -122,7 +147,6 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit, roles
           </Badge>
         </div>
       </div>
-      <ReadOnlyField label="Source" value={department.is_default ? 'Default' : 'Custom'} />
       <ReadOnlyField label="Members" value={String(department.member_count)} />
     </div>
   );
@@ -181,6 +205,7 @@ export function ViewDepartmentSheet({ isOpen, onClose, department, onEdit, roles
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={department.name}

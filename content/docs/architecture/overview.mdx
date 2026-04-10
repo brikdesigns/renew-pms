@@ -30,14 +30,14 @@ Every practice-scoped table follows this pattern:
 create policy "table_select" on public.some_table
   for select using (
     practice_id in (select public.user_practice_ids(auth.uid()))
-    or public.get_my_system_role() = 'platform_admin'
+    or public.get_my_system_role() = 'brik_admin'
   );
 
 -- Write: practice admins + platform admins
 create policy "table_admin_manage" on public.some_table
   for all using (
     practice_id in (select public.user_practice_ids(auth.uid()))
-    and public.get_my_system_role() in ('platform_admin', 'practice_admin')
+    and public.get_my_system_role() in ('brik_admin', 'admin')
   );
 ```
 

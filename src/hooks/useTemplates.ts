@@ -26,6 +26,8 @@ export interface TaskTemplate {
   estimated_duration: number | null;
   requires_approval: boolean;
   status: string;
+  assignment_mode: string;
+  display_mode: string;
   is_default: boolean;
   checklist_items: ChecklistItem[];
   created_at: string;

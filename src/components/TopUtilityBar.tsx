@@ -6,10 +6,11 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, gap, space } from '@/lib/tokens';
-import { IconButton, Menu } from '@bds/components';
+import { IconButton, Menu, Tooltip } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { FeedbackButton } from '@/components/FeedbackButton';
+import { NotificationBell } from '@/components/NotificationBell';
 import { createClient } from '@/lib/supabase/client';
 
 // ─── Route label mapping ─────────────────────────────────────────────────────
@@ -97,11 +98,12 @@ interface TopUtilityBarProps {
   userName?: string;
   userFullName?: string;
   userDepartment?: string | null;
+  userAvatarUrl?: string | null;
   userEmail?: string;
   practiceName?: string;
 }
 
-export function TopUtilityBar({ userName, userFullName, userDepartment, userEmail, practiceName }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment, userAvatarUrl, userEmail, practiceName }: TopUtilityBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const pageLabel = getPageLabel(pathname);
@@ -126,9 +128,15 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userEmai
         <span style={greetingStyle}>{pageLabel}</span>
       </div>
       <div style={rightStyle}>
-        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.help} />} label="Help & User Guide" onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')} />
-        <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
-        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" />
+        <Tooltip content="Add Request" placement="bottom">
+          <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.plus} />} label="New Request" onClick={() => router.push('/requests?submit=true')} />
+        </Tooltip>
+        <Tooltip content="Share Feedback" placement="bottom">
+          <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
+        </Tooltip>
+        <Tooltip content="Notifications" placement="bottom">
+          <NotificationBell />
+        </Tooltip>
         <div style={avatarWrapStyle}>
           <button
             type="button"
@@ -139,8 +147,8 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userEmai
             <UserAvatar
               name={userFullName ?? userName ?? '?'}
               departmentColorKey={userDepartment}
+              avatarUrl={userAvatarUrl}
               size="md"
-              shape="rounded"
             />
           </button>
           <Menu

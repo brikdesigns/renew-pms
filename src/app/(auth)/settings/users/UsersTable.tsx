@@ -17,12 +17,13 @@ import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
+import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 
 const TEXT_SECONDARY = color.text.secondary;
 
 const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  platform_admin: 'Platform Admin',
-  practice_admin: 'Practice Admin',
+  brik_admin: 'Platform Admin',
+  admin: 'Practice Admin',
   staff: 'Staff',
 };
 
@@ -91,14 +92,6 @@ export function UsersTable() {
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [filterType, setFilterType] = useState('All Types');
 
-  // Roles that span secondary departments beyond their primary FK
-  const SECONDARY_DEPTS: Record<string, string[]> = {
-    'Office Manager':       ['IT (Information Technology)', 'Marketing', 'Finance', 'Facilities'],
-    'Clinical Manager':     ['(M) Management'],
-    'Insurance Coordinator': ['Finance'],
-    'Third Party':          ['Finance', 'Marketing', 'Facilities'],
-  };
-
   const roleBelongsToDept = (roleName: string, rolePrimaryDept: string, dept: string) =>
     rolePrimaryDept === dept || (SECONDARY_DEPTS[roleName]?.includes(dept) ?? false);
 
@@ -156,12 +149,13 @@ export function UsersTable() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const res = await fetch(`/api/members/${deleteTarget.id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      showToast({ title: 'Error', description: 'Failed to delete user', variant: 'error' });
-      return;
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete user' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
     }
-    setMembers(prev => prev.filter(m => m.id !== deleteTarget.id));
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
     setDeleteTarget(null);
   };
 

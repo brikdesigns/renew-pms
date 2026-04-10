@@ -28,10 +28,6 @@ const subHeaderStyle: CSSProperties = {
 
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
-
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
@@ -59,10 +55,16 @@ export function DepartmentsTable() {
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (d: Department) => { setEditing(d); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/departments/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setDepartments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete department' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
   const handleView = (d: Department) => { setViewing(d); setViewSheetOpen(true); };
@@ -97,12 +99,14 @@ export function DepartmentsTable() {
     ? { id: editing.id, name: editing.name, color: editing.color, is_active: editing.is_active }
     : null;
 
+  const visibleDepts = departments.filter((d) => d.name !== '(G) All Departments');
+
   return (
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Departments</h3>
-          <span style={countBadge}>{loading ? '–' : departments.filter((d) => d.name !== '(G) All Departments').length}</span>
+          <h3 style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0 }}>Departments</h3>
+          <span style={countBadge}>{loading ? '–' : visibleDepts.length}</span>
         </div>
         <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
       </div>
@@ -125,7 +129,7 @@ export function DepartmentsTable() {
                   Loading departments…
                 </TableCell>
               </TableRow>
-            ) : departments.filter((d) => d.name !== '(G) All Departments').map((d) => (
+            ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
@@ -173,7 +177,6 @@ export function DepartmentsTable() {
           name: viewing.name,
           color: viewing.color,
           is_active: viewing.is_active,
-          is_default: false,
           member_count: viewing.member_count,
         } satisfies DepartmentViewData : null}
         onEdit={handleViewEdit}

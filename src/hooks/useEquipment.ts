@@ -7,6 +7,13 @@ export interface EquipmentItem {
   name: string;
   room_id: string | null;
   room_name: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  department_color: string | null;
+  team_id: string | null;
+  team_name: string | null;
   status: string;
   manufacturer: string | null;
   description: string | null;
@@ -34,5 +41,5 @@ export function useEquipment() {
       });
   }, []);
 
-  return { equipment, loading, error };
+  return { equipment, setEquipment, loading, error };
 }

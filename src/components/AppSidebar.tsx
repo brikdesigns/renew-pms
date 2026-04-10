@@ -124,6 +124,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/training',  icon: icon.training,  label: 'Training',  match: (p) => p.startsWith('/training') },
   { href: '/documents', icon: icon.documents, label: 'Documents', match: (p) => p.startsWith('/documents'), adminOnly: true },
   { href: '/analytics', icon: icon.analytics, label: 'Analytics', match: (p) => p.startsWith('/analytics'), adminOnly: true },
+  // Settings href overridden below for non-admin roles (staff/manager → account only)
   { href: '/settings',  icon: icon.settings,  label: 'Settings',  match: (p) => p.startsWith('/settings') },
 ];
 
@@ -136,13 +137,18 @@ interface AppSidebarProps {
 export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const pathname = usePathname();
   const { isDark, toggle } = useTheme();
-  const isAdmin = userRole === 'platform_admin' || userRole === 'practice_admin';
+  const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [hoveredTheme, setHoveredTheme] = useState(false);
   const [hoveredHelp, setHoveredHelp] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
+  ).map((item) =>
+    // Non-admins only have access to Account — skip the settings landing page
+    item.label === 'Settings' && !isAdmin
+      ? { ...item, href: '/settings/account' }
+      : item
   );
 
   return (

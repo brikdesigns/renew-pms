@@ -49,10 +49,16 @@ export function RolesTable() {
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (r: Role) => { setEditing(r); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/roles/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setRoles((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete role' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
   const handleView = (r: Role) => { setViewing(r); setViewSheetOpen(true); };
@@ -83,8 +89,8 @@ export function RolesTable() {
     }
   };
 
-  const sheetData: RoleFormData | null = editing
-    ? { name: editing.name, department_id: editing.department_id, description: editing.description, is_active: editing.is_active }
+  const sheetData: (RoleFormData & { id?: string }) | null = editing
+    ? { id: editing.id, name: editing.name, department_id: editing.department_id, description: editing.description, default_system_role: editing.default_system_role, is_active: editing.is_active }
     : null;
 
   const viewData: RoleViewData | null = viewing
@@ -154,7 +160,7 @@ export function RolesTable() {
         </Table>
       </div>
 
-      <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
+      <EditRoleSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} members={members} />
       <ViewRoleSheet isOpen={viewSheetOpen} onClose={handleViewClose} role={viewData} onEdit={handleViewEdit} members={members} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

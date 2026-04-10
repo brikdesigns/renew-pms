@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -120,19 +121,37 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const dateParam = searchParams.get('date');
   const dateValue = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10);
+  const pool = searchParams.get('pool') === 'true';
 
-  // Fetch tasks that should appear on the selected date:
-  // 1. Tasks due exactly on this date
-  // 2. Overdue tasks (past due, not completed)
-  // 3. Recurring tasks (daily/per_shift) whose due_date <= selected date and aren't completed
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+
+  // Build query based on view mode:
+  // - pool=false (default): individually assigned tasks for the selected date
+  // - pool=true: unassigned pool tasks (opening/closing office, shared checklists)
+  let query = admin
     .from('tasks')
     .select(TASK_SELECT)
-    .eq('practice_id', practiceId)
-    .not('assigned_to', 'is', null)
-    .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`)
-    .order('due_date', { ascending: true })
-    .order('created_at', { ascending: true });
+    .eq('practice_id', practiceId);
+
+  if (pool) {
+    // Pool tasks: unassigned tasks that are active for this date.
+    // Includes: exact date match, overdue, recurring daily/per_shift (with due_date <= today OR null due_date),
+    // and any not_started tasks with no due_date (e.g. newly created pool tasks).
+    query = query
+      .is('assigned_to', null)
+      .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped),and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`)
+      .order('status', { ascending: true })
+      .order('created_at', { ascending: true });
+  } else {
+    // Assigned tasks: individually assigned, for the selected date
+    query = query
+      .not('assigned_to', 'is', null)
+      .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`)
+      .order('due_date', { ascending: true })
+      .order('created_at', { ascending: true });
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -149,7 +168,7 @@ export async function GET(request: Request) {
   // Fetch checklist progress counts for all tasks in one query
   const taskIds = flatTasks.map((t) => t.id);
   if (taskIds.length > 0) {
-    const { data: checklistCounts } = await supabase
+    const { data: checklistCounts } = await admin
       .from('task_checklist_items')
       .select('task_id, is_completed')
       .in('task_id', taskIds);
@@ -192,7 +211,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('tasks')
     .insert({
       practice_id: practiceId,
@@ -219,14 +239,14 @@ export async function POST(request: Request) {
 
   // If created from a template, copy its checklist items into task_checklist_items
   if (body.template_id && data) {
-    const { data: templateItems } = await supabase
+    const { data: templateItems } = await admin
       .from('checklist_items')
       .select('label, sort_order, room_id, equipment_id, supply_category_id')
       .eq('template_id', body.template_id)
       .order('sort_order');
 
     if (templateItems && templateItems.length > 0) {
-      await supabase.from('task_checklist_items').insert(
+      await admin.from('task_checklist_items').insert(
         templateItems.map((item) => ({
           task_id: data.id,
           practice_id: practiceId,

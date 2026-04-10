@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
@@ -24,12 +24,18 @@ export interface RoleViewData {
 }
 
 interface ViewRoleSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  role: RoleViewData | null;
+  /** Full role data (page-level mode — skips fetch) */
+  role?: RoleViewData | null;
+  /** Role ID (global mode — fetches data) */
+  id?: string;
   onEdit?: () => void;
   /** All practice members — filtered to this role inside the component */
-  members: Member[];
+  members?: Member[];
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -45,8 +51,34 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewRoleSheet({ isOpen, onClose, role, onEdit, members: allMembers }: ViewRoleSheetProps) {
+export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEdit, members: allMembers = [], onNavigate }: ViewRoleSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [fetched, setFetched] = useState<RoleViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? roleProp?.id;
+  useEffect(() => {
+    if (roleProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/roles/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewRoleSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, roleProp]);
+
+  const role = roleProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!role) return null;
 
@@ -127,6 +159,7 @@ export function ViewRoleSheet({ isOpen, onClose, role, onEdit, members: allMembe
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={role.name}

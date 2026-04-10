@@ -43,8 +43,8 @@ interface EditUserSheetProps {
 
 const SYSTEM_ROLE_OPTIONS = [
   { label: 'Staff', value: 'staff' },
-  { label: 'Practice Admin', value: 'practice_admin' },
-  { label: 'Platform Admin', value: 'platform_admin' },
+  { label: 'Practice Admin', value: 'admin' },
+  { label: 'Platform Admin', value: 'brik_admin' },
 ];
 
 const EMPLOYEE_TYPE_OPTIONS = [
@@ -109,6 +109,13 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
     { label: 'Select option', value: '' },
     ...roles.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id })),
   ], [roles]);
+
+  // Department is derived from the selected practice role, not independently editable
+  const selectedRoleDepartment = useMemo(() => {
+    if (!form.practice_role_id) return '';
+    const role = roles.find((r) => r.id === form.practice_role_id);
+    return role?.department ?? '';
+  }, [form.practice_role_id, roles]);
 
   const departmentOptions = useMemo(() => [
     { label: 'Select option', value: '' },
@@ -181,7 +188,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
           </div>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <TextInput label="Email" size="sm" type="email" value={form.email} onChange={updateText('email')} placeholder="user@practice.com" fullWidth required />
+              <TextInput label="Email" size="sm" type="email" value={form.email} onChange={updateText('email')} placeholder="user@practice.com" fullWidth required disabled={isEdit} />
             </div>
             <div style={formRowHalf}>
               <TextInput label="Phone" size="sm" type="tel" value={form.phone} onChange={updateText('phone')} placeholder="(XXX) XXX-XXXX" fullWidth />
@@ -197,12 +204,16 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
               <Select label="System Role" size="sm" options={SYSTEM_ROLE_OPTIONS} value={form.system_role} onChange={updateSelect('system_role')} fullWidth />
             </div>
             <div style={formRowHalf}>
-              <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role_id ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, practice_role_id: e.target.value || null }))} fullWidth />
+              <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role_id ?? ''} onChange={(e) => {
+                const roleId = e.target.value || null;
+                const role = roles.find((r) => r.id === roleId);
+                setForm((prev) => ({ ...prev, practice_role_id: roleId, department: role?.department ?? '' }));
+              }} fullWidth />
             </div>
           </div>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <Select label="Department" size="sm" options={departmentOptions} value={form.department} onChange={updateSelect('department')} fullWidth />
+              <Select label="Department" size="sm" options={departmentOptions} value={selectedRoleDepartment} disabled fullWidth />
             </div>
             <div style={formRowHalf}>
               <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />

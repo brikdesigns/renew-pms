@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requirePracticeAdmin } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 
@@ -46,9 +47,44 @@ function flattenMember(m: {
 }
 
 /**
+ * GET /api/members/[id]
+ * Returns a single practice member by ID with profile and role/department details.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requireAuth(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('practice_members')
+    .select(`
+      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
+      practice_role_types(id, name, department_id, departments(id, name, color))
+    `)
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  return NextResponse.json(flattenMember(data));
+}
+
+/**
  * PATCH /api/members/[id]
  * Updates a member's practice-level fields and/or profile fields.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  *
  * Accepted fields:
  *   practice_members: practice_role_id, employee_type, shift, is_active
@@ -87,8 +123,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Verify the member belongs to this practice
-  const { data: memberCheck } = await supabase
+  const { data: memberCheck } = await admin
     .from('practice_members')
     .select('id, user_id')
     .eq('id', id)
@@ -99,7 +137,7 @@ export async function PATCH(
 
   // Update practice_members if needed
   if (Object.keys(memberUpdates).length > 0) {
-    const { error: memberErr } = await supabase
+    const { error: memberErr } = await admin
       .from('practice_members')
       .update(memberUpdates)
       .eq('id', id)
@@ -110,7 +148,7 @@ export async function PATCH(
 
   // Update profiles if needed
   if (Object.keys(profileUpdates).length > 0) {
-    const { error: profileErr } = await supabase
+    const { error: profileErr } = await admin
       .from('profiles')
       .update(profileUpdates)
       .eq('id', memberCheck.user_id);
@@ -119,7 +157,7 @@ export async function PATCH(
   }
 
   // Return updated member with full joins
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('practice_members')
     .select(`
       id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
@@ -137,7 +175,7 @@ export async function PATCH(
 /**
  * DELETE /api/members/[id]
  * Removes a member from the practice.
- * Requires practice_admin or platform_admin.
+ * Requires admin or brik_admin.
  */
 export async function DELETE(
   _req: Request,
@@ -152,7 +190,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('practice_members')
     .delete()
     .eq('id', id)

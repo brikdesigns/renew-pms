@@ -21,7 +21,6 @@ const bodyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.lg,
-  padding: space.lg,
   flex: 1,
 };
 

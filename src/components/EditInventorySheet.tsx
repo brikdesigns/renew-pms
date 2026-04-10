@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { Sheet, Button, TextInput, Select } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import {
@@ -9,6 +9,9 @@ import {
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
 import { useRooms } from '@/hooks/useRooms';
+import { useDepartments } from '@/hooks/useDepartments';
+import { useTeams } from '@/hooks/useTeams';
+import { useVendors } from '@/hooks/useVendors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -16,10 +19,13 @@ export interface InventoryFormData {
   name: string;
   status: string;
   department: string;
+  department_id: string;
   description: string;
   type: string;
   company: string;
+  vendor_id: string;
   team: string;
+  team_id: string;
   room: string;
 }
 
@@ -27,15 +33,15 @@ interface EditInventorySheetProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: InventoryFormData | null;
-  onSave: (data: InventoryFormData) => void;
+  onSave: (data: InventoryFormData) => void | Promise<void>;
 }
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
 const STATUS_OPTIONS = [
-  { label: 'Active', value: 'Active' },
-  { label: 'Renew Review', value: 'Renew Review' },
-  { label: 'Need to Cancel/Replace', value: 'Need to Cancel/Replace' },
+  { label: 'Active', value: 'active' },
+  { label: 'Needs Service', value: 'needs_service' },
+  { label: 'Out of Service', value: 'out_of_service' },
 ];
 
 const TYPE_OPTIONS = [
@@ -44,22 +50,17 @@ const TYPE_OPTIONS = [
   { label: 'Software', value: 'Software' },
 ];
 
-const DEPARTMENT_OPTIONS = [
-  { label: 'Clinical', value: 'Clinical' },
-  { label: 'Front Desk', value: 'Front Desk' },
-  { label: 'Business Admin', value: 'Business Admin' },
-  { label: 'Everyone', value: 'Everyone' },
-  { label: 'Management', value: 'Management' },
-];
-
 const EMPTY_FORM: InventoryFormData = {
   name: '',
-  status: 'Active',
-  department: 'Clinical',
+  status: 'active',
+  department: '',
+  department_id: '',
   description: '',
   type: 'Clinical Equipment',
   company: '',
+  vendor_id: '',
   team: '',
+  team_id: '',
   room: '',
 };
 
@@ -68,9 +69,35 @@ const EMPTY_FORM: InventoryFormData = {
 export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: EditInventorySheetProps) {
   const { showToast } = useToast();
   const { rooms } = useRooms();
-  const roomOptions = [{ label: '— None —', value: '' }, ...rooms.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id }))];
+  const { departments } = useDepartments();
+  const { teams } = useTeams();
+  const { vendors } = useVendors();
+
   const [form, setForm] = useState<InventoryFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+
+  const roomOptions = [{ label: 'Select room', value: '' }, ...rooms.filter((r) => r.is_active).map((r) => ({ label: r.name, value: r.id }))];
+
+  const departmentOptions = useMemo(() => [
+    { label: 'Select department', value: '' },
+    ...departments.filter((d) => d.is_active && d.name !== '(G) All Departments').map((d) => ({ label: d.name, value: d.id })),
+  ], [departments]);
+
+  /** Teams filtered by selected department */
+  const teamOptions = useMemo(() => {
+    const filtered = form.department_id
+      ? teams.filter((t) => t.is_active && t.department_id === form.department_id)
+      : teams.filter((t) => t.is_active);
+    return [
+      { label: 'Select team', value: '' },
+      ...filtered.map((t) => ({ label: t.name, value: t.id })),
+    ];
+  }, [teams, form.department_id]);
+
+  const vendorOptions = useMemo(() => [
+    { label: 'Select vendor', value: '' },
+    ...vendors.filter((v) => v.is_active).map((v) => ({ label: v.name, value: v.id })),
+  ], [vendors]);
 
   const isEdit = initialData !== null;
 
@@ -89,20 +116,21 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
     if (!form.name.trim()) return;
 
     setSaving(true);
-
-    // TODO: Wire to Supabase insert/update on equipment table
-    await new Promise((r) => setTimeout(r, 500));
-
-    onSave(form);
-    setSaving(false);
-    showToast({
-      title: isEdit ? 'Item updated' : 'Item added',
-      description: isEdit
-        ? `${form.name} has been updated.`
-        : `${form.name} has been added to inventory.`,
-      variant: 'success',
-    });
-    onClose();
+    try {
+      await onSave(form);
+      showToast({
+        title: isEdit ? 'Item updated' : 'Item added',
+        description: isEdit
+          ? `${form.name} has been updated.`
+          : `${form.name} has been added to inventory.`,
+        variant: 'success',
+      });
+      onClose();
+    } catch (err) {
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save', variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -151,10 +179,27 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
             <Select
               label="Department"
               size="sm"
-              options={DEPARTMENT_OPTIONS}
-              value={form.department}
-              onChange={(e) => setForm((prev) => ({ ...prev, department: e.target.value }))}
+              options={departmentOptions}
+              value={form.department_id}
+              onChange={(e) => {
+                const deptId = e.target.value;
+                const dept = departments.find((d) => d.id === deptId);
+                setForm((prev) => ({ ...prev, department_id: deptId, department: dept?.name ?? '', team_id: '', team: '' }));
+              }}
               fullWidth
+            />
+            <Select
+              label="Team"
+              size="sm"
+              options={teamOptions}
+              value={form.team_id}
+              onChange={(e) => {
+                const teamId = e.target.value;
+                const team = teams.find((t) => t.id === teamId);
+                setForm((prev) => ({ ...prev, team_id: teamId, team: team?.name ?? '' }));
+              }}
+              fullWidth
+              disabled={!form.department_id}
             />
             <TextInput
               label="Description"
@@ -164,20 +209,16 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
               placeholder="Notes about this item (optional)"
               fullWidth
             />
-            <TextInput
-              label="Third-Party Company"
+            <Select
+              label="Vendor"
               size="sm"
-              value={form.company}
-              onChange={updateText('company')}
-              placeholder="e.g. Planmeca, Henry Schein"
-              fullWidth
-            />
-            <TextInput
-              label="Team"
-              size="sm"
-              value={form.team}
-              onChange={updateText('team')}
-              placeholder="e.g. Hygiene, Lab"
+              options={vendorOptions}
+              value={form.vendor_id}
+              onChange={(e) => {
+                const vid = e.target.value;
+                const vendor = vendors.find((v) => v.id === vid);
+                setForm((prev) => ({ ...prev, vendor_id: vid, company: vendor?.name ?? '' }));
+              }}
               fullWidth
             />
             <Select

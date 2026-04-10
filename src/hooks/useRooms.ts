@@ -31,5 +31,5 @@ export function useRooms() {
       });
   }, []);
 
-  return { rooms, loading, error };
+  return { rooms, setRooms, loading, error };
 }

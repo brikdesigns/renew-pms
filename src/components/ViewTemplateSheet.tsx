@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { color, font, gap, space, border } from '@/lib/tokens';
+import { frequencyLabel } from '@/lib/frequency-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ export interface TemplateViewData {
   frequency: string;
   assigned_role: string;
   department: string;
+  assignment_mode: string;
+  display_mode: string;
   priority: string;
   status: string;
   description: string;
@@ -35,9 +38,15 @@ export interface TemplateViewData {
 }
 
 interface ViewTemplateSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  template: TemplateViewData | null;
+  /** Full template data (page-level mode — skips fetch) */
+  template?: TemplateViewData | null;
+  /** Template ID (global mode — fetches data) */
+  id?: string;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Label maps ─────────────────────────────────────────────────────────────
@@ -64,6 +73,17 @@ const STATUS_MAP: Record<string, { badge: 'positive' | 'warning' | 'error'; labe
   archived: { badge: 'error', label: 'Archived' },
 };
 
+const ASSIGNMENT_MODE_LABELS: Record<string, string> = {
+  individual: 'Individual',
+  role: 'Role',
+  department: 'Department',
+  pool: 'Pool (Everyone)',
+};
+
+const DISPLAY_MODE_LABELS: Record<string, string> = {
+  nested: 'Nested',
+  expanded: 'Expanded',
+};
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -99,8 +119,34 @@ const emptyState: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateSheetProps) {
+export function ViewTemplateSheet({ isOpen = true, onClose, template: templateProp, id, onNavigate }: ViewTemplateSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
+  const [fetched, setFetched] = useState<TemplateViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? templateProp?.id;
+  useEffect(() => {
+    if (templateProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/templates/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewTemplateSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, templateProp]);
+
+  const template = templateProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!template) return null;
 
@@ -132,6 +178,14 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
       <h3 style={sheetSectionTitle}>Assignment & Scheduling</h3>
       <div style={rowStyle}>
         <div style={halfStyle}>
+          <ReadOnlyField label="Assignment Mode" value={ASSIGNMENT_MODE_LABELS[template.assignment_mode] ?? template.assignment_mode} />
+        </div>
+        <div style={halfStyle}>
+          <ReadOnlyField label="Display Mode" value={DISPLAY_MODE_LABELS[template.display_mode] ?? template.display_mode} />
+        </div>
+      </div>
+      <div style={rowStyle}>
+        <div style={halfStyle}>
           <ReadOnlyField label="Assigned Role" value={template.assigned_role || 'All Staff'} />
         </div>
         <div style={halfStyle}>
@@ -141,7 +195,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
 
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={template.frequency || '—'} />
+          <ReadOnlyField label="Frequency" value={frequencyLabel(template.frequency)} />
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
@@ -217,6 +271,7 @@ export function ViewTemplateSheet({ isOpen, onClose, template }: ViewTemplateShe
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={template.name}
