@@ -18,7 +18,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('rooms')
     .select('id, name, room_type, is_active, sort_order')
     .eq('practice_id', practiceId)
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data: office } = await supabase
+  const admin = createAdminClient();
+
+  const { data: office } = await admin
     .from('offices')
     .select('id')
     .eq('practice_id', practiceId)
@@ -54,12 +57,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
-  const { count } = await supabase
+  const { count } = await admin
     .from('rooms')
     .select('*', { count: 'exact', head: true })
     .eq('practice_id', practiceId);
-
-  const admin = createAdminClient();
   const { data, error } = await admin
     .from('rooms')
     .insert({

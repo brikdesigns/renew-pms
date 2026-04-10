@@ -19,7 +19,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('equipment')
     .select(`
       id, name, room_id, vendor_id, department_id, team_id, status, manufacturer, notes,
@@ -79,8 +80,10 @@ export async function POST(request: Request) {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
+  const admin = createAdminClient();
+
   // Resolve office_id (single-office model)
-  const { data: office } = await supabase
+  const { data: office } = await admin
     .from('offices')
     .select('id')
     .eq('practice_id', practiceId)
@@ -90,8 +93,6 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
-
-  const admin = createAdminClient();
   const { data, error } = await admin
     .from('equipment')
     .insert({

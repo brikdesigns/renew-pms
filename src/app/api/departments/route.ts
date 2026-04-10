@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -19,7 +20,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('departments')
     .select('id, name, color, is_active, sort_order')
     .eq('practice_id', practiceId)
@@ -27,7 +29,7 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const deptCountMap = await getDeptMemberCounts(supabase, practiceId, data ?? []);
+  const deptCountMap = await getDeptMemberCounts(admin, practiceId, data ?? []);
   const result = (data ?? []).map((d) => ({ ...d, member_count: deptCountMap[d.id] ?? 0 }));
   return NextResponse.json(result);
 }
@@ -51,12 +53,13 @@ export async function POST(request: Request) {
 
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
-  const { count } = await supabase
+  const admin = createAdminClient();
+  const { count } = await admin
     .from('departments')
     .select('*', { count: 'exact', head: true })
     .eq('practice_id', practiceId);
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('departments')
     .insert({
       practice_id: practiceId,

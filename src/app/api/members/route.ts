@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -59,7 +60,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('practice_members')
     .select(`
       id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
@@ -97,7 +99,8 @@ export async function POST(request: Request) {
 
   if (!body.user_id) return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('practice_members')
     .insert({
       practice_id: practiceId,

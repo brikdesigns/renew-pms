@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -87,7 +88,8 @@ export async function GET(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('requests')
     .select(SINGLE_SELECT)
     .eq('id', id)
@@ -135,8 +137,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Fetch current request state for notification comparisons
-  const { data: current } = await supabase
+  const { data: current } = await admin
     .from('requests')
     .select('title, status, submitted_by, assigned_to, practice_members!requests_submitted_by_fkey(user_id)')
     .eq('id', id)
@@ -150,7 +154,7 @@ export async function PATCH(
     updates.resolved_at = null;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('requests')
     .update(updates)
     .eq('id', id)
@@ -187,7 +191,7 @@ export async function PATCH(
   // Notify assignee when assigned
   if (updates.assigned_to && current && updates.assigned_to !== current.assigned_to) {
     // Look up the assignee's user_id from practice_members
-    const { data: assigneeMember } = await supabase
+    const { data: assigneeMember } = await admin
       .from('practice_members')
       .select('user_id')
       .eq('id', updates.assigned_to as string)

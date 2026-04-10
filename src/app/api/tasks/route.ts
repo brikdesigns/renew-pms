@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -122,10 +123,12 @@ export async function GET(request: Request) {
   const dateValue = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10);
   const pool = searchParams.get('pool') === 'true';
 
+  const admin = createAdminClient();
+
   // Build query based on view mode:
   // - pool=false (default): individually assigned tasks for the selected date
   // - pool=true: unassigned pool tasks (opening/closing office, shared checklists)
-  let query = supabase
+  let query = admin
     .from('tasks')
     .select(TASK_SELECT)
     .eq('practice_id', practiceId);
@@ -165,7 +168,7 @@ export async function GET(request: Request) {
   // Fetch checklist progress counts for all tasks in one query
   const taskIds = flatTasks.map((t) => t.id);
   if (taskIds.length > 0) {
-    const { data: checklistCounts } = await supabase
+    const { data: checklistCounts } = await admin
       .from('task_checklist_items')
       .select('task_id, is_completed')
       .in('task_id', taskIds);
@@ -208,7 +211,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('tasks')
     .insert({
       practice_id: practiceId,
@@ -235,14 +239,14 @@ export async function POST(request: Request) {
 
   // If created from a template, copy its checklist items into task_checklist_items
   if (body.template_id && data) {
-    const { data: templateItems } = await supabase
+    const { data: templateItems } = await admin
       .from('checklist_items')
       .select('label, sort_order, room_id, equipment_id, supply_category_id')
       .eq('template_id', body.template_id)
       .order('sort_order');
 
     if (templateItems && templateItems.length > 0) {
-      await supabase.from('task_checklist_items').insert(
+      await admin.from('task_checklist_items').insert(
         templateItems.map((item) => ({
           task_id: data.id,
           practice_id: practiceId,

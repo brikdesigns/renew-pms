@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -22,7 +23,8 @@ export async function GET(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('departments')
     .select('id, name, color, is_active, sort_order')
     .eq('id', id)
@@ -32,12 +34,12 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { data: allDepts } = await supabase
+  const { data: allDepts } = await admin
     .from('departments')
     .select('id, name')
     .eq('practice_id', practiceId);
 
-  const counts = await getDeptMemberCounts(supabase, practiceId, allDepts ?? []);
+  const counts = await getDeptMemberCounts(admin, practiceId, allDepts ?? []);
   return NextResponse.json({ ...data, member_count: counts[data.id] ?? 0 });
 }
 
@@ -70,7 +72,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('departments')
     .update(updates)
     .eq('id', id)
@@ -86,12 +89,12 @@ export async function PATCH(
   }
 
   // Fetch all departments for secondary-dept name→id lookup, then compute count
-  const { data: allDepts } = await supabase
+  const { data: allDepts } = await admin
     .from('departments')
     .select('id, name')
     .eq('practice_id', practiceId);
 
-  const counts = await getDeptMemberCounts(supabase, practiceId, allDepts ?? []);
+  const counts = await getDeptMemberCounts(admin, practiceId, allDepts ?? []);
   return NextResponse.json({ ...data, member_count: counts[data.id] ?? 0 });
 }
 
@@ -112,7 +115,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('departments')
     .delete()
     .eq('id', id)

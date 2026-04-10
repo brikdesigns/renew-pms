@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -17,7 +18,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('teams')
     .select(`
       id, name, department_id, is_active, sort_order, created_at,
@@ -30,7 +32,7 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Count members per team
-  const { data: memberCounts } = await supabase
+  const { data: memberCounts } = await admin
     .from('practice_members')
     .select('team_id')
     .eq('practice_id', practiceId)
@@ -78,7 +80,8 @@ export async function POST(request: Request) {
 
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('teams')
     .insert({
       practice_id: practiceId,

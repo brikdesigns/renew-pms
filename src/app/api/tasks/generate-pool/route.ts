@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -19,7 +20,8 @@ export async function POST() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase.rpc('generate_daily_pool_tasks', {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('generate_daily_pool_tasks', {
     p_practice_id: practiceId,
   });
 

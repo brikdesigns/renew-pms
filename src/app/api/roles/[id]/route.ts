@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -21,7 +22,8 @@ export async function GET(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('practice_role_types')
     .select('id, name, description, default_system_role, is_default, is_active, sort_order, department_id, departments(id, name, color)')
     .eq('id', id)
@@ -31,7 +33,7 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { count: memberCount } = await supabase
+  const { count: memberCount } = await admin
     .from('practice_members')
     .select('*', { count: 'exact', head: true })
     .eq('practice_id', practiceId)
@@ -84,7 +86,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('practice_role_types')
     .update(updates)
     .eq('id', id)
@@ -134,7 +137,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('practice_role_types')
     .delete()
     .eq('id', id)

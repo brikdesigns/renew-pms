@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -18,7 +19,8 @@ export async function GET() {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('task_templates')
     .select(`
       id, name, description, type, frequency, priority, status,
@@ -74,7 +76,8 @@ export async function POST(request: Request) {
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!body.type) return NextResponse.json({ error: 'Type is required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('task_templates')
     .insert({
       practice_id: practiceId,

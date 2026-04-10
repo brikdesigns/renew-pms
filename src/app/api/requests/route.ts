@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -135,7 +136,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
 
-  let query = supabase
+  const admin = createAdminClient();
+  let query = admin
     .from('requests')
     .select(REQUEST_SELECT)
     .eq('practice_id', practiceId)
@@ -175,8 +177,10 @@ export async function POST(request: Request) {
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
+  const admin = createAdminClient();
+
   // Get the current user's practice member ID for submitted_by
-  const { data: member } = await supabase
+  const { data: member } = await admin
     .from('practice_members')
     .select('id')
     .eq('user_id', authUser.profile.id)
@@ -199,7 +203,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Category is required' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('requests')
     .insert({
       practice_id: practiceId,

@@ -22,7 +22,8 @@ export async function GET(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('vendors')
     .select('id, name, type, phone, email, website_url, address, notes, is_active, created_at, vendor_contacts(id)')
     .eq('id', id)

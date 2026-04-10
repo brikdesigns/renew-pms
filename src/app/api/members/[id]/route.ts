@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -62,7 +63,8 @@ export async function GET(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('practice_members')
     .select(`
       id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
@@ -121,8 +123,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Verify the member belongs to this practice
-  const { data: memberCheck } = await supabase
+  const { data: memberCheck } = await admin
     .from('practice_members')
     .select('id, user_id')
     .eq('id', id)
@@ -133,7 +137,7 @@ export async function PATCH(
 
   // Update practice_members if needed
   if (Object.keys(memberUpdates).length > 0) {
-    const { error: memberErr } = await supabase
+    const { error: memberErr } = await admin
       .from('practice_members')
       .update(memberUpdates)
       .eq('id', id)
@@ -144,7 +148,7 @@ export async function PATCH(
 
   // Update profiles if needed
   if (Object.keys(profileUpdates).length > 0) {
-    const { error: profileErr } = await supabase
+    const { error: profileErr } = await admin
       .from('profiles')
       .update(profileUpdates)
       .eq('id', memberCheck.user_id);
@@ -153,7 +157,7 @@ export async function PATCH(
   }
 
   // Return updated member with full joins
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('practice_members')
     .select(`
       id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
@@ -186,7 +190,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('practice_members')
     .delete()
     .eq('id', id)
