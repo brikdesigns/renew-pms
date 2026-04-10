@@ -6,7 +6,7 @@ import { icon } from '@/lib/icons';
 import { IconButton, Button, Sheet } from '@bds/components';
 import { color, font, space, gap, border, size } from '@/lib/tokens';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_PERSONAS === 'true';
 
 const FEEDBACK_TYPES = [
   { value: 'bug', label: 'Bug', emoji: '🐛' },
