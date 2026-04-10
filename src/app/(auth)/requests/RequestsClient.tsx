@@ -11,7 +11,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
 import { useMembers, type Member } from '@/hooks/useMembers';
-import { SubmitRequestSheet } from '@/components/SubmitRequestSheet';
+import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
 import { ViewRequestSheet } from '@/components/ViewRequestSheet';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useToast } from '@/components/ToastProvider';
@@ -396,6 +396,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
   const [viewing, setViewing] = useState<RequestRow | null>(null);
+  const [editing, setEditing] = useState<RequestEditData | null>(null);
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterPriority, setFilterPriority] = useState('All Priorities');
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -671,10 +672,11 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       </Board>
 
       <SubmitRequestSheet
-        isOpen={submitOpen}
-        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+        isOpen={submitOpen || editing !== null}
+        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
         onSaved={refetch}
         defaultCategory={submitCategory}
+        initialData={editing}
       />
       <ViewRequestSheet
         isOpen={viewing !== null}
@@ -682,6 +684,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         request={viewing}
         isAdmin={isAdmin}
         onUpdated={refetch}
+        onEdit={(r) => { setViewing(null); setEditing(r); }}
       />
     </div>
   );

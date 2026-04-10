@@ -9,10 +9,10 @@ import { color, font, space, gap, border, size } from '@/lib/tokens';
 const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_PERSONAS === 'true';
 
 const FEEDBACK_TYPES = [
-  { value: 'bug', label: 'Bug', emoji: '🐛' },
-  { value: 'ui', label: 'UI Issue', emoji: '🎨' },
-  { value: 'suggestion', label: 'Suggestion', emoji: '💡' },
-  { value: 'question', label: 'Question', emoji: '❓' },
+  { value: 'bug', label: 'Bug' },
+  { value: 'ui', label: 'UI Issue' },
+  { value: 'suggestion', label: 'Suggestion' },
+  { value: 'question', label: 'Question' },
 ] as const;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ export function FeedbackButton({ userEmail, userName }: { userEmail?: string; us
                     style={typeBtnStyle(type === ft.value)}
                     onClick={() => setType(ft.value)}
                   >
-                    {ft.emoji} {ft.label}
+                    {ft.label}
                   </button>
                 ))}
               </div>

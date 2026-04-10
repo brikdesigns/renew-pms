@@ -9,7 +9,7 @@ import { Badge, Tag, Button } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
-import { SubmitRequestSheet } from '@/components/SubmitRequestSheet';
+import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
 import { ViewRequestSheet } from '@/components/ViewRequestSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
@@ -154,6 +154,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
   const [viewing, setViewing] = useState<RequestRow | null>(null);
+  const [editing, setEditing] = useState<RequestEditData | null>(null);
 
   // Auto-open request sheet from ?open=<id> or submit from ?submit=true
   useEffect(() => {
@@ -201,10 +202,11 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         </div>
 
         <SubmitRequestSheet
-          isOpen={submitOpen}
-          onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+          isOpen={submitOpen || editing !== null}
+          onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
           onSaved={refetch}
           defaultCategory={submitCategory}
+          initialData={editing}
         />
       </div>
     );
@@ -274,10 +276,11 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       </div>
 
       <SubmitRequestSheet
-        isOpen={submitOpen}
-        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+        isOpen={submitOpen || editing !== null}
+        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
         onSaved={refetch}
         defaultCategory={submitCategory}
+        initialData={editing}
       />
       <ViewRequestSheet
         isOpen={viewing !== null}
@@ -285,6 +288,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         request={viewing}
         isAdmin={false}
         onUpdated={refetch}
+        onEdit={(r) => { setViewing(null); setEditing(r); }}
       />
     </div>
   );

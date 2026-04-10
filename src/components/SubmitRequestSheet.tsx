@@ -39,11 +39,26 @@ interface VendorContactOption {
   role: string | null;
 }
 
+export interface RequestEditData {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  urgency: string;
+  room_id: string | null;
+  equipment_id: string | null;
+  location_description: string | null;
+  vendor_id: string | null;
+  vendor_contact_id: string | null;
+}
+
 interface SubmitRequestSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
   defaultCategory?: string;
+  /** Pass existing request data to open in edit mode */
+  initialData?: RequestEditData | null;
 }
 
 // ─── Options ────────────────────────────────────────────────────────────────
@@ -79,7 +94,7 @@ const formRowHalf: React.CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }: SubmitRequestSheetProps) {
+export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory, initialData }: SubmitRequestSheetProps) {
   const { showToast } = useToast();
   const { rooms } = useRooms();
   const { equipment } = useEquipment();
@@ -89,9 +104,27 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }
   const [vendorContacts, setVendorContacts] = useState<VendorContactOption[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
 
+  const isEdit = !!initialData;
+
   useEffect(() => {
-    if (isOpen) setForm({ ...EMPTY_FORM, category: defaultCategory ?? '' });
-  }, [isOpen]);
+    if (isOpen) {
+      if (initialData) {
+        setForm({
+          title: initialData.title,
+          description: initialData.description ?? '',
+          category: initialData.category,
+          urgency: initialData.urgency,
+          room_id: initialData.room_id ?? '',
+          equipment_id: initialData.equipment_id ?? '',
+          location_description: initialData.location_description ?? '',
+          vendor_id: initialData.vendor_id ?? '',
+          vendor_contact_id: initialData.vendor_contact_id ?? '',
+        });
+      } else {
+        setForm({ ...EMPTY_FORM, category: defaultCategory ?? '' });
+      }
+    }
+  }, [isOpen, initialData]);
 
   // Fetch vendors once
   useEffect(() => {
@@ -156,33 +189,42 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }
     if (!form.title.trim() || !form.category) return;
 
     setSaving(true);
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      category: form.category,
+      urgency: form.urgency,
+      room_id: form.room_id || null,
+      equipment_id: form.equipment_id || null,
+      location_description: form.location_description.trim() || null,
+      vendor_id: form.vendor_id || null,
+      vendor_contact_id: form.vendor_contact_id || null,
+    };
+
     try {
-      const res = await fetch('/api/requests', {
-        method: 'POST',
+      const url = isEdit && initialData ? `/api/requests/${initialData.id}` : '/api/requests';
+      const res = await fetch(url, {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          description: form.description.trim() || null,
-          category: form.category,
-          urgency: form.urgency,
-          room_id: form.room_id || null,
-          equipment_id: form.equipment_id || null,
-          location_description: form.location_description.trim() || null,
-          vendor_id: form.vendor_id || null,
-          vendor_contact_id: form.vendor_contact_id || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? 'Failed to submit request');
+        throw new Error(data.error ?? `Failed to ${isEdit ? 'update' : 'submit'} request`);
       }
 
-      showToast({ title: 'Request submitted', description: `${form.title} has been submitted for review.`, variant: 'success' });
+      showToast({
+        title: isEdit ? 'Request updated' : 'Request submitted',
+        description: isEdit
+          ? `${form.title} has been updated.`
+          : `${form.title} has been submitted for review.`,
+        variant: 'success',
+      });
       onSaved();
       onClose();
     } catch (err: unknown) {
-      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to submit', variant: 'error' });
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : `Failed to ${isEdit ? 'update' : 'submit'}`, variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -194,13 +236,13 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory }
     <Sheet
       isOpen={isOpen}
       onClose={onClose}
-      title="Submit Request"
+      title={isEdit ? 'Edit Request' : 'Submit Request'}
       width="600px"
       side="right"
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="submit-request-form" disabled={saving || !canSubmit}>
-          {saving ? 'Submitting...' : 'Submit Request'}
+          {saving ? (isEdit ? 'Saving...' : 'Submitting...') : (isEdit ? 'Save Changes' : 'Submit Request')}
         </Button>
       </>}
     >

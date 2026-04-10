@@ -82,11 +82,13 @@ interface ViewRequestSheetProps {
   id?: string;
   isAdmin?: boolean;
   onUpdated?: () => void;
+  /** Open this request in edit mode */
+  onEdit?: (request: RequestRow) => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp, id, isAdmin = false, onUpdated, onNavigate }: ViewRequestSheetProps) {
+export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp, id, isAdmin = false, onUpdated, onEdit, onNavigate }: ViewRequestSheetProps) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [status, setStatus] = useState('');
@@ -300,23 +302,19 @@ export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp,
     </form>
   ) : (
     <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Status</h3>
+      <h3 style={sheetSectionTitle}>Status & Assignment</h3>
       <ReadOnlyField label="Status" value={
         <Badge status={statusBadge} size="sm" style={{ display: 'inline-flex' }}>{statusLabel}</Badge>
       } />
-      {request.assignee_name && (
-        <ReadOnlyField label="Assigned To" value={request.assignee_name} />
+      <ReadOnlyField label="Assigned To" value={request.assignee_name ?? 'Not yet assigned'} />
+      <h3 style={sheetSectionTitle}>Resolution</h3>
+      {request.resolution_notes ? (
+        <ReadOnlyField label="Resolution Notes" value={request.resolution_notes} />
+      ) : (
+        <ReadOnlyField label="Resolution Notes" value="No resolution notes yet" />
       )}
-      {(request.resolution_notes || request.resolved_at) && (
-        <>
-          <h3 style={sheetSectionTitle}>Resolution</h3>
-          {request.resolution_notes && (
-            <ReadOnlyField label="Resolution Notes" value={request.resolution_notes} />
-          )}
-          {request.resolved_at && (
-            <ReadOnlyField label="Resolved At" value={new Date(request.resolved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
-          )}
-        </>
+      {request.resolved_at && (
+        <ReadOnlyField label="Resolved At" value={new Date(request.resolved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
       )}
     </div>
   );
@@ -458,6 +456,14 @@ export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp,
       <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
       <Button variant="primary" size="md" type="submit" form="manage-request-form" disabled={!hasChanges || saving}>
         {saving ? 'Saving...' : 'Save Changes'}
+      </Button>
+    </>
+  ) : activeTab === 'details' && onEdit ? (
+    <>
+      <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+      <Button variant="outline" size="md" type="button" onClick={() => onEdit(request)}>
+        <Icon icon={icon.edit} style={{ marginRight: gap.xs } as React.CSSProperties} />
+        Edit Request
       </Button>
     </>
   ) : (

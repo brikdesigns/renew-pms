@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         Product: { select: { name: PRODUCT_NAME } },
         Status: { status: { name: 'Not Started' } },
         Scope: { select: { name: SCOPE_MAP[type] ?? 'Normal' } },
-        'userDefined:URL': { url: `${BASE_URL}${page_url}` },
+        URL: { url: `${BASE_URL}${page_url}` },
       },
     }),
   });
