@@ -25,6 +25,7 @@ export async function GET() {
       requires_approval, estimated_duration, is_default,
       task_category_id, compliance_type_id, room_id,
       assigned_role_id, department_id,
+      assignment_mode, display_mode,
       created_at, updated_at,
       checklist_items (
         id, label, sort_order,
@@ -66,6 +67,8 @@ export async function POST(request: Request) {
     estimated_duration?: number | null;
     requires_approval?: boolean;
     status?: string;
+    assignment_mode?: string;
+    display_mode?: string;
   };
 
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -88,9 +91,11 @@ export async function POST(request: Request) {
       estimated_duration: body.estimated_duration ?? null,
       requires_approval: body.requires_approval ?? false,
       status: body.status ?? 'draft',
+      assignment_mode: body.assignment_mode ?? 'pool',
+      display_mode: body.display_mode ?? 'nested',
       created_by: authUser.profile.id,
     })
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, created_at, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, assignment_mode, display_mode, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

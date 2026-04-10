@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, SegmentedControl } from '@bds/components';
+import { Badge, Button, IconButton } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
@@ -16,7 +16,6 @@ import { useRoles } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { TeamsTable, type TeamsTableHandle } from './TeamsTable';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -40,16 +39,9 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 
-const DEPT_SEGMENTS = [
-  { label: 'Departments', value: 'departments' },
-  { label: 'Teams', value: 'teams' },
-];
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
-  const [view, setView] = useState<'departments' | 'teams'>('departments');
-  const [teamsHandle, setTeamsHandle] = useState<TeamsTableHandle | null>(null);
   const { departments, setDepartments, loading } = useDepartments();
   const { roles } = useRoles();
   const { members } = useMembers();
@@ -63,10 +55,16 @@ export function DepartmentsTable() {
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (d: Department) => { setEditing(d); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/departments/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setDepartments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete department' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
   const handleView = (d: Department) => { setViewing(d); setViewSheetOpen(true); };
@@ -103,24 +101,17 @@ export function DepartmentsTable() {
 
   const visibleDepts = departments.filter((d) => d.name !== '(G) All Departments');
 
-  const isDepartments = view === 'departments';
-
   return (
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <SegmentedControl items={DEPT_SEGMENTS} value={view} onChange={(v) => setView(v as 'departments' | 'teams')} size="sm" />
-          <span style={countBadge}>{isDepartments ? (loading ? '–' : visibleDepts.length) : (teamsHandle?.count ?? '–')}</span>
+          <h3 style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0 }}>Departments</h3>
+          <span style={countBadge}>{loading ? '–' : visibleDepts.length}</span>
         </div>
-        {isDepartments
-          ? <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
-          : <Button variant="primary" size="sm" onClick={() => teamsHandle?.openAdd()}>Add Team</Button>
-        }
+        <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
       </div>
 
-      {view === 'teams' && <TeamsTable embedded onReady={setTeamsHandle} />}
-
-      {view === 'departments' && <div style={tableWrap}>
+      <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
             <TableRow>
@@ -168,7 +159,7 @@ export function DepartmentsTable() {
             ))}
           </TableBody>
         </Table>
-      </div>}
+      </div>
 
       <EditDepartmentSheet
         isOpen={sheetOpen}
@@ -186,7 +177,6 @@ export function DepartmentsTable() {
           name: viewing.name,
           color: viewing.color,
           is_active: viewing.is_active,
-          is_default: false,
           member_count: viewing.member_count,
         } satisfies DepartmentViewData : null}
         onEdit={handleViewEdit}

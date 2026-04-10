@@ -5,8 +5,27 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { IconButton } from '@bds/components';
+import { useSheetStack } from '@bds/components';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
+import type { SheetType } from '@/lib/sheet-registry';
+
+// ─── Notification link → sheet mapping ─────────────────────────────────────
+
+function parseNotificationLink(link: string | null): { type: SheetType; props: { id: string }; title?: string } | null {
+  if (!link) return null;
+  try {
+    const url = new URL(link, 'http://localhost');
+    const openId = url.searchParams.get('open');
+    if (!openId) return null;
+    const path = url.pathname;
+    if (path === '/requests') return { type: 'request', props: { id: openId } };
+    if (path === '/tasks') return { type: 'task', props: { id: openId } };
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -120,10 +139,19 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const { openSheet } = useSheetStack();
+
   const handleItemClick = (n: Notification) => {
     if (!n.is_read) markRead(n.id);
-    if (n.link) router.push(n.link);
     setOpen(false);
+
+    // Try to open in a global sheet first (no page navigation)
+    const parsed = parseNotificationLink(n.link);
+    if (parsed) {
+      openSheet(parsed.type, parsed.props, { title: n.title });
+    } else if (n.link) {
+      router.push(n.link);
+    }
   };
 
   return (

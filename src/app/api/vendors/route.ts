@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -52,7 +53,11 @@ export async function POST(request: Request) {
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!body.type) return NextResponse.json({ error: 'Type is required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  // Use admin client for INSERT — app-level auth (requirePracticeAdmin) already
+  // validates the user is an admin. The RLS `with check` on the user session
+  // client intermittently fails due to policy evaluation timing.
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('vendors')
     .insert({
       practice_id: practiceId,

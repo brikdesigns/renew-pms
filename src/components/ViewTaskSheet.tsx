@@ -12,6 +12,7 @@ import {
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
 import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
+import { frequencyLabel } from '@/lib/frequency-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,10 +50,16 @@ interface ChecklistItem {
 }
 
 interface ViewTaskSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  task: TaskViewData | null;
+  /** Full task data (page-level mode — skips fetch) */
+  task?: TaskViewData | null;
+  /** Task ID (global mode — fetches data) */
+  id?: string;
   onTaskCompleted?: () => void;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Priority display ────────────────────────────────────────────────────────
@@ -129,12 +136,28 @@ const progressTextStyle: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewTaskSheet({ isOpen, onClose, task, onTaskCompleted }: ViewTaskSheetProps) {
+export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate }: ViewTaskSheetProps) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
+  const [fetched, setFetched] = useState<TaskViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? taskProp?.id;
+  useEffect(() => {
+    if (taskProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/tasks/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewTaskSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, taskProp]);
+
+  const task = taskProp ?? fetched;
 
   // Fetch checklist items when sheet opens
   useEffect(() => {
@@ -153,6 +176,16 @@ export function ViewTaskSheet({ isOpen, onClose, task, onTaskCompleted }: ViewTa
   useEffect(() => {
     if (task) setActiveTab('details');
   }, [task?.id]);
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!task) return null;
 
@@ -261,7 +294,7 @@ export function ViewTaskSheet({ isOpen, onClose, task, onTaskCompleted }: ViewTa
           <ReadOnlyField label="Due" value={task.due} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={task.freq} />
+          <ReadOnlyField label="Frequency" value={frequencyLabel(task.freq)} />
         </div>
       </div>
 
@@ -374,7 +407,7 @@ export function ViewTaskSheet({ isOpen, onClose, task, onTaskCompleted }: ViewTa
             >
               <div style={checkboxStyle(item.is_completed)}>
                 {item.is_completed && (
-                  <Icon icon={icon.check} style={{ color: color.text.onColorDark, fontSize: '14px' } as CSSProperties & Record<string, string>} />
+                  <Icon icon={icon.check} style={{ color: color.text.onColorDark, fontSize: font.size.body.sm } as CSSProperties & Record<string, string>} />
                 )}
               </div>
               <span style={checklistLabelStyle(item.is_completed)}>{item.label}</span>
@@ -411,6 +444,7 @@ export function ViewTaskSheet({ isOpen, onClose, task, onTaskCompleted }: ViewTa
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={sheetTitle}

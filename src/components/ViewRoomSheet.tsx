@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { color, font, gap } from '@/lib/tokens';
@@ -18,9 +19,15 @@ export interface RoomViewData {
 }
 
 interface ViewRoomSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  room: RoomViewData | null;
+  /** Full room data (page-level mode — skips fetch) */
+  room?: RoomViewData | null;
+  /** Room ID (global mode — fetches data) */
+  id?: string;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Label maps ─────────────────────────────────────────────────────────────
@@ -44,11 +51,39 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewRoomSheet({ isOpen, onClose, room }: ViewRoomSheetProps) {
+export function ViewRoomSheet({ isOpen = true, onClose, room: roomProp, id, onNavigate }: ViewRoomSheetProps) {
+  const [fetched, setFetched] = useState<RoomViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? roomProp?.id;
+  useEffect(() => {
+    if (roomProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/rooms/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewRoomSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, roomProp]);
+
+  const room = roomProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
+
   if (!room) return null;
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={room.name}

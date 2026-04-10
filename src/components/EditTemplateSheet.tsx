@@ -29,6 +29,8 @@ export interface TemplateFormData {
   frequency: string;
   assigned_role_id: string;
   department_id: string;
+  assignment_mode: string;
+  display_mode: string;
   priority: string;
   status: string;
   description: string;
@@ -119,6 +121,18 @@ const PRIORITY_OPTIONS = [
   { label: 'Critical', value: 'critical' },
 ];
 
+const ASSIGNMENT_MODE_OPTIONS = [
+  { label: 'Individual (specific person)', value: 'individual' },
+  { label: 'Role (anyone in role)',         value: 'role' },
+  { label: 'Department (anyone in dept)',   value: 'department' },
+  { label: 'Pool (everyone)',               value: 'pool' },
+];
+
+const DISPLAY_MODE_OPTIONS = [
+  { label: 'Nested (single card with checklist)', value: 'nested' },
+  { label: 'Expanded (one card per item)',         value: 'expanded' },
+];
+
 const STATUS_OPTIONS = [
   { label: 'Active',   value: 'active' },
   { label: 'Draft',    value: 'draft' },
@@ -134,6 +148,8 @@ const EMPTY_FORM: TemplateFormData = {
   frequency: 'daily',
   assigned_role_id: '',
   department_id: '',
+  assignment_mode: 'pool',
+  display_mode: 'nested',
   priority: 'medium',
   status: 'draft',
   description: '',
@@ -413,25 +429,61 @@ export function EditTemplateSheet({
           <div style={formRowStyle}>
             <div style={formRowHalf}>
               <Select
-                label="Assigned Role"
+                label="Assignment Mode"
                 size="sm"
-                options={roleOptions}
-                value={form.assigned_role_id}
-                onChange={updateSelect('assigned_role_id')}
+                options={ASSIGNMENT_MODE_OPTIONS}
+                value={form.assignment_mode}
+                onChange={updateSelect('assignment_mode')}
                 fullWidth
               />
             </div>
             <div style={formRowHalf}>
               <Select
-                label="Department"
+                label="Display Mode"
                 size="sm"
-                options={departmentOptions}
-                value={form.department_id}
-                onChange={updateSelect('department_id')}
+                options={DISPLAY_MODE_OPTIONS}
+                value={form.display_mode}
+                onChange={updateSelect('display_mode')}
                 fullWidth
               />
             </div>
           </div>
+
+          {(form.assignment_mode === 'role' || form.assignment_mode === 'individual') && (
+            <div style={formRowStyle}>
+              <div style={formRowHalf}>
+                <Select
+                  label="Assigned Role"
+                  size="sm"
+                  options={roleOptions}
+                  value={form.assigned_role_id}
+                  onChange={updateSelect('assigned_role_id')}
+                  fullWidth
+                />
+              </div>
+              <div style={formRowHalf}>
+                <Select
+                  label="Department"
+                  size="sm"
+                  options={departmentOptions}
+                  value={form.department_id}
+                  onChange={updateSelect('department_id')}
+                  fullWidth
+                />
+              </div>
+            </div>
+          )}
+
+          {form.assignment_mode === 'department' && (
+            <Select
+              label="Department"
+              size="sm"
+              options={departmentOptions}
+              value={form.department_id}
+              onChange={updateSelect('department_id')}
+              fullWidth
+            />
+          )}
 
           <div style={formRowStyle}>
             {fields.frequency && (

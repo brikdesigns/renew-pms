@@ -6,6 +6,7 @@ import { useToast } from '@/components/ToastProvider';
 import { useMembers } from '@/hooks/useMembers';
 import { useDepartments } from '@/hooks/useDepartments';
 import { color, font, gap, space, border } from '@/lib/tokens';
+import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -43,12 +44,6 @@ function todayStr() {
 
 const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical',
-};
-
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: 'Daily', weekly: 'Weekly', bi_weekly: 'Bi-Weekly', monthly: 'Monthly',
-  quarterly: 'Quarterly', semi_annually: 'Semi-Annually', annually: 'Annually',
-  per_shift: 'Per Shift',
 };
 
 const TYPE_LABELS: Record<string, string> = {

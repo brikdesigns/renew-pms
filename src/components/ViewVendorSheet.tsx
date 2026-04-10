@@ -12,6 +12,7 @@ import {
 import { color, gap, font, space } from '@/lib/tokens';
 import type { Vendor } from '@/app/(auth)/settings/contacts/ContactsTable';
 
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface VendorContact {
@@ -48,15 +49,37 @@ const emptyState: CSSProperties = {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface ViewVendorSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  vendor: Vendor | null;
+  /** Full vendor data (page-level mode — skips fetch) */
+  vendor?: Vendor | null;
+  /** Vendor ID (global mode — fetches data) */
+  id?: string;
   onEdit: (v: Vendor) => void;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-export function ViewVendorSheet({ isOpen, onClose, vendor, onEdit }: ViewVendorSheetProps) {
+export function ViewVendorSheet({ isOpen = true, onClose, vendor: vendorProp, id, onEdit, onNavigate }: ViewVendorSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
   const [contacts, setContacts] = useState<VendorContact[]>([]);
+  const [fetched, setFetched] = useState<Vendor | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? vendorProp?.id;
+  useEffect(() => {
+    if (vendorProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/vendors/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewVendorSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, vendorProp]);
+
+  const vendor = vendorProp ?? fetched;
 
   useEffect(() => {
     if (!vendor || !isOpen) { setContacts([]); return; }
@@ -69,6 +92,16 @@ export function ViewVendorSheet({ isOpen, onClose, vendor, onEdit }: ViewVendorS
   useEffect(() => {
     if (vendor) setActiveTab('details');
   }, [vendor?.id]);
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
 
   if (!vendor) return null;
 
@@ -138,6 +171,7 @@ export function ViewVendorSheet({ isOpen, onClose, vendor, onEdit }: ViewVendorS
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={vendor.name}

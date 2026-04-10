@@ -17,6 +17,7 @@ import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
+import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 
 const TEXT_SECONDARY = color.text.secondary;
 
@@ -91,14 +92,6 @@ export function UsersTable() {
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [filterType, setFilterType] = useState('All Types');
 
-  // Roles that span secondary departments beyond their primary FK
-  const SECONDARY_DEPTS: Record<string, string[]> = {
-    'Office Manager':       ['IT (Information Technology)', 'Marketing', 'Finance', 'Facilities'],
-    'Clinical Manager':     ['(M) Management'],
-    'Insurance Coordinator': ['Finance'],
-    'Third Party':          ['Finance', 'Marketing', 'Facilities'],
-  };
-
   const roleBelongsToDept = (roleName: string, rolePrimaryDept: string, dept: string) =>
     rolePrimaryDept === dept || (SECONDARY_DEPTS[roleName]?.includes(dept) ?? false);
 
@@ -153,10 +146,16 @@ export function UsersTable() {
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (m: Member) => { setEditing(m); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/members/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete user' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
 
@@ -184,8 +183,30 @@ export function UsersTable() {
         const updated: Member = await res.json();
         setMembers((prev) => prev.map((m) => m.id === editing.id ? updated : m));
       }
+    } else {
+      // Invite new user
+      const res = await fetch('/api/members/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          system_role: data.system_role,
+          practice_role_id: data.practice_role_id,
+          employee_type: data.employee_type,
+          shift: data.shift || null,
+        }),
+      });
+      if (res.ok) {
+        const created: Member = await res.json();
+        setMembers((prev) => [...prev, created]);
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Failed to invite user' }));
+        showToast({ title: 'Invite failed', description: err.error, variant: 'error' });
+      }
     }
-    // POST (invite) flow is handled separately — no optimistic add here
   };
 
   const sheetData: UserFormData | null = editing

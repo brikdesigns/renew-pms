@@ -6,6 +6,7 @@ export interface Role {
   id: string;
   name: string;
   description: string;
+  default_system_role: string;
   is_default: boolean;
   is_active: boolean;
   sort_order: number;

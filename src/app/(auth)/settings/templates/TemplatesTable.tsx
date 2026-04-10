@@ -15,6 +15,7 @@ import { Badge, Button, IconButton, Tag } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
+import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useRooms } from '@/hooks/useRooms';
 import { useEquipment } from '@/hooks/useEquipment';
@@ -38,18 +39,6 @@ const TYPE_META: Record<string, { label: string; icon: string }> = {
   skill_training: { label: 'Skill Training', icon: icon.typeSkillTraining },
 };
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: 'Daily',
-  weekly: 'Weekly',
-  bi_weekly: 'Bi-Weekly',
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  semi_annually: 'Semi-Annually',
-  annually: 'Annually',
-  per_shift: 'Per Shift',
-  custom: 'Custom',
-};
-
 const STATUS_BADGE: Record<string, 'positive' | 'warning' | 'error'> = {
   active: 'positive',
   draft: 'warning',
@@ -66,7 +55,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 const EMPTY_FORM_BASE: TemplateFormData = {
   name: '', type: 'checklist', task_category_id: '', frequency: 'daily',
-  assigned_role_id: '', department_id: '', priority: 'medium', status: 'draft',
+  assigned_role_id: '', department_id: '', assignment_mode: 'pool', display_mode: 'nested',
+  priority: 'medium', status: 'draft',
   description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '',
 };
 
@@ -224,10 +214,16 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
 
   const handleSheetClose = () => { setSheetOpen(false); setEditingTemplate(null); };
   const handleViewClose = () => { setViewSheetOpen(false); setViewingTemplate(null); };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/templates/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete template' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
 
@@ -246,6 +242,8 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
       estimated_duration: data.estimated_duration ? parseInt(data.estimated_duration, 10) : null,
       requires_approval: data.requires_approval,
       status: data.status,
+      assignment_mode: data.assignment_mode,
+      display_mode: data.display_mode,
     };
 
     if (editingTemplate) {
@@ -319,6 +317,8 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
         estimated_duration: editingTemplate.estimated_duration ? String(editingTemplate.estimated_duration) : '',
         room_id: editingTemplate.room_id ?? '',
         compliance_type_id: editingTemplate.compliance_type_id ?? '',
+        assignment_mode: editingTemplate.assignment_mode ?? 'pool',
+        display_mode: editingTemplate.display_mode ?? 'nested',
       }
     : { ...EMPTY_FORM_BY_TYPE[newTemplateType] };
 
@@ -340,6 +340,8 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
     frequency: resolveFrequency(t.frequency),
     assigned_role: resolveRole(t.assigned_role_id),
     department: departments.find((d) => d.id === t.department_id)?.name ?? '—',
+    assignment_mode: t.assignment_mode ?? 'pool',
+    display_mode: t.display_mode ?? 'nested',
     priority: t.priority,
     status: t.status,
     description: t.description ?? '',

@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
@@ -24,10 +24,16 @@ export interface InventoryViewData {
 }
 
 interface ViewInventorySheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  item: InventoryViewData | null;
+  /** Full item data (page-level mode — skips fetch) */
+  item?: InventoryViewData | null;
+  /** Item ID (global mode — fetches data) */
+  id?: string;
   onEdit: () => void;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
 // ─── Status mapping ─────────────────────────────────────────────────────────
@@ -53,7 +59,34 @@ const halfStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInventorySheetProps) {
+export function ViewInventorySheet({ isOpen = true, onClose, item: itemProp, id, onEdit, onNavigate }: ViewInventorySheetProps) {
+  const [fetched, setFetched] = useState<InventoryViewData | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? itemProp?.id;
+  useEffect(() => {
+    if (itemProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/equipment/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewInventorySheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, itemProp]);
+
+  const item = itemProp ?? fetched;
+
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading...
+        </div>
+      </Sheet>
+    );
+  }
+
   if (!item) return null;
 
   const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.Active;
@@ -61,6 +94,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={item.name}
@@ -112,7 +146,7 @@ export function ViewInventorySheet({ isOpen, onClose, item, onEdit }: ViewInvent
 
         <div style={rowStyle}>
           <div style={halfStyle}>
-            <ReadOnlyField label="Third-Party Company" value={item.company || '—'} />
+            <ReadOnlyField label="Vendor" value={item.company || '—'} />
           </div>
           <div style={halfStyle}>
             <ReadOnlyField label="Team" value={item.team || '—'} />

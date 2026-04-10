@@ -45,7 +45,7 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -97,45 +97,16 @@ function timeAgo(dateStr: string): string {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-interface MyRequestsListProps {
-  memberId: string;
-}
+// ─── Add request button (self-contained menu state) ───────────────────────
 
-export function MyRequestsList({ memberId }: MyRequestsListProps) {
-  const { requests, loading, refetch } = useRequests({ mine: memberId });
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [submitOpen, setSubmitOpen] = useState(false);
-  const [submitCategory, setSubmitCategory] = useState('');
-  const [viewing, setViewing] = useState<RequestRow | null>(null);
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
-
-  // Auto-open request sheet from ?open=<id> or submit from ?submit=true
-  useEffect(() => {
-    const openId = searchParams.get('open');
-    if (openId && requests.length > 0) {
-      const match = requests.find(r => r.id === openId);
-      if (match) {
-        setViewing(match);
-        router.replace('/requests', { scroll: false });
-      }
-    }
-    if (searchParams.get('submit') === 'true') {
-      setSubmitOpen(true);
-      router.replace('/requests', { scroll: false });
-    }
-  }, [searchParams, requests, router]);
-
-  const sorted = useMemo(() =>
-    [...requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-  [requests]);
-
-  const addButton = (
+function AddRequestButton({ onSelect }: { onSelect: (categoryId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
     <div style={{ position: 'relative' }}>
-      <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+      <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setOpen(p => !p)}>
         New Request
       </Button>
-      {addMenuOpen && (
+      {open && (
         <div style={{
           position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
           backgroundColor: color.surface.primary, borderRadius: border.radius.md,
@@ -146,7 +117,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
             <button
               key={c.id}
               type="button"
-              onClick={() => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); }}
+              onClick={() => { onSelect(c.id); setOpen(false); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: gap.md,
                 width: '100%', padding: `${space.sm} ${space.md}`,
@@ -168,6 +139,46 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       )}
     </div>
   );
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────
+
+interface MyRequestsListProps {
+  memberId: string;
+}
+
+export function MyRequestsList({ memberId }: MyRequestsListProps) {
+  const { requests, loading, refetch } = useRequests({ mine: memberId });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [submitCategory, setSubmitCategory] = useState('');
+  const [viewing, setViewing] = useState<RequestRow | null>(null);
+
+  // Auto-open request sheet from ?open=<id> or submit from ?submit=true
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId && requests.length > 0) {
+      const match = requests.find(r => r.id === openId);
+      if (match) {
+        setViewing(match);
+        router.replace('/requests', { scroll: false });
+      }
+    }
+    if (searchParams.get('submit') === 'true') {
+      setSubmitOpen(true);
+      router.replace('/requests', { scroll: false });
+    }
+  }, [searchParams, requests, router]);
+
+  const sorted = useMemo(() =>
+    [...requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  [requests]);
+
+  const handleAddSelect = (categoryId: string) => {
+    setSubmitCategory(categoryId);
+    setSubmitOpen(true);
+  };
 
   // ── Empty state ──
 
@@ -179,14 +190,14 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
             <h3 style={titleStyle}>My Requests</h3>
             <span style={countBadge}>0</span>
           </div>
-          {addButton}
+          <AddRequestButton onSelect={handleAddSelect} />
         </div>
         <div style={emptyWrapStyle}>
           <h2 style={emptyTitleStyle}>No Requests Yet</h2>
           <p style={emptyDescStyle}>
             Submit a request when something needs attention — equipment issues, device problems, or facility maintenance.
           </p>
-          {addButton}
+          <AddRequestButton onSelect={handleAddSelect} />
         </div>
 
         <SubmitRequestSheet
@@ -208,7 +219,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
           <h3 style={titleStyle}>My Requests</h3>
           <span style={countBadge}>{loading ? '–' : sorted.length}</span>
         </div>
-        {addButton}
+        <AddRequestButton onSelect={handleAddSelect} />
       </div>
 
       <div style={tableWrap}>

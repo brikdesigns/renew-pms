@@ -5,6 +5,101 @@ import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { createNotification } from '@/lib/notifications';
 
+// ─── Shared SELECT + flatten (mirrors list endpoint) ────────────────────────
+
+type ProfileJoin = { first_name: string; last_name: string };
+type DepartmentJoin = { name: string; color: string };
+type RoleJoin = { name: string; departments: DepartmentJoin | DepartmentJoin[] | null };
+type MemberJoin = { id: string; profiles: ProfileJoin | ProfileJoin[] | null; practice_role_types: RoleJoin | RoleJoin[] | null };
+type AssigneeMemberJoin = { id: string; profiles: ProfileJoin | ProfileJoin[] | null };
+
+function first<T>(v: T | T[] | null): T | null {
+  return Array.isArray(v) ? (v[0] ?? null) : v;
+}
+
+const SINGLE_SELECT = `
+  id, title, description, category, urgency, status,
+  location_description, room_id, equipment_id,
+  vendor_id, vendor_contact_id,
+  resolution_notes, resolved_at,
+  created_at, updated_at,
+  rooms(name),
+  equipment(name),
+  vendors(name, type),
+  vendor_contacts(name, phone, email),
+  submitted_member:practice_members!requests_submitted_by_fkey(
+    id, profiles(first_name, last_name),
+    practice_role_types(name, departments(name, color))
+  ),
+  assigned_member:practice_members!requests_assigned_to_fkey(
+    id, profiles(first_name, last_name)
+  )
+`;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function flattenRequest(r: any) {
+  const submitter = first(r.submitted_member);
+  const submitterProfile = submitter ? first((submitter as MemberJoin).profiles) : null;
+  const submitterRole = submitter ? first((submitter as MemberJoin).practice_role_types) : null;
+  const submitterDept = submitterRole ? first(submitterRole.departments) : null;
+  const assignee = first(r.assigned_member);
+  const assigneeProfile = assignee ? first((assignee as AssigneeMemberJoin).profiles) : null;
+  const room = first(r.rooms);
+  const equip = first(r.equipment);
+  const vendor = first(r.vendors);
+  const contact = first(r.vendor_contacts);
+
+  return {
+    id: r.id, title: r.title, description: r.description,
+    category: r.category, urgency: r.urgency, status: r.status,
+    location_description: r.location_description,
+    room_id: r.room_id, room_name: room?.name ?? null,
+    equipment_id: r.equipment_id, equipment_name: equip?.name ?? null,
+    vendor_id: r.vendor_id, vendor_name: vendor?.name ?? null, vendor_type: vendor?.type ?? null,
+    vendor_contact_id: r.vendor_contact_id,
+    vendor_contact_name: contact?.name ?? null,
+    vendor_contact_phone: contact?.phone ?? null,
+    vendor_contact_email: contact?.email ?? null,
+    resolution_notes: r.resolution_notes, resolved_at: r.resolved_at,
+    created_at: r.created_at, updated_at: r.updated_at,
+    submitter_id: submitter?.id ?? null,
+    submitter_name: submitterProfile ? `${(submitterProfile as ProfileJoin).first_name} ${(submitterProfile as ProfileJoin).last_name}`.trim() : null,
+    submitter_role: submitterRole?.name ?? null,
+    assignee_id: assignee?.id ?? null,
+    assignee_name: assigneeProfile ? `${(assigneeProfile as ProfileJoin).first_name} ${(assigneeProfile as ProfileJoin).last_name}`.trim() : null,
+  };
+}
+
+/**
+ * GET /api/requests/[id]
+ * Fetch a single request with all joins (same shape as the list endpoint).
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requireAuth(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const { data, error } = await supabase
+    .from('requests')
+    .select(SINGLE_SELECT)
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+
+  return NextResponse.json(flattenRequest(data));
+}
+
 const ALLOWED_FIELDS = [
   'title', 'description', 'category', 'urgency', 'status',
   'location_description', 'room_id', 'equipment_id',

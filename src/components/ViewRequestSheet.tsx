@@ -73,14 +73,20 @@ interface MemberOption {
 }
 
 interface ViewRequestSheetProps {
-  isOpen: boolean;
+  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
+  isOpen?: boolean;
   onClose: () => void;
-  request: RequestRow | null;
-  isAdmin: boolean;
-  onUpdated: () => void;
+  /** Full request data (page-level mode — skips fetch) */
+  request?: RequestRow | null;
+  /** Request ID (global mode — fetches data) */
+  id?: string;
+  isAdmin?: boolean;
+  onUpdated?: () => void;
+  /** Navigate to a related entity (global sheet stack) */
+  onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated }: ViewRequestSheetProps) {
+export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp, id, isAdmin = false, onUpdated, onNavigate }: ViewRequestSheetProps) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [status, setStatus] = useState('');
@@ -89,6 +95,22 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [fetched, setFetched] = useState<RequestRow | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Global mode: fetch by ID when no data prop is given
+  const resolvedId = id ?? requestProp?.id;
+  useEffect(() => {
+    if (requestProp || !resolvedId) return;
+    setFetchLoading(true);
+    fetch(`/api/requests/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewRequestSheet] fetch failed:', err))
+      .finally(() => setFetchLoading(false));
+  }, [resolvedId, requestProp]);
+
+  const request = requestProp ?? fetched;
 
   // Reset form state when request changes
   useEffect(() => {
@@ -117,6 +139,16 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
       .catch(err => console.error('[ViewRequestSheet] failed to load members:', err));
   }, [isAdmin, isOpen]);
 
+  if (fetchLoading) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
+          Loading request...
+        </div>
+      </Sheet>
+    );
+  }
+
   if (!request) return null;
 
   const hasChanges = dirty || status !== request.status || assignedTo !== (request.assignee_id ?? '') || resolutionNotes !== (request.resolution_notes ?? '');
@@ -144,7 +176,7 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
       }
 
       showToast({ title: 'Request updated', description: `${request.title} has been updated.`, variant: 'success' });
-      onUpdated();
+      onUpdated?.();
       onClose();
     } catch (err: unknown) {
       showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to update', variant: 'error' });
@@ -193,8 +225,20 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
         <>
           <h3 style={sheetSectionTitle}>Location & Equipment</h3>
           <div style={rowStyle}>
-            <ReadOnlyField label="Room" value={request.room_name} />
-            <ReadOnlyField label="Equipment" value={request.equipment_name} />
+            <ReadOnlyField label="Room" value={
+              onNavigate && request.room_id ? (
+                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.room_id) onNavigate('room', { id: request.room_id }, { title: request.room_name ?? 'Room' }); }}>
+                  {request.room_name}
+                </button>
+              ) : request.room_name
+            } />
+            <ReadOnlyField label="Equipment" value={
+              onNavigate && request.equipment_id ? (
+                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.equipment_id) onNavigate('inventory', { id: request.equipment_id }, { title: request.equipment_name ?? 'Equipment' }); }}>
+                  {request.equipment_name}
+                </button>
+              ) : request.equipment_name
+            } />
           </div>
           {request.location_description && (
             <ReadOnlyField label="Location Details" value={request.location_description} />
@@ -206,7 +250,13 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
         <>
           <h3 style={sheetSectionTitle}>Vendor</h3>
           <div style={rowStyle}>
-            <ReadOnlyField label="Vendor" value={request.vendor_name} />
+            <ReadOnlyField label="Vendor" value={
+              onNavigate && request.vendor_id ? (
+                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_id) onNavigate('vendor', { id: request.vendor_id }, { title: request.vendor_name ?? 'Vendor' }); }}>
+                  {request.vendor_name}
+                </button>
+              ) : request.vendor_name
+            } />
             <ReadOnlyField label="Contact" value={request.vendor_contact_name} />
           </div>
         </>
@@ -344,7 +394,7 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
                   <Icon
                     icon={event.icon}
                     style={{
-                      fontSize: '14px',
+                      fontSize: font.size.body.sm,
                       color: idx === 0 ? color.text.onColorDark : color.text.secondary,
                     } as CSSProperties & Record<string, string>}
                   />
@@ -416,6 +466,7 @@ export function ViewRequestSheet({ isOpen, onClose, request, isAdmin, onUpdated 
 
   return (
     <Sheet
+      variant="floating"
       isOpen={isOpen}
       onClose={onClose}
       title={request.title}

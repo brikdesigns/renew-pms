@@ -1,8 +1,45 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requirePracticeAdmin } from '@/lib/auth';
+import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { getDeptMemberCounts } from '../_helpers';
+
+/**
+ * GET /api/departments/[id]
+ * Returns a single department by ID with member count.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requireAuth(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const { data, error } = await supabase
+    .from('departments')
+    .select('id, name, color, is_active, sort_order')
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const { data: allDepts } = await supabase
+    .from('departments')
+    .select('id, name')
+    .eq('practice_id', practiceId);
+
+  const counts = await getDeptMemberCounts(supabase, practiceId, allDepts ?? []);
+  return NextResponse.json({ ...data, member_count: counts[data.id] ?? 0 });
+}
 
 /**
  * PATCH /api/departments/[id]
@@ -48,7 +85,14 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ...data, member_count: 0 });
+  // Fetch all departments for secondary-dept name→id lookup, then compute count
+  const { data: allDepts } = await supabase
+    .from('departments')
+    .select('id, name')
+    .eq('practice_id', practiceId);
+
+  const counts = await getDeptMemberCounts(supabase, practiceId, allDepts ?? []);
+  return NextResponse.json({ ...data, member_count: counts[data.id] ?? 0 });
 }
 
 /**

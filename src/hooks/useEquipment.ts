@@ -34,5 +34,5 @@ export function useEquipment() {
       });
   }, []);
 
-  return { equipment, loading, error };
+  return { equipment, setEquipment, loading, error };
 }

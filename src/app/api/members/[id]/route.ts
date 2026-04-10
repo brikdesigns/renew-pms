@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requirePracticeAdmin } from '@/lib/auth';
+import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 
@@ -43,6 +43,40 @@ function flattenMember(m: {
     is_active: m.is_active,
     joined_at: m.joined_at,
   };
+}
+
+/**
+ * GET /api/members/[id]
+ * Returns a single practice member by ID with profile and role/department details.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const authResult = await requireAuth(supabase);
+  if (authResult instanceof NextResponse) return authResult;
+  const authUser = authResult as AuthUser;
+
+  const practiceId = await getPracticeId(supabase, authUser);
+  if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  const { data, error } = await supabase
+    .from('practice_members')
+    .select(`
+      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
+      practice_role_types(id, name, department_id, departments(id, name, color))
+    `)
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  return NextResponse.json(flattenMember(data));
 }
 
 /**

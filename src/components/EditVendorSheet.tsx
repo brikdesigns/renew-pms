@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select } from '@bds/components';
+import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@bds/components';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
 import { useEquipment } from '@/hooks/useEquipment';
 import {
@@ -9,7 +11,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { gap } from '@/lib/tokens';
+import { gap, color, font, space, border } from '@/lib/tokens';
 import type { Vendor } from '@/app/(auth)/settings/contacts/ContactsTable';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -23,6 +25,7 @@ export interface VendorFormData {
   address: string;
   notes: string;
   is_active: boolean;
+  equipment_ids: string[];
 }
 
 const TYPE_OPTIONS = [
@@ -42,6 +45,7 @@ const STATUS_OPTIONS = [
 const EMPTY_FORM: VendorFormData = {
   name: '', type: '', phone: '', email: '',
   website_url: '', address: '', notes: '', is_active: true,
+  equipment_ids: [],
 };
 
 const formRowStyle: React.CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
@@ -73,6 +77,7 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
         address: initialData.address ?? '',
         notes: initialData.notes ?? '',
         is_active: initialData.is_active,
+        equipment_ids: [],
       } : EMPTY_FORM);
     }
   }, [isOpen, initialData]);
@@ -151,10 +156,38 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
 
           <h3 style={sheetSectionTitle}>Equipment & Inventory</h3>
           <div style={sheetFormGroup}>
-            <Select label="Related Equipment" size="sm" options={equipmentOptions} value="" onChange={() => {}} fullWidth />
-            <p style={{ fontFamily: 'var(--font-family-body)', fontSize: 'var(--body-xs)', color: 'var(--text-muted)', margin: 0 }}>
-              Equipment associations will be available in a future update.
-            </p>
+            <Select
+              label="Add Equipment"
+              size="sm"
+              options={equipmentOptions.filter(o => !form.equipment_ids.includes(o.value))}
+              value=""
+              onChange={(e) => {
+                const id = e.target.value;
+                if (id && !form.equipment_ids.includes(id)) {
+                  setForm(prev => ({ ...prev, equipment_ids: [...prev.equipment_ids, id] }));
+                }
+              }}
+              fullWidth
+            />
+            {form.equipment_ids.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: gap.sm }}>
+                {form.equipment_ids.map(eqId => {
+                  const item = equipment.find(e => e.id === eqId);
+                  return (
+                    <Tag key={eqId} size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.primary, display: 'inline-flex', alignItems: 'center', gap: gap.xs }}>
+                      {item?.name ?? eqId}
+                      <IconButton
+                        variant="danger-ghost"
+                        size="tiny"
+                        icon={<Icon icon={icon.close} />}
+                        label={`Remove ${item?.name ?? 'equipment'}`}
+                        onClick={() => setForm(prev => ({ ...prev, equipment_ids: prev.equipment_ids.filter(id => id !== eqId) }))}
+                      />
+                    </Tag>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <h3 style={sheetSectionTitle}>Notes</h3>

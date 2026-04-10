@@ -58,7 +58,7 @@ const INVENTORY_SEGMENTS = [
 
 export function InventoryTable() {
   const [view, setView] = useState('equipment');
-  const { equipment, loading } = useEquipment();
+  const { equipment, setEquipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editing, setEditing] = useState<EquipmentItem | null>(null);
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
@@ -93,20 +93,61 @@ export function InventoryTable() {
   const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    // TODO: Wire to DELETE API
-    showToast({ title: 'Deleted', description: `${deleteTarget.name} has been deleted.`, variant: 'success' });
+    const res = await fetch(`/api/equipment/${deleteTarget.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setEquipment((prev) => prev.filter((e) => e.id !== deleteTarget.id));
+      showToast({ title: 'Deleted', description: `${deleteTarget.name} has been removed.`, variant: 'success' });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to delete' }));
+      showToast({ title: 'Error', description: err.error, variant: 'error' });
+    }
     setDeleteTarget(null);
   };
 
-  const handleSave = (data: InventoryFormData) => {
-    // TODO: wire to POST/PUT /api/equipment once CRUD is implemented
-    void data;
+  const handleSave = async (data: InventoryFormData) => {
+    if (editing) {
+      const res = await fetch(`/api/equipment/${editing.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          manufacturer: data.company || null,
+          room_id: data.room || null,
+          status: data.status === 'Active' ? 'active' : data.status === 'Renew Review' ? 'needs_service' : 'out_of_service',
+          notes: data.description || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to update' }));
+        throw new Error(err.error);
+      }
+      const updated: EquipmentItem = await res.json();
+      setEquipment((prev) => prev.map((e) => e.id === editing.id ? updated : e));
+    } else {
+      const res = await fetch('/api/equipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          manufacturer: data.company || null,
+          room_id: data.room || null,
+          status: data.status === 'Active' ? 'active' : data.status === 'Renew Review' ? 'needs_service' : 'out_of_service',
+          notes: data.description || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to add item' }));
+        throw new Error(err.error);
+      }
+      const created: EquipmentItem = await res.json();
+      setEquipment((prev) => [...prev, created]);
+    }
   };
 
   const editFormData: InventoryFormData | null = editing
-    ? { name: editing.name, status: editing.status, department: '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', team: '', room: editing.room_id ?? '' }
+    ? { name: editing.name, status: editing.status, department: '', department_id: '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: '', team: '', role_id: '', room: editing.room_id ?? '' }
     : null;
 
   const viewData: InventoryViewData | null = viewing

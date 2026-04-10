@@ -23,7 +23,7 @@ interface EditRoomSheetProps {
   onClose: () => void;
   /** null = Add mode, object = Edit mode */
   initialData: RoomFormData | null;
-  onSave: (data: RoomFormData) => void;
+  onSave: (data: RoomFormData) => void | Promise<void>;
 }
 
 // ─── Options ─────────────────────────────────────────────────────────────────
@@ -80,20 +80,21 @@ export function EditRoomSheet({ isOpen, onClose, initialData, onSave }: EditRoom
     if (!form.name.trim()) return;
 
     setSaving(true);
-
-    // TODO: Wire to Supabase insert/update on rooms table
-    await new Promise((r) => setTimeout(r, 500));
-
-    onSave(form);
-    setSaving(false);
-    showToast({
-      title: isEdit ? 'Room updated' : 'Room added',
-      description: isEdit
-        ? `${form.name} has been updated.`
-        : `${form.name} has been added to the office.`,
-      variant: 'success',
-    });
-    onClose();
+    try {
+      await onSave(form);
+      showToast({
+        title: isEdit ? 'Room updated' : 'Room added',
+        description: isEdit
+          ? `${form.name} has been updated.`
+          : `${form.name} has been added to the office.`,
+        variant: 'success',
+      });
+      onClose();
+    } catch (err) {
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save', variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

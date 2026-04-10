@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, type CSSProperties } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton } from '@bds/components';
@@ -15,6 +15,10 @@ import { shadow, color, font, space, gap, border, departmentColor } from '@/lib/
 import { useDepartments } from '@/hooks/useDepartments';
 import { useTasks } from '@/hooks/useTasks';
 import { usePoolTasks } from '@/hooks/usePoolTasks';
+import { useMembers } from '@/hooks/useMembers';
+import { useToast } from '@/components/ToastProvider';
+import { TaskAssigneeAvatar } from '@/components/TaskAssigneeAvatar';
+import { frequencyLabel } from '@/lib/frequency-labels';
 
 // ─── Task shape for the board ────────────────────────────────────────────────
 
@@ -63,7 +67,7 @@ const TYPE_FILTER_MAP: Record<string, string> = {
 
 // ─── View toggle ─────────────────────────────────────────────────────────────
 
-type TaskView = 'all' | 'open';
+type TaskView = 'all' | 'mine' | 'open';
 
 // ─── Status columns for Open Tasks view ─────────────────────────────────────
 
@@ -81,11 +85,42 @@ const STATUS_COLUMN_COLORS: Record<string, { dot: 'info' | 'positive' | 'warning
   complete:        { dot: 'positive', bg: color.surface.primary },
 };
 
+/** When dropping into a multi-status column, map to the primary DB status */
+const DROP_STATUS_MAP: Record<string, string> = {
+  open:            'not_started',
+  in_progress:     'in_progress',
+  needs_attention: 'blocked',
+  complete:        'completed',
+};
+
+// ─── Open Tasks board column styles (drag states) ───────────────────────────
+
+const poolColumnBase: CSSProperties = {
+  backgroundColor: color.surface.primary,
+  transition: 'outline 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+  outline: '2px solid transparent',
+  outlineOffset: '-2px',
+  borderRadius: border.radius.md,
+};
+
+const poolColumnDragActive: CSSProperties = {
+  ...poolColumnBase,
+  backgroundColor: color.surface.secondary,
+  outline: `2px dashed ${color.border.muted}`,
+};
+
+const poolColumnDropTarget: CSSProperties = {
+  ...poolColumnBase,
+  backgroundColor: color.surface.muted,
+  outline: `2px solid ${color.border.brand}`,
+  boxShadow: shadow.md,
+};
+
 // ─── Segmented control styles (matches Contacts page) ───────────────────────
 
 const segmentBarStyle: CSSProperties = {
   display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: '2px',
+  borderRadius: border.radius.sm, padding: space.tiny,
 };
 
 const segmentBtnStyle = (active: boolean): CSSProperties => ({
@@ -98,7 +133,7 @@ const segmentBtnStyle = (active: boolean): CSSProperties => ({
   fontWeight: active ? font.weight.semibold : font.weight.medium,
   color: active ? color.text.primary : color.text.secondary,
   backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+  boxShadow: active ? shadow.sm : 'none',
   transition: 'all 0.15s ease',
 });
 
@@ -159,6 +194,7 @@ function ChecklistProgress({ completed, total }: { completed: number; total: num
 
 interface TasksClientProps {
   canAddTask: boolean;
+  currentMemberId: string | null;
 }
 
 const ADD_TASK_TYPES = [
@@ -169,7 +205,7 @@ const ADD_TASK_TYPES = [
   { id: 'skill_training', label: 'Training',   desc: 'Continuing education',     icon: icon.typeSkillTraining },
 ] as const;
 
-export default function TasksClient({ canAddTask }: TasksClientProps) {
+export default function TasksClient({ canAddTask, currentMemberId }: TasksClientProps) {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
@@ -186,6 +222,11 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
   const [addTaskType, setAddTaskType] = useState('');
   const addBtnRef = useRef<HTMLDivElement>(null);
 
+  // ── Drag-and-drop state (Open Tasks board) ────────────────────────────────
+  const [poolDraggingId, setPoolDraggingId] = useState<string | null>(null);
+  const [poolDropTarget, setPoolDropTarget] = useState<string | null>(null);
+  const poolIsDragging = useRef(false);
+
   // Close add menu on outside click
   useEffect(() => {
     if (!addMenuOpen) return;
@@ -197,16 +238,85 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
   }, [addMenuOpen]);
 
   const { departments } = useDepartments();
+  const { members } = useMembers();
   const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate);
   const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate);
 
   const refetchAll = () => { refetchAssigned(); refetchPool(); };
+  const { showToast } = useToast();
 
   const deptColorMap = useMemo(
     () => new Map(departments.map((d) => [d.name, d.color])),
     [departments]
   );
   const getDeptColors = (deptName: string) => departmentColor(deptColorMap.get(deptName) ?? 'blue');
+
+  // ── Drag-and-drop handlers (Open Tasks board) ─────────────────────────────
+
+  const handlePoolDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, taskId: string) => {
+    poolIsDragging.current = true;
+    setPoolDraggingId(taskId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', taskId);
+    const card = e.currentTarget;
+    card.classList.add('bds-board-card--drag-preview');
+    requestAnimationFrame(() => { card.classList.remove('bds-board-card--drag-preview'); });
+  }, []);
+
+  const handlePoolDragEnd = useCallback(() => {
+    setPoolDraggingId(null);
+    setPoolDropTarget(null);
+    setTimeout(() => { poolIsDragging.current = false; }, 0);
+  }, []);
+
+  const handlePoolDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handlePoolDragEnter = useCallback((_e: React.DragEvent<HTMLDivElement>, colId: string) => {
+    setPoolDropTarget(colId);
+  }, []);
+
+  const handlePoolDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>, colId: string) => {
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) return;
+    setPoolDropTarget(prev => prev === colId ? null : prev);
+  }, []);
+
+  const handlePoolDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>, targetColId: string) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+    setPoolDraggingId(null);
+    setPoolDropTarget(null);
+
+    if (!taskId) return;
+    const task = poolTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const targetStatus = DROP_STATUS_MAP[targetColId];
+    const targetCol = STATUS_COLUMNS.find(c => c.id === targetColId);
+    if (!targetStatus || !targetCol) return;
+
+    // Skip if already in target column
+    if ((targetCol.statuses as readonly string[]).includes(task.status)) return;
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to update status');
+      }
+      showToast({ title: 'Status updated', description: `Moved to ${targetCol.label}.`, variant: 'success' });
+      refetchPool();
+    } catch (err) {
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to update status', variant: 'error' });
+    }
+  }, [poolTasks, refetchPool, showToast]);
 
   const toggle = (id: string) =>
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -306,6 +416,15 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
     })
     .filter((col) => col.tasks.length > 0);
 
+  // ── Filtered "My Tasks" board (current user only) ─────────────────────────
+
+  const filteredMyBoard = filteredAssignedBoard.filter(
+    (col) => assignedTasks.some(
+      (t) => t.assigned_to === currentMemberId
+        && `${t.member_first_name} ${t.member_last_name}`.trim() === col.person.name
+    )
+  );
+
   // ── Filtered "Open Tasks" board ────────────────────────────────────────────
 
   const filteredPoolBoard = poolBoard.map((col) => ({
@@ -360,7 +479,7 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
         }
         tags={pool ? (
           <>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{task.freq}</Tag>
+            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
                 <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
@@ -370,7 +489,7 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
         ) : (
           <>
             <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{task.freq}</Tag>
+            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
@@ -394,7 +513,7 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
               backgroundColor: color.surface.secondary,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Icon icon={icon.profile} style={{ fontSize: '14px', color: color.text.muted } as React.CSSProperties & Record<string, string>} />
+              <Icon icon={icon.profile} style={{ fontSize: font.size.body.sm, color: color.text.muted } as React.CSSProperties & Record<string, string>} />
             </div>
           )
         ) : (
@@ -416,6 +535,69 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
     );
   }
 
+  // ── Render a draggable pool task card ─────────────────────────────────────
+
+  function renderPoolDragCard(task: MockTask, isBeingDragged: boolean, isDragMode: boolean) {
+    const isOverdue = task.overdue && !checked[task.id];
+    const rawTask = poolTasks.find(t => t.id === task.id);
+    const assigneeName = rawTask?.member_first_name
+      ? `${rawTask.member_first_name} ${rawTask.member_last_name}`.trim()
+      : null;
+    return (
+      <BoardCard
+        key={task.id}
+        title={task.title}
+        subtitle={task.due}
+        accentColor={color.surface.secondary}
+        checked={!!checked[task.id]}
+        onCheckedChange={() => toggle(task.id)}
+        onClick={() => { if (!poolIsDragging.current) setViewingTask(buildTaskViewData(task)); }}
+        draggable
+        onDragStart={(e: React.DragEvent<HTMLDivElement>) => handlePoolDragStart(e, task.id)}
+        onDragEnd={handlePoolDragEnd}
+        style={{
+          ...(isOverdue
+            ? { backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)' } as React.CSSProperties // token-audit-ignore — CSS custom property override
+            : { backgroundColor: color.surface.overlay }
+          ),
+          boxShadow: isBeingDragged ? 'none' : shadow.sm,
+          cursor: isDragMode ? 'grabbing' : 'grab',
+          ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
+          transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
+        }}
+        tags={
+          <>
+            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
+            {isOverdue && (
+              <Tooltip content="Overdue" placement="top">
+                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
+              </Tooltip>
+            )}
+          </>
+        }
+        trailingTag={
+          checked[task.id] ? (
+            <AnimatedIcon
+              key={`check-${task.id}-done`}
+              animationData={checkCompleteAnimation}
+              trigger="once"
+              size={20}
+              label="Completed"
+            />
+          ) : (
+            <TaskAssigneeAvatar
+              taskId={task.id}
+              assigneeName={assigneeName}
+              assigneeDepartmentColor={rawTask?.member_department_color}
+              members={members}
+              onAssigned={refetchPool}
+            />
+          )
+        }
+      />
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
       {/* ── Unified toolbar ── */}
@@ -423,6 +605,7 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
         {/* Left: view toggle */}
         <div style={segmentBarStyle}>
           <button type="button" style={segmentBtnStyle(taskView === 'all')} onClick={() => setTaskView('all')}>All Tasks</button>
+          <button type="button" style={segmentBtnStyle(taskView === 'mine')} onClick={() => setTaskView('mine')}>My Tasks</button>
           <button type="button" style={segmentBtnStyle(taskView === 'open')} onClick={() => setTaskView('open')}>Open Tasks</button>
         </div>
 
@@ -513,10 +696,20 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
       )}
 
       {/* ── Board ── */}
-      {taskView === 'all' ? (
-        /* All Tasks — person-based columns */
+      {taskView === 'mine' && filteredMyBoard.length === 0 ? (
+        /* My Tasks — empty state */
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: gap.lg, minHeight: '40vh' }}>
+          <h2 style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, color: color.text.primary, margin: 0 }}>
+            No Tasks Assigned
+          </h2>
+          <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, textAlign: 'center', maxWidth: '400px', lineHeight: font.lineHeight.normal, margin: 0 }}>
+            You don&apos;t have any tasks assigned for this date. Check back later or switch to All Tasks to see what&apos;s happening across the team.
+          </p>
+        </div>
+      ) : (taskView === 'all' || taskView === 'mine') ? (
+        /* All Tasks / My Tasks — person-based columns */
         <Board style={{ flex: 1, minHeight: 0 }}>
-          {filteredAssignedBoard.map((col) => {
+          {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => {
             const overdueTasks = col.tasks.filter((t) => t.overdue && !checked[t.id]);
             const normalTasks = col.tasks.filter((t) => !t.overdue || checked[t.id]);
 
@@ -544,14 +737,29 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
           })}
         </Board>
       ) : (
-        /* Open Tasks — status-based columns for pool tasks */
+        /* Open Tasks — status-based columns for pool tasks (drag-and-drop enabled) */
         <Board style={{ flex: 1, minHeight: 0 }}>
           {filteredPoolBoard.map((col) => {
-            const colStyle = STATUS_COLUMN_COLORS[col.id];
+            const colColors = STATUS_COLUMN_COLORS[col.id];
+            const isDropTarget = poolDropTarget === col.id;
+            const isDragMode = poolDraggingId !== null;
+            const colStyle = isDropTarget
+              ? poolColumnDropTarget
+              : isDragMode
+                ? poolColumnDragActive
+                : poolColumnBase;
+
             return (
-              <BoardColumn key={col.id} style={{ backgroundColor: colStyle.bg } as React.CSSProperties}>
+              <BoardColumn
+                key={col.id}
+                style={colStyle}
+                onDragOver={handlePoolDragOver}
+                onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handlePoolDragEnter(e, col.id)}
+                onDragLeave={(e: React.DragEvent<HTMLDivElement>) => handlePoolDragLeave(e, col.id)}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => handlePoolDrop(e, col.id)}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, padding: `${space.md} 0` }}>
-                  <Dot status={colStyle.dot} size="sm" />
+                  <Dot status={colColors.dot} size="sm" />
                   <span style={{
                     fontFamily: font.family.label,
                     fontSize: font.size.label.md,
@@ -574,7 +782,31 @@ export default function TasksClient({ canAddTask }: TasksClientProps) {
                     </span>
                   )}
                 </div>
-                {col.tasks.map((task) => renderTaskCard(task, color.surface.secondary, undefined, undefined, true))}
+                {col.tasks.map((task) => {
+                  const isBeingDragged = poolDraggingId === task.id;
+                  return renderPoolDragCard(task, isBeingDragged, isDragMode);
+                })}
+                {col.tasks.length === 0 && !isDragMode && (
+                  <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
+                    No tasks
+                  </div>
+                )}
+                {isDragMode && (
+                  <div style={{
+                    padding: space.lg,
+                    textAlign: 'center',
+                    color: isDropTarget ? color.text.brand : color.text.muted,
+                    fontSize: font.size.body.sm,
+                    fontFamily: font.family.label,
+                    fontWeight: font.weight.medium,
+                    border: `2px dashed ${isDropTarget ? color.border.brand : color.border.muted}`,
+                    borderRadius: border.radius.md,
+                    transition: 'color 0.15s ease, border-color 0.15s ease',
+                    marginTop: col.tasks.length > 0 ? space.sm : '0',
+                  }}>
+                    Drop to move to {col.label}
+                  </div>
+                )}
               </BoardColumn>
             );
           })}

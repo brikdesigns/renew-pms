@@ -9,5 +9,12 @@ export default async function DashboardPage() {
   const { first_name, email } = authUser.profile;
   const displayName = first_name ?? email?.split('@')[0] ?? 'there';
 
-  return <DashboardClient userName={displayName} />;
+  return (
+    <DashboardClient
+      userName={displayName}
+      systemRole={authUser.profile.system_role}
+      employeeType={authUser.membership?.employee_type ?? 'proficient'}
+      userDepartment={authUser.membership?.department ?? null}
+    />
+  );
 }

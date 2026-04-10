@@ -139,16 +139,25 @@ const columnBaseStyle: CSSProperties = {
   backgroundColor: color.surface.primary,
   flex: 1,
   minWidth: 0,
-  transition: 'outline 0.15s ease, background-color 0.15s ease',
+  transition: 'outline 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease',
   outline: '2px solid transparent',
   outlineOffset: '-2px',
   borderRadius: border.radius.md,
 };
 
+/** All columns while any card is being dragged — subtle dropzone hint */
+const columnDragActiveStyle: CSSProperties = {
+  ...columnBaseStyle,
+  backgroundColor: color.surface.secondary,
+  outline: `2px dashed ${color.border.muted}`,
+};
+
+/** The specific column the card is hovering over */
 const columnDropTargetStyle: CSSProperties = {
   ...columnBaseStyle,
-  outline: `2px dashed ${color.border.secondary}`,
-  backgroundColor: color.surface.secondary,
+  backgroundColor: color.surface.muted,
+  outline: `2px solid ${color.border.brand}`,
+  boxShadow: shadow.md,
 };
 
 // ─── Assignee menu constants ────────────────────────────────────────────────
@@ -564,73 +573,101 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       </div>
 
       <Board style={{ flex: 1, minHeight: 0 }}>
-        {columns.map(col => (
-          <BoardColumn
-            key={col.key}
-            style={dropTargetKey === col.key ? columnDropTargetStyle : columnBaseStyle}
-            onDragOver={handleColumnDragOver}
-            onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragEnter(e, col.key)}
-            onDragLeave={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragLeave(e, col.key)}
-            onDrop={(e: React.DragEvent<HTMLDivElement>) => handleColumnDrop(e, col.key)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, color: color.text.primary }}>
-                {col.label}
-              </span>
-              <span style={countBadgeStyle}>{col.requests.length}</span>
-            </div>
-            {col.requests.map(req => {
-              const priority = PRIORITY_BADGE[req.urgency] ?? PRIORITY_BADGE.medium;
-              const catLabel = CATEGORY_LABELS[req.category] ?? req.category;
-              return (
-                <BoardCard
-                  key={req.id}
-                  title={req.title}
-                  subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
-                  onClick={() => { if (!isDragging.current) setViewing(req); }}
-                  draggable
-                  onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
-                  onDragEnd={handleDragEnd}
-                  style={{
-                    backgroundColor: color.surface.overlay,
-                    boxShadow: shadow.sm,
-                    cursor: 'grab',
-                    ...(draggingId === req.id ? { opacity: 0.35, pointerEvents: 'none' as const } : {}),
-                  }}
-                  tags={
-                    <>
-                      <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
-                      <Badge status={priority.status} size="xs" variant="dark" icon={<Icon icon={priority.icon} />} style={{ flexShrink: 0 }}>
-                        {priority.label}
-                      </Badge>
-                      {req.vendor_name && (
-                        <Tooltip content="Has Vendor">
-                          <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
-                            <Icon icon={icon.wrench} width={14} height={14} />
-                          </span>
-                        </Tooltip>
-                      )}
-                    </>
-                  }
-                  trailingTag={
-                    <AssigneeAvatar
-                      requestId={req.id}
-                      assigneeId={req.assignee_id}
-                      assigneeName={req.assignee_name}
-                      members={members}
-                      onAssigned={refetch}
-                    />
-                  }
-                />
-              );
-            })}
-            {col.requests.length === 0 && (
-              <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
-                No requests
+        {columns.map(col => {
+          const isDropTarget = dropTargetKey === col.key;
+          const isDragMode = draggingId !== null;
+          const colStyle = isDropTarget
+            ? columnDropTargetStyle
+            : isDragMode
+              ? columnDragActiveStyle
+              : columnBaseStyle;
+
+          return (
+            <BoardColumn
+              key={col.key}
+              style={colStyle}
+              onDragOver={handleColumnDragOver}
+              onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragEnter(e, col.key)}
+              onDragLeave={(e: React.DragEvent<HTMLDivElement>) => handleColumnDragLeave(e, col.key)}
+              onDrop={(e: React.DragEvent<HTMLDivElement>) => handleColumnDrop(e, col.key)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, color: color.text.primary }}>
+                  {col.label}
+                </span>
+                <span style={countBadgeStyle}>{col.requests.length}</span>
               </div>
-            )}
-          </BoardColumn>
-        ))}
+              {col.requests.map(req => {
+                const priority = PRIORITY_BADGE[req.urgency] ?? PRIORITY_BADGE.medium;
+                const catLabel = CATEGORY_LABELS[req.category] ?? req.category;
+                const isBeingDragged = draggingId === req.id;
+                return (
+                  <BoardCard
+                    key={req.id}
+                    title={req.title}
+                    subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
+                    onClick={() => { if (!isDragging.current) setViewing(req); }}
+                    draggable
+                    onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
+                    onDragEnd={handleDragEnd}
+                    style={{
+                      backgroundColor: color.surface.overlay,
+                      boxShadow: isBeingDragged ? 'none' : shadow.sm,
+                      cursor: isDragMode ? 'grabbing' : 'grab',
+                      ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
+                      transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                    tags={
+                      <>
+                        <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
+                        <Badge status={priority.status} size="xs" variant="dark" icon={<Icon icon={priority.icon} />} style={{ flexShrink: 0 }}>
+                          {priority.label}
+                        </Badge>
+                        {req.vendor_name && (
+                          <Tooltip content="Has Vendor">
+                            <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
+                              <Icon icon={icon.wrench} width={14} height={14} />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </>
+                    }
+                    trailingTag={
+                      <AssigneeAvatar
+                        requestId={req.id}
+                        assigneeId={req.assignee_id}
+                        assigneeName={req.assignee_name}
+                        members={members}
+                        onAssigned={refetch}
+                      />
+                    }
+                  />
+                );
+              })}
+              {col.requests.length === 0 && !isDragMode && (
+                <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
+                  No requests
+                </div>
+              )}
+              {isDragMode && (
+                <div style={{
+                  padding: space.lg,
+                  textAlign: 'center',
+                  color: isDropTarget ? color.text.brand : color.text.muted,
+                  fontSize: font.size.body.sm,
+                  fontFamily: font.family.label,
+                  fontWeight: font.weight.medium,
+                  border: `2px dashed ${isDropTarget ? color.border.brand : color.border.muted}`,
+                  borderRadius: border.radius.md,
+                  transition: 'color 0.15s ease, border-color 0.15s ease',
+                  marginTop: col.requests.length > 0 ? space.sm : '0',
+                }}>
+                  Drop to move to {col.label}
+                </div>
+              )}
+            </BoardColumn>
+          );
+        })}
       </Board>
 
       <SubmitRequestSheet

@@ -21,7 +21,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('practice_role_types')
-    .select('id, name, description, is_default, is_active, sort_order, department_id, departments(id, name, color)')
+    .select('id, name, description, default_system_role, is_default, is_active, sort_order, department_id, departments(id, name, color)')
     .eq('practice_id', practiceId)
     .order('sort_order');
 
@@ -47,6 +47,7 @@ export async function GET() {
       id: r.id,
       name: r.name,
       description: r.description ?? '',
+      default_system_role: r.default_system_role ?? 'staff',
       is_default: r.is_default,
       is_active: r.is_active,
       sort_order: r.sort_order,
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
     name?: string;
     department_id?: string;
     description?: string;
+    default_system_role?: string;
     is_active?: boolean;
   };
 
@@ -94,10 +96,11 @@ export async function POST(request: Request) {
       name: body.name.trim(),
       department_id: body.department_id ?? null,
       description: body.description ?? null,
+      default_system_role: body.default_system_role ?? 'staff',
       is_active: body.is_active ?? true,
       sort_order: (count ?? 0) + 1,
     })
-    .select('id, name, description, is_default, is_active, sort_order, department_id, departments(id, name, color)')
+    .select('id, name, description, default_system_role, is_default, is_active, sort_order, department_id, departments(id, name, color)')
     .single();
 
   if (error) {
@@ -113,6 +116,7 @@ export async function POST(request: Request) {
     id: data.id,
     name: data.name,
     description: data.description ?? '',
+    default_system_role: data.default_system_role ?? 'staff',
     is_default: data.is_default,
     is_active: data.is_active,
     sort_order: data.sort_order,
