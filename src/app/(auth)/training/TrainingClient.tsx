@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useSheetStack } from '@bds/components';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';
@@ -73,6 +74,7 @@ interface TrainingClientProps {
 
 export default function TrainingClient({ systemRole, currentMemberId, userDepartment }: TrainingClientProps) {
   const { members, loading } = useMembers();
+  const { openSheet } = useSheetStack();
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [activeTypes, setActiveTypes] = useState<Set<EmployeeTypeFilter>>(new Set());
 
@@ -130,6 +132,11 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
       return a.name.localeCompare(b.name);
     });
 
+  const handleViewDetails = useCallback((memberId: string) => {
+    const m = filtered.find((f) => f.id === memberId);
+    openSheet('user', { id: memberId }, { title: m?.name ?? 'User Profile' });
+  }, [filtered, openSheet]);
+
   const isEmpty = !loading && filtered.length === 0;
 
   const heading = isAdmin
@@ -157,7 +164,7 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
       </div>
       <div style={listStyle}>
         {filtered.map((member) => (
-          <TrainingCard key={member.id} member={member} />
+          <TrainingCard key={member.id} member={member} onViewDetails={handleViewDetails} />
         ))}
         {isEmpty && (
           <div style={emptyStyle}>

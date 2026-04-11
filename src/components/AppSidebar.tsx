@@ -28,6 +28,7 @@ const sidebarStyle: CSSProperties = {
   height: '100dvh',
   position: 'sticky',
   top: 0,
+  zIndex: 40,
   paddingBlock: space.lg,
 };
 

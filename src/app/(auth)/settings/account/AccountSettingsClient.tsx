@@ -29,12 +29,7 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Active',
 };
 
-const SHIFT_LABELS: Record<string, string> = {
-  opening: 'Opening',
-  closing: 'Closing',
-  evening: 'Evening',
-  full_day: 'Full Day',
-};
+import { SHIFT_LABELS } from '@/lib/member-labels';
 
 export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSettingsClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);

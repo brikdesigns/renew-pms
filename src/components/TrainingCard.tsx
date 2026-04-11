@@ -1,10 +1,10 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import Link from 'next/link';
-import { Tag, Dot } from '@bds/components';
+import { Button, Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, space, border, shadow, gap, departmentColor } from '@/lib/tokens';
+import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,14 +25,6 @@ export interface TrainingMember {
   /** Whether this person has any training currently due */
   hasTrainingDue: boolean;
 }
-
-// ─── Employee type tag colors ────────────────────────────────────────────────
-
-const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
-  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
-  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -130,29 +122,16 @@ const progressLabelStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const viewBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '32px',
-  paddingInline: space.md,
-  borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.bold,
-  border: 'none',
-  cursor: 'pointer',
-  textDecoration: 'none',
-  whiteSpace: 'nowrap',
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function TrainingCard({ member }: { member: TrainingMember }) {
+interface TrainingCardProps {
+  member: TrainingMember;
+  onViewDetails: (memberId: string) => void;
+}
+
+export function TrainingCard({ member, onViewDetails }: TrainingCardProps) {
   const deptColors = departmentColor(member.departmentColor);
-  const typeTag = TYPE_TAG[member.employeeType] ?? TYPE_TAG.proficient;
+  const typeTag = EMPLOYEE_TYPE_TAG[member.employeeType] ?? EMPLOYEE_TYPE_TAG.proficient;
 
   return (
     <div style={cardStyle(deptColors.light)}>
@@ -165,9 +144,9 @@ export function TrainingCard({ member }: { member: TrainingMember }) {
             <div style={roleStyle}>{member.role}</div>
           </div>
         </div>
-        <Link href={`/training/${member.id}`} style={viewBtnStyle}>
+        <Button variant="primary" size="sm" onClick={() => onViewDetails(member.id)}>
           View Details
-        </Link>
+        </Button>
       </div>
 
       {/* Bottom row: type + dept tags | progress bar */}

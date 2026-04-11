@@ -22,19 +22,9 @@ import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 
 const TEXT_SECONDARY = color.text.secondary;
 
-const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  brik_admin: 'Platform Admin',
-  admin: 'Practice Admin',
-  staff: 'Staff',
-};
+import { EMPLOYEE_TYPE_TAG, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
 
 const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 'maturing', 'Proficient': 'proficient' };
-
-const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
-  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
-  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 

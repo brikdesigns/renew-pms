@@ -50,12 +50,7 @@ const TODAY_TOTAL = 32;
 const TODAY_COMPLETED = 12;
 const TODAY_PCT = Math.round((TODAY_COMPLETED / TODAY_TOTAL) * 100);
 
-// ─── Employee type tags (shared) ─────────────────────────────────────────────
-
-const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base, color: color.text.inverse, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base, color: color.text.inverse, label: 'Maturing' },
-};
+import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
 
@@ -416,7 +411,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                 </li>
               )}
               {onboardingMembers.map((m) => {
-                const typeTag = TYPE_TAG[m.employee_type] ?? TYPE_TAG.new;
+                const typeTag = EMPLOYEE_TYPE_TAG[m.employee_type] ?? EMPLOYEE_TYPE_TAG.new;
                 const fullName = `${m.first_name} ${m.last_name}`;
                 return (
                   <li key={m.id} style={listItemStyle}>

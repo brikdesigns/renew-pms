@@ -9,6 +9,7 @@ import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
+import { EMPLOYEE_TYPE_TAG, SHIFT_LABELS, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -41,32 +42,9 @@ interface ViewUserSheetProps {
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-// (No mock data — roles and department are derived directly from the user prop)
-
-// ─── Label lookups ──────────────────────────────────────────────────────────
-
-const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  brik_admin: 'Platform Admin',
-  admin: 'Practice Admin',
-  staff: 'Staff',
-};
-
-const SHIFT_LABELS: Record<string, string> = {
-  opening: 'Opening',
-  closing: 'Closing',
-  evening: 'Evening',
-  full_day: 'Full Day',
-};
-
-const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
-  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
-  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
-};
-
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, departmentColor } from '@/lib/tokens';
+import { font, color, gap, space, border, departmentColor } from '@/lib/tokens';
 
 const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
@@ -82,6 +60,22 @@ const emptyState: CSSProperties = {
   fontSize: font.size.body.md,
   color: TEXT_SECONDARY,
   textAlign: 'center',
+};
+
+const progressTrackStyle: CSSProperties = {
+  width: '100%',
+  height: '6px',
+  borderRadius: border.radius.xs,
+  backgroundColor: color.background.muted,
+  overflow: 'hidden',
+  position: 'relative',
+};
+
+const progressLabelStyle: CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.semibold,
+  color: TEXT_SECONDARY,
 };
 
 
@@ -234,10 +228,64 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
     </div>
   );
 
+  // Training — placeholder until Trainual integration is connected
+  const totalModules = 0;
+  const completedModules = 0;
+  const progress = 0;
+  const empType = EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient;
+
+  const trainingContent = (
+    <div style={sheetBodyStyle}>
+      <h3 style={sheetSectionTitle}>Employee Status</h3>
+      <div style={fieldRow}>
+        <div style={fieldHalf}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
+              Employee Type
+            </span>
+            <div style={{ display: 'inline-flex' }}>
+              <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
+                {empType.label}
+              </Tag>
+            </div>
+          </div>
+        </div>
+        <div style={fieldHalf}>
+          <ReadOnlyField label="Department" value={user.department || null} />
+        </div>
+      </div>
+
+      <h3 style={sheetSectionTitle}>Training Progress</h3>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: gap.md }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={progressLabelStyle}>
+            {completedModules} of {totalModules} modules completed
+          </span>
+          <span style={progressLabelStyle}>{progress}%</span>
+        </div>
+        <div style={progressTrackStyle}>
+          <div
+            style={{
+              position: 'absolute', top: 0, left: 0, height: '100%',
+              width: `${progress}%`, borderRadius: border.radius.xs,
+              backgroundColor: color.background.brandPrimary,
+            }}
+          />
+        </div>
+      </div>
+
+      <h3 style={sheetSectionTitle}>Assigned Modules</h3>
+      <p style={emptyState}>
+        Training module cards will appear here once training templates are assigned to this team member.
+      </p>
+    </div>
+  );
+
   const sheetTabs: SheetTab[] = [
     { id: 'details', label: 'Details', content: detailsContent },
     { id: 'roles', label: 'Roles', content: rolesContent },
     { id: 'departments', label: 'Departments', content: departmentsContent },
+    { id: 'training', label: 'Training', content: trainingContent },
   ];
 
   return (
