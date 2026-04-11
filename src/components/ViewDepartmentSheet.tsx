@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button } from '@bds/components';
+import { Sheet, Button, Skeleton } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { departmentColor, color, font, gap, space, border } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import type { Role } from '@/hooks/useRoles';
@@ -97,17 +98,13 @@ export function ViewDepartmentSheet({ isOpen = true, onClose, department: depart
 
   const department = departmentProp ?? fetched;
 
-  if (fetchLoading) {
+  if (fetchLoading || !department) {
     return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading...
-        </div>
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
       </Sheet>
     );
   }
-
-  if (!department) return null;
 
   const roles = allRoles.filter(
     (r) => r.department_id === department.id || (SECONDARY_DEPTS[r.name]?.includes(department.name) ?? false),

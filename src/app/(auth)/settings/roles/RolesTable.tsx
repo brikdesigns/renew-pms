@@ -4,10 +4,12 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
+import { Button, IconButton, useSheetStack } from '@bds/components';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditRoleSheet, type RoleFormData } from '@/components/EditRoleSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewRoleSheet, type RoleViewData } from '@/components/ViewRoleSheet';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useRoles } from '@/hooks/useRoles';
@@ -122,11 +124,7 @@ export function RolesTable() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading roles…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={6} />
             ) : roles.filter((r) => r.name !== 'Everyone').map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
@@ -144,9 +142,7 @@ export function RolesTable() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Badge status={r.is_active ? 'positive' : 'error'} size="sm">
-                    {r.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <StatusBadge status={r.is_active} />
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>

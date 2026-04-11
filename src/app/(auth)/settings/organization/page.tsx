@@ -6,6 +6,7 @@ import type { TabItem } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { Button } from '@bds/components';
 import {
   contentStyle,
@@ -13,46 +14,16 @@ import {
   rowStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { StatusBadge } from '@/components/StatusBadge';
+import { color, font, space, gap } from '@/lib/tokens';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
 const ORG_TABS: TabItem[] = [
   { key: 'details', label: 'Details' },
-  { key: 'location', label: 'Location' },
+  { key: 'location', label: 'Locations' },
   { key: 'office', label: 'Office' },
 ];
-
-// ─── Status badge ────────────────────────────────────────────────────────────
-
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  active:    { bg: `color-mix(in srgb, ${color.system.green} 15%, transparent)`, text: color.system.green },
-  inactive:  { bg: `color-mix(in srgb, ${color.text.secondary} 15%, transparent)`, text: color.text.secondary },
-  suspended: { bg: `color-mix(in srgb, ${color.system.red} 15%, transparent)`, text: color.system.red },
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const colors = STATUS_COLORS[status] ?? STATUS_COLORS.inactive;
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        fontFamily: font.family.label,
-        fontSize: font.size.label.sm,
-        fontWeight: font.weight.semibold,
-        padding: `${gap.xs} ${space.xs}`,
-        borderRadius: border.radius.sm,
-        backgroundColor: colors.bg,
-        color: colors.text,
-        lineHeight: 1,
-        textTransform: 'capitalize',
-      }}
-    >
-      {status}
-    </span>
-  );
-}
 
 // ─── Details tab ─────────────────────────────────────────────────────────────
 
@@ -193,7 +164,7 @@ export default function OrganizationSettingsPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: space['2xl'], color: color.text.muted }}>Loading...</div>;
+    return <PageSkeleton />;
   }
 
   return (

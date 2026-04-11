@@ -1,35 +1,22 @@
 'use client';
 
-import { useState, useMemo, useEffect, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Tag, Button, useSheetStack } from '@bds/components';
+import { Tag, Button, useSheetStack } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PriorityBadge } from '@/components/PriorityBadge';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
 import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
-import { ViewRequestSheet } from '@/components/ViewRequestSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Display maps ──────────────────────────────────────────────────────────
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  high:     { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  medium:   { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  low:      { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
-
-const STATUS_BADGE: Record<string, { status: 'info' | 'warning' | 'positive' | 'error'; label: string }> = {
-  submitted:         { status: 'info',    label: 'Submitted' },
-  in_review:         { status: 'info',    label: 'In Review' },
-  in_progress:       { status: 'warning', label: 'In Progress' },
-  waiting_on_vendor: { status: 'warning', label: 'Waiting on Vendor' },
-  resolved:          { status: 'positive', label: 'Resolved' },
-  closed:            { status: 'positive', label: 'Closed' },
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue:          'Device',
@@ -149,13 +136,30 @@ interface MyRequestsListProps {
 
 export function MyRequestsList({ memberId }: MyRequestsListProps) {
   const { requests, loading, refetch } = useRequests({ mine: memberId });
-  const { pushSheet } = useSheetStack();
+  const { openSheet, closeAll } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
-  const [viewing, setViewing] = useState<RequestRow | null>(null);
   const [editing, setEditing] = useState<RequestEditData | null>(null);
+
+  // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
+  const openRequest = useCallback((req: RequestRow) => {
+    openSheet('request', {
+      id: req.id,
+      onUpdated: refetch,
+      onEdit: (r: RequestRow) => {
+        closeAll();
+        setEditing({
+          id: r.id, title: r.title, description: r.description,
+          category: r.category, urgency: r.urgency,
+          room_id: r.room_id, equipment_id: r.equipment_id,
+          location_description: r.location_description,
+          vendor_id: r.vendor_id, vendor_contact_id: r.vendor_contact_id,
+        });
+      },
+    }, { title: req.title, variant: 'floating' });
+  }, [openSheet, closeAll, refetch]);
 
   // Auto-open request sheet from ?open=<id> or submit from ?submit=true
   useEffect(() => {
@@ -163,7 +167,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
     if (openId && requests.length > 0) {
       const match = requests.find(r => r.id === openId);
       if (match) {
-        setViewing(match);
+        openRequest(match);
         router.replace('/requests', { scroll: false });
       }
     }
@@ -171,7 +175,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       setSubmitOpen(true);
       router.replace('/requests', { scroll: false });
     }
-  }, [searchParams, requests, router]);
+  }, [searchParams, requests, router, openRequest]);
 
   const sorted = useMemo(() =>
     [...requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -238,33 +242,23 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading requests…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : sorted.map(r => {
-              const priority = PRIORITY_BADGE[r.urgency] ?? PRIORITY_BADGE.medium;
-              const status = STATUS_BADGE[r.status] ?? STATUS_BADGE.submitted;
               return (
-                <TableRow key={r.id} onClick={() => setViewing(r)} style={{ cursor: 'pointer' }}>
+                <TableRow key={r.id} onClick={() => openRequest(r)} style={{ cursor: 'pointer' }}>
                   <TableCell>
                     <span style={nameCellStyle}>{r.title}</span>
                   </TableCell>
                   <TableCell>
-                    <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
+                    <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary }}>
                       {CATEGORY_LABELS[r.category] ?? r.category}
                     </Tag>
                   </TableCell>
                   <TableCell>
-                    <Badge status={priority.status} size="sm" variant="dark" icon={<Icon icon={priority.icon} />}>
-                      {priority.label}
-                    </Badge>
+                    <PriorityBadge priority={r.urgency} />
                   </TableCell>
                   <TableCell>
-                    <Badge status={status.status} size="sm">
-                      {status.label}
-                    </Badge>
+                    <StatusBadge status={r.status} />
                   </TableCell>
                   <TableCell>
                     <span style={secondaryCellStyle}>{timeAgo(r.created_at)}</span>
@@ -282,15 +276,6 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         onSaved={refetch}
         defaultCategory={submitCategory}
         initialData={editing}
-      />
-      <ViewRequestSheet
-        isOpen={viewing !== null}
-        onClose={() => setViewing(null)}
-        request={viewing}
-        isAdmin={false}
-        onUpdated={refetch}
-        onEdit={(r) => { setViewing(null); setEditing(r); }}
-        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { useMembers } from '@/hooks/useMembers';
 import { useDepartments } from '@/hooks/useDepartments';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -267,7 +268,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskS
                 </div>
                 <div style={previewRowStyle}>
                   <span style={previewLabelStyle}>Frequency</span>
-                  <span style={previewFieldStyle}>{selectedTemplate.frequency ? (FREQUENCY_LABELS[selectedTemplate.frequency] ?? selectedTemplate.frequency) : 'One-time'}</span>
+                  <span style={previewFieldStyle}><FrequencyTag value={selectedTemplate.frequency} /></span>
                 </div>
                 <div style={previewRowStyle}>
                   <span style={previewLabelStyle}>Assignment</span>

@@ -4,16 +4,17 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@bds/components';
+import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@bds/components';
+import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, space, gap, border, shadow } from '@/lib/tokens';
+import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
-import { ViewVendorSheet } from '@/components/ViewVendorSheet';
 import { AddContactSheet, type ContactEditData } from '@/components/AddContactSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -84,24 +85,10 @@ const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', g
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
 
-const recordTypeBarStyle: CSSProperties = {
-  display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: space.tiny,
-};
-
-const recordTypeBtnStyle = (active: boolean): CSSProperties => ({
-  padding: `${space.xs} ${space.md}`,
-  borderRadius: border.radius.xs,
-  border: 'none',
-  cursor: 'pointer',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: active ? font.weight.semibold : font.weight.medium,
-  color: active ? color.text.primary : color.text.secondary,
-  backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? shadow.sm : 'none',
-  transition: 'all 0.15s ease',
-});
+const RECORD_SEGMENTS = [
+  { label: 'Companies', value: 'companies' },
+  { label: 'Contacts', value: 'contacts' },
+];
 
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
@@ -145,11 +132,7 @@ function CompaniesView({
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-              Loading companies…
-            </TableCell>
-          </TableRow>
+          <TableSkeleton columns={7} />
         ) : vendors.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
@@ -191,9 +174,7 @@ function CompaniesView({
                 </span>
               </TableCell>
               <TableCell>
-                <Badge status={v.is_active ? 'positive' : 'error'} size="sm">
-                  {v.is_active ? 'Active' : 'Inactive'}
-                </Badge>
+                <StatusBadge status={v.is_active} />
               </TableCell>
               <TableCell>
                 <div style={actionBtnGroup}>
@@ -236,11 +217,7 @@ function ContactsView({
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-              Loading contacts…
-            </TableCell>
-          </TableRow>
+          <TableSkeleton columns={7} />
         ) : contacts.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
@@ -308,7 +285,7 @@ function ContactsView({
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function ContactsTable() {
-  const { pushSheet } = useSheetStack();
+  const { openSheet, closeAll } = useSheetStack();
   const { showToast } = useToast();
   const [recordType, setRecordType] = useState<RecordType>('companies');
 
@@ -317,7 +294,6 @@ export function ContactsTable() {
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Vendor | null>(null);
-  const [viewOpen, setViewOpen] = useState(false);
   const [viewing, setViewing] = useState<Vendor | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [filterType, setFilterType] = useState('All Types');
@@ -387,7 +363,14 @@ export function ContactsTable() {
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (v: Vendor) => { setEditing(v); setSheetOpen(true); };
-  const handleView = (v: Vendor) => { setViewing(v); setViewOpen(true); };
+  const handleView = (v: Vendor) => {
+    setViewing(v);
+    openSheet('vendor', {
+      id: v.id,
+      vendor: v,
+      onEdit: (vendor: Vendor) => { closeAll(); handleEdit(vendor); },
+    }, { title: v.name, variant: 'floating' });
+  };
 
   const handleSave = async (data: VendorFormData) => {
     if (editing) {
@@ -432,7 +415,7 @@ export function ContactsTable() {
   const handleViewContact = (c: Contact) => {
     // Open the parent vendor's view sheet (which shows contacts in the Contacts tab)
     const v = vendors.find(v => v.id === c.vendor_id);
-    if (v) { setViewing(v); setViewOpen(true); }
+    if (v) handleView(v);
   };
 
   const handleEditContact = (c: Contact) => {
@@ -470,14 +453,12 @@ export function ContactsTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <div style={recordTypeBarStyle}>
-            <button type="button" style={recordTypeBtnStyle(isCompanies)} onClick={() => setRecordType('companies')}>
-              Companies
-            </button>
-            <button type="button" style={recordTypeBtnStyle(!isCompanies)} onClick={() => setRecordType('contacts')}>
-              Contacts
-            </button>
-          </div>
+          <SegmentedControl
+            items={RECORD_SEGMENTS}
+            value={recordType}
+            onChange={(v) => setRecordType(v as RecordType)}
+            size="sm"
+          />
           <span style={countBadge}>{loading ? '–' : count}</span>
         </div>
         <div style={filterBarStyle}>
@@ -522,13 +503,6 @@ export function ContactsTable() {
         onClose={() => { setSheetOpen(false); setEditing(null); }}
         initialData={editing}
         onSave={handleSave}
-      />
-      <ViewVendorSheet
-        isOpen={viewOpen}
-        onClose={() => { setViewOpen(false); setViewing(null); }}
-        vendor={viewing}
-        onEdit={(v) => { setViewOpen(false); setViewing(null); handleEdit(v); }}
-        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <AddContactSheet
         isOpen={addContactOpen}

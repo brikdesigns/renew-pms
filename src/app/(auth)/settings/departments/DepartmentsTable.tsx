@@ -4,10 +4,12 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
+import { Button, IconButton, useSheetStack } from '@bds/components';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewDepartmentSheet';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -125,11 +127,7 @@ export function DepartmentsTable() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading departments…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
                 <TableCell>
@@ -145,9 +143,7 @@ export function DepartmentsTable() {
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{d.member_count}</span>
                 </TableCell>
                 <TableCell>
-                  <Badge status={d.is_active ? 'positive' : 'error'} size="sm">
-                    {d.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <StatusBadge status={d.is_active} />
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>

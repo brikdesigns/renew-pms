@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button } from '@bds/components';
+import { Sheet, Button, Skeleton } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -105,17 +106,13 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
 
   const user = userProp ?? fetched;
 
-  if (fetchLoading) {
+  if (fetchLoading || !user) {
     return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading...
-        </div>
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
       </Sheet>
     );
   }
-
-  if (!user) return null;
 
   const fullName = `${user.first_name} ${user.last_name}`.trim();
 

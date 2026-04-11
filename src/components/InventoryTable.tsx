@@ -4,24 +4,21 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@bds/components';
-import { Badge, Button, IconButton, FilterButton, SegmentedControl, useSheetStack } from '@bds/components';
+import { Button, IconButton, FilterButton, SegmentedControl, useSheetStack } from '@bds/components';
+import { StatusBadge } from '@/components/StatusBadge';
 import type { FilterButtonOption } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { EditInventorySheet, type InventoryFormData } from '@/components/EditInventorySheet';
-import { ViewInventorySheet, type InventoryViewData } from '@/components/ViewInventorySheet';
+import type { InventoryViewData } from '@/components/ViewInventorySheet';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { useToast } from '@/components/ToastProvider';
 import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 // ─── Status display ─────────────────────────────────────────────────────────
 
-const STATUS_BADGE: Record<string, { status: 'positive' | 'warning' | 'error'; label: string }> = {
-  active: { status: 'positive', label: 'Active' },
-  needs_service: { status: 'warning', label: 'Needs Service' },
-  out_of_service: { status: 'error', label: 'Out of Service' },
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -57,12 +54,11 @@ const INVENTORY_SEGMENTS = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function InventoryTable() {
-  const { pushSheet } = useSheetStack();
+  const { openSheet, closeAll } = useSheetStack();
   const [view, setView] = useState('equipment');
   const { equipment, setEquipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editing, setEditing] = useState<EquipmentItem | null>(null);
-  const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewing, setViewing] = useState<EquipmentItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterCategory, setFilterCategory] = useState<string | undefined>();
@@ -70,7 +66,11 @@ export function InventoryTable() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const { showToast } = useToast();
 
-  const statusOptions: FilterButtonOption[] = Object.keys(STATUS_BADGE).map((k) => ({ id: k, label: STATUS_BADGE[k].label }));
+  const statusOptions: FilterButtonOption[] = [
+    { id: 'active', label: 'Active' },
+    { id: 'needs_service', label: 'Needs Service' },
+    { id: 'out_of_service', label: 'Out of Service' },
+  ];
 
   const categoryOptions: FilterButtonOption[] = [...new Set(equipment.map((i) => i.category).filter(Boolean) as string[])]
     .sort()
@@ -90,9 +90,20 @@ export function InventoryTable() {
   const handleAdd = () => { setEditing(null); setEditSheetOpen(true); };
   const handleEdit = (item: EquipmentItem) => { setEditing(item); setEditSheetOpen(true); };
   const handleEditClose = () => { setEditSheetOpen(false); setEditing(null); };
-  const handleView = (item: EquipmentItem) => { setViewing(item); setViewSheetOpen(true); };
-  const handleViewClose = () => { setViewSheetOpen(false); setViewing(null); };
-  const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
+  const handleView = (item: EquipmentItem) => {
+    setViewing(item);
+    const viewData: InventoryViewData = {
+      id: item.id, name: item.name, status: item.status,
+      department: item.department_name ?? '', departmentColor: item.department_color ?? 'blue',
+      description: item.description ?? '', type: item.category ?? '',
+      company: item.manufacturer ?? '', team: item.team_name ?? '', room: item.room_name ?? '',
+    };
+    openSheet('inventory', {
+      id: item.id,
+      item: viewData,
+      onEdit: () => { closeAll(); handleEdit(item); },
+    }, { title: item.name, variant: 'floating' });
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -150,9 +161,7 @@ export function InventoryTable() {
     ? { name: editing.name, status: editing.status, department: editing.department_name ?? '', department_id: editing.department_id ?? '', description: editing.description ?? '', type: editing.category ?? '', company: editing.manufacturer ?? '', vendor_id: editing.vendor_id ?? '', team: editing.team_name ?? '', team_id: editing.team_id ?? '', room: editing.room_id ?? '' }
     : null;
 
-  const viewData: InventoryViewData | null = viewing
-    ? { id: viewing.id, name: viewing.name, status: viewing.status, department: viewing.department_name ?? '', departmentColor: viewing.department_color ?? 'blue', description: viewing.description ?? '', type: viewing.category ?? '', company: viewing.manufacturer ?? '', team: viewing.team_name ?? '', room: viewing.room_name ?? '' }
-    : null;
+
 
   return (
     <div style={wrapStyle}>
@@ -238,11 +247,7 @@ export function InventoryTable() {
           </TableHeader>
           <TableBody>
             {loading && (
-              <TableRow>
-                <TableCell colSpan={6} style={{ textAlign: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading equipment…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={6} />
             )}
             {!loading && filteredItems.length === 0 && (
               <TableRow>
@@ -252,7 +257,6 @@ export function InventoryTable() {
               </TableRow>
             )}
             {!loading && filteredItems.map((item) => {
-              const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.active;
               return (
                 <TableRow key={item.id}>
                   <TableCell>
@@ -268,7 +272,7 @@ export function InventoryTable() {
                     <span style={secondaryCellStyle}>{item.room_name || '—'}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge status={badge.status} size="sm">{badge.label}</Badge>
+                    <StatusBadge status={item.status} />
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
@@ -285,7 +289,6 @@ export function InventoryTable() {
       </div>}
 
       <EditInventorySheet isOpen={editSheetOpen} onClose={handleEditClose} initialData={editFormData} onSave={handleSave} />
-      <ViewInventorySheet isOpen={viewSheetOpen} onClose={handleViewClose} item={viewData} onEdit={handleViewEdit} onNavigate={(type, props, opts) => pushSheet(type, props, opts)} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

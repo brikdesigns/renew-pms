@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
-import { Sheet, Badge, Tag, Button, Select, TextArea } from '@bds/components';
+import { useState, useEffect, useLayoutEffect, type FormEvent, type CSSProperties } from 'react';
+import { Tag, Button, Select, TextArea, useConfigureSheet } from '@bds/components';
+import { StatusBadge, statusLabel } from '@/components/StatusBadge';
+import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@bds/components';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -16,31 +19,6 @@ import { useToast } from '@/components/ToastProvider';
 
 // ─── Display maps ───────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  in_review: 'In Review',
-  in_progress: 'In Progress',
-  waiting_on_vendor: 'Waiting on Vendor',
-  resolved: 'Resolved',
-  closed: 'Closed',
-};
-
-const STATUS_BADGE: Record<string, 'info' | 'warning' | 'positive' | 'error'> = {
-  submitted: 'info',
-  in_review: 'warning',
-  in_progress: 'warning',
-  waiting_on_vendor: 'info',
-  resolved: 'positive',
-  closed: 'positive',
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low',
-};
-
-const PRIORITY_BADGE: Record<string, 'error' | 'warning' | 'info'> = {
-  critical: 'error', high: 'error', medium: 'warning', low: 'info',
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue: 'Device Issue',
@@ -73,8 +51,6 @@ interface MemberOption {
 }
 
 interface ViewRequestSheetProps {
-  /** Whether the sheet is open (page-level mode). Defaults to true for global mode. */
-  isOpen?: boolean;
   onClose: () => void;
   /** Full request data (page-level mode — skips fetch) */
   request?: RequestRow | null;
@@ -88,7 +64,8 @@ interface ViewRequestSheetProps {
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp, id, isAdmin = false, onUpdated, onEdit, onNavigate }: ViewRequestSheetProps) {
+export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = false, onUpdated, onEdit, onNavigate }: ViewRequestSheetProps) {
+  const configureSheet = useConfigureSheet();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [status, setStatus] = useState('');
@@ -127,7 +104,7 @@ export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp,
 
   // Fetch practice members for assignment dropdown
   useEffect(() => {
-    if (!isAdmin || !isOpen) return;
+    if (!isAdmin) return;
     fetch('/api/members')
       .then(r => r.json())
       .then(data => {
@@ -139,25 +116,13 @@ export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp,
         }
       })
       .catch(err => console.error('[ViewRequestSheet] failed to load members:', err));
-  }, [isAdmin, isOpen]);
+  }, [isAdmin]);
 
-  if (fetchLoading) {
-    return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading request...
-        </div>
-      </Sheet>
-    );
-  }
-
-  if (!request) return null;
-
-  const hasChanges = dirty || status !== request.status || assignedTo !== (request.assignee_id ?? '') || resolutionNotes !== (request.resolution_notes ?? '');
+  const hasChanges = request ? (dirty || status !== request.status || assignedTo !== (request.assignee_id ?? '') || resolutionNotes !== (request.resolution_notes ?? '')) : false;
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    if (!hasChanges) return;
+    if (!request || !hasChanges) return;
     setSaving(true);
 
     const updates: Record<string, unknown> = {};
@@ -187,301 +152,289 @@ export function ViewRequestSheet({ isOpen = true, onClose, request: requestProp,
     }
   };
 
-  const statusLabel = STATUS_LABELS[request.status] ?? request.status;
-  const statusBadge = STATUS_BADGE[request.status] ?? 'info';
-  const priorityLabel = PRIORITY_LABELS[request.urgency] ?? request.urgency;
-  const priorityBadge = PRIORITY_BADGE[request.urgency] ?? 'info';
-  const categoryLabel = CATEGORY_LABELS[request.category] ?? request.category;
+  // ── Loading state ──────────────────────────────────────────────────────
 
-  const createdDate = new Date(request.created_at).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
+  useLayoutEffect(() => {
+    if (fetchLoading || !request) {
+      configureSheet({
+        body: <SheetSkeleton />,
+        footer: <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>,
+      });
+      return;
+    }
 
-  // ── Details tab ──
+    const categoryLabel = CATEGORY_LABELS[request.category] ?? request.category;
 
-  const detailsContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Request Details</h3>
-      <div style={rowStyle}>
-        <ReadOnlyField label="Submitted By" value={request.submitter_name} />
-        <ReadOnlyField label="Submitted" value={createdDate} />
-      </div>
-      <ReadOnlyField label="Category" value={
-        <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
-          {categoryLabel}
-        </Tag>
-      } />
-      <div style={rowStyle}>
-        <ReadOnlyField label="Priority" value={
-          <Badge status={priorityBadge} size="sm" style={{ display: 'inline-flex' }}>{priorityLabel}</Badge>
+    const createdDate = new Date(request.created_at).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    });
+
+    // ── Details tab ──
+    const detailsContent = (
+      <div style={sheetBodyStyle}>
+        <h3 style={sheetSectionTitle}>Request Details</h3>
+        <div style={rowStyle}>
+          <ReadOnlyField label="Submitted By" value={request.submitter_name} />
+          <ReadOnlyField label="Submitted" value={createdDate} />
+        </div>
+        <ReadOnlyField label="Category" value={
+          <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
+            {categoryLabel}
+          </Tag>
         } />
-        <ReadOnlyField label="Status" value={
-          <Badge status={statusBadge} size="sm" style={{ display: 'inline-flex' }}>{statusLabel}</Badge>
-        } />
+        <div style={rowStyle}>
+          <ReadOnlyField label="Priority" value={
+            <PriorityBadge priority={request.urgency} />
+          } />
+          <ReadOnlyField label="Status" value={
+            <StatusBadge status={request.status} />
+          } />
+        </div>
+        {request.description && (
+          <ReadOnlyField label="Description" value={request.description} />
+        )}
+
+        {(request.room_name || request.equipment_name || request.location_description) && (
+          <>
+            <h3 style={sheetSectionTitle}>Location & Equipment</h3>
+            <div style={rowStyle}>
+              <ReadOnlyField label="Room" value={
+                onNavigate && request.room_id ? (
+                  <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.room_id) onNavigate('room', { id: request.room_id }, { title: request.room_name ?? 'Room' }); }}>
+                    {request.room_name}
+                  </button>
+                ) : request.room_name
+              } />
+              <ReadOnlyField label="Equipment" value={
+                onNavigate && request.equipment_id ? (
+                  <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.equipment_id) onNavigate('inventory', { id: request.equipment_id }, { title: request.equipment_name ?? 'Equipment' }); }}>
+                    {request.equipment_name}
+                  </button>
+                ) : request.equipment_name
+              } />
+            </div>
+            {request.location_description && (
+              <ReadOnlyField label="Location Details" value={request.location_description} />
+            )}
+          </>
+        )}
+
+        {request.vendor_name && (
+          <>
+            <h3 style={sheetSectionTitle}>Vendor</h3>
+            <div style={rowStyle}>
+              <ReadOnlyField label="Vendor" value={
+                onNavigate && request.vendor_id ? (
+                  <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_id) onNavigate('vendor', { id: request.vendor_id }, { title: request.vendor_name ?? 'Vendor' }); }}>
+                    {request.vendor_name}
+                  </button>
+                ) : request.vendor_name
+              } />
+              <ReadOnlyField label="Contact" value={request.vendor_contact_name} />
+            </div>
+          </>
+        )}
       </div>
-      {request.description && (
-        <ReadOnlyField label="Description" value={request.description} />
-      )}
+    );
 
-      {(request.room_name || request.equipment_name || request.location_description) && (
-        <>
-          <h3 style={sheetSectionTitle}>Location & Equipment</h3>
-          <div style={rowStyle}>
-            <ReadOnlyField label="Room" value={
-              onNavigate && request.room_id ? (
-                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.room_id) onNavigate('room', { id: request.room_id }, { title: request.room_name ?? 'Room' }); }}>
-                  {request.room_name}
-                </button>
-              ) : request.room_name
-            } />
-            <ReadOnlyField label="Equipment" value={
-              onNavigate && request.equipment_id ? (
-                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.equipment_id) onNavigate('inventory', { id: request.equipment_id }, { title: request.equipment_name ?? 'Equipment' }); }}>
-                  {request.equipment_name}
-                </button>
-              ) : request.equipment_name
-            } />
-          </div>
-          {request.location_description && (
-            <ReadOnlyField label="Location Details" value={request.location_description} />
-          )}
-        </>
-      )}
-
-      {request.vendor_name && (
-        <>
-          <h3 style={sheetSectionTitle}>Vendor</h3>
-          <div style={rowStyle}>
-            <ReadOnlyField label="Vendor" value={
-              onNavigate && request.vendor_id ? (
-                <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_id) onNavigate('vendor', { id: request.vendor_id }, { title: request.vendor_name ?? 'Vendor' }); }}>
-                  {request.vendor_name}
-                </button>
-              ) : request.vendor_name
-            } />
-            <ReadOnlyField label="Contact" value={request.vendor_contact_name} />
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  // ── Manage tab ──
-
-  const manageContent = isAdmin ? (
-    <form id="manage-request-form" onSubmit={handleSave}>
+    // ── Manage tab ──
+    const manageContent = isAdmin ? (
+      <form id="manage-request-form" onSubmit={handleSave}>
+        <div style={sheetBodyStyle}>
+          <h3 style={sheetSectionTitle}>Status & Assignment</h3>
+          <Select
+            label="Status"
+            size="sm"
+            value={status}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setStatus(e.target.value); setDirty(true); }}
+            options={STATUS_OPTIONS}
+          />
+          <Select
+            label="Assign To"
+            size="sm"
+            value={assignedTo}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setAssignedTo(e.target.value); setDirty(true); }}
+            options={[
+              { value: '', label: 'Unassigned' },
+              ...members.map(m => ({ value: m.id, label: m.name })),
+            ]}
+          />
+          <h3 style={sheetSectionTitle}>Resolution</h3>
+          <TextArea
+            label="Resolution Notes"
+            size="sm"
+            value={resolutionNotes}
+            onChange={e => { setResolutionNotes(e.target.value); setDirty(true); }}
+            placeholder="How was this resolved?"
+            rows={3}
+          />
+        </div>
+      </form>
+    ) : (
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Status & Assignment</h3>
-        <Select
-          label="Status"
-          size="sm"
-          value={status}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setStatus(e.target.value); setDirty(true); }}
-          options={STATUS_OPTIONS}
-        />
-        <Select
-          label="Assign To"
-          size="sm"
-          value={assignedTo}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setAssignedTo(e.target.value); setDirty(true); }}
-          options={[
-            { value: '', label: 'Unassigned' },
-            ...members.map(m => ({ value: m.id, label: m.name })),
-          ]}
-        />
+        <ReadOnlyField label="Status" value={
+          <StatusBadge status={request.status} />
+        } />
+        <ReadOnlyField label="Assigned To" value={request.assignee_name ?? 'Not yet assigned'} />
         <h3 style={sheetSectionTitle}>Resolution</h3>
-        <TextArea
-          label="Resolution Notes"
-          size="sm"
-          value={resolutionNotes}
-          onChange={e => { setResolutionNotes(e.target.value); setDirty(true); }}
-          placeholder="How was this resolved?"
-          rows={3}
-        />
+        {request.resolution_notes ? (
+          <ReadOnlyField label="Resolution Notes" value={request.resolution_notes} />
+        ) : (
+          <ReadOnlyField label="Resolution Notes" value="No resolution notes yet" />
+        )}
+        {request.resolved_at && (
+          <ReadOnlyField label="Resolved At" value={new Date(request.resolved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
+        )}
       </div>
-    </form>
-  ) : (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Status & Assignment</h3>
-      <ReadOnlyField label="Status" value={
-        <Badge status={statusBadge} size="sm" style={{ display: 'inline-flex' }}>{statusLabel}</Badge>
-      } />
-      <ReadOnlyField label="Assigned To" value={request.assignee_name ?? 'Not yet assigned'} />
-      <h3 style={sheetSectionTitle}>Resolution</h3>
-      {request.resolution_notes ? (
-        <ReadOnlyField label="Resolution Notes" value={request.resolution_notes} />
-      ) : (
-        <ReadOnlyField label="Resolution Notes" value="No resolution notes yet" />
-      )}
-      {request.resolved_at && (
-        <ReadOnlyField label="Resolved At" value={new Date(request.resolved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
-      )}
-    </div>
-  );
+    );
 
-  // ── Activity tab ──
+    // ── Activity tab ──
+    const formatTimestamp = (ts: string) =>
+      new Date(ts).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
+      });
 
-  const formatTimestamp = (ts: string) =>
-    new Date(ts).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-    });
+    interface TimelineEvent {
+      icon: string;
+      label: string;
+      detail: string | null;
+      timestamp: string;
+    }
 
-  interface TimelineEvent {
-    icon: string;
-    label: string;
-    detail: string | null;
-    timestamp: string;
-  }
-
-  const timelineEvents: TimelineEvent[] = [];
-
-  // Created
-  timelineEvents.push({
-    icon: icon.plus,
-    label: 'Request submitted',
-    detail: request.submitter_name ? `by ${request.submitter_name}` : null,
-    timestamp: formatTimestamp(request.created_at),
-  });
-
-  // Assigned
-  if (request.assignee_name) {
+    const timelineEvents: TimelineEvent[] = [];
     timelineEvents.push({
-      icon: icon.profile,
-      label: 'Assigned',
-      detail: `to ${request.assignee_name}`,
-      timestamp: formatTimestamp(request.updated_at),
+      icon: icon.plus,
+      label: 'Request submitted',
+      detail: request.submitter_name ? `by ${request.submitter_name}` : null,
+      timestamp: formatTimestamp(request.created_at),
     });
-  }
+    if (request.assignee_name) {
+      timelineEvents.push({
+        icon: icon.profile,
+        label: 'Assigned',
+        detail: `to ${request.assignee_name}`,
+        timestamp: formatTimestamp(request.updated_at),
+      });
+    }
+    if (request.status !== 'submitted') {
+      timelineEvents.push({
+        icon: icon.circleCheck,
+        label: `Status changed to ${statusLabel(request.status)}`,
+        detail: null,
+        timestamp: formatTimestamp(request.updated_at),
+      });
+    }
+    if (request.resolved_at) {
+      timelineEvents.push({
+        icon: icon.circleCheck,
+        label: 'Resolved',
+        detail: request.resolution_notes ? request.resolution_notes : null,
+        timestamp: formatTimestamp(request.resolved_at),
+      });
+    }
 
-  // Status milestones (only if moved beyond submitted)
-  if (request.status !== 'submitted') {
-    timelineEvents.push({
-      icon: icon.circleCheck,
-      label: `Status changed to ${STATUS_LABELS[request.status] ?? request.status}`,
-      detail: null,
-      timestamp: formatTimestamp(request.updated_at),
-    });
-  }
-
-  // Resolved
-  if (request.resolved_at) {
-    timelineEvents.push({
-      icon: icon.circleCheck,
-      label: 'Resolved',
-      detail: request.resolution_notes ? request.resolution_notes : null,
-      timestamp: formatTimestamp(request.resolved_at),
-    });
-  }
-
-  const activityContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Activity Timeline</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {timelineEvents.map((event, idx) => {
-          const isLast = idx === timelineEvents.length - 1;
-          return (
-            <div key={idx} style={{ display: 'flex', gap: gap.md }}>
-              {/* Vertical line + dot */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 24, flexShrink: 0 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: border.radius.pill,
-                  backgroundColor: idx === 0 ? color.background.brandPrimary : color.surface.secondary,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <Icon
-                    icon={event.icon}
-                    style={{
-                      fontSize: font.size.body.sm,
-                      color: idx === 0 ? color.text.onColorDark : color.text.secondary,
-                    } as CSSProperties & Record<string, string>}
-                  />
-                </div>
-                {!isLast && (
+    const activityContent = (
+      <div style={sheetBodyStyle}>
+        <h3 style={sheetSectionTitle}>Activity Timeline</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {timelineEvents.map((event, idx) => {
+            const isLast = idx === timelineEvents.length - 1;
+            return (
+              <div key={idx} style={{ display: 'flex', gap: gap.md }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 24, flexShrink: 0 }}>
                   <div style={{
-                    width: 2, flex: 1, minHeight: 20,
-                    backgroundColor: color.border.muted,
-                  }} />
-                )}
-              </div>
-              {/* Content */}
-              <div style={{ paddingBottom: isLast ? 0 : space.lg, paddingTop: space.tiny }}>
-                <div style={{
-                  fontFamily: font.family.label,
-                  fontSize: font.size.label.sm,
-                  fontWeight: font.weight.semibold,
-                  color: color.text.primary,
-                  lineHeight: font.lineHeight.tight,
-                }}>
-                  {event.label}
+                    width: 28, height: 28, borderRadius: border.radius.pill,
+                    backgroundColor: idx === 0 ? color.background.brandPrimary : color.surface.secondary,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon
+                      icon={event.icon}
+                      style={{
+                        fontSize: font.size.body.sm,
+                        color: idx === 0 ? color.text.onColorDark : color.text.secondary,
+                      } as CSSProperties & Record<string, string>}
+                    />
+                  </div>
+                  {!isLast && (
+                    <div style={{
+                      width: 2, flex: 1, minHeight: 20,
+                      backgroundColor: color.border.muted,
+                    }} />
+                  )}
                 </div>
-                {event.detail && (
+                <div style={{ paddingBottom: isLast ? 0 : space.lg, paddingTop: space.tiny }}>
+                  <div style={{
+                    fontFamily: font.family.label,
+                    fontSize: font.size.label.sm,
+                    fontWeight: font.weight.semibold,
+                    color: color.text.primary,
+                    lineHeight: font.lineHeight.tight,
+                  }}>
+                    {event.label}
+                  </div>
+                  {event.detail && (
+                    <div style={{
+                      fontFamily: font.family.body,
+                      fontSize: font.size.body.xs,
+                      color: color.text.secondary,
+                      marginTop: '2px',
+                    }}>
+                      {event.detail}
+                    </div>
+                  )}
                   <div style={{
                     fontFamily: font.family.body,
                     fontSize: font.size.body.xs,
-                    color: color.text.secondary,
+                    color: color.text.muted,
                     marginTop: '2px',
                   }}>
-                    {event.detail}
+                    {event.timestamp}
                   </div>
-                )}
-                <div style={{
-                  fontFamily: font.family.body,
-                  fontSize: font.size.body.xs,
-                  color: color.text.muted,
-                  marginTop: '2px',
-                }}>
-                  {event.timestamp}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
 
-  // ── Tabs ──
+    // ── Configure Sheet ──
+    const sheetTabs: SheetTab[] = [
+      { id: 'details', label: 'Details', content: detailsContent },
+      { id: 'manage', label: 'Manage', content: manageContent },
+      { id: 'activity', label: 'Activity', content: activityContent },
+    ];
 
-  const sheetTabs: SheetTab[] = [
-    { id: 'details', label: 'Details', content: detailsContent },
-    { id: 'manage', label: 'Manage', content: manageContent },
-    { id: 'activity', label: 'Activity', content: activityContent },
-  ];
-
-  // ── Footer ──
-
-  const footerContent = isAdmin && activeTab === 'manage' ? (
-    <>
-      <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
-      <Button variant="primary" size="md" type="submit" form="manage-request-form" disabled={!hasChanges || saving}>
-        {saving ? 'Saving...' : 'Save Changes'}
-      </Button>
-    </>
-  ) : activeTab === 'details' && onEdit ? (
-    <>
+    const footerContent = isAdmin && activeTab === 'manage' ? (
+      <>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" size="md" type="submit" form="manage-request-form" disabled={!hasChanges || saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </>
+    ) : activeTab === 'details' && onEdit ? (
+      <>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+        <Button variant="outline" size="md" type="button" onClick={() => onEdit(request)}>
+          <Icon icon={icon.edit} style={{ marginRight: gap.xs } as React.CSSProperties} />
+          Edit Request
+        </Button>
+      </>
+    ) : (
       <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
-      <Button variant="outline" size="md" type="button" onClick={() => onEdit(request)}>
-        <Icon icon={icon.edit} style={{ marginRight: gap.xs } as React.CSSProperties} />
-        Edit Request
-      </Button>
-    </>
-  ) : (
-    <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
-  );
+    );
 
-  return (
-    <Sheet
-      variant="floating"
-      isOpen={isOpen}
-      onClose={onClose}
-      title={request.title}
-      width="600px"
-      side="right"
-      tabs={sheetTabs}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      footer={footerContent}
-    />
-  );
+    configureSheet({
+      title: request.title,
+      tabs: sheetTabs,
+      activeTab,
+      onTabChange: setActiveTab,
+      footer: footerContent,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configureSheet, fetchLoading, request?.id, request?.status, activeTab, status, assignedTo, resolutionNotes, saving, members.length, isAdmin, onClose]);
+
+  return null;
 }

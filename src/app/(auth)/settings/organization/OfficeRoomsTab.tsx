@@ -13,7 +13,6 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
-import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
@@ -131,13 +130,12 @@ function StatusIndicator({ active }: { active: boolean }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function OfficeRoomsTab() {
-  const { pushSheet } = useSheetStack();
+  const { openSheet } = useSheetStack();
   const { rooms: apiRooms, setRooms, loading: roomsLoading } = useRooms();
   const rooms: RoomRow[] = apiRooms.map((r) => ({ ...r, description: '', is_custom: false }));
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<RoomRow | null>(null);
-  const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewingRoom, setViewingRoom] = useState<RoomRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -153,12 +151,10 @@ export function OfficeRoomsTab() {
 
   const handleViewClick = (room: RoomRow) => {
     setViewingRoom(room);
-    setViewSheetOpen(true);
-  };
-
-  const handleViewClose = () => {
-    setViewSheetOpen(false);
-    setViewingRoom(null);
+    openSheet('room', {
+      id: room.id,
+      room: { id: room.id, name: room.name, room_type: room.room_type, description: room.description, is_custom: room.is_custom, is_active: room.is_active },
+    }, { title: room.name, variant: 'floating' });
   };
 
   const handleSheetClose = () => {
@@ -275,19 +271,6 @@ export function OfficeRoomsTab() {
         onClose={handleSheetClose}
         initialData={sheetInitialData}
         onSave={handleSave}
-      />
-      <ViewRoomSheet
-        isOpen={viewSheetOpen}
-        onClose={handleViewClose}
-        room={viewingRoom ? {
-          id: viewingRoom.id,
-          name: viewingRoom.name,
-          room_type: viewingRoom.room_type,
-          description: viewingRoom.description,
-          is_custom: viewingRoom.is_custom,
-          is_active: viewingRoom.is_active,
-        } : null}
-        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

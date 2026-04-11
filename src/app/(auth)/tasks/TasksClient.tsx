@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, useSheetStack } from '@bds/components';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@bds/components';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -18,7 +18,8 @@ import { usePoolTasks } from '@/hooks/usePoolTasks';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { TaskAssigneeAvatar } from '@/components/TaskAssigneeAvatar';
-import { frequencyLabel } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
+import { PriorityBadge } from '@/components/PriorityBadge';
 
 // ─── Task shape for the board ────────────────────────────────────────────────
 
@@ -43,12 +44,6 @@ interface MockTask {
 
 // ─── Priority map ─────────────────────────────────────────────────────────────
 
-const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  error:    { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  info:     { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
 
 const PRIORITY_FILTER_MAP: Record<string, string> = {
   'Critical': 'critical',
@@ -116,26 +111,11 @@ const poolColumnDropTarget: CSSProperties = {
   boxShadow: shadow.md,
 };
 
-// ─── Segmented control styles (matches Contacts page) ───────────────────────
-
-const segmentBarStyle: CSSProperties = {
-  display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: space.tiny,
-};
-
-const segmentBtnStyle = (active: boolean): CSSProperties => ({
-  padding: `${space.xs} ${space.md}`,
-  borderRadius: border.radius.xs,
-  border: 'none',
-  cursor: 'pointer',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: active ? font.weight.semibold : font.weight.medium,
-  color: active ? color.text.primary : color.text.secondary,
-  backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? shadow.sm : 'none',
-  transition: 'all 0.15s ease',
-});
+const TASK_VIEW_SEGMENTS = [
+  { label: 'All Tasks', value: 'all' },
+  { label: 'My Tasks', value: 'mine' },
+  { label: 'Open Tasks', value: 'open' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -461,7 +441,6 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   // ── Render a task card (shared between both views) ─────────────────────────
 
   function renderTaskCard(task: MockTask, accentColor: string, assignee?: string, assigneeRole?: string, pool = false) {
-    const pri = PRIORITY_MAP[task.priority];
     const taskDeptColors = getDeptColors(task.dept);
     const isOverdue = task.overdue && !checked[task.id];
 
@@ -480,7 +459,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         }
         tags={pool ? (
           <>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
+            <FrequencyTag value={task.freq} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
                 <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
@@ -489,8 +468,8 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
           </>
         ) : (
           <>
-            <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
+            {task.dept && <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
+            <FrequencyTag value={task.freq} />
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
@@ -527,9 +506,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
               label="Completed"
             />
           ) : (
-            <Tooltip content={pri.label} placement="top">
-              <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} style={{ flexShrink: 0 }} />
-            </Tooltip>
+            <PriorityBadge priority={task.priority} size="xs" />
           )
         )}
       />
@@ -568,7 +545,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         }}
         tags={
           <>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
+            <FrequencyTag value={task.freq} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
                 <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
@@ -604,11 +581,12 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       {/* ── Unified toolbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: space.xl, padding: `${space.sm} ${space.xl} ${space.sm} 0` }}>
         {/* Left: view toggle */}
-        <div style={segmentBarStyle}>
-          <button type="button" style={segmentBtnStyle(taskView === 'all')} onClick={() => setTaskView('all')}>All Tasks</button>
-          <button type="button" style={segmentBtnStyle(taskView === 'mine')} onClick={() => setTaskView('mine')}>My Tasks</button>
-          <button type="button" style={segmentBtnStyle(taskView === 'open')} onClick={() => setTaskView('open')}>Open Tasks</button>
-        </div>
+        <SegmentedControl
+          items={TASK_VIEW_SEGMENTS}
+          value={taskView}
+          onChange={(v) => setTaskView(v as TaskView)}
+          size="sm"
+        />
 
         {/* Center: date picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>

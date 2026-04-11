@@ -8,6 +8,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { Tag } from '@bds/components';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useMembers } from '@/hooks/useMembers';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -90,11 +91,7 @@ export default function TrainingDetailPage() {
   );
 
   if (loading) {
-    return (
-      <div style={{ padding: space['3xl'], textAlign: 'center', color: color.text.muted, fontFamily: font.family.body }}>
-        Loading…
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (!member) {
@@ -123,9 +120,11 @@ export default function TrainingDetailPage() {
         <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
           {typeTag.label}
         </Tag>
-        <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
-          {member.department}
-        </Tag>
+        {member.department && (
+          <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
+            {member.department}
+          </Tag>
+        )}
       </div>
     </div>
   );

@@ -23,12 +23,15 @@ export type SheetType = keyof SheetRegistry;
 /**
  * Props injected by AppSheetProvider into every globally-rendered sheet component.
  * View sheets should accept these alongside their entity-specific props.
+ *
+ * View components use `useConfigureSheet()` from BDS to declare their Sheet
+ * title, tabs, and footer — they do NOT render their own `<Sheet>`.
  */
 export interface GlobalSheetProps {
   /** Close the entire sheet stack */
   onClose: () => void;
   /** Navigate to a related entity (pushes onto the stack) */
   onNavigate: (type: SheetType, props: Record<string, unknown>, opts?: { title?: string }) => void;
-  /** User has admin/manager privileges — injected by AppSheetProvider */
+  /** User has admin/manager privileges — injected via globalFrameProps */
   isAdmin?: boolean;
 }

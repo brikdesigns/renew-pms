@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button } from '@bds/components';
+import { Sheet, Button, Skeleton } from '@bds/components';
 import type { SheetTab } from '@bds/components';
-import { Badge } from '@bds/components';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PriorityBadge } from '@/components/PriorityBadge';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { color, font, gap, space, border } from '@/lib/tokens';
-import { frequencyLabel } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,18 +62,6 @@ const TYPE_LABELS: Record<string, string> = {
   skill_training: 'Skill Training',
 };
 
-const PRIORITY_MAP: Record<string, { status: 'error' | 'warning' | 'info'; label: string }> = {
-  critical: { status: 'error', label: 'Critical' },
-  high: { status: 'error', label: 'High' },
-  medium: { status: 'warning', label: 'Medium' },
-  low: { status: 'info', label: 'Low' },
-};
-
-const STATUS_MAP: Record<string, { badge: 'positive' | 'warning' | 'error'; label: string }> = {
-  active: { badge: 'positive', label: 'Active' },
-  draft: { badge: 'warning', label: 'Draft' },
-  archived: { badge: 'error', label: 'Archived' },
-};
 
 const ASSIGNMENT_MODE_LABELS: Record<string, string> = {
   individual: 'Individual',
@@ -138,21 +128,15 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
 
   const template = templateProp ?? fetched;
 
-  if (fetchLoading) {
+  if (fetchLoading || !template) {
     return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading...
-        </div>
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
       </Sheet>
     );
   }
 
-  if (!template) return null;
-
   const typeLabel = TYPE_LABELS[template.type] ?? template.type;
-  const pri = PRIORITY_MAP[template.priority] ?? PRIORITY_MAP.medium;
-  const status = STATUS_MAP[template.status] ?? STATUS_MAP.draft;
 
   const detailsContent = (
     <div style={sheetBodyStyle}>
@@ -195,7 +179,7 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
 
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={frequencyLabel(template.frequency)} />
+          <ReadOnlyField label="Frequency" value={<FrequencyTag value={template.frequency} />} />
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
@@ -203,7 +187,7 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
               Priority
             </span>
             <div style={{ display: 'inline-flex' }}>
-              <Badge status={pri.status} size="sm">{pri.label}</Badge>
+              <PriorityBadge priority={template.priority} />
             </div>
           </div>
         </div>
@@ -228,7 +212,7 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
           Status
         </span>
         <div style={{ display: 'inline-flex' }}>
-          <Badge status={status.badge} size="sm">{status.label}</Badge>
+          <StatusBadge status={template.status} />
         </div>
       </div>
       <ReadOnlyField label="Requires Approval" value={template.requires_approval ? 'Yes' : 'No'} />

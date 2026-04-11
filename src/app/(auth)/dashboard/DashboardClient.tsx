@@ -4,7 +4,9 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag, Badge, Tooltip } from '@bds/components';
+import { Tag, Tooltip } from '@bds/components';
+import { PriorityBadge } from '@/components/PriorityBadge';
+import { StatusBadge } from '@/components/StatusBadge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -57,11 +59,6 @@ const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  info:     { status: 'info',    label: 'Low',       icon: icon.priorityInfo },
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -336,7 +333,6 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
           <ul style={listStyle}>
             {scopedOverdueTasks.map((task) => {
-              const pri = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.info;
               const deptColors = getDeptColors(task.dept);
               return (
                 <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
@@ -347,10 +343,8 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
-                    <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-                    <Tooltip content={pri.label} placement="top">
-                      <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} style={{ flexShrink: 0 }} />
-                    </Tooltip>
+                    {task.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
+                    <PriorityBadge priority={task.priority} size="xs" />
                   </div>
                 </li>
               );
@@ -452,12 +446,6 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
           <ul style={listStyle}>
             {scopedComplianceItems.map((item) => {
-              const statusMap = {
-                completed: { status: 'positive' as const, label: 'Completed' },
-                due_soon: { status: 'warning' as const, label: 'Due Soon' },
-                upcoming: { status: 'info' as const, label: 'Upcoming' },
-              };
-              const badge = statusMap[item.status];
               return (
                 <li key={item.name} style={listItemStyle}>
                   <div style={listItemLeftStyle}>
@@ -466,7 +454,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                       <div style={listItemSubStyle}>{item.assignedTo} · {item.due}</div>
                     </div>
                   </div>
-                  <Badge status={badge.status} size="sm">{badge.label}</Badge>
+                  <StatusBadge status={item.status} />
                 </li>
               );
             })}

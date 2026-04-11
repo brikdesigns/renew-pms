@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@bds/components';
-import { Tag, Badge, Chip, Button, Tooltip, useSheetStack } from '@bds/components';
+import { Tag, Chip, Button, Tooltip, useSheetStack } from '@bds/components';
+import { PriorityBadge } from '@/components/PriorityBadge';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
@@ -12,7 +13,6 @@ import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
 import { useMembers, type Member } from '@/hooks/useMembers';
 import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
-import { ViewRequestSheet } from '@/components/ViewRequestSheet';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -28,12 +28,6 @@ const STATUS_PIPELINE = [
   { key: 'closed',            label: 'Closed' },
 ] as const;
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  high:     { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  medium:   { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  low:      { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue:          'Device',
@@ -391,12 +385,11 @@ interface RequestsClientProps {
 export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const { requests, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
-  const { pushSheet } = useSheetStack();
+  const { openSheet, closeAll } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
-  const [viewing, setViewing] = useState<RequestRow | null>(null);
   const [editing, setEditing] = useState<RequestEditData | null>(null);
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterPriority, setFilterPriority] = useState('All Priorities');
@@ -409,6 +402,24 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const [settling, setSettling] = useState(false);
   const isDragging = useRef(false);
 
+  // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
+  const openRequest = useCallback((req: RequestRow) => {
+    openSheet('request', {
+      id: req.id,
+      onUpdated: refetch,
+      onEdit: (r: RequestRow) => {
+        closeAll();
+        setEditing({
+          id: r.id, title: r.title, description: r.description,
+          category: r.category, urgency: r.urgency,
+          room_id: r.room_id, equipment_id: r.equipment_id,
+          location_description: r.location_description,
+          vendor_id: r.vendor_id, vendor_contact_id: r.vendor_contact_id,
+        });
+      },
+    }, { title: req.title, variant: 'floating' });
+  }, [openSheet, closeAll, refetch]);
+
   // Auto-open request sheet from ?open=<id> (e.g., notification click)
   // Auto-open submit form from ?submit=true (e.g., plus button in utility bar)
   useEffect(() => {
@@ -416,7 +427,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     if (openId && requests.length > 0) {
       const match = requests.find(r => r.id === openId);
       if (match) {
-        setViewing(match);
+        openRequest(match);
         router.replace('/requests', { scroll: false });
       }
     }
@@ -424,7 +435,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       setSubmitOpen(true);
       router.replace('/requests', { scroll: false });
     }
-  }, [searchParams, requests, router]);
+  }, [searchParams, requests, router, openRequest]);
 
   const filtered = useMemo(() => {
     return requests.filter(r => {
@@ -600,7 +611,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                 <span style={countBadgeStyle}>{col.requests.length}</span>
               </div>
               {col.requests.map(req => {
-                const priority = PRIORITY_BADGE[req.urgency] ?? PRIORITY_BADGE.medium;
                 const catLabel = CATEGORY_LABELS[req.category] ?? req.category;
                 const isBeingDragged = draggingId === req.id;
                 return (
@@ -608,7 +618,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                     key={req.id}
                     title={req.title}
                     subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
-                    onClick={() => { if (!isDragging.current) setViewing(req); }}
+                    onClick={() => { if (!isDragging.current) openRequest(req); }}
                     draggable
                     onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
                     onDragEnd={handleDragEnd}
@@ -621,10 +631,8 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                     }}
                     tags={
                       <>
-                        <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
-                        <Badge status={priority.status} size="xs" variant="dark" icon={<Icon icon={priority.icon} />} style={{ flexShrink: 0 }}>
-                          {priority.label}
-                        </Badge>
+                        <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
+                        <PriorityBadge priority={req.urgency} size="xs" />
                         {req.vendor_name && (
                           <Tooltip content="Has Vendor">
                             <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
@@ -678,15 +686,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         onSaved={refetch}
         defaultCategory={submitCategory}
         initialData={editing}
-      />
-      <ViewRequestSheet
-        isOpen={viewing !== null}
-        onClose={() => setViewing(null)}
-        request={viewing}
-        isAdmin={isAdmin}
-        onUpdated={refetch}
-        onEdit={(r) => { setViewing(null); setEditing(r); }}
-        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
     </div>
   );

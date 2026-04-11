@@ -8,6 +8,7 @@ import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput } from '@bds/c
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useTeams, type Team } from '@/hooks/useTeams';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -166,11 +167,7 @@ export function TeamsTable() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading teams...
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : teams.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>

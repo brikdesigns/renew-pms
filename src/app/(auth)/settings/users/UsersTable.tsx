@@ -9,6 +9,7 @@ import type { MenuItemData } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -279,11 +280,7 @@ export function UsersTable() {
           </TableHeader>
           <TableBody>
             {loading && (
-              <TableRow>
-                <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading members…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={7} />
             )}
             {!loading && filteredMembers.map((m) => {
               const empType = EMPLOYEE_TYPE_TAG[m.employee_type] ?? EMPLOYEE_TYPE_TAG.new;

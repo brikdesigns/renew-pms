@@ -11,12 +11,15 @@ import {
 } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton, Tag, useSheetStack } from '@bds/components';
+import { Button, IconButton, Tag, SegmentedControl, useSheetStack } from '@bds/components';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
+import { StatusBadge } from '@/components/StatusBadge';
 import { useTemplates } from '@/hooks/useTemplates';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { useRooms } from '@/hooks/useRooms';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useSupplyCategories } from '@/hooks/useSupplyCategories';
@@ -39,17 +42,6 @@ const TYPE_META: Record<string, { label: string; icon: string }> = {
   skill_training: { label: 'Skill Training', icon: icon.typeSkillTraining },
 };
 
-const STATUS_BADGE: Record<string, 'positive' | 'warning' | 'error'> = {
-  active: 'positive',
-  draft: 'warning',
-  archived: 'error',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Active',
-  draft: 'Draft',
-  archived: 'Archived',
-};
 
 // ─── Default form state per type ─────────────────────────────────────────────
 
@@ -127,6 +119,21 @@ const ADD_MENU_TYPES = [
   { id: 'skill_training',label: 'Training',   desc: 'Continuing education',        icon: icon.typeSkillTraining },
 ];
 
+const TASK_TYPES = ['checklist', 'procedure', 'compliance', 'request'];
+const TRAINING_TYPES = ['onboarding', 'skill_training'];
+
+type TemplateSegment = 'tasks' | 'training';
+
+const TEMPLATE_SEGMENTS = [
+  { label: 'Tasks', value: 'tasks' },
+  { label: 'Training', value: 'training' },
+];
+
+const SEGMENT_TYPES: Record<TemplateSegment, string[]> = {
+  tasks: TASK_TYPES,
+  training: TRAINING_TYPES,
+};
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function TypeChip({ type }: { type: string }) {
@@ -138,23 +145,14 @@ function TypeChip({ type }: { type: string }) {
   );
 }
 
-function StatusIndicator({ status }: { status: string }) {
-  return (
-    <Badge status={STATUS_BADGE[status] ?? 'warning'} size="sm">
-      {STATUS_LABELS[status] ?? status}
-    </Badge>
-  );
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-interface TemplatesTableProps {
-  typeFilter?: string[];
-}
-
-export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
+export function TemplatesTable() {
   const { pushSheet } = useSheetStack();
   const { templates, setTemplates, loading } = useTemplates();
+  const [segment, setSegment] = useState<TemplateSegment>('tasks');
+  const typeFilter = SEGMENT_TYPES[segment];
 
   // Reference data for form selects
   const { rooms } = useRooms();
@@ -359,7 +357,12 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
       {/* Sub-header */}
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>{typeFilter ? 'Task Templates' : 'All Templates'}</h3>
+          <SegmentedControl
+            items={TEMPLATE_SEGMENTS}
+            value={segment}
+            onChange={(v) => setSegment(v as TemplateSegment)}
+            size="sm"
+          />
           <span style={subHeaderCountStyle}>{filteredTemplates.length}</span>
         </div>
         <div ref={addBtnRef} style={{ position: 'relative' }}>
@@ -410,9 +413,20 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
       {/* Templates table */}
       <div style={tableWrapperStyle}>
         {loading ? (
-          <div style={{ padding: space.xl, color: color.text.muted, fontSize: font.size.body.sm, textAlign: 'center' }}>
-            Loading templates...
-          </div>
+          <Table size="default" flush>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Frequency</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>{' '}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableSkeleton columns={5} />
+            </TableBody>
+          </Table>
         ) : (
           <Table size="default" flush>
             <TableHeader>
@@ -443,9 +457,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
-                      {resolveFrequency(template.frequency)}
-                    </span>
+                    <FrequencyTag value={template.frequency} />
                   </TableCell>
                   <TableCell>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
@@ -453,7 +465,7 @@ export function TemplatesTable({ typeFilter }: TemplatesTableProps) {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <StatusIndicator status={template.status} />
+                    <StatusBadge status={template.status} />
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>

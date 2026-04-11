@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, Tag } from '@bds/components';
+import { Sheet, Button, Badge, Tag, Skeleton } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
 import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
-import { frequencyLabel } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -177,17 +178,13 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     if (task) setActiveTab('details');
   }, [task?.id]);
 
-  if (fetchLoading) {
+  if (fetchLoading || !task) {
     return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading...
-        </div>
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
       </Sheet>
     );
   }
-
-  if (!task) return null;
 
   const pri = PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info;
   const deptColors = departmentColor(task.deptColor);
@@ -294,7 +291,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
           <ReadOnlyField label="Due" value={task.due} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={frequencyLabel(task.freq)} />
+          <ReadOnlyField label="Frequency" value={<FrequencyTag value={task.freq} />} />
         </div>
       </div>
 
@@ -309,7 +306,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
               Department
             </span>
             <div style={tagRowStyle}>
-              <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>
+              {task.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>}
             </div>
           </div>
         </div>
