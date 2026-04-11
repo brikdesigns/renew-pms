@@ -128,13 +128,13 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userAvat
         <span style={greetingStyle}>{pageLabel}</span>
       </div>
       <div style={rightStyle}>
-        <Tooltip content="Add Request" placement="bottom">
+        <Tooltip content="Add Request" placement="bottom" delay={600}>
           <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.plus} />} label="New Request" onClick={() => router.push('/requests?submit=true')} />
         </Tooltip>
-        <Tooltip content="Share Feedback" placement="bottom">
+        <Tooltip content="Share Feedback" placement="bottom" delay={600}>
           <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
         </Tooltip>
-        <Tooltip content="Notifications" placement="bottom">
+        <Tooltip content="Notifications" placement="bottom" delay={600}>
           <NotificationBell />
         </Tooltip>
         <div style={avatarWrapStyle}>

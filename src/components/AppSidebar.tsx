@@ -169,6 +169,7 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
                 key={item.href}
                 content={item.label}
                 placement="right"
+                delay={600}
                 style={{ display: 'block', width: '100%' }}
               >
                 <Link
@@ -194,7 +195,7 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
 
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
-        <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right">
+        <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
           <button
             onClick={toggle}
             style={bottomBtnStyle(hoveredTheme)}
@@ -205,7 +206,7 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
             <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
           </button>
         </Tooltip>
-        <Tooltip content="Help & User Guide" placement="right">
+        <Tooltip content="Help & User Guide" placement="right" delay={600}>
           <button
             onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
             style={bottomBtnStyle(hoveredHelp)}
