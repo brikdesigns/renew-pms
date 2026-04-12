@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { createNotification } from '@/lib/notifications';
+import { sendEmail, getMemberEmail, requestStatusChangeEmail, requestAssignedEmail, requestRejectedEmail } from '@/lib/email';
 
 // ─── Shared SELECT + flatten (mirrors list endpoint) ────────────────────────
 
@@ -171,7 +172,7 @@ export async function PATCH(
     waiting_on_vendor: 'Waiting on Vendor', resolved: 'Resolved', closed: 'Closed',
   };
 
-  // Notify submitter on status change
+  // Notify submitter on status change (in-app + email)
   if (updates.status && current && updates.status !== current.status) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const submitterMember = Array.isArray(current.practice_members) ? current.practice_members[0] : current.practice_members as any;
@@ -185,12 +186,22 @@ export async function PATCH(
         body: `Status changed to ${statusLabels[updates.status as string] ?? updates.status}`,
         link: `/requests?open=${id}`,
       }).catch(err => console.error('[notification]', err));
+
+      // Email submitter
+      if (current.submitted_by) {
+        const emailTemplate = updates.status === 'closed'
+          ? requestRejectedEmail(current.title, id)
+          : requestStatusChangeEmail(current.title, updates.status as string, id);
+        getMemberEmail(current.submitted_by as string).then(email => {
+          if (!email) return;
+          return sendEmail({ to: [email], ...emailTemplate, practiceId, template: 'request_status_change' });
+        }).catch(err => console.error('[email]', err));
+      }
     }
   }
 
-  // Notify assignee when assigned
+  // Notify assignee when assigned (in-app + email)
   if (updates.assigned_to && current && updates.assigned_to !== current.assigned_to) {
-    // Look up the assignee's user_id from practice_members
     const { data: assigneeMember } = await admin
       .from('practice_members')
       .select('user_id')
@@ -206,6 +217,13 @@ export async function PATCH(
         body: 'You have been assigned to this request',
         link: `/requests?open=${id}`,
       }).catch(err => console.error('[notification]', err));
+
+      // Email assignee
+      const { subject, html } = requestAssignedEmail(current.title, id);
+      getMemberEmail(updates.assigned_to as string).then(email => {
+        if (!email) return;
+        return sendEmail({ to: [email], subject, html, practiceId, template: 'request_assigned' });
+      }).catch(err => console.error('[email]', err));
     }
   }
 
