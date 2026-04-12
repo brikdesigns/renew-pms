@@ -4,53 +4,18 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag, Tooltip } from '@bds/components';
+import { Tag, Skeleton, useSheetStack } from '@bds/components';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
-import { UserAvatar } from '@/components/UserAvatar';
+import { ProfileCard } from '@/components/ProfileCard';
 import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
+import { useDashboard } from '@/hooks/useDashboard';
 import { label as labelStyle } from '@/lib/styles';
+import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-
-// ─── Mock data (aggregated from tasks + training pages) ──────────────────────
-
-// TODO: Replace with real overdue task query from DB
-const OVERDUE_TASKS = [
-  { id: 't1', title: 'Review daily patient schedule', assignee: 'Sarah Mitchell', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't4', title: 'Conduct daily team huddle', assignee: 'Jessica Torres', dept: '(BA) Business Administration', priority: 'critical' as const },
-  { id: 't7', title: 'Sterilize instruments — morning batch', assignee: 'Amanda Chen', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't17', title: 'Run autoclave cycle — morning', assignee: 'Tyler Nguyen', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't14', title: 'Chairside setup for morning procedures', assignee: 'Emily Rivera', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't21', title: 'Confirm next-day appointments', assignee: 'Rachel Foster', dept: '(BA) Business Administration', priority: 'critical' as const },
-  { id: 't2', title: 'Verify operatory setup and readiness', assignee: 'Sarah Mitchell', dept: '(C) Clinical', priority: 'warning' as const },
-];
-
-// ONBOARDING_MEMBERS sourced from useMembers() — filtered by employee_type !== 'proficient'
-
-// TODO: Replace with real aggregated task query from DB
-const MOCK_DEPT_COMPLETION: Record<string, { completed: number; total: number }> = {
-  '(C) Clinical':                { completed: 14, total: 22 },
-  '(BA) Business Administration': { completed: 4,  total: 6  },
-  '(M) Management':              { completed: 2,  total: 5  },
-  '(L) Leadership':              { completed: 3,  total: 3  },
-  'Facilities':                  { completed: 1,  total: 3  },
-};
-
-const COMPLIANCE_ITEMS = [
-  { name: 'OSHA Safety Training', assignedTo: 'All Staff', due: 'Q2 2026', status: 'upcoming' as const },
-  { name: 'HIPAA Privacy Training', assignedTo: 'All Staff', due: 'Q2 2026', status: 'upcoming' as const },
-  { name: 'Infection Control Refresher', assignedTo: 'Clinical', due: 'Apr 15, 2026', status: 'due_soon' as const },
-  { name: 'Radiation Safety Review', assignedTo: 'Clinical', due: 'Completed Mar 1', status: 'completed' as const },
-];
-
-const TODAY_TOTAL = 32;
-const TODAY_COMPLETED = 12;
-const TODAY_PCT = Math.round((TODAY_COMPLETED / TODAY_TOTAL) * 100);
-
-import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 
 // ─── Priority mapping ────────────────────────────────────────────────────────
 
@@ -222,6 +187,8 @@ interface DashboardClientProps {
 export default function DashboardClient({ userName, systemRole, employeeType, userDepartment }: DashboardClientProps) {
   const { departments } = useDepartments();
   const { members } = useMembers();
+  const { data: dashboard, loading: dashLoading } = useDashboard();
+  const { openSheet } = useSheetStack();
 
   const isAdminUser = systemRole === 'brik_admin' || systemRole === 'admin';
   const isManager = systemRole === 'manager';
@@ -233,61 +200,60 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
     [departments]
   );
 
-  // Scope overdue tasks by role
+  // Scope overdue tasks by role (API returns all practice tasks; filter client-side by role)
   const scopedOverdueTasks = useMemo(() => {
-    if (isAdminUser) return OVERDUE_TASKS;
-    if (isManager && userDepartment) return OVERDUE_TASKS.filter((t) => t.dept === userDepartment);
-    // Staff: show only tasks assigned to the current user (mock: show first 2 as personal tasks)
-    return OVERDUE_TASKS.slice(0, 2);
-  }, [isAdminUser, isManager, userDepartment]);
+    const all = dashboard?.overdueTasks ?? [];
+    if (isAdminUser) return all;
+    if (isManager && userDepartment) return all.filter((t) => t.dept === userDepartment);
+    // Staff: only tasks assigned to the current user
+    return all.filter((t) => t.assignee.includes(userName));
+  }, [dashboard, isAdminUser, isManager, userDepartment, userName]);
 
   // Scope department completion by role
   const scopedDeptCompletion = useMemo(() => {
-    if (isAdminUser) return MOCK_DEPT_COMPLETION;
+    const all = dashboard?.departmentCompletion ?? {};
+    if (isAdminUser) return all;
     if (isManager && userDepartment) {
-      const entry = MOCK_DEPT_COMPLETION[userDepartment];
+      const entry = all[userDepartment];
       return entry ? { [userDepartment]: entry } : {};
     }
     return {};
-  }, [isAdminUser, isManager, userDepartment]);
+  }, [dashboard, isAdminUser, isManager, userDepartment]);
 
   // Scope compliance items by role
   const scopedComplianceItems = useMemo(() => {
-    if (isAdminUser) return COMPLIANCE_ITEMS;
+    const all = dashboard?.complianceItems ?? [];
+    if (isAdminUser) return all;
     if (isManager && userDepartment) {
-      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
+      return all.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
     }
-    // Staff: only items assigned to all staff or their department
     if (userDepartment) {
-      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
+      return all.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
     }
-    return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff');
-  }, [isAdminUser, isManager, userDepartment]);
+    return all.filter((item) => item.assignedTo === 'All Staff');
+  }, [dashboard, isAdminUser, isManager, userDepartment]);
 
   // Onboarding members: scope by role
-  // Staff: hide entirely if proficient (handled in render). If not proficient, show only self.
-  // Manager: filter to their department. Admin: show all.
   const onboardingMembers = useMemo(() => {
     const onboarding = members.filter((m) => m.employee_type !== 'proficient' && m.is_active);
     if (isAdminUser) return onboarding;
     if (isManager && userDepartment) return onboarding.filter((m) => m.department === userDepartment);
-    // Staff: show only themselves if they're onboarding
     return onboarding.filter((m) => m.first_name === userName);
   }, [members, isAdminUser, isManager, userDepartment, userName]);
 
-  // Whether to show onboarding card at all
   const showOnboarding = isAdminUser || isManager || employeeType !== 'proficient';
 
-  // Progress stats — scope for staff (personal) vs manager (department)
+  // Progress stats from real data
   const progressStats = useMemo(() => {
-    if (isAdminUser) return { completed: TODAY_COMPLETED, total: TODAY_TOTAL };
+    if (!dashboard) return { completed: 0, total: 0 };
+    if (isAdminUser) return dashboard.todayProgress;
     if (isManager && userDepartment) {
-      const entry = MOCK_DEPT_COMPLETION[userDepartment];
-      return entry ?? { completed: 0, total: 0 };
+      const entry = dashboard.departmentCompletion[userDepartment];
+      return entry ? { completed: entry.completed, total: entry.total } : { completed: 0, total: 0 };
     }
-    // Staff: personal task counts (mock subset)
-    return { completed: 3, total: 8 };
-  }, [isAdminUser, isManager, userDepartment]);
+    // Staff: use overall progress (API already scopes by practice)
+    return dashboard.todayProgress;
+  }, [dashboard, isAdminUser, isManager, userDepartment]);
 
   const progressPct = progressStats.total > 0 ? Math.round((progressStats.completed / progressStats.total) * 100) : 0;
 
@@ -327,8 +293,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </Link>
           </div>
           <ul style={listStyle}>
-            {scopedOverdueTasks.map((task) => {
-              const deptColors = getDeptColors(task.dept);
+            {dashLoading ? (
+              <li style={listItemStyle}><Skeleton height={40} /></li>
+            ) : scopedOverdueTasks.length === 0 ? (
+              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                No overdue tasks
+              </li>
+            ) : scopedOverdueTasks.map((task) => {
+              const deptColors = task.deptColor ? departmentColor(task.deptColor) : getDeptColors(task.dept);
               return (
                 <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
                   <div style={listItemLeftStyle}>
@@ -383,12 +355,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>
                 {isManager ? 'Department Breakdown' : 'By Department'}
               </span>
-              {departments.filter((d) => d.is_active && d.name !== 'All Departments' && (isAdminUser || d.name === userDepartment)).map((d) => {
-                const counts = scopedDeptCompletion[d.name] ?? { completed: 0, total: 0 };
-                return (
-                  <DeptBar key={d.id} dept={d.name} colorKey={d.color} completed={counts.completed} total={counts.total} />
-                );
-              })}
+              {dashLoading ? (
+                <Skeleton height={14} />
+              ) : Object.entries(scopedDeptCompletion)
+                .filter(([name]) => name !== '(G) All Departments')
+                .map(([name, counts]) => (
+                  <DeptBar key={name} dept={name} colorKey={counts.color} completed={counts.completed} total={counts.total} />
+                ))
+              }
             </div>
           )}
         </div>
@@ -413,18 +387,19 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               {onboardingMembers.map((m) => {
                 const typeTag = EMPLOYEE_TYPE_TAG[m.employee_type] ?? EMPLOYEE_TYPE_TAG.new;
                 const fullName = `${m.first_name} ${m.last_name}`;
+                const deptColors = departmentColor(m.department_color);
                 return (
-                  <li key={m.id} style={listItemStyle}>
-                    <div style={listItemLeftStyle}>
-                      <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={listItemTitleStyle}>{fullName}</div>
-                        <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
-                      <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
-                    </div>
+                  <li key={m.id}>
+                    <ProfileCard
+                      variant="user"
+                      name={fullName}
+                      role={m.practice_role || m.department}
+                      department={m.department}
+                      departmentBg={deptColors.light}
+                      departmentText={deptColors.text}
+                      endContent={<Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>}
+                      onClick={() => openSheet('user', { id: m.id }, { title: fullName, variant: 'floating' })}
+                    />
                   </li>
                 );
               })}
@@ -440,13 +415,22 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </h2>
           </div>
           <ul style={listStyle}>
-            {scopedComplianceItems.map((item) => {
+            {dashLoading ? (
+              <li style={listItemStyle}><Skeleton height={40} /></li>
+            ) : scopedComplianceItems.length === 0 ? (
+              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                No compliance items due
+              </li>
+            ) : scopedComplianceItems.map((item) => {
+              const dueLabel = item.due
+                ? new Date(item.due).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'No due date';
               return (
-                <li key={item.name} style={listItemStyle}>
+                <li key={item.id} style={listItemStyle}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{item.name}</div>
-                      <div style={listItemSubStyle}>{item.assignedTo} · {item.due}</div>
+                      <div style={listItemSubStyle}>{item.assignedTo} · {dueLabel}</div>
                     </div>
                   </div>
                   <StatusBadge status={item.status} />

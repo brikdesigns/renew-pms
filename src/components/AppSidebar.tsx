@@ -156,9 +156,9 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
     <aside style={sidebarStyle}>
       <div style={topGroupStyle}>
         {/* Logomark */}
-        <div style={logoStyle}>
+        <Link href="/dashboard" style={logoStyle} aria-label="Dashboard">
           <Logomark size={40} />
-        </div>
+        </Link>
 
         {/* Nav icons */}
         <nav style={navGroupStyle}>
