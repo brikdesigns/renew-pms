@@ -4,11 +4,12 @@ import { useState, useRef, useEffect, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton } from '@bds/components';
+import { IconButton, NotificationPopover } from '@bds/components';
 import { useSheetStack } from '@bds/components';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
-import { color, font, gap, space, border, shadow } from '@/lib/tokens';
+import { color, border } from '@/lib/tokens';
 import type { SheetType } from '@/lib/sheet-registry';
+import type { NotificationItemData } from '@bds/components';
 
 // ─── Notification link → sheet mapping ─────────────────────────────────────
 
@@ -27,7 +28,7 @@ function parseNotificationLink(link: string | null): { type: SheetType; props: {
   }
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
+// ─── Styles (bell-specific — presentation delegated to BDS) ────────────────
 
 const wrapStyle: CSSProperties = { position: 'relative' };
 
@@ -38,62 +39,9 @@ const unreadDotStyle: CSSProperties = {
   pointerEvents: 'none',
 };
 
-const dropdownStyle: CSSProperties = {
+const dropdownPositionStyle: CSSProperties = {
   position: 'absolute', top: '100%', right: 0, marginTop: '4px',
-  width: '360px', maxHeight: '480px', overflowY: 'auto',
-  backgroundColor: color.surface.primary,
-  border: `1px solid ${color.border.muted}`,
-  borderRadius: border.radius.md, boxShadow: shadow.lg, zIndex: 200,
-};
-
-const headerStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.sm} ${space.md}`,
-  borderBottom: `1px solid ${color.border.muted}`,
-};
-
-const headerTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold, color: color.text.primary,
-};
-
-const markAllStyle: CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer',
-  fontFamily: font.family.label, fontSize: font.size.body.xs,
-  fontWeight: font.weight.medium, color: color.text.brand, padding: 0,
-};
-
-const itemStyle = (isRead: boolean): CSSProperties => ({
-  display: 'flex', gap: gap.md, padding: `${space.sm} ${space.md}`,
-  cursor: 'pointer', backgroundColor: isRead ? 'transparent' : color.surface.secondary,
-  borderBottom: `1px solid ${color.border.muted}`, transition: 'background-color 0.15s ease',
-});
-
-const dotStyle: CSSProperties = {
-  width: '8px', height: '8px', borderRadius: border.radius.circle,
-  backgroundColor: color.system.link, flexShrink: 0, marginTop: '6px',
-};
-
-const itemTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium, color: color.text.primary,
-  lineHeight: font.lineHeight.snug,
-};
-
-const itemBodyStyle: CSSProperties = {
-  fontFamily: font.family.body, fontSize: font.size.body.xs,
-  color: color.text.secondary, lineHeight: font.lineHeight.normal,
-  marginTop: space.tiny,
-};
-
-const itemTimeStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.tiny,
-  color: color.text.muted, marginTop: space.tiny,
-};
-
-const emptyStyle: CSSProperties = {
-  padding: space.xl, textAlign: 'center', fontFamily: font.family.body,
-  fontSize: font.size.body.sm, color: color.text.muted,
+  zIndex: 200,
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -108,6 +56,17 @@ function timeAgo(dateStr: string): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/** Map product notifications to BDS NotificationItemData */
+function toBdsItems(notifications: Notification[]): NotificationItemData[] {
+  return notifications.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    time: timeAgo(n.created_at),
+    isRead: n.is_read,
+  }));
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -141,16 +100,17 @@ export function NotificationBell() {
 
   const { openSheet } = useSheetStack();
 
-  const handleItemClick = (n: Notification) => {
-    if (!n.is_read) markRead(n.id);
+  const handleItemClick = (item: NotificationItemData) => {
+    const original = notifications.find((n) => n.id === item.id);
+    if (original && !original.is_read) markRead(original.id);
     setOpen(false);
 
     // Try to open in a global sheet first (no page navigation)
-    const parsed = parseNotificationLink(n.link);
+    const parsed = original ? parseNotificationLink(original.link) : null;
     if (parsed) {
-      openSheet(parsed.type, parsed.props, { title: n.title });
-    } else if (n.link) {
-      router.push(n.link);
+      openSheet(parsed.type, parsed.props, { title: item.title });
+    } else if (original?.link) {
+      router.push(original.link);
     }
   };
 
@@ -167,26 +127,13 @@ export function NotificationBell() {
       {unreadCount > 0 && <span className={pulse ? 'dot-pulse' : ''} style={unreadDotStyle} />}
 
       {open && (
-        <div style={dropdownStyle}>
-          <div style={headerStyle}>
-            <span style={headerTitleStyle}>Notifications</span>
-            {unreadCount > 0 && <button type="button" style={markAllStyle} onClick={markAllRead}>Mark all read</button>}
-          </div>
-
-          {notifications.length === 0 ? (
-            <div style={emptyStyle}>No notifications yet</div>
-          ) : (
-            notifications.map(n => (
-              <div key={n.id} style={itemStyle(n.is_read)} onClick={() => handleItemClick(n)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') handleItemClick(n); }}>
-                {!n.is_read && <div style={dotStyle} />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={itemTitleStyle}>{n.title}</div>
-                  {n.body && <div style={itemBodyStyle}>{n.body}</div>}
-                  <div style={itemTimeStyle}>{timeAgo(n.created_at)}</div>
-                </div>
-              </div>
-            ))
-          )}
+        <div style={dropdownPositionStyle}>
+          <NotificationPopover
+            notifications={toBdsItems(notifications)}
+            onItemClick={handleItemClick}
+            onMarkAllRead={markAllRead}
+            showMarkAllRead={unreadCount > 0}
+          />
         </div>
       )}
     </div>

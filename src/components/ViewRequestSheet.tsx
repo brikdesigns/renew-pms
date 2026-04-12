@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, type FormEvent, type CSSProperties } from 'react';
-import { Tag, Button, Select, TextArea, useConfigureSheet } from '@bds/components';
+import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
+import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@bds/components';
 import { StatusBadge, statusLabel } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@bds/components';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
+import { ManageRequestModal } from '@/components/ManageRequestModal';
+import { ResolveRequestModal } from '@/components/ResolveRequestModal';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -19,21 +21,11 @@ import { useToast } from '@/components/ToastProvider';
 
 // ─── Display maps ───────────────────────────────────────────────────────────
 
-
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue: 'Device Issue',
   equipment_issue: 'Equipment Issue',
   facility_maintenance: 'Facility / Maintenance',
 };
-
-const STATUS_OPTIONS = [
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'in_review', label: 'In Review' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'waiting_on_vendor', label: 'Waiting on Vendor' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'closed', label: 'Closed' },
-];
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -45,11 +37,6 @@ const rowStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-interface MemberOption {
-  id: string;
-  name: string;
-}
-
 interface ViewRequestSheetProps {
   onClose: () => void;
   /** Full request data (page-level mode — skips fetch) */
@@ -57,28 +44,33 @@ interface ViewRequestSheetProps {
   /** Request ID (global mode — fetches data) */
   id?: string;
   isAdmin?: boolean;
+  /** Current user's practice_members.id — for assignee detection */
+  currentMemberId?: string;
   onUpdated?: () => void;
-  /** Open this request in edit mode */
-  onEdit?: (request: RequestRow) => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
 
-export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = false, onUpdated, onEdit, onNavigate }: ViewRequestSheetProps) {
+export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = false, currentMemberId, onUpdated, onNavigate }: ViewRequestSheetProps) {
   const configureSheet = useConfigureSheet();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
-  const [status, setStatus] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
-  const [resolutionNotes, setResolutionNotes] = useState('');
-  const [members, setMembers] = useState<MemberOption[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [fetched, setFetched] = useState<RequestRow | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [resolveOpen, setResolveOpen] = useState(false);
 
   // Global mode: fetch by ID when no data prop is given
   const resolvedId = id ?? requestProp?.id;
+  const refetch = () => {
+    if (!resolvedId) return;
+    fetch(`/api/requests/${resolvedId}`)
+      .then(r => r.json())
+      .then(data => { if (data && !data.error) setFetched(data); })
+      .catch(err => console.error('[ViewRequestSheet] refetch failed:', err));
+  };
+
   useEffect(() => {
     if (requestProp || !resolvedId) return;
     setFetchLoading(true);
@@ -91,65 +83,36 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
 
   const request = requestProp ?? fetched;
 
-  // Reset form state when request changes
+  // Reset tab when request changes
   useEffect(() => {
-    if (request) {
-      setStatus(request.status);
-      setAssignedTo(request.assignee_id ?? '');
-      setResolutionNotes(request.resolution_notes ?? '');
-      setDirty(false);
-      setActiveTab('details');
-    }
-  }, [request]);
+    if (request) setActiveTab('details');
+  }, [request?.id]);
 
-  // Fetch practice members for assignment dropdown
-  useEffect(() => {
-    if (!isAdmin) return;
-    fetch('/api/members')
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setMembers(data.map((m: { id: string; first_name: string; last_name: string }) => ({
-            id: m.id,
-            name: `${m.first_name} ${m.last_name}`.trim(),
-          })));
-        }
-      })
-      .catch(err => console.error('[ViewRequestSheet] failed to load members:', err));
-  }, [isAdmin]);
-
-  const hasChanges = request ? (dirty || status !== request.status || assignedTo !== (request.assignee_id ?? '') || resolutionNotes !== (request.resolution_notes ?? '')) : false;
-
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!request || !hasChanges) return;
-    setSaving(true);
-
-    const updates: Record<string, unknown> = {};
-    if (status !== request.status) updates.status = status;
-    if (assignedTo !== (request.assignee_id ?? '')) updates.assigned_to = assignedTo || null;
-    if (resolutionNotes !== (request.resolution_notes ?? '')) updates.resolution_notes = resolutionNotes || null;
-
+  const handleReject = async () => {
+    if (!request) return;
     try {
       const res = await fetch(`/api/requests/${request.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({ status: 'closed' }),
       });
-
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? 'Failed to update request');
+        throw new Error(data.error ?? 'Failed to reject request');
       }
-
-      showToast({ title: 'Request updated', description: `${request.title} has been updated.`, variant: 'success' });
+      showToast({ title: 'Request rejected', description: `"${request.title}" has been closed.`, variant: 'success' });
       onUpdated?.();
       onClose();
     } catch (err: unknown) {
-      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to update', variant: 'error' });
+      showToast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to reject', variant: 'error' });
     } finally {
-      setSaving(false);
+      setRejectOpen(false);
     }
+  };
+
+  const handleManageSaved = () => {
+    refetch();
+    onUpdated?.();
   };
 
   // ── Loading state ──────────────────────────────────────────────────────
@@ -237,81 +200,23 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
       </div>
     );
 
-    // ── Manage tab ──
-    const manageContent = isAdmin ? (
-      <form id="manage-request-form" onSubmit={handleSave}>
-        <div style={sheetBodyStyle}>
-          <h3 style={sheetSectionTitle}>Status & Assignment</h3>
-          <Select
-            label="Status"
-            size="sm"
-            value={status}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setStatus(e.target.value); setDirty(true); }}
-            options={STATUS_OPTIONS}
-          />
-          <Select
-            label="Assign To"
-            size="sm"
-            value={assignedTo}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setAssignedTo(e.target.value); setDirty(true); }}
-            options={[
-              { value: '', label: 'Unassigned' },
-              ...members.map(m => ({ value: m.id, label: m.name })),
-            ]}
-          />
-          <h3 style={sheetSectionTitle}>Resolution</h3>
-          <TextArea
-            label="Resolution Notes"
-            size="sm"
-            value={resolutionNotes}
-            onChange={e => { setResolutionNotes(e.target.value); setDirty(true); }}
-            placeholder="How was this resolved?"
-            rows={3}
-          />
-        </div>
-      </form>
-    ) : (
-      <div style={sheetBodyStyle}>
-        <h3 style={sheetSectionTitle}>Status & Assignment</h3>
-        <ReadOnlyField label="Status" value={
-          <StatusBadge status={request.status} />
-        } />
-        <ReadOnlyField label="Assigned To" value={request.assignee_name ?? 'Not yet assigned'} />
-        <h3 style={sheetSectionTitle}>Resolution</h3>
-        {request.resolution_notes ? (
-          <ReadOnlyField label="Resolution Notes" value={request.resolution_notes} />
-        ) : (
-          <ReadOnlyField label="Resolution Notes" value="No resolution notes yet" />
-        )}
-        {request.resolved_at && (
-          <ReadOnlyField label="Resolved At" value={new Date(request.resolved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
-        )}
-      </div>
-    );
-
     // ── Activity tab ──
     const formatTimestamp = (ts: string) =>
       new Date(ts).toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
       });
 
-    interface TimelineEvent {
-      icon: string;
-      label: string;
-      detail: string | null;
-      timestamp: string;
-    }
-
-    const timelineEvents: TimelineEvent[] = [];
+    const timelineEvents: import('@bds/components').TimelineEvent[] = [];
     timelineEvents.push({
-      icon: icon.plus,
+      icon: <Icon icon={icon.plus} />,
       label: 'Request submitted',
       detail: request.submitter_name ? `by ${request.submitter_name}` : null,
       timestamp: formatTimestamp(request.created_at),
+      isOrigin: true,
     });
     if (request.assignee_name) {
       timelineEvents.push({
-        icon: icon.profile,
+        icon: <Icon icon={icon.profile} />,
         label: 'Assigned',
         detail: `to ${request.assignee_name}`,
         timestamp: formatTimestamp(request.updated_at),
@@ -319,17 +224,16 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
     }
     if (request.status !== 'submitted') {
       timelineEvents.push({
-        icon: icon.circleCheck,
+        icon: <Icon icon={icon.circleCheck} />,
         label: `Status changed to ${statusLabel(request.status)}`,
-        detail: null,
         timestamp: formatTimestamp(request.updated_at),
       });
     }
     if (request.resolved_at) {
       timelineEvents.push({
-        icon: icon.circleCheck,
+        icon: <Icon icon={icon.circleCheck} />,
         label: 'Resolved',
-        detail: request.resolution_notes ? request.resolution_notes : null,
+        detail: request.resolution_notes ?? undefined,
         timestamp: formatTimestamp(request.resolved_at),
       });
     }
@@ -337,93 +241,38 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
     const activityContent = (
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Activity Timeline</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {timelineEvents.map((event, idx) => {
-            const isLast = idx === timelineEvents.length - 1;
-            return (
-              <div key={idx} style={{ display: 'flex', gap: gap.md }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 24, flexShrink: 0 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: border.radius.pill,
-                    backgroundColor: idx === 0 ? color.background.brandPrimary : color.surface.secondary,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon
-                      icon={event.icon}
-                      style={{
-                        fontSize: font.size.body.sm,
-                        color: idx === 0 ? color.text.onColorDark : color.text.secondary,
-                      } as CSSProperties & Record<string, string>}
-                    />
-                  </div>
-                  {!isLast && (
-                    <div style={{
-                      width: 2, flex: 1, minHeight: 20,
-                      backgroundColor: color.border.muted,
-                    }} />
-                  )}
-                </div>
-                <div style={{ paddingBottom: isLast ? 0 : space.lg, paddingTop: space.tiny }}>
-                  <div style={{
-                    fontFamily: font.family.label,
-                    fontSize: font.size.label.sm,
-                    fontWeight: font.weight.semibold,
-                    color: color.text.primary,
-                    lineHeight: font.lineHeight.tight,
-                  }}>
-                    {event.label}
-                  </div>
-                  {event.detail && (
-                    <div style={{
-                      fontFamily: font.family.body,
-                      fontSize: font.size.body.xs,
-                      color: color.text.secondary,
-                      marginTop: '2px',
-                    }}>
-                      {event.detail}
-                    </div>
-                  )}
-                  <div style={{
-                    fontFamily: font.family.body,
-                    fontSize: font.size.body.xs,
-                    color: color.text.muted,
-                    marginTop: '2px',
-                  }}>
-                    {event.timestamp}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <ActivityTimeline events={timelineEvents} />
       </div>
     );
 
     // ── Configure Sheet ──
     const sheetTabs: SheetTab[] = [
       { id: 'details', label: 'Details', content: detailsContent },
-      { id: 'manage', label: 'Manage', content: manageContent },
       { id: 'activity', label: 'Activity', content: activityContent },
     ];
 
-    const footerContent = isAdmin && activeTab === 'manage' ? (
-      <>
-        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" size="md" type="submit" form="manage-request-form" disabled={!hasChanges || saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
+    const isTerminal = request.status === 'resolved' || request.status === 'closed';
+    const isAssignee = !!currentMemberId && request.assignee_id === currentMemberId;
+
+    const canAct = !isTerminal && (isAdmin || isAssignee);
+
+    const footerContent = canAct ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end', width: '100%' }}>
+        <Button variant="secondary" size="md" type="button" onClick={() => setRejectOpen(true)}>
+          Reject
         </Button>
-      </>
-    ) : activeTab === 'details' && onEdit ? (
-      <>
-        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
-        <Button variant="outline" size="md" type="button" onClick={() => onEdit(request)}>
-          <Icon icon={icon.edit} style={{ marginRight: gap.xs } as React.CSSProperties} />
-          Edit Request
+        <div style={{ flex: 1 }} />
+        <Button variant="secondary" size="md" type="button" onClick={() => setManageOpen(true)}>
+          Reassign
         </Button>
-      </>
+        <Button variant="primary" size="md" type="button" onClick={() => setResolveOpen(true)}>
+          Resolve
+        </Button>
+      </div>
     ) : (
-      <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+      </div>
     );
 
     configureSheet({
@@ -434,7 +283,44 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
       footer: footerContent,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configureSheet, fetchLoading, request?.id, request?.status, activeTab, status, assignedTo, resolutionNotes, saving, members.length, isAdmin, onClose]);
+  }, [configureSheet, fetchLoading, request?.id, request?.status, activeTab, isAdmin, currentMemberId, onClose]);
 
-  return null;
+  return (
+    <>
+      {request && (
+        <ManageRequestModal
+          isOpen={manageOpen}
+          onClose={() => setManageOpen(false)}
+          requestId={request.id}
+          requestTitle={request.title}
+          currentAssigneeId={request.assignee_id}
+          currentVendorId={request.vendor_id}
+          currentVendorContactId={request.vendor_contact_id}
+          currentNotes={request.resolution_notes}
+          isAdmin={isAdmin}
+          onSaved={handleManageSaved}
+        />
+      )}
+      {request && (
+        <ResolveRequestModal
+          isOpen={resolveOpen}
+          onClose={() => setResolveOpen(false)}
+          requestId={request.id}
+          requestTitle={request.title}
+          currentNotes={request.resolution_notes}
+          onSaved={handleManageSaved}
+        />
+      )}
+      <Dialog
+        isOpen={rejectOpen}
+        onClose={() => setRejectOpen(false)}
+        title="Reject request?"
+        description={`Are you sure you want to reject "${request?.title ?? 'this request'}"? This will close the request.`}
+        confirmLabel="Reject"
+        cancelLabel="Cancel"
+        onConfirm={handleReject}
+        variant="destructive"
+      />
+    </>
+  );
 }
