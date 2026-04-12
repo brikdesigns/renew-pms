@@ -127,7 +127,7 @@ function CompaniesView({
           <TableHead>Email</TableHead>
           <TableHead>Contacts</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+          <TableHead style={{ width: '120px' }}>{' '}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -164,8 +164,8 @@ function CompaniesView({
                 </span>
               </TableCell>
               <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.email ? color.text.primary : color.text.muted }}>
-                  {v.email ?? '—'}
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
+                  {v.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
               <TableCell>
@@ -178,9 +178,9 @@ function CompaniesView({
               </TableCell>
               <TableCell>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
                 </div>
               </TableCell>
             </TableRow>
@@ -212,7 +212,7 @@ function ContactsView({
           <TableHead>Role</TableHead>
           <TableHead>Phone</TableHead>
           <TableHead>Email</TableHead>
-          <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+          <TableHead style={{ width: '120px' }}>{' '}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -263,15 +263,15 @@ function ContactsView({
                 </span>
               </TableCell>
               <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.email ? color.text.primary : color.text.muted }}>
-                  {c.email ?? '—'}
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
+                  {c.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
               <TableCell>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
                 </div>
               </TableCell>
             </TableRow>

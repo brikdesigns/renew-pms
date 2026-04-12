@@ -242,7 +242,7 @@ export function InventoryTable() {
               <TableHead>Manufacturer</TableHead>
               <TableHead>Room</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -276,9 +276,9 @@ export function InventoryTable() {
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${item.name}`} onClick={() => handleView(item)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${item.name}`} onClick={() => handleEdit(item)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${item.name}`} onClick={() => setDeleteTarget({ id: item.id, name: item.name })} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${item.name}`} onClick={() => handleView(item)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${item.name}`} onClick={() => handleEdit(item)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${item.name}`} onClick={() => setDeleteTarget({ id: item.id, name: item.name })} />
                     </div>
                   </TableCell>
                 </TableRow>

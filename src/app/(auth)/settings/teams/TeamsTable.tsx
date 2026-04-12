@@ -162,7 +162,7 @@ export function TeamsTable() {
               <TableHead>Department</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -200,9 +200,9 @@ export function TeamsTable() {
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
                     </div>
                   </TableCell>
                 </TableRow>

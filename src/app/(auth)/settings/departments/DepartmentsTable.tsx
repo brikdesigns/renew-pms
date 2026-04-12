@@ -122,7 +122,7 @@ export function DepartmentsTable() {
               <TableHead>Color</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,9 +147,9 @@ export function DepartmentsTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${d.name}`} onClick={() => setDeleteTarget({ id: d.id, name: d.name })} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${d.name}`} onClick={() => setDeleteTarget({ id: d.id, name: d.name })} />
                   </div>
                 </TableCell>
               </TableRow>

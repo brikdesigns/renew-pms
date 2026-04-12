@@ -9,6 +9,8 @@ interface ProfileCardBaseProps {
   subtitle?: string | null;
   /** When provided, the card becomes a clickable link to the related record */
   onClick?: () => void;
+  /** Custom trailing content — replaces the default department tag when provided */
+  endContent?: ReactNode;
 }
 
 interface UserCardProps extends ProfileCardBaseProps {
@@ -102,10 +104,8 @@ const subtitleStyle: CSSProperties = {
   fontSize: font.size.label.sm,
   fontWeight: font.weight.regular,
   color: color.text.secondary,
-  lineHeight: 1,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
+  lineHeight: 1.3,
+  overflowWrap: 'break-word',
   textTransform: font.transform.label,
 };
 
@@ -123,7 +123,7 @@ const deptTagStyle: CSSProperties = {
 };
 
 export function ProfileCard(props: ProfileCardProps) {
-  const { variant, name, subtitle, onClick } = props;
+  const { variant, name, subtitle, onClick, endContent } = props;
   const [hovered, setHovered] = useState(false);
   const clickable = !!onClick;
   const Tag = clickable ? 'button' : 'div';
@@ -161,7 +161,7 @@ export function ProfileCard(props: ProfileCardProps) {
   if (variant === 'user') {
     const parts: string[] = [];
     if (props.role) parts.push(props.role);
-    if (subtitle) parts.push(subtitle);
+    if (subtitle) parts.push(subtitle.toLowerCase());
     const composedSubtitle = parts.length > 0 ? parts.join(' \u2022 ') : null;
     const hasDeptTag = props.department && props.departmentBg;
 
@@ -178,7 +178,7 @@ export function ProfileCard(props: ProfileCardProps) {
           <span style={nameStyle}>{name}</span>
           {composedSubtitle && <span style={subtitleStyle}>{composedSubtitle}</span>}
         </div>
-        {hasDeptTag && (
+        {endContent ?? (hasDeptTag && (
           <span style={{
             ...deptTagStyle,
             backgroundColor: props.departmentBg,
@@ -186,7 +186,7 @@ export function ProfileCard(props: ProfileCardProps) {
           }}>
             {props.department}
           </span>
-        )}
+        ))}
       </Tag>
     );
   }

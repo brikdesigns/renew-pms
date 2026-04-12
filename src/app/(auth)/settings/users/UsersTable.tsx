@@ -267,7 +267,7 @@ export function UsersTable() {
               <TableHead>Permission</TableHead>
               <TableHead>Employee Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -287,7 +287,7 @@ export function UsersTable() {
                           {m.first_name} {m.last_name}
                         </span>
                         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary, lineHeight: font.lineHeight.snug }}>
-                          {m.email}
+                          {m.email.toLowerCase()}
                         </span>
                       </div>
                     </div>
@@ -317,9 +317,9 @@ export function UsersTable() {
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
                     </div>
                   </TableCell>
                 </TableRow>

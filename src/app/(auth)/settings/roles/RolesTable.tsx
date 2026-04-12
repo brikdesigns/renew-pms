@@ -119,7 +119,7 @@ export function RolesTable() {
               <TableHead>Members</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -146,9 +146,9 @@ export function RolesTable() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${r.name}`} onClick={() => setDeleteTarget({ id: r.id, name: r.name })} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${r.name}`} onClick={() => setDeleteTarget({ id: r.id, name: r.name })} />
                   </div>
                 </TableCell>
               </TableRow>

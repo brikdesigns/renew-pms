@@ -231,7 +231,7 @@ export function OfficeRoomsTab() {
               <TableHead>Type</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -255,9 +255,9 @@ export function OfficeRoomsTab() {
                 </TableCell>
                 <TableCell>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
                   </div>
                 </TableCell>
               </TableRow>
