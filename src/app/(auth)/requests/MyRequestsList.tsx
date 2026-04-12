@@ -32,7 +32,7 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingRight: space.xl };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',

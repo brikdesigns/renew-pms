@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { Skeleton } from '@bds/components';
-import { gap, space } from '@/lib/tokens';
+import { gap } from '@/lib/tokens';
 
 /**
  * SheetSkeleton — shimmer loading placeholder for sheet body content.
@@ -13,7 +13,6 @@ const wrapStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.lg,
-  padding: `${space.lg} ${space.xl}`,
 };
 
 const rowStyle: CSSProperties = {

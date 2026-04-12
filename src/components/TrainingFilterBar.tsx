@@ -1,21 +1,30 @@
 'use client';
 
 import { useState, useMemo, type CSSProperties } from 'react';
-import { Chip } from '@bds/components';
+import { Chip, SegmentedControl } from '@bds/components';
 import { Menu } from '@bds/components';
 import type { MenuItemData } from '@bds/components';
-import { gap } from '@/lib/tokens';
+import { gap, space, font, color, border } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type EmployeeTypeFilter = 'new' | 'maturing' | 'proficient';
+export type EmployeeTypeSegment = 'all' | EmployeeTypeFilter;
+
+const MATURITY_SEGMENTS = [
+  { label: 'All', value: 'all' },
+  { label: 'New', value: 'new' },
+  { label: 'Maturing', value: 'maturing' },
+  { label: 'Proficient', value: 'proficient' },
+];
 
 interface TrainingFilterBarProps {
   selectedDepartment: string;
   onDepartmentChange: (dept: string) => void;
-  activeTypes: Set<EmployeeTypeFilter>;
-  onToggleType: (type: EmployeeTypeFilter) => void;
+  activeSegment: EmployeeTypeSegment;
+  onSegmentChange: (segment: EmployeeTypeSegment) => void;
+  count: number | string;
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -23,8 +32,25 @@ interface TrainingFilterBarProps {
 const barStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-end',
+  justifyContent: 'space-between',
+  padding: `${space.sm} 0`,
   gap: gap.md,
+};
+
+const barLeftStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: space.sm,
+};
+
+const countBadgeStyle: CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
+  fontWeight: font.weight.medium,
+  color: color.text.secondary,
+  backgroundColor: color.surface.secondary,
+  padding: `2px ${gap.md}`,
+  borderRadius: border.radius.sm,
 };
 
 const chipWrapperStyle: CSSProperties = {
@@ -89,8 +115,9 @@ function ChipFilter({
 export function TrainingFilterBar({
   selectedDepartment,
   onDepartmentChange,
-  activeTypes,
-  onToggleType,
+  activeSegment,
+  onSegmentChange,
+  count,
 }: TrainingFilterBarProps) {
   const { departments } = useDepartments();
   const departmentOptions = useMemo(
@@ -100,24 +127,15 @@ export function TrainingFilterBar({
 
   return (
     <div style={barStyle}>
-      <Chip
-        label="New Hire"
-        variant={activeTypes.has('new') ? 'primary' : 'secondary'}
-        appearance={activeTypes.has('new') ? 'solid' : 'light'}
-        onChipClick={() => onToggleType('new')}
-      />
-      <Chip
-        label="Maturing"
-        variant={activeTypes.has('maturing') ? 'primary' : 'secondary'}
-        appearance={activeTypes.has('maturing') ? 'solid' : 'light'}
-        onChipClick={() => onToggleType('maturing')}
-      />
-      <Chip
-        label="Proficient"
-        variant={activeTypes.has('proficient') ? 'primary' : 'secondary'}
-        appearance={activeTypes.has('proficient') ? 'solid' : 'light'}
-        onChipClick={() => onToggleType('proficient')}
-      />
+      <div style={barLeftStyle}>
+        <SegmentedControl
+          items={MATURITY_SEGMENTS}
+          value={activeSegment}
+          onChange={(val) => onSegmentChange(val as EmployeeTypeSegment)}
+          size="sm"
+        />
+        <span style={countBadgeStyle}>{count}</span>
+      </div>
       <ChipFilter
         options={departmentOptions}
         selected={selectedDepartment}

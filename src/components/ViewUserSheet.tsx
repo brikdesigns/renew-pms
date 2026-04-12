@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton } from '@bds/components';
+import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
+import { Sheet, Button, Skeleton, useConfigureSheet } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Badge } from '@bds/components';
 import { Tag } from '@bds/components';
@@ -21,7 +21,9 @@ export interface UserViewData {
   phone: string;
   system_role: string;
   practice_role: string;
+  practice_role_id?: string | null;
   department: string;
+  department_id?: string | null;
   department_color: string;
   employee_type: string;
   shift: string;
@@ -40,6 +42,8 @@ interface ViewUserSheetProps {
   onEdit?: () => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
+  /** When true, uses useConfigureSheet instead of rendering own Sheet (set by AppSheetProvider) */
+  headless?: boolean;
 }
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
@@ -81,7 +85,8 @@ const progressLabelStyle: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEdit, onNavigate }: ViewUserSheetProps) {
+export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEdit, onNavigate, headless = false }: ViewUserSheetProps) {
+  const configureSheet = useConfigureSheet();
   const [activeTab, setActiveTab] = useState('details');
   const [fetched, setFetched] = useState<UserViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -100,26 +105,26 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
 
   const user = userProp ?? fetched;
 
-  if (fetchLoading || !user) {
-    return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
-        <SheetSkeleton />
-      </Sheet>
-    );
-  }
+  // ── Derived data ──────────────────────────────────────────────────────────
 
-  const fullName = `${user.first_name} ${user.last_name}`.trim();
+  const fullName = user ? `${user.first_name} ${user.last_name}`.trim() : '';
 
-  // A member has exactly one role (via practice_role_types) and one department
-  // (via that role's department_id). Shown as single-item lists in the tabs.
-  const roles = user.practice_role
-    ? [{ id: user.id, role: user.practice_role, department: user.department, departmentColor: user.department_color }]
+  const roles = user?.practice_role
+    ? [{ id: user.practice_role_id ?? null, role: user.practice_role, department: user.department, departmentColor: user.department_color }]
     : [];
-  const departments = user.department
-    ? [{ id: user.id, department: user.department, departmentColor: user.department_color }]
+  const departments = user?.department
+    ? [{ id: user.department_id ?? null, department: user.department, departmentColor: user.department_color }]
     : [];
 
-  const detailsContent = (
+  // Training placeholder
+  const totalModules = 0;
+  const completedModules = 0;
+  const progress = 0;
+  const empType = EMPLOYEE_TYPE_TAG[user?.employee_type ?? ''] ?? EMPLOYEE_TYPE_TAG.proficient;
+
+  // ── Tab content ───────────────────────────────────────────────────────────
+
+  const detailsContent = user ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>User Details</h3>
       <div style={fieldRow}>
@@ -161,8 +166,8 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
               Employee Type
             </span>
             <div style={{ display: 'inline-flex' }}>
-              <Tag size="sm" style={{ backgroundColor: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).bg, color: (EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).color }}>
-                {(EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient).label}
+              <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
+                {empType.label}
               </Tag>
             </div>
           </div>
@@ -184,7 +189,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
         <ReadOnlyField label="Joined" value={new Date(user.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
       )}
     </div>
-  );
+  ) : null;
 
   const rolesContent = (
     <div style={sheetBodyStyle}>
@@ -195,12 +200,13 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
         <div style={profileCardGrid}>
           {roles.map((r) => (
             <ProfileCard
-              key={r.id}
+              key={r.id ?? r.role}
               variant="role"
               name={r.role}
               subtitle={r.department}
               departmentBg={departmentColor(r.departmentColor).light}
               departmentText={departmentColor(r.departmentColor).text}
+              onClick={onNavigate && r.id ? () => onNavigate('role', { id: r.id as string }, { title: r.role }) : undefined}
             />
           ))}
         </div>
@@ -217,10 +223,11 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
         <div style={profileCardGrid}>
           {departments.map((d) => (
             <ProfileCard
-              key={d.id}
+              key={d.id ?? d.department}
               variant="department"
               name={d.department}
               dotColor={departmentColor(d.departmentColor).light}
+              onClick={onNavigate && d.id ? () => onNavigate('department', { id: d.id as string }, { title: d.department }) : undefined}
             />
           ))}
         </div>
@@ -228,13 +235,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
     </div>
   );
 
-  // Training — placeholder until Trainual integration is connected
-  const totalModules = 0;
-  const completedModules = 0;
-  const progress = 0;
-  const empType = EMPLOYEE_TYPE_TAG[user.employee_type] ?? EMPLOYEE_TYPE_TAG.proficient;
-
-  const trainingContent = (
+  const trainingContent = user ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Employee Status</h3>
       <div style={fieldRow}>
@@ -279,7 +280,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
         Training module cards will appear here once training templates are assigned to this team member.
       </p>
     </div>
-  );
+  ) : null;
 
   const sheetTabs: SheetTab[] = [
     { id: 'details', label: 'Details', content: detailsContent },
@@ -287,6 +288,45 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
     { id: 'departments', label: 'Departments', content: departmentsContent },
     { id: 'training', label: 'Training', content: trainingContent },
   ];
+
+  const footer = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
+      <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+      {onEdit && (
+        <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
+      )}
+    </div>
+  );
+
+  // ── Headless mode: configure the stack's Sheet ────────────────────────────
+
+  useLayoutEffect(() => {
+    if (!headless) return;
+    if (fetchLoading || !user) {
+      configureSheet({ body: <SheetSkeleton />, footer: <Button variant="ghost" size="md" onClick={onClose}>Close</Button> });
+      return;
+    }
+    configureSheet({
+      title: fullName,
+      tabs: sheetTabs,
+      activeTab,
+      onTabChange: setActiveTab,
+      footer,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headless, configureSheet, fetchLoading, user?.id, fullName, activeTab, roles.length, departments.length, onClose, onEdit]);
+
+  if (headless) return null;
+
+  // ── Page-level mode: render own Sheet ─────────────────────────────────────
+
+  if (fetchLoading || !user) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet
@@ -299,14 +339,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
       tabs={sheetTabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
-          {onEdit && (
-            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
-          )}
-        </div>
-      }
+      footer={footer}
     />
   );
 }

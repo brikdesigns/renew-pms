@@ -40,6 +40,7 @@ export function AppSheetProvider({ children, isAdmin = false }: AppSheetProvider
               <Component
                 {...ctx.globalFrameProps}
                 {...frame.props}
+                headless
                 onClose={ctx.closeAll}
                 onNavigate={ctx.pushSheet}
               />

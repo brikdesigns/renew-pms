@@ -22,11 +22,11 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
   gap: gap.md,
 };
 
@@ -39,7 +39,7 @@ const countBadge: CSSProperties = {
 
 const filterGroupStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 

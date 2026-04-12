@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
 import { Badge, Button, useConfigureSheet } from '@bds/components';
 import { color, font, gap } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
+
+const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
+const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -80,20 +83,32 @@ export function ViewRoomSheet({ onClose, room: roomProp, id, onNavigate }: ViewR
       body: (
         <div style={sheetBodyStyle}>
           <h3 style={sheetSectionTitle}>Room Details</h3>
-          <ReadOnlyField label="Name" value={room.name} />
-          <ReadOnlyField label="Type" value={ROOM_TYPE_LABELS[room.room_type] || room.room_type} />
+          <div style={fieldRow}>
+            <div style={fieldHalf}>
+              <ReadOnlyField label="Name" value={room.name} />
+            </div>
+            <div style={fieldHalf}>
+              <ReadOnlyField label="Type" value={ROOM_TYPE_LABELS[room.room_type] || room.room_type} />
+            </div>
+          </div>
           {room.description && (
             <ReadOnlyField label="Description" value={room.description} />
           )}
-          <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={room.is_active ? 'positive' : 'error'} size="sm">
-                {room.is_active ? 'Active' : 'Inactive'}
-              </Badge>
+          <div style={fieldRow}>
+            <div style={fieldHalf}>
+              <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
+            </div>
+            <div style={fieldHalf}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
+                  Status
+                </span>
+                <div style={{ display: 'inline-flex' }}>
+                  <Badge status={room.is_active ? 'positive' : 'error'} size="sm">
+                    {room.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
         </div>

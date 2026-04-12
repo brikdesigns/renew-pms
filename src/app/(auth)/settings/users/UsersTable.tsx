@@ -28,10 +28,10 @@ const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`,
+  padding: `${space.md} ${space.xl}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
@@ -41,7 +41,7 @@ const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
@@ -230,7 +230,9 @@ export function UsersTable() {
         phone: viewing.phone,
         system_role: viewing.system_role,
         practice_role: viewing.practice_role,
+        practice_role_id: viewing.practice_role_id,
         department: viewing.department,
+        department_id: viewing.department_id,
         department_color: viewing.department_color,
         employee_type: viewing.employee_type,
         shift: viewing.shift,

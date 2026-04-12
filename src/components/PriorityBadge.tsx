@@ -49,14 +49,16 @@ export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIco
   if (!priority) return null;
 
   const resolved = PRIORITIES[priority] ?? FALLBACK;
+  const isIconOnly = size === 'xs';
   return (
     <Badge
       status={resolved.status}
       size={size}
       variant={variant}
-      icon={showIcon ? <Icon icon={resolved.icon} /> : undefined}
+      icon={showIcon ? <Icon icon={resolved.icon} style={isIconOnly ? { display: 'block' } : undefined} /> : undefined}
+      style={isIconOnly ? { overflow: 'hidden' } : undefined}
     >
-      {size === 'xs' ? undefined : resolved.label}
+      {isIconOnly ? undefined : resolved.label}
     </Badge>
   );
 }

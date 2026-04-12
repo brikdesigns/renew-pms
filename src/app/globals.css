@@ -199,6 +199,16 @@ body {
     font-weight: var(--font-weight-semi-bold);
   }
 
+  /* Tags: tighter horizontal padding (xs instead of sm) */
+  .bds-tag--sm {
+    padding-inline: var(--padding-xs);
+  }
+
+  .bds-tag--md,
+  .bds-tag--lg {
+    padding-inline: var(--padding-sm);
+  }
+
   /* Board subtitles: token-driven casing + fix BDS Board.css body→label font */
   .bds-board-header__subtitle,
   .bds-board-card__subtitle {

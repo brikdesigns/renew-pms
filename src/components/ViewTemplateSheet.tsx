@@ -207,15 +207,21 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
       </div>
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-          Status
-        </span>
-        <div style={{ display: 'inline-flex' }}>
-          <StatusBadge status={template.status} />
+      <div style={rowStyle}>
+        <div style={halfStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
+              Status
+            </span>
+            <div style={{ display: 'inline-flex' }}>
+              <StatusBadge status={template.status} />
+            </div>
+          </div>
+        </div>
+        <div style={halfStyle}>
+          <ReadOnlyField label="Requires Approval" value={template.requires_approval ? 'Yes' : 'No'} />
         </div>
       </div>
-      <ReadOnlyField label="Requires Approval" value={template.requires_approval ? 'Yes' : 'No'} />
       <ReadOnlyField label="Source" value={template.is_default ? 'Default' : 'Custom'} />
     </div>
   );

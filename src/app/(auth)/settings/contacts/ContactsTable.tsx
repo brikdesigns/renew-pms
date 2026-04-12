@@ -66,10 +66,10 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
@@ -79,7 +79,7 @@ const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };

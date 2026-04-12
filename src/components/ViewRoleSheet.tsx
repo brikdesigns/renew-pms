@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton } from '@bds/components';
+import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
+import { Sheet, Button, Skeleton, useConfigureSheet } from '@bds/components';
 import { Badge } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -17,6 +17,7 @@ export interface RoleViewData {
   id: string;
   name: string;
   department: string;
+  department_id?: string | null;
   department_color: string;
   description: string;
   is_default: boolean;
@@ -37,9 +38,14 @@ interface ViewRoleSheetProps {
   members?: Member[];
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
+  /** When true, uses useConfigureSheet instead of rendering own Sheet (set by AppSheetProvider) */
+  headless?: boolean;
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
+
+const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
+const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -52,10 +58,14 @@ const emptyState: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEdit, members: allMembers = [], onNavigate }: ViewRoleSheetProps) {
+export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEdit, members: allMembersProp, onNavigate, headless = false }: ViewRoleSheetProps) {
+  const configureSheet = useConfigureSheet();
   const [activeTab, setActiveTab] = useState('details');
   const [fetched, setFetched] = useState<RoleViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
+
+  // Self-fetch members in global (headless) mode when not provided via props
+  const [selfMembers, setSelfMembers] = useState<Member[]>([]);
 
   // Global mode: fetch by ID when no data prop is given
   const resolvedId = id ?? roleProp?.id;
@@ -69,64 +79,86 @@ export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEd
       .finally(() => setFetchLoading(false));
   }, [resolvedId, roleProp]);
 
+  // Self-fetch members when not provided
+  useEffect(() => {
+    if (allMembersProp) return;
+    fetch('/api/members')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setSelfMembers(data); })
+      .catch(err => console.error('[ViewRoleSheet] members fetch failed:', err));
+  }, [allMembersProp]);
+
   const role = roleProp ?? fetched;
+  const allMembers = allMembersProp ?? selfMembers;
 
-  if (fetchLoading || !role) {
-    return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
-        <SheetSkeleton />
-      </Sheet>
-    );
-  }
+  // ── Derived data ──────────────────────────────────────────────────────────
 
-  const users = allMembers.filter((m) => m.practice_role_id === role.id);
-  const departments = role.department
-    ? [{ id: role.id, name: role.department, departmentColor: role.department_color }]
+  const users = role ? allMembers.filter((m) => m.practice_role_id === role.id) : [];
+  const departments = role?.department
+    ? [{ id: role.department_id ?? null, name: role.department, departmentColor: role.department_color }]
     : [];
 
-  const detailsContent = (
+  // ── Tab content ───────────────────────────────────────────────────────────
+
+  const detailsContent = role ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Role Details</h3>
-      <ReadOnlyField label="Name" value={role.name} />
-      <ReadOnlyField label="Department" value={role.department} />
+      <div style={fieldRow}>
+        <div style={fieldHalf}>
+          <ReadOnlyField label="Name" value={role.name} />
+        </div>
+        <div style={fieldHalf}>
+          <ReadOnlyField label="Department" value={role.department} />
+        </div>
+      </div>
       <ReadOnlyField label="Description" value={role.description} />
-      <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-          Status
-        </span>
-        <div style={{ display: 'inline-flex' }}>
-          <Badge status={role.is_active ? 'positive' : 'error'} size="sm">
-            {role.is_active ? 'Active' : 'Inactive'}
-          </Badge>
+      <div style={fieldRow}>
+        <div style={fieldHalf}>
+          <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
+        </div>
+        <div style={fieldHalf}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
+              Status
+            </span>
+            <div style={{ display: 'inline-flex' }}>
+              <Badge status={role.is_active ? 'positive' : 'error'} size="sm">
+                {role.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  );
+  ) : null;
 
-  const usersContent = (
+  const usersContent = role ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Users</h3>
       {users.length === 0 ? (
         <p style={emptyState}>No users assigned to this role.</p>
       ) : (
         <div style={profileCardGrid}>
-          {users.map((u) => (
-            <ProfileCard
-              key={u.id}
-              variant="user"
-              name={`${u.first_name} ${u.last_name}`.trim()}
-              subtitle={u.email}
-              role={role.name}
-              department={u.department}
-              departmentBg={departmentColor(u.department_color).light}
-              departmentText={departmentColor(u.department_color).text}
-            />
-          ))}
+          {users.map((u) => {
+            const fullName = `${u.first_name} ${u.last_name}`.trim();
+            return (
+              <ProfileCard
+                key={u.id}
+                variant="user"
+                name={fullName}
+                subtitle={u.email}
+                role={role.name}
+                department={u.department}
+                departmentBg={departmentColor(u.department_color).light}
+                departmentText={departmentColor(u.department_color).text}
+                onClick={onNavigate ? () => onNavigate('user', { id: u.id }, { title: fullName }) : undefined}
+              />
+            );
+          })}
         </div>
       )}
     </div>
-  );
+  ) : null;
 
   const departmentsContent = (
     <div style={sheetBodyStyle}>
@@ -137,10 +169,11 @@ export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEd
         <div style={profileCardGrid}>
           {departments.map((d) => (
             <ProfileCard
-              key={d.id}
+              key={d.id ?? d.name}
               variant="department"
               name={d.name}
               dotColor={departmentColor(d.departmentColor).light}
+              onClick={onNavigate && d.id ? () => onNavigate('department', { id: d.id as string }, { title: d.name }) : undefined}
             />
           ))}
         </div>
@@ -154,6 +187,45 @@ export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEd
     { id: 'departments', label: 'Departments', content: departmentsContent },
   ];
 
+  const footer = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
+      <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+      {onEdit && (
+        <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
+      )}
+    </div>
+  );
+
+  // ── Headless mode: configure the stack's Sheet ────────────────────────────
+
+  useLayoutEffect(() => {
+    if (!headless) return;
+    if (fetchLoading || !role) {
+      configureSheet({ body: <SheetSkeleton />, footer: <Button variant="ghost" size="md" onClick={onClose}>Close</Button> });
+      return;
+    }
+    configureSheet({
+      title: role.name,
+      tabs: sheetTabs,
+      activeTab,
+      onTabChange: setActiveTab,
+      footer,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headless, configureSheet, fetchLoading, role?.id, role?.name, activeTab, users.length, departments.length, onClose, onEdit]);
+
+  if (headless) return null;
+
+  // ── Page-level mode: render own Sheet ─────────────────────────────────────
+
+  if (fetchLoading || !role) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
+      </Sheet>
+    );
+  }
+
   return (
     <Sheet
       variant="floating"
@@ -165,14 +237,7 @@ export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEd
       tabs={sheetTabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
-          {onEdit && (
-            <Button variant="primary" size="md" type="button" onClick={onEdit}>Edit</Button>
-          )}
-        </div>
-      }
+      footer={footer}
     />
   );
 }
