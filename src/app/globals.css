@@ -321,16 +321,11 @@ body {
   .bds-toast__close {
     padding-right: 0;
   }
-}
 
-/* ── Unlayered BDS overrides ─────────────────────────────────────────────────
-   BDS component CSS is unlayered (imported by React components at runtime),
-   so layered rules can't beat them. These overrides must also be unlayered.
-   ────────────────────────────────────────────────────────────────────────── */
-
-/* Sheet: tighten footer vertical padding */
-.bds-sheet__footer {
-  padding: var(--padding-md) var(--padding-lg);
+  /* Sheet: tighten footer vertical padding */
+  .bds-sheet__footer {
+    padding: var(--padding-md) var(--padding-lg);
+  }
 }
 
 /* ── Settings sub-nav entrance animation ── */
