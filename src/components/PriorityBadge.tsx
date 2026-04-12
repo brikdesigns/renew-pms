@@ -1,4 +1,4 @@
-import { Badge } from '@bds/components';
+import { Badge, Tooltip } from '@bds/components';
 import type { BadgeSize, BadgeVariant } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -50,7 +50,7 @@ export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIco
 
   const resolved = PRIORITIES[priority] ?? FALLBACK;
   const isIconOnly = size === 'xs';
-  return (
+  const badge = (
     <Badge
       status={resolved.status}
       size={size}
@@ -61,4 +61,8 @@ export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIco
       {isIconOnly ? undefined : resolved.label}
     </Badge>
   );
+  if (isIconOnly) {
+    return <Tooltip content={`${resolved.label} Priority`} placement="top">{badge}</Tooltip>;
+  }
+  return badge;
 }

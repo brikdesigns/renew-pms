@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
+import { Tooltip } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -140,23 +141,24 @@ export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentCol
 
   return (
     <>
-      <div
-        ref={avatarRef}
-        title={assigneeName ?? 'Unassigned'}
-        style={{ cursor: 'pointer' }}
-        onClick={handleToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
-      >
-        {assigneeName ? (
-          <UserAvatar name={assigneeName} departmentColorKey={assigneeDepartmentColor} size="sm" />
-        ) : (
-          <div style={unassignedStyle}>
-            <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
-          </div>
-        )}
-      </div>
+      <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
+        <div
+          ref={avatarRef}
+          style={{ cursor: 'pointer' }}
+          onClick={handleToggle}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
+        >
+          {assigneeName ? (
+            <UserAvatar name={assigneeName} departmentColorKey={assigneeDepartmentColor} size="sm" />
+          ) : (
+            <div style={unassignedStyle}>
+              <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
+            </div>
+          )}
+        </div>
+      </Tooltip>
       {open && pos && createPortal(
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div

@@ -488,13 +488,15 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
               label="Completed"
             />
           ) : (
-            <div style={{
-              width: 28, height: 28, borderRadius: border.radius.pill,
-              backgroundColor: color.surface.secondary,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon icon={icon.profile} style={{ fontSize: font.size.body.sm, color: color.text.muted } as React.CSSProperties & Record<string, string>} />
-            </div>
+            <Tooltip content="Unassigned" placement="top">
+              <div style={{
+                width: 28, height: 28, borderRadius: border.radius.pill,
+                backgroundColor: color.surface.secondary,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon icon={icon.profile} style={{ fontSize: font.size.body.sm, color: color.text.muted } as React.CSSProperties & Record<string, string>} />
+              </div>
+            </Tooltip>
           )
         ) : (
           checked[task.id] ? (

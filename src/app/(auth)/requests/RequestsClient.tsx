@@ -276,23 +276,24 @@ function AssigneeAvatar({
 
   return (
     <>
-      <div
-        ref={avatarRef}
-        title={assigneeName ?? 'Unassigned'}
-        style={{ cursor: 'pointer' }}
-        onClick={handleToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
-      >
-        {assigneeName ? (
-          <UserAvatar name={assigneeName} size="sm" />
-        ) : (
-          <div style={unassignedAvatarStyle}>
-            <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
-          </div>
-        )}
-      </div>
+      <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
+        <div
+          ref={avatarRef}
+          style={{ cursor: 'pointer' }}
+          onClick={handleToggle}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
+        >
+          {assigneeName ? (
+            <UserAvatar name={assigneeName} size="sm" />
+          ) : (
+            <div style={unassignedAvatarStyle}>
+              <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
+            </div>
+          )}
+        </div>
+      </Tooltip>
       {open && pos && createPortal(
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div
