@@ -408,18 +408,8 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     openSheet('request', {
       id: req.id,
       onUpdated: refetch,
-      onEdit: (r: RequestRow) => {
-        closeAll();
-        setEditing({
-          id: r.id, title: r.title, description: r.description,
-          category: r.category, urgency: r.urgency,
-          room_id: r.room_id, equipment_id: r.equipment_id,
-          location_description: r.location_description,
-          vendor_id: r.vendor_id, vendor_contact_id: r.vendor_contact_id,
-        });
-      },
     }, { title: req.title, variant: 'floating' });
-  }, [openSheet, closeAll, refetch]);
+  }, [openSheet, refetch]);
 
   // Auto-open request sheet from ?open=<id> (e.g., notification click)
   // Auto-open submit form from ?submit=true (e.g., plus button in utility bar)

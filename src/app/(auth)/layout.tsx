@@ -49,7 +49,7 @@ export default async function AuthLayout({
 
   return (
     <ToastProvider>
-      <AppSheetProvider isAdmin={isAdmin}>
+      <AppSheetProvider isAdmin={isAdmin} currentMemberId={authUser.membership?.memberId}>
         <div style={shellStyle}>
           <AppSidebar userRole={authUser.profile.system_role} />
           <div style={mainStyle}>

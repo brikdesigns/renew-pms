@@ -12,6 +12,8 @@ interface AppSheetProviderProps {
   children: ReactNode;
   /** User has admin/manager privileges — passed to all globally-rendered sheets */
   isAdmin?: boolean;
+  /** Current user's practice_members.id — used for assignee checks in sheets */
+  currentMemberId?: string;
 }
 
 /**
@@ -21,8 +23,8 @@ interface AppSheetProviderProps {
  * Sheet panel. View components use `useConfigureSheet()` to declare their
  * title, tabs, and footer — the Sheet never closes/reopens during navigation.
  */
-export function AppSheetProvider({ children, isAdmin = false }: AppSheetProviderProps) {
-  const globalFrameProps = useMemo(() => ({ isAdmin }), [isAdmin]);
+export function AppSheetProvider({ children, isAdmin = false, currentMemberId }: AppSheetProviderProps) {
+  const globalFrameProps = useMemo(() => ({ isAdmin, currentMemberId }), [isAdmin, currentMemberId]);
 
   return (
     <SheetStackProvider>
