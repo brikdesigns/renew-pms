@@ -633,10 +633,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                     tags={
                       <>
                         <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
-                        <PriorityBadge priority={req.urgency} size="xs" />
+                        <PriorityBadge priority={req.urgency} iconOnly />
                         {req.vendor_name && (
                           <Tooltip content="Has Vendor">
-                            <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
+                            <span style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
                               <Icon icon={icon.wrench} width={14} height={14} />
                             </span>
                           </Tooltip>

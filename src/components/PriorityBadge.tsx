@@ -22,6 +22,9 @@ const PRIORITIES: Record<string, { status: BadgeStatus; label: string; icon: str
 
 const FALLBACK = PRIORITIES.medium;
 
+/** Card indicator size — matches Tag/Badge sm min-height for row alignment */
+const CARD_INDICATOR_SIZE = 28;
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface PriorityBadgeProps {
@@ -33,6 +36,8 @@ interface PriorityBadgeProps {
   variant?: BadgeVariant;
   /** Show icon (default true) */
   showIcon?: boolean;
+  /** Icon-only mode — square badge with tooltip. Defaults to true when size="xs". */
+  iconOnly?: boolean;
 }
 
 /**
@@ -43,20 +48,20 @@ interface PriorityBadgeProps {
  *
  * @example
  * <PriorityBadge priority="critical" />
- * <PriorityBadge priority={task.priority} size="xs" />
+ * <PriorityBadge priority={task.priority} iconOnly />
  */
-export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIcon = true }: PriorityBadgeProps) {
+export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIcon = true, iconOnly }: PriorityBadgeProps) {
   if (!priority) return null;
 
   const resolved = PRIORITIES[priority] ?? FALLBACK;
-  const isIconOnly = size === 'xs';
+  const isIconOnly = iconOnly ?? size === 'xs';
   const badge = (
     <Badge
       status={resolved.status}
-      size={size}
+      size={isIconOnly ? 'xs' : size}
       variant={variant}
-      icon={showIcon ? <Icon icon={resolved.icon} style={isIconOnly ? { display: 'block' } : undefined} /> : undefined}
-      style={isIconOnly ? { overflow: 'hidden' } : undefined}
+      icon={showIcon ? <Icon icon={resolved.icon} /> : undefined}
+      style={isIconOnly ? { width: CARD_INDICATOR_SIZE, height: CARD_INDICATOR_SIZE } : undefined}
     >
       {isIconOnly ? undefined : resolved.label}
     </Badge>
