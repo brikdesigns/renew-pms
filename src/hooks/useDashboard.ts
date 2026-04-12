@@ -17,19 +17,23 @@ export interface DeptCompletion {
   color: string;
 }
 
-export interface ComplianceItem {
+export interface RecentRequest {
   id: string;
-  name: string;
-  assignedTo: string;
-  due: string | null;
-  status: 'upcoming' | 'due_soon' | 'overdue' | 'completed';
+  title: string;
+  category: string;
+  urgency: string;
+  status: string;
+  updatedAt: string;
+  submitter: string;
+  dept: string;
+  deptColor: string;
 }
 
 export interface DashboardData {
   overdueTasks: OverdueTask[];
   todayProgress: { completed: number; total: number };
   departmentCompletion: Record<string, DeptCompletion>;
-  complianceItems: ComplianceItem[];
+  recentRequests: RecentRequest[];
 }
 
 export function useDashboard() {

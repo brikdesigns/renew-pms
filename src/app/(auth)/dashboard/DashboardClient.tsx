@@ -17,7 +17,20 @@ import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
 
-// ─── Priority mapping ────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -220,25 +233,22 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
     return {};
   }, [dashboard, isAdminUser, isManager, userDepartment]);
 
-  // Scope compliance items by role
-  const scopedComplianceItems = useMemo(() => {
-    const all = dashboard?.complianceItems ?? [];
+  // Scope recent requests by role
+  const scopedRequests = useMemo(() => {
+    const all = dashboard?.recentRequests ?? [];
     if (isAdminUser) return all;
-    if (isManager && userDepartment) {
-      return all.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
-    }
-    if (userDepartment) {
-      return all.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
-    }
-    return all.filter((item) => item.assignedTo === 'All Staff');
-  }, [dashboard, isAdminUser, isManager, userDepartment]);
+    if (isManager && userDepartment) return all.filter((r) => r.dept === userDepartment);
+    return all.filter((r) => r.submitter.includes(userName));
+  }, [dashboard, isAdminUser, isManager, userDepartment, userName]);
 
-  // Onboarding members: scope by role
+  // Onboarding members: scope by role, cap at 6
   const onboardingMembers = useMemo(() => {
     const onboarding = members.filter((m) => m.employee_type !== 'proficient' && m.is_active);
-    if (isAdminUser) return onboarding;
-    if (isManager && userDepartment) return onboarding.filter((m) => m.department === userDepartment);
-    return onboarding.filter((m) => m.first_name === userName);
+    let scoped: typeof onboarding;
+    if (isAdminUser) scoped = onboarding;
+    else if (isManager && userDepartment) scoped = onboarding.filter((m) => m.department === userDepartment);
+    else scoped = onboarding.filter((m) => m.first_name === userName);
+    return scoped.slice(0, 6);
   }, [members, isAdminUser, isManager, userDepartment, userName]);
 
   const showOnboarding = isAdminUser || isManager || employeeType !== 'proficient';
@@ -407,33 +417,41 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
         )}
 
-        {/* ── Card 4: Compliance Due ── */}
+        {/* ── Card 4: Recent Requests ── */}
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
-            <h2 style={cardTitleStyle}>
-              {isStaff ? 'Your Compliance & Training' : isManager ? 'Department Compliance' : 'Compliance & Training Due'}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
+              <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <h2 style={cardTitleStyle}>
+                {isStaff ? 'Your Requests' : isManager ? 'Department Requests' : 'Recent Requests'}
+              </h2>
+              <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
+                {scopedRequests.length}
+              </span>
+            </div>
+            <Link href="/requests" style={cardLinkStyle}>
+              View All
+            </Link>
           </div>
           <ul style={listStyle}>
             {dashLoading ? (
               <li style={listItemStyle}><Skeleton height={40} /></li>
-            ) : scopedComplianceItems.length === 0 ? (
+            ) : scopedRequests.length === 0 ? (
               <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                No compliance items due
+                No open requests
               </li>
-            ) : scopedComplianceItems.map((item) => {
-              const dueLabel = item.due
-                ? new Date(item.due).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                : 'No due date';
+            ) : scopedRequests.map((req) => {
+              const deptColors = req.deptColor ? departmentColor(req.deptColor) : getDeptColors(req.dept);
+              const timeAgo = formatTimeAgo(req.updatedAt);
               return (
-                <li key={item.id} style={listItemStyle}>
+                <li key={req.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={listItemTitleStyle}>{item.name}</div>
-                      <div style={listItemSubStyle}>{item.assignedTo} · {dueLabel}</div>
+                      <div style={listItemTitleStyle}>{req.title}</div>
+                      <div style={listItemSubStyle}>{req.submitter} · {timeAgo}</div>
                     </div>
                   </div>
-                  <StatusBadge status={item.status} />
+                  <StatusBadge status={req.status} />
                 </li>
               );
             })}

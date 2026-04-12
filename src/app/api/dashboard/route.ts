@@ -44,11 +44,11 @@ export async function GET() {
   const admin = createAdminClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  // ── 1. Overdue tasks ──────────────────────────────────────────────────────
+  // ── 1. Overdue tasks (6 most recent by due_date) ───────────────────────────
   const { data: rawOverdue, error: overdueErr } = await admin
     .from('tasks')
     .select(`
-      id, title, priority, assigned_to, assigned_department,
+      id, title, priority, due_date, assigned_to, assigned_department,
       departments(name, color),
       practice_members(
         id,
@@ -58,8 +58,8 @@ export async function GET() {
     `)
     .eq('practice_id', practiceId)
     .eq('status', 'overdue')
-    .order('priority', { ascending: true })
-    .limit(20);
+    .order('due_date', { ascending: false })
+    .limit(6);
 
   if (overdueErr) return NextResponse.json({ error: overdueErr.message }, { status: 500 });
 
@@ -121,45 +121,46 @@ export async function GET() {
     }
   }
 
-  // ── 3. Compliance items (tasks with compliance_type_id set) ───────────────
-  const { data: complianceTasks, error: compErr } = await admin
-    .from('tasks')
+  // ── 3. Recent open requests (6 most recently active) ───────────────────────
+  type SubmitterJoin = {
+    id: string;
+    profiles: ProfileJoin | ProfileJoin[] | null;
+    practice_role_types: RoleJoin | RoleJoin[] | null;
+  };
+
+  const { data: rawRequests, error: reqErr } = await admin
+    .from('requests')
     .select(`
-      id, title, status, due_date,
-      compliance_types(name),
-      departments(name),
-      practice_members(profiles(first_name, last_name))
+      id, title, category, urgency, status, updated_at,
+      submitted_member:practice_members!requests_submitted_by_fkey(
+        id,
+        profiles(first_name, last_name),
+        practice_role_types(name, departments(name, color))
+      )
     `)
     .eq('practice_id', practiceId)
-    .not('compliance_type_id', 'is', null)
-    .in('status', ['not_started', 'in_progress', 'overdue'])
-    .order('due_date', { ascending: true, nullsFirst: false })
-    .limit(10);
+    .in('status', ['submitted', 'in_review', 'in_progress', 'waiting_on_vendor'])
+    .order('updated_at', { ascending: false })
+    .limit(6);
 
-  if (compErr) return NextResponse.json({ error: compErr.message }, { status: 500 });
+  if (reqErr) return NextResponse.json({ error: reqErr.message }, { status: 500 });
 
-  type ComplianceTypeJoin = { name: string };
-
-  const complianceItems = (complianceTasks ?? []).map((t) => {
-    const compType = first(t.compliance_types as ComplianceTypeJoin | ComplianceTypeJoin[] | null);
-    const dept = first(t.departments as DepartmentJoin | DepartmentJoin[] | null);
-    const member = first(t.practice_members as MemberJoin | MemberJoin[] | null);
-    const profile = member ? first(member.profiles as ProfileJoin | ProfileJoin[] | null) : null;
-
-    // Determine status label
-    let statusLabel: 'upcoming' | 'due_soon' | 'overdue' | 'completed' = 'upcoming';
-    if (t.status === 'overdue') statusLabel = 'overdue';
-    else if (t.due_date) {
-      const daysUntil = Math.ceil((new Date(t.due_date).getTime() - Date.now()) / 86400000);
-      if (daysUntil <= 7) statusLabel = 'due_soon';
-    }
+  const recentRequests = (rawRequests ?? []).map((r) => {
+    const submitter = first(r.submitted_member as SubmitterJoin | SubmitterJoin[] | null);
+    const profile = submitter ? first(submitter.profiles) : null;
+    const role = submitter ? first(submitter.practice_role_types) : null;
+    const dept = role ? first(role.departments) : null;
 
     return {
-      id: t.id,
-      name: compType?.name ?? t.title,
-      assignedTo: profile ? `${profile.first_name} ${profile.last_name}` : dept?.name ?? 'All Staff',
-      due: t.due_date ?? null,
-      status: statusLabel,
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      urgency: r.urgency,
+      status: r.status,
+      updatedAt: r.updated_at,
+      submitter: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown',
+      dept: dept?.name ?? '',
+      deptColor: dept?.color ?? '',
     };
   });
 
@@ -167,6 +168,6 @@ export async function GET() {
     overdueTasks,
     todayProgress: { completed: todayCompleted, total: todayTotal },
     departmentCompletion: deptCounts,
-    complianceItems,
+    recentRequests,
   });
 }
