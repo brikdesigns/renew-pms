@@ -13,7 +13,6 @@ import { color, font, space, gap, border } from '@/lib/tokens';
 const pageStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: gap.lg,
 };
 
 const staffHeaderStyle: React.CSSProperties = {
