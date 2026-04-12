@@ -5,7 +5,8 @@ import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { createNotification } from '@/lib/notifications';
-import { sendEmail, getMemberEmail, requestStatusChangeEmail, requestAssignedEmail, requestRejectedEmail } from '@/lib/email';
+import { sendEmail, getMemberEmail, requestStatusChangeEmail, requestAssignedEmail, requestRejectedEmail, vendorAssignedEmail } from '@/lib/email';
+import { generateVendorToken, revokeTokensForRequest, closeTokensForRequest } from '@/lib/vendor-tokens';
 
 // ─── Shared SELECT + flatten (mirrors list endpoint) ────────────────────────
 
@@ -225,6 +226,83 @@ export async function PATCH(
         return sendEmail({ to: [email], subject, html, practiceId, template: 'request_assigned' });
       }).catch(err => console.error('[email]', err));
     }
+  }
+
+  // Notify vendor on assignment (token generation + email)
+  if (updates.vendor_id !== undefined && current) {
+    // Revoke any existing vendor tokens for this request
+    revokeTokensForRequest(id).catch(err => console.error('[vendor-token]', err));
+
+    if (updates.vendor_id) {
+      // Generate a new vendor portal token and email the vendor contact
+      generateVendorToken({
+        practiceId,
+        requestId: id,
+        vendorId: updates.vendor_id as string,
+        vendorContactId: (updates.vendor_contact_id as string) ?? null,
+      }).then(async (tokenRecord) => {
+        // Look up vendor contact email, fall back to vendor email
+        let vendorEmail: string | null = null;
+        let contactName = 'Vendor';
+
+        if (tokenRecord.vendor_contact_id) {
+          const { data: contact } = await admin
+            .from('vendor_contacts')
+            .select('name, email')
+            .eq('id', tokenRecord.vendor_contact_id)
+            .single();
+          if (contact) {
+            contactName = contact.name;
+            vendorEmail = contact.email;
+          }
+        }
+
+        if (!vendorEmail) {
+          const { data: vendor } = await admin
+            .from('vendors')
+            .select('name, email')
+            .eq('id', tokenRecord.vendor_id)
+            .single();
+          if (vendor) {
+            if (!contactName || contactName === 'Vendor') contactName = vendor.name;
+            vendorEmail = vendor.email;
+          }
+        }
+
+        if (!vendorEmail) {
+          console.warn('[vendor-token] No email found for vendor — token generated but no email sent. Practice can share the link manually.');
+          return;
+        }
+
+        // Look up practice name for the email
+        const { data: practice } = await admin
+          .from('practices')
+          .select('name')
+          .eq('id', practiceId)
+          .single();
+
+        const email = vendorAssignedEmail({
+          vendorContactName: contactName,
+          practiceName: practice?.name ?? 'Your dental practice',
+          requestTitle: current.title,
+          requestDescription: null, // Keep email concise — description is on the portal page
+          token: tokenRecord.token,
+        });
+
+        return sendEmail({
+          to: [vendorEmail],
+          subject: email.subject,
+          html: email.html,
+          practiceId,
+          template: 'vendor_assigned',
+        });
+      }).catch(err => console.error('[vendor-token] Token generation/email failed:', err));
+    }
+  }
+
+  // Close vendor tokens when request reaches terminal state
+  if (updates.status === 'resolved' || updates.status === 'closed') {
+    closeTokensForRequest(id).catch(err => console.error('[vendor-token]', err));
   }
 
   return NextResponse.json({ id: data.id });

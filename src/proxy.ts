@@ -35,7 +35,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === '/login';
   const isApiDebug = pathname.startsWith('/api/debug');
-  const isPublicRoute = pathname === '/login' || pathname === '/' || isApiDebug;
+  const isVendorRoute = pathname.startsWith('/vendor/') || pathname.startsWith('/api/vendor/');
+  const isPublicRoute = pathname === '/login' || pathname === '/' || isApiDebug || isVendorRoute;
 
   // Redirect unauthenticated users to login
   if (!user && !isPublicRoute) {

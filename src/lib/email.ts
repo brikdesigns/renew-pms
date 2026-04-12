@@ -135,3 +135,97 @@ export function requestRejectedEmail(title: string, requestId: string): { subjec
     `),
   };
 }
+
+// ─── Vendor portal email templates ────────────────────────────────────────
+
+const CTA_STYLE = 'display: inline-block; padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 6px;';
+
+/** Sent to vendor contact when a request is assigned to their company. */
+export function vendorAssignedEmail(opts: {
+  vendorContactName: string;
+  practiceName: string;
+  requestTitle: string;
+  requestDescription: string | null;
+  token: string;
+}): { subject: string; html: string } {
+  const descBlock = opts.requestDescription
+    ? `<p style="margin: 0 0 16px; color: #555;">${opts.requestDescription.slice(0, 300)}</p>`
+    : '';
+
+  return {
+    subject: `Work Order: ${opts.requestTitle}`,
+    html: emailWrapper(`
+      <h2 style="margin: 0 0 8px;">New Work Order</h2>
+      <p style="margin: 0 0 16px;">Hi ${opts.vendorContactName},</p>
+      <p style="margin: 0 0 16px;"><strong>${opts.practiceName}</strong> has assigned you a work order:</p>
+      <p style="margin: 0 0 8px; font-size: 18px; font-weight: 600;">${opts.requestTitle}</p>
+      ${descBlock}
+      <p style="margin: 24px 0;">
+        <a href="${SITE_URL}/vendor/${opts.token}" style="${CTA_STYLE}">View Work Order</a>
+      </p>
+      <p style="font-size: 13px; color: #888;">This link expires in 30 days. Use it to view details and post updates.</p>
+    `),
+  };
+}
+
+/** Sent to vendor contact when a staff member posts a message on the request thread. */
+export function vendorMessageEmail(opts: {
+  vendorContactName: string;
+  staffName: string;
+  requestTitle: string;
+  messagePreview: string;
+  token: string;
+}): { subject: string; html: string } {
+  const preview = opts.messagePreview.length > 200
+    ? opts.messagePreview.slice(0, 200) + '...'
+    : opts.messagePreview;
+
+  return {
+    subject: `New Message: ${opts.requestTitle}`,
+    html: emailWrapper(`
+      <h2 style="margin: 0 0 8px;">New Message on Work Order</h2>
+      <p style="margin: 0 0 16px;">Hi ${opts.vendorContactName},</p>
+      <p style="margin: 0 0 16px;"><strong>${opts.staffName}</strong> sent you a message regarding <strong>${opts.requestTitle}</strong>:</p>
+      <blockquote style="margin: 0 0 16px; padding: 12px 16px; background: #f5f5f5; border-left: 3px solid #ddd; border-radius: 4px; color: #555;">${preview}</blockquote>
+      <p style="margin: 24px 0;">
+        <a href="${SITE_URL}/vendor/${opts.token}" style="${CTA_STYLE}">View &amp; Respond</a>
+      </p>
+    `),
+  };
+}
+
+/** Sent to practice admins when a vendor posts a reply on the request thread. */
+export function staffVendorReplyEmail(opts: {
+  vendorName: string;
+  vendorContactName: string;
+  requestTitle: string;
+  requestId: string;
+  messagePreview: string;
+  vendorStatus?: string | null;
+}): { subject: string; html: string } {
+  const preview = opts.messagePreview.length > 200
+    ? opts.messagePreview.slice(0, 200) + '...'
+    : opts.messagePreview;
+
+  const VENDOR_STATUS_LABELS: Record<string, string> = {
+    acknowledged: 'Acknowledged', scheduled: 'Scheduled', in_progress: 'In Progress',
+    on_hold: 'On Hold', parts_ordered: 'Parts Ordered', completed: 'Completed',
+  };
+
+  const statusLine = opts.vendorStatus
+    ? `<p style="margin: 0 0 16px;"><strong>Vendor Status:</strong> ${VENDOR_STATUS_LABELS[opts.vendorStatus] ?? opts.vendorStatus}</p>`
+    : '';
+
+  return {
+    subject: `Vendor Response: ${opts.requestTitle}`,
+    html: emailWrapper(`
+      <h2 style="margin: 0 0 8px;">Vendor Response</h2>
+      <p style="margin: 0 0 16px;"><strong>${opts.vendorContactName}</strong> from <strong>${opts.vendorName}</strong> replied to <strong>${opts.requestTitle}</strong>:</p>
+      <blockquote style="margin: 0 0 16px; padding: 12px 16px; background: #f5f5f5; border-left: 3px solid #ddd; border-radius: 4px; color: #555;">${preview}</blockquote>
+      ${statusLine}
+      <p style="margin: 24px 0;">
+        <a href="${SITE_URL}/requests?open=${opts.requestId}" style="${CTA_STYLE}">View Request</a>
+      </p>
+    `),
+  };
+}

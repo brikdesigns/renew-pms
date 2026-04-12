@@ -92,6 +92,8 @@ export const icon = {
 
   // Vendor / external
   wrench:             'ph:wrench-fill',
+  copy:               'ph:copy-fill',
+  link:               'ph:link-fill',
 } as const;
 
 export type IconName = typeof icon[keyof typeof icon];

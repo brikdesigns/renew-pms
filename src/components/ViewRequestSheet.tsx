@@ -9,6 +9,7 @@ import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { ManageRequestModal } from '@/components/ManageRequestModal';
 import { ResolveRequestModal } from '@/components/ResolveRequestModal';
+import { VendorMessagesTab } from '@/components/VendorMessagesTab';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -250,6 +251,14 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
       { id: 'details', label: 'Details', content: detailsContent },
       { id: 'activity', label: 'Activity', content: activityContent },
     ];
+
+    if (request.vendor_id) {
+      sheetTabs.push({
+        id: 'vendor',
+        label: 'Vendor',
+        content: <VendorMessagesTab requestId={request.id} vendorName={request.vendor_name} />,
+      });
+    }
 
     const isTerminal = request.status === 'resolved' || request.status === 'closed';
     const isAssignee = !!currentMemberId && request.assignee_id === currentMemberId;
