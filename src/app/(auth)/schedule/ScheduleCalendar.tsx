@@ -254,21 +254,21 @@ export function ScheduleCalendar() {
           <div style={viewToggleBarStyle} role="radiogroup" aria-label="Calendar view">
             <IconButton
               variant={currentView === 'dayGridMonth' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:squares-four-fill" />}
               label="Month view"
               onClick={() => changeView('dayGridMonth')}
             />
             <IconButton
               variant={currentView === 'timeGridWeek' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:list-fill" />}
               label="Week view"
               onClick={() => changeView('timeGridWeek')}
             />
             <IconButton
               variant={currentView === 'timeGridDay' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:calendar-dots-fill" />}
               label="Day view"
               onClick={() => changeView('timeGridDay')}
