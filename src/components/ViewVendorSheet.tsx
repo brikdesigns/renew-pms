@@ -149,6 +149,7 @@ export function ViewVendorSheet({ onClose, vendor: vendorProp, id, onEdit, onNav
                   department={c.is_primary ? 'Primary' : undefined}
                   departmentBg={c.is_primary ? color.surface.positive : undefined}
                   departmentText={c.is_primary ? color.text.primary : undefined}
+                  onClick={onNavigate ? () => onNavigate('contact', { id: c.id }, { title: c.name }) : undefined}
                 />
               );
             })}

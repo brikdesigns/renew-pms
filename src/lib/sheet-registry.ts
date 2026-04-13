@@ -9,6 +9,7 @@
 export interface SheetRegistry {
   request:    { id: string };
   vendor:     { id: string };
+  contact:    { id: string };
   task:       { id: string };
   room:       { id: string };
   inventory:  { id: string };

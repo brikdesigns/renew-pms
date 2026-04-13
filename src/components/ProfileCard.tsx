@@ -106,7 +106,6 @@ const subtitleStyle: CSSProperties = {
   color: color.text.secondary,
   lineHeight: 1.3,
   overflowWrap: 'break-word',
-  textTransform: font.transform.label,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────

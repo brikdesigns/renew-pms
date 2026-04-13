@@ -413,9 +413,7 @@ export function ContactsTable() {
   // ── Contact handlers ──
 
   const handleViewContact = (c: Contact) => {
-    // Open the parent vendor's view sheet (which shows contacts in the Contacts tab)
-    const v = vendors.find(v => v.id === c.vendor_id);
-    if (v) handleView(v);
+    openSheet('contact', { id: c.id }, { title: c.name, variant: 'floating' });
   };
 
   const handleEditContact = (c: Contact) => {
