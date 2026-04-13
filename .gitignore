@@ -61,3 +61,13 @@ next-env.d.ts
 
 # Paper design artifacts (local only)
 paper/
+
+# Screen recordings and demo media (large binary files — store outside repo)
+recordings/*.mp4
+recordings/*.webm
+recordings/*.gif
+recordings/**/*.ttf
+recordings/assembly/
+recordings/analysis/
+recordings/trimmed/
+.playwright-mcp/

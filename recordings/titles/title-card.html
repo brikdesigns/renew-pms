@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <style>
-  @font-face { font-family: 'CenturySchoolbook'; src: url('/Users/nickstanerson/Library/Fonts/centuryschoolbook.ttf'); }
+  @font-face { font-family: 'CenturySchoolbook'; src: url('centuryschoolbook.ttf'); }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     width: 1280px; height: 720px; overflow: hidden;
@@ -21,10 +21,15 @@
     color: #ffffff; font-size: 52px; margin-bottom: 16px;
   }
   .subtitle {
-    color: #abbdce; font-size: 18px; font-weight: 400;
+    color: #abbdce; font-size: 18px; font-weight: 400; margin-bottom: 24px;
+    max-width: 700px; text-align: center; line-height: 1.5;
   }
   .divider {
     width: 60px; height: 2px; background: #ba9cc5; margin: 20px 0;
+  }
+  .narrative {
+    color: #abbdce; font-size: 17px; font-weight: 400; line-height: 1.65;
+    max-width: 720px; text-align: center; letter-spacing: 0.2px;
   }
 </style>
 </head>
@@ -33,11 +38,13 @@
   <div class="title" id="title"></div>
   <div class="divider"></div>
   <div class="subtitle" id="subtitle"></div>
+  <div class="narrative" id="narrative"></div>
   <script>
     const params = new URLSearchParams(window.location.search);
     document.getElementById('step').textContent = params.get('step') || '';
     document.getElementById('title').textContent = params.get('title') || '';
     document.getElementById('subtitle').textContent = params.get('sub') || '';
+    document.getElementById('narrative').textContent = params.get('narrative') || '';
   </script>
 </body>
 </html>
