@@ -11,6 +11,8 @@ interface ProfileCardBaseProps {
   onClick?: () => void;
   /** Custom trailing content — replaces the default department tag when provided */
   endContent?: ReactNode;
+  /** Avatar size override (default: 'md') */
+  avatarSize?: 'sm' | 'md' | 'lg';
 }
 
 interface UserCardProps extends ProfileCardBaseProps {
@@ -122,7 +124,7 @@ const deptTagStyle: CSSProperties = {
 };
 
 export function ProfileCard(props: ProfileCardProps) {
-  const { variant, name, subtitle, onClick, endContent } = props;
+  const { variant, name, subtitle, onClick, endContent, avatarSize = 'md' } = props;
   const [hovered, setHovered] = useState(false);
   const clickable = !!onClick;
   const Tag = clickable ? 'button' : 'div';
@@ -150,7 +152,7 @@ export function ProfileCard(props: ProfileCardProps) {
         name={name}
         departmentColorKey={deptName}
         avatarUrl={url}
-        size="md"
+        size={avatarSize}
         style={styleOverrides}
       />
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -8,7 +8,7 @@ import { Tag, Skeleton, useSheetStack } from '@bds/components';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
-import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
+import { color, font, gap, space, border, shadow, state, motion, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -62,6 +62,8 @@ const gridStyle: CSSProperties = {
   gap: gap.xl,
 };
 
+const CARD_MIN_HEIGHT = '340px';
+
 const cardStyle: CSSProperties = {
   backgroundColor: color.background.primary,
   borderRadius: border.radius.lg,
@@ -70,6 +72,7 @@ const cardStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.lg,
+  minHeight: CARD_MIN_HEIGHT,
 };
 
 const cardHeaderStyle: CSSProperties = {
@@ -106,15 +109,44 @@ const listStyle: CSSProperties = {
   listStyle: 'none',
 };
 
-const listItemStyle: CSSProperties = {
+function listItemBg(hovered: boolean): string {
+  return hovered ? state.hover.secondary : color.surface.secondary;
+}
+
+const listItemBase: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: `${space.xs} ${space.sm}`,
   borderRadius: border.radius.md,
-  backgroundColor: color.surface.secondary,
   cursor: 'pointer',
-  transition: 'opacity 0.1s ease',
+  transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
+  border: 'none',
+  width: '100%',
+  textAlign: 'left',
+};
+
+/** Interactive list item with hover state — matches ProfileCard interaction pattern */
+function HoverLi({ onClick, style, children }: { onClick: () => void; style?: CSSProperties; children: ReactNode }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <li
+      style={{ ...listItemBase, backgroundColor: listItemBg(hovered), ...style }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children}
+    </li>
+  );
+}
+
+/** Static list item (no click) for empty states */
+const listItemStaticStyle: CSSProperties = {
+  ...listItemBase,
+  cursor: 'default',
+  backgroundColor: color.surface.secondary,
+  justifyContent: 'center',
 };
 
 const listItemLeftStyle: CSSProperties = {
@@ -306,15 +338,15 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
           <ul style={listStyle}>
             {dashLoading ? (
-              <li style={listItemStyle}><Skeleton height={40} /></li>
+              <li style={{ ...listItemBase, backgroundColor: color.surface.secondary }}><Skeleton height={40} /></li>
             ) : scopedOverdueTasks.length === 0 ? (
-              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+              <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                 No overdue tasks
               </li>
             ) : scopedOverdueTasks.map((task) => {
               const deptColors = task.deptColor ? departmentColor(task.deptColor) : getDeptColors(task.dept);
               return (
-                <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}
+                <HoverLi key={task.id} style={{ borderLeft: `3px solid ${deptColors.light}` }}
                   onClick={() => openSheet('task', { id: task.id }, { title: task.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
@@ -326,7 +358,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                     {task.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
                     <PriorityBadge priority={task.priority} size="xs" />
                   </div>
-                </li>
+                </HoverLi>
               );
             })}
           </ul>
@@ -393,7 +425,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </div>
             <ul style={listStyle}>
               {onboardingMembers.length === 0 && (
-                <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <li style={{ ...listItemStaticStyle, color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                   {isManager ? 'No department members currently onboarding.' : 'No members currently onboarding.'}
                 </li>
               )}
@@ -405,6 +437,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                   <li key={m.id}>
                     <ProfileCard
                       variant="user"
+                      avatarSize="sm"
                       name={fullName}
                       role={m.practice_role || m.department}
                       department={m.department}
@@ -438,16 +471,16 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
           <ul style={listStyle}>
             {dashLoading ? (
-              <li style={listItemStyle}><Skeleton height={40} /></li>
+              <li style={{ ...listItemBase, backgroundColor: color.surface.secondary }}><Skeleton height={40} /></li>
             ) : scopedRequests.length === 0 ? (
-              <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+              <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                 No open requests
               </li>
             ) : scopedRequests.map((req) => {
               const deptColors = req.deptColor ? departmentColor(req.deptColor) : getDeptColors(req.dept);
               const timeAgo = formatTimeAgo(req.updatedAt);
               return (
-                <li key={req.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}
+                <HoverLi key={req.id} style={{ borderLeft: `3px solid ${deptColors.light}` }}
                   onClick={() => openSheet('request', { id: req.id }, { title: req.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
@@ -456,7 +489,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                     </div>
                   </div>
                   <StatusBadge status={req.status} />
-                </li>
+                </HoverLi>
               );
             })}
           </ul>
