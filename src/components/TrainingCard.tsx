@@ -1,9 +1,9 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import { Button, Tag, Dot } from '@bds/components';
+import { useState, type CSSProperties } from 'react';
+import { Tag, Dot } from '@bds/components';
 import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, space, border, shadow, gap, departmentColor } from '@/lib/tokens';
+import { color, font, space, border, gap, state, motion } from '@/lib/tokens';
 import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -28,73 +28,64 @@ export interface TrainingMember {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-function cardStyle(borderColor: string): CSSProperties {
+function cardStyle(hovered: boolean): CSSProperties {
   return {
     display: 'flex',
-    flexDirection: 'column',
-    gap: gap.lg,
-    paddingBlock: space.md,
-    paddingInline: space.lg,
-    backgroundColor: color.surface.primary,
-    borderLeft: `8px solid ${borderColor}`,
+    alignItems: 'center',
+    gap: gap.md,
+    padding: space.md,
     borderRadius: border.radius.md,
-    boxShadow: shadow.sm,
-    overflow: 'hidden',
+    backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
+    cursor: 'pointer',
+    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
+    border: 'none',
+    textAlign: 'left',
     width: '100%',
-    boxSizing: 'border-box',
   };
 }
 
-const topRowStyle: CSSProperties = {
+const textWrap: CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-};
-
-const personStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
+  flexDirection: 'column',
+  gap: gap.tiny,
+  minWidth: 0,
+  flex: 1,
 };
 
 const nameStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.label.md,
   fontWeight: font.weight.bold,
-  lineHeight: 'normal',
   color: color.text.primary,
+  lineHeight: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 };
 
-const roleStyle: CSSProperties = {
+const subtitleStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.label.sm,
   fontWeight: font.weight.regular,
-  lineHeight: 'normal',
-  color: color.text.primary,
+  color: color.text.secondary,
+  lineHeight: 1.3,
 };
 
-const bottomRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-};
-
-const tagGroupStyle: CSSProperties = {
+const trailingWrap: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
+  flexShrink: 0,
 };
 
 const progressWrapStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: gap.md,
+  gap: gap.sm,
 };
 
 const progressTrackStyle: CSSProperties = {
-  width: '166px',
+  width: '80px',
   height: '6px',
   borderRadius: border.radius.xs,
   backgroundColor: color.background.muted,
@@ -130,37 +121,36 @@ interface TrainingCardProps {
 }
 
 export function TrainingCard({ member, onViewDetails }: TrainingCardProps) {
-  const deptColors = departmentColor(member.departmentColor);
+  const [hovered, setHovered] = useState(false);
   const typeTag = EMPLOYEE_TYPE_TAG[member.employeeType] ?? EMPLOYEE_TYPE_TAG.proficient;
 
-  return (
-    <div style={cardStyle(deptColors.light)}>
-      {/* Top row: avatar + name | View Details button */}
-      <div style={topRowStyle}>
-        <div style={personStyle}>
-          <UserAvatar name={member.name} departmentColorKey={member.departmentColor} size="lg" />
-          <div>
-            <div style={nameStyle}>{member.name}</div>
-            <div style={roleStyle}>{member.role}</div>
-          </div>
-        </div>
-        <Button variant="primary" size="sm" onClick={() => onViewDetails(member.id)}>
-          View Details
-        </Button>
-      </div>
+  // Build subtitle: role • department
+  const subtitleParts: string[] = [];
+  if (member.role) subtitleParts.push(member.role);
+  if (member.department) subtitleParts.push(member.department);
+  const subtitle = subtitleParts.join(' \u2022 ');
 
-      {/* Bottom row: type + dept tags | progress bar */}
-      <div style={bottomRowStyle}>
-        <div style={tagGroupStyle}>
-          {member.department && (
-            <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
-              {member.department}
-            </Tag>
-          )}
-          <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
-            {typeTag.label}
-          </Tag>
-        </div>
+  return (
+    <button
+      type="button"
+      style={cardStyle(hovered)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onViewDetails(member.id)}
+    >
+      <UserAvatar
+        name={member.name}
+        departmentColorKey={member.departmentColor}
+        size="md"
+      />
+      <div style={textWrap}>
+        <span style={nameStyle}>{member.name}</span>
+        {subtitle && <span style={subtitleStyle}>{subtitle}</span>}
+      </div>
+      <div style={trailingWrap}>
+        <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
+          {typeTag.label}
+        </Tag>
         {member.hasTrainingDue ? (
           <div style={progressWrapStyle}>
             <Dot status="warning" size="sm" pulse />
@@ -177,6 +167,6 @@ export function TrainingCard({ member, onViewDetails }: TrainingCardProps) {
           </span>
         )}
       </div>
-    </div>
+    </button>
   );
 }
