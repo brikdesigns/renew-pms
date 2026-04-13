@@ -70,4 +70,5 @@ recordings/**/*.ttf
 recordings/assembly/
 recordings/analysis/
 recordings/trimmed/
+recordings/narration/
 .playwright-mcp/
