@@ -78,23 +78,15 @@ const mainAreaStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
   display: 'flex',
-  justifyContent: 'center',
   overflow: 'hidden',
-  backgroundColor: color.page.secondary,
-};
-
-const contentWrapStyle: CSSProperties = {
-  width: '100%',
-  maxWidth: '1280px',
-  display: 'flex',
-  minHeight: '100%',
 };
 
 // ─── Left column: request details ───────────────────────────────────────────
 
 const leftColStyle: CSSProperties = {
-  flex: '1 1 50%',
-  minWidth: 0,
+  width: '100%',
+  maxWidth: '640px',
+  flexShrink: 0,
   backgroundColor: color.surface.primary,
   padding: space.xl,
   overflowY: 'auto',
@@ -110,7 +102,7 @@ const detailsSectionStyle: CSSProperties = {
 // ─── Right column: message thread ───────────────────────────────────────────
 
 const rightColStyle: CSSProperties = {
-  flex: '1 1 50%',
+  flex: 1,
   minWidth: 0,
   backgroundColor: color.surface.secondary,
   display: 'flex',
@@ -155,8 +147,8 @@ const formAreaStyle: CSSProperties = {
 // ─── Profile section styles ─────────────────────────────────────────────────
 
 const profilePageStyle: CSSProperties = {
-  width: '100%',
-  maxWidth: '1280px',
+  flex: 1,
+  minWidth: 0,
   overflowY: 'auto',
   backgroundColor: color.surface.primary,
 };
@@ -260,7 +252,7 @@ export function VendorResponseClient({
 
       <div style={mainAreaStyle}>
         {activeSection === 'work-order' ? (
-          <div style={contentWrapStyle}>
+          <>
             {/* ── Left column: request details ── */}
             <div style={leftColStyle}>
               <div style={detailsSectionStyle}>
@@ -417,7 +409,7 @@ export function VendorResponseClient({
                 </div>
               )}
             </div>
-          </div>
+          </>
         ) : (
           /* ── Profile section ── */
           <div style={profilePageStyle}>
