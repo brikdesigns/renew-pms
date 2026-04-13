@@ -4,7 +4,10 @@ import { useState, useRef, useEffect, type CSSProperties, type FormEvent } from 
 import { Button, TextArea, Select, Tag, Badge } from '@bds/components';
 import { useToast } from '@/components/ToastProvider';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
-import { rowStyle, sectionTitleStyle } from '@/app/(auth)/settings/_shared';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PriorityBadge } from '@/components/PriorityBadge';
+import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
+import { rowStyle } from '@/app/(auth)/settings/_shared';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import { VendorSidebar } from './VendorSidebar';
 import type { VendorMessage } from '@/lib/vendor-tokens';
@@ -39,18 +42,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   facility_maintenance: 'Facility / Maintenance',
 };
 
-const URGENCY_MAP: Record<string, { label: string; status: 'positive' | 'warning' | 'error' | 'info' }> = {
-  low: { label: 'Low', status: 'positive' },
-  medium: { label: 'Medium', status: 'info' },
-  high: { label: 'High', status: 'warning' },
-  critical: { label: 'Critical', status: 'error' },
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted', in_review: 'In Review', in_progress: 'In Progress',
-  waiting_on_vendor: 'Waiting on Vendor', resolved: 'Resolved', closed: 'Closed',
-};
-
 const VENDOR_STATUS_OPTIONS = [
   { value: '', label: 'No status update' },
   { value: 'acknowledged', label: 'Acknowledged' },
@@ -81,7 +72,7 @@ const mainAreaStyle: CSSProperties = {
   overflow: 'hidden',
 };
 
-// ─── Left column: request details ───────────────────────────────────────────
+// ─── Left column ────────────────────────────────────────────────────────────
 
 const leftColStyle: CSSProperties = {
   width: '100%',
@@ -93,13 +84,7 @@ const leftColStyle: CSSProperties = {
   borderRight: `1px solid ${color.border.muted}`,
 };
 
-const detailsSectionStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space.huge,
-};
-
-// ─── Right column: message thread ───────────────────────────────────────────
+// ─── Right column ───────────────────────────────────────────────────────────
 
 const rightColStyle: CSSProperties = {
   flex: 1,
@@ -136,27 +121,20 @@ const messageBubbleBase: CSSProperties = {
 
 const formAreaStyle: CSSProperties = {
   flexShrink: 0,
-  padding: space.xl,
-  paddingTop: space.md,
+  padding: `${space.lg} ${space.xl}`,
   borderTop: `1px solid ${color.border.muted}`,
   display: 'flex',
   flexDirection: 'column',
-  gap: gap.sm,
+  gap: gap.lg,
 };
 
-// ─── Profile section styles ─────────────────────────────────────────────────
+// ─── Profile page ───────────────────────────────────────────────────────────
 
 const profilePageStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
   overflowY: 'auto',
   backgroundColor: color.surface.primary,
-};
-
-const profileContentStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space.huge,
   padding: space.xl,
 };
 
@@ -181,7 +159,6 @@ export function VendorResponseClient({
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   const isTerminal = request.status === 'resolved' || request.status === 'closed';
-  const urgency = URGENCY_MAP[request.urgency] ?? URGENCY_MAP.medium;
 
   const createdDate = new Date(request.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -242,6 +219,8 @@ export function VendorResponseClient({
     }
   };
 
+  const categoryLabel = CATEGORY_LABELS[request.category] ?? request.category;
+
   return (
     <div style={shellStyle}>
       <VendorSidebar
@@ -253,66 +232,48 @@ export function VendorResponseClient({
       <div style={mainAreaStyle}>
         {activeSection === 'work-order' ? (
           <>
-            {/* ── Left column: request details ── */}
+            {/* ── Left column: request details (mirrors ViewRequestSheet) ── */}
             <div style={leftColStyle}>
-              <div style={detailsSectionStyle}>
-                {/* Header */}
-                <div>
-                  <h1 style={{ ...sectionTitleStyle, fontSize: font.size.heading.small, fontWeight: font.weight.bold, marginBottom: space.xs }}>
-                    {request.title}
-                  </h1>
-                  <p style={{ fontSize: font.size.body.sm, color: color.text.secondary, margin: 0 }}>
-                    Submitted {createdDate}
-                  </p>
+              <div style={sheetBodyStyle}>
+                <h3 style={sheetSectionTitle}>{request.title}</h3>
+
+                <div style={rowStyle}>
+                  <ReadOnlyField label="Submitted" value={createdDate} />
+                  <ReadOnlyField label="Vendor" value={vendorContact ? `${vendorContact.name} — ${vendor.name}` : vendor.name} />
                 </div>
 
-                {/* Status + Priority + Category */}
-                <div>
-                  <h2 style={sectionTitleStyle}>Details</h2>
-                  <div style={rowStyle}>
-                    <ReadOnlyField label="Status" value={
-                      <Badge status="info" size="sm" variant="dark">
-                        {STATUS_LABELS[request.status] ?? request.status}
-                      </Badge>
-                    } />
-                    <ReadOnlyField label="Priority" value={
-                      <Badge status={urgency.status} size="sm" variant="dark">{urgency.label}</Badge>
-                    } />
-                    <ReadOnlyField label="Category" value={
-                      <Tag size="sm" style={{ display: 'inline-flex' }}>
-                        {CATEGORY_LABELS[request.category] ?? request.category}
-                      </Tag>
-                    } />
-                  </div>
+                <ReadOnlyField label="Category" value={
+                  <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
+                    {categoryLabel}
+                  </Tag>
+                } />
+
+                <div style={rowStyle}>
+                  <ReadOnlyField label="Priority" value={
+                    <PriorityBadge priority={request.urgency} />
+                  } />
+                  <ReadOnlyField label="Status" value={
+                    <StatusBadge status={request.status} />
+                  } />
                 </div>
 
-                {/* Description */}
                 {request.description && (
-                  <div>
-                    <h2 style={sectionTitleStyle}>Description</h2>
-                    <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>
-                      {request.description}
-                    </p>
-                  </div>
+                  <ReadOnlyField label="Description" value={request.description} />
                 )}
 
-                {/* Location & Equipment */}
                 {(roomName || equipmentName || request.location_description) && (
-                  <div>
-                    <h2 style={sectionTitleStyle}>Location & Equipment</h2>
+                  <>
+                    <h3 style={sheetSectionTitle}>Location & Equipment</h3>
                     <div style={rowStyle}>
                       {roomName && <ReadOnlyField label="Room" value={roomName} />}
                       {equipmentName && <ReadOnlyField label="Equipment" value={equipmentName} />}
                     </div>
                     {request.location_description && (
-                      <div style={{ marginTop: space.md }}>
-                        <ReadOnlyField label="Location Details" value={request.location_description} />
-                      </div>
+                      <ReadOnlyField label="Location Details" value={request.location_description} />
                     )}
-                  </div>
+                  </>
                 )}
 
-                {/* Expiry */}
                 <p style={{ fontSize: font.size.body.xs, color: color.text.muted, margin: 0 }}>
                   This vendor link expires on {expiryDate}
                 </p>
@@ -322,7 +283,7 @@ export function VendorResponseClient({
             {/* ── Right column: message thread ── */}
             <div style={rightColStyle}>
               <div style={threadHeaderStyle}>
-                <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Messages</h2>
+                <h3 style={{ ...sheetSectionTitle, margin: 0 }}>Messages</h3>
                 <Button variant="ghost" size="sm" type="button" onClick={handleRefresh}>
                   Refresh
                 </Button>
@@ -383,7 +344,7 @@ export function VendorResponseClient({
                     onChange={(e) => setBody(e.target.value)}
                     rows={3}
                   />
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: gap.md }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: gap.lg }}>
                     <div style={{ flex: 1 }}>
                       <Select
                         label="Status Update (optional)"
@@ -404,7 +365,7 @@ export function VendorResponseClient({
                   </div>
                 </form>
               ) : (
-                <div style={{ ...formAreaStyle, textAlign: 'center', color: color.text.secondary, fontSize: font.size.body.sm }}>
+                <div style={{ padding: `${space.lg} ${space.xl}`, borderTop: `1px solid ${color.border.muted}`, textAlign: 'center', color: color.text.secondary, fontSize: font.size.body.sm }}>
                   This request has been {request.status === 'resolved' ? 'resolved' : 'closed'}. No further updates can be posted.
                 </div>
               )}
@@ -413,26 +374,18 @@ export function VendorResponseClient({
         ) : (
           /* ── Profile section ── */
           <div style={profilePageStyle}>
-            <div style={profileContentStyle}>
-              <h1 style={{ ...sectionTitleStyle, fontSize: font.size.heading.small, fontWeight: font.weight.bold }}>
-                Profile
-              </h1>
+            <div style={sheetBodyStyle}>
+              <h3 style={sheetSectionTitle}>Profile</h3>
 
-              {/* Contact */}
-              <div>
-                <h2 style={sectionTitleStyle}>Contact</h2>
-                <div style={rowStyle}>
-                  <ReadOnlyField label="Name" value={vendorContact?.name} />
-                  <ReadOnlyField label="Email" value={vendorContact?.email} />
-                </div>
+              <h3 style={sheetSectionTitle}>Contact</h3>
+              <div style={rowStyle}>
+                <ReadOnlyField label="Name" value={vendorContact?.name} />
+                <ReadOnlyField label="Email" value={vendorContact?.email} />
               </div>
 
-              {/* Company */}
-              <div>
-                <h2 style={sectionTitleStyle}>Company</h2>
-                <div style={rowStyle}>
-                  <ReadOnlyField label="Company Name" value={vendor.name} />
-                </div>
+              <h3 style={sheetSectionTitle}>Company</h3>
+              <div style={rowStyle}>
+                <ReadOnlyField label="Company Name" value={vendor.name} />
               </div>
             </div>
           </div>
