@@ -113,6 +113,8 @@ const listItemStyle: CSSProperties = {
   padding: `${space.xs} ${space.sm}`,
   borderRadius: border.radius.md,
   backgroundColor: color.surface.secondary,
+  cursor: 'pointer',
+  transition: 'opacity 0.1s ease',
 };
 
 const listItemLeftStyle: CSSProperties = {
@@ -312,7 +314,8 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             ) : scopedOverdueTasks.map((task) => {
               const deptColors = task.deptColor ? departmentColor(task.deptColor) : getDeptColors(task.dept);
               return (
-                <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
+                <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}
+                  onClick={() => openSheet('task', { id: task.id }, { title: task.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{task.title}</div>
@@ -444,7 +447,8 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               const deptColors = req.deptColor ? departmentColor(req.deptColor) : getDeptColors(req.dept);
               const timeAgo = formatTimeAgo(req.updatedAt);
               return (
-                <li key={req.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
+                <li key={req.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}
+                  onClick={() => openSheet('request', { id: req.id }, { title: req.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{req.title}</div>
