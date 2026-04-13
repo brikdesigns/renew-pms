@@ -138,9 +138,24 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Request Details</h3>
         <div style={rowStyle}>
-          <ReadOnlyField label="Submitted By" value={request.submitter_name} />
+          <ReadOnlyField label="Submitted By" value={
+            onNavigate && request.submitter_id ? (
+              <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.submitter_id) onNavigate('user', { id: request.submitter_id }, { title: request.submitter_name ?? 'User' }); }}>
+                {request.submitter_name}
+              </button>
+            ) : request.submitter_name
+          } />
           <ReadOnlyField label="Submitted" value={createdDate} />
         </div>
+        {request.assignee_name && (
+          <ReadOnlyField label="Assigned To" value={
+            onNavigate && request.assignee_id ? (
+              <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.assignee_id) onNavigate('user', { id: request.assignee_id }, { title: request.assignee_name ?? 'User' }); }}>
+                {request.assignee_name}
+              </button>
+            ) : request.assignee_name
+          } />
+        )}
         <ReadOnlyField label="Category" value={
           <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
             {categoryLabel}
