@@ -101,7 +101,19 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
 
-  return NextResponse.json(flattenRequest(data));
+  // Count past requests for the same equipment (excludes current request)
+  let equipmentRequestCount: number | null = null;
+  if (data.equipment_id) {
+    const { count } = await admin
+      .from('requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('practice_id', practiceId)
+      .eq('equipment_id', data.equipment_id)
+      .neq('id', id);
+    equipmentRequestCount = count ?? 0;
+  }
+
+  return NextResponse.json({ ...flattenRequest(data), equipment_request_count: equipmentRequestCount });
 }
 
 const ALLOWED_FIELDS = [

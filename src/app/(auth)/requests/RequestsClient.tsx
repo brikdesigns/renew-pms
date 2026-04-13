@@ -494,6 +494,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     const requestId = e.dataTransfer.getData('text/plain');
     setDraggingId(null);
     setDropTargetKey(null);
+    // Reset drag flag here — the optimistic update below unmounts the card from its
+    // old column, so React detaches the onDragEnd handler before dragend fires,
+    // leaving isDragging.current stuck at true and blocking all future clicks.
+    setTimeout(() => { isDragging.current = false; }, 0);
 
     if (!requestId) return;
 

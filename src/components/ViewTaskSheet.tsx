@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, Tag, Skeleton } from '@bds/components';
+import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
+import { Sheet, Button, Badge, Tag, Skeleton, useConfigureSheet } from '@bds/components';
 import type { SheetTab } from '@bds/components';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -61,6 +61,8 @@ interface ViewTaskSheetProps {
   onTaskCompleted?: () => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
+  /** When true, uses useConfigureSheet instead of rendering own Sheet (set by AppSheetProvider) */
+  headless?: boolean;
 }
 
 // ─── Priority display ────────────────────────────────────────────────────────
@@ -137,7 +139,8 @@ const progressTextStyle: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate }: ViewTaskSheetProps) {
+export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate, headless = false }: ViewTaskSheetProps) {
+  const configureSheet = useConfigureSheet();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -146,49 +149,50 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   const [fetched, setFetched] = useState<TaskViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  // Global mode: fetch by ID when no data prop is given
+  // Global mode: fetch task + checklist in parallel when no data prop given
   const resolvedId = id ?? taskProp?.id;
   useEffect(() => {
     if (taskProp || !resolvedId) return;
     setFetchLoading(true);
-    fetch(`/api/tasks/${resolvedId}`)
+    setLoadingItems(true);
+
+    const taskFetch = fetch(`/api/tasks/${resolvedId}`)
       .then(r => r.json())
-      .then(data => { if (data && !data.error) setFetched(data); })
-      .catch(err => console.error('[ViewTaskSheet] fetch failed:', err))
-      .finally(() => setFetchLoading(false));
+      .then(data => { if (data && !data.error) setFetched(data); return data; });
+
+    const checklistFetch = fetch(`/api/tasks/${resolvedId}/checklist`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setItems(data); });
+
+    Promise.allSettled([taskFetch, checklistFetch])
+      .finally(() => { setFetchLoading(false); setLoadingItems(false); });
   }, [resolvedId, taskProp]);
 
   const task = taskProp ?? fetched;
 
-  // Fetch checklist items when sheet opens
+  // Page-level mode: fetch checklist when sheet opens with task prop
   useEffect(() => {
-    if (!isOpen || !task) { setItems([]); return; }
-    if (task.checklistTotal === 0) return;
+    if (!taskProp || !isOpen) return;
+    if (taskProp.checklistTotal === 0) return;
 
     setLoadingItems(true);
-    fetch(`/api/tasks/${task.id}/checklist`)
+    fetch(`/api/tasks/${taskProp.id}/checklist`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setItems(data); })
       .catch(err => console.error('[ViewTaskSheet] failed to load checklist:', err))
       .finally(() => setLoadingItems(false));
-  }, [isOpen, task?.id]);
+  }, [isOpen, taskProp?.id]);
 
   // Reset tab when task changes
   useEffect(() => {
     if (task) setActiveTab('details');
   }, [task?.id]);
 
-  if (fetchLoading || !task) {
-    return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
-        <SheetSkeleton />
-      </Sheet>
-    );
-  }
+  // ── Derived ──
 
-  const pri = PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info;
-  const deptColors = departmentColor(task.deptColor);
-  const hasChecklist = task.checklistTotal > 0;
+  const pri = task ? (PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info) : PRIORITY_DISPLAY.info;
+  const deptColors = task ? departmentColor(task.deptColor) : departmentColor('blue');
+  const hasChecklist = task ? task.checklistTotal > 0 : false;
   const completedCount = items.filter(i => i.is_completed).length;
   const allDone = hasChecklist && items.length > 0 && completedCount === items.length;
   const progressPct = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
@@ -196,6 +200,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   // ── Toggle single item ──
 
   const toggleItem = async (itemId: string, currentState: boolean) => {
+    if (!task) return;
     setToggling(prev => new Set(prev).add(itemId));
 
     // Optimistic update
@@ -212,7 +217,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       if (Array.isArray(updated)) setItems(updated);
     } catch (err) {
       console.error('[ViewTaskSheet] toggle failed:', err);
-      // Revert optimistic update
       setItems(prev => prev.map(i => i.id === itemId ? { ...i, is_completed: currentState } : i));
       showToast({ title: 'Error', description: 'Failed to update checklist item', variant: 'error' });
     } finally {
@@ -223,10 +227,10 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   // ── Complete all remaining items ──
 
   const completeAll = async () => {
+    if (!task) return;
     const remaining = items.filter(i => !i.is_completed);
     if (remaining.length === 0) return;
 
-    // Optimistic
     setItems(prev => prev.map(i => ({ ...i, is_completed: true })));
 
     try {
@@ -242,7 +246,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       onTaskCompleted?.();
     } catch (err) {
       console.error('[ViewTaskSheet] completeAll failed:', err);
-      // Refetch to get true state
       const res = await fetch(`/api/tasks/${task.id}/checklist`);
       const data = await res.json();
       if (Array.isArray(data)) setItems(data);
@@ -250,37 +253,21 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     }
   };
 
-  // ── Sheet title ──
+  // ── Tab content builders ──
 
-  const sheetTitle = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>
-      <span>{task.title}</span>
-      <span style={{
-        fontFamily: font.family.label,
-        fontSize: font.size.label.sm,
-        fontWeight: font.weight.regular,
-        color: color.text.secondary,
-      }}>
-        {task.templateName}
-      </span>
-    </div>
-  );
-
-  // ── Details tab ──
-
-  const detailsContent = (
+  const buildDetailsContent = (t: TaskViewData) => (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Task Details</h3>
 
       {/* Assignment */}
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Assigned To" value={task.assignee} />
+          <ReadOnlyField label="Assigned To" value={t.assignee} />
         </div>
         <div style={halfStyle}>
           <ReadOnlyField
-            label={task.assignmentType === 'role' ? 'Assigned Role' : 'Assigned Department'}
-            value={task.assignmentValue}
+            label={t.assignmentType === 'role' ? 'Assigned Role' : 'Assigned Department'}
+            value={t.assignmentValue}
           />
         </div>
       </div>
@@ -288,17 +275,17 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       {/* Schedule */}
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Due" value={task.due} />
+          <ReadOnlyField label="Due" value={t.due} />
         </div>
         <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={<FrequencyTag value={task.freq} />} />
+          <ReadOnlyField label="Frequency" value={<FrequencyTag value={t.freq} />} />
         </div>
       </div>
 
       {/* Classification */}
       <div style={rowStyle}>
         <div style={halfStyle}>
-          <ReadOnlyField label="Task Type" value={TASK_TYPE_DISPLAY[task.taskType] ?? task.taskType} />
+          <ReadOnlyField label="Task Type" value={TASK_TYPE_DISPLAY[t.taskType] ?? t.taskType} />
         </div>
         <div style={halfStyle}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
@@ -306,23 +293,23 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
               Department
             </span>
             <div style={tagRowStyle}>
-              {task.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>}
+              {t.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>}
             </div>
           </div>
         </div>
       </div>
 
       {/* Context: Room & Equipment */}
-      {(task.room || task.equipment) && (
+      {(t.room || t.equipment) && (
         <div style={rowStyle}>
-          {task.room && (
+          {t.room && (
             <div style={halfStyle}>
-              <ReadOnlyField label="Room" value={task.room} />
+              <ReadOnlyField label="Room" value={t.room} />
             </div>
           )}
-          {task.equipment && (
+          {t.equipment && (
             <div style={halfStyle}>
-              <ReadOnlyField label="Equipment" value={task.equipment} />
+              <ReadOnlyField label="Equipment" value={t.equipment} />
             </div>
           )}
         </div>
@@ -346,8 +333,8 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
               Status
             </span>
             <div style={{ display: 'inline-flex' }}>
-              <Badge status={allDone || task.checked ? 'positive' : 'warning'} size="sm">
-                {allDone || task.checked ? 'Completed' : 'In Progress'}
+              <Badge status={allDone || t.checked ? 'positive' : 'warning'} size="sm">
+                {allDone || t.checked ? 'Completed' : 'In Progress'}
               </Badge>
             </div>
           </div>
@@ -356,13 +343,10 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     </div>
   );
 
-  // ── Checklist tab ──
-
-  const checklistContent = (
+  const buildChecklistContent = () => (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Checklist Items</h3>
 
-      {/* Progress bar */}
       {items.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
           <div style={progressBarOuter}>
@@ -378,7 +362,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
         </div>
       )}
 
-      {/* Items */}
       {loadingItems ? (
         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted, textAlign: 'center', padding: space.lg }}>
           Loading checklist…
@@ -415,29 +398,79 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     </div>
   );
 
-  // ── Tabs ──
+  // ── Sheet config ──
 
-  const sheetTabs: SheetTab[] = hasChecklist
-    ? [
-        { id: 'details', label: 'Details', content: detailsContent },
-        { id: 'checklist', label: `Checklist (${completedCount}/${items.length || task.checklistTotal})`, content: checklistContent },
-      ]
-    : [
-        { id: 'details', label: 'Details', content: detailsContent },
-      ];
+  const buildTabs = (t: TaskViewData): SheetTab[] => {
+    const tabs: SheetTab[] = [
+      { id: 'details', label: 'Details', content: buildDetailsContent(t) },
+    ];
+    if (hasChecklist) {
+      tabs.push({
+        id: 'checklist',
+        label: `Checklist (${completedCount}/${items.length || t.checklistTotal})`,
+        content: buildChecklistContent(),
+      });
+    }
+    return tabs;
+  };
 
-  // ── Footer ──
+  const sheetTitle = task ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>
+      <span>{task.title}</span>
+      <span style={{
+        fontFamily: font.family.label,
+        fontSize: font.size.label.sm,
+        fontWeight: font.weight.regular,
+        color: color.text.secondary,
+      }}>
+        {task.templateName}
+      </span>
+    </div>
+  ) : undefined;
 
-  const footerContent = (
-    <>
+  const footer = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
       <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
       {hasChecklist && !allDone && (
         <Button variant="primary" size="md" type="button" onClick={completeAll}>
           Complete All
         </Button>
       )}
-    </>
+    </div>
   );
+
+  // ── Headless mode: configure the stack's Sheet ────────────────────────────
+
+  useLayoutEffect(() => {
+    if (!headless) return;
+    if (fetchLoading || !task) {
+      configureSheet({
+        body: <SheetSkeleton />,
+        footer: <Button variant="ghost" size="md" onClick={onClose}>Close</Button>,
+      });
+      return;
+    }
+    configureSheet({
+      title: task.title,
+      tabs: buildTabs(task),
+      activeTab,
+      onTabChange: setActiveTab,
+      footer,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headless, configureSheet, fetchLoading, task?.id, task?.title, activeTab, items.length, completedCount, loadingItems, onClose, onTaskCompleted]);
+
+  if (headless) return null;
+
+  // ── Page-level mode: render own Sheet ─────────────────────────────────────
+
+  if (fetchLoading || !task) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet
@@ -447,10 +480,10 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       title={sheetTitle}
       width="600px"
       side="right"
-      tabs={sheetTabs}
+      tabs={buildTabs(task)}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      footer={footerContent}
+      footer={footer}
     />
   );
 }

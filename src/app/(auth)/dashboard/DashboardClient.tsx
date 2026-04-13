@@ -4,10 +4,11 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag, Skeleton, useSheetStack } from '@bds/components';
+import { Tag, useSheetStack } from '@bds/components';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
+import { CardSkeleton } from '@/components/CardSkeleton';
 import { color, font, gap, space, border, shadow, state, motion, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
@@ -321,6 +322,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
 
       <div style={gridStyle}>
         {/* ── Card 1: Overdue Tasks ── */}
+        {dashLoading ? (
+          <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
+        ) : (
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
@@ -337,9 +341,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </Link>
           </div>
           <ul style={listStyle}>
-            {dashLoading ? (
-              <li style={{ ...listItemBase, backgroundColor: color.surface.secondary }}><Skeleton height={40} /></li>
-            ) : scopedOverdueTasks.length === 0 ? (
+            {scopedOverdueTasks.length === 0 ? (
               <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                 No overdue tasks
               </li>
@@ -363,8 +365,12 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             })}
           </ul>
         </div>
+        )}
 
         {/* ── Card 2: Today's Progress ── */}
+        {dashLoading ? (
+          <CardSkeleton variant="stats" minHeight={CARD_MIN_HEIGHT} />
+        ) : (
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
@@ -400,9 +406,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>
                 {isManager ? 'Department Breakdown' : 'By Department'}
               </span>
-              {dashLoading ? (
-                <Skeleton height={14} />
-              ) : Object.entries(scopedDeptCompletion)
+              {Object.entries(scopedDeptCompletion)
                 .filter(([name]) => name !== '(G) All Departments')
                 .map(([name, counts]) => (
                   <DeptBar key={name} dept={name} colorKey={counts.color} completed={counts.completed} total={counts.total} />
@@ -411,6 +415,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </div>
           )}
         </div>
+        )}
 
         {/* ── Card 3: Onboarding Status (hidden for proficient staff) ── */}
         {showOnboarding && (
@@ -454,6 +459,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
         )}
 
         {/* ── Card 4: Recent Requests ── */}
+        {dashLoading ? (
+          <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
+        ) : (
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
@@ -470,9 +478,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </Link>
           </div>
           <ul style={listStyle}>
-            {dashLoading ? (
-              <li style={{ ...listItemBase, backgroundColor: color.surface.secondary }}><Skeleton height={40} /></li>
-            ) : scopedRequests.length === 0 ? (
+            {scopedRequests.length === 0 ? (
               <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                 No open requests
               </li>
@@ -494,6 +500,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             })}
           </ul>
         </div>
+        )}
       </div>
     </div>
   );

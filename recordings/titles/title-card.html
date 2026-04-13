@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'CenturySchoolbook'; src: url('/Users/nickstanerson/Library/Fonts/centuryschoolbook.ttf'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 720px; overflow: hidden;
+    background: #1f2732;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Avenir', 'Avenir Next', system-ui, sans-serif;
+  }
+  .step {
+    font-family: 'CenturySchoolbook', 'Century Schoolbook', Georgia, serif;
+    color: #ba9cc5; font-size: 22px; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .title {
+    font-family: 'CenturySchoolbook', 'Century Schoolbook', Georgia, serif;
+    color: #ffffff; font-size: 52px; margin-bottom: 16px;
+  }
+  .subtitle {
+    color: #abbdce; font-size: 18px; font-weight: 400;
+  }
+  .divider {
+    width: 60px; height: 2px; background: #ba9cc5; margin: 20px 0;
+  }
+</style>
+</head>
+<body>
+  <div class="step" id="step"></div>
+  <div class="title" id="title"></div>
+  <div class="divider"></div>
+  <div class="subtitle" id="subtitle"></div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('step').textContent = params.get('step') || '';
+    document.getElementById('title').textContent = params.get('title') || '';
+    document.getElementById('subtitle').textContent = params.get('sub') || '';
+  </script>
+</body>
+</html>
