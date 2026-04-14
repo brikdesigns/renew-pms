@@ -212,25 +212,29 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
 - No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
-## Branching Model
+## Branch Workflow
 
-Pre-launch, single developer — keep it simple.
+**All work happens on `task/{scope}-{name}` branches created from `main`.** Never branch from `staging`. Never reuse a branch for unrelated work.
 
-```text
-main (production — protected, deploys to production)
-  └── staging (daily working branch — all work happens here)
+```bash
+# Start a new task (always use this — never manual git checkout -b)
+./scripts/new-task.sh {scope}-{name}
+
+# Examples:
+./scripts/new-task.sh renew-task-templates
+./scripts/new-task.sh auth-session-refresh
+./scripts/new-task.sh vendor-portal-v1
 ```
 
-### Rules
+**Rules:**
 
-1. **Work directly on `staging`.** No feature branches until there are multiple contributors or a live production environment to protect.
-2. **`main` is locked.** Only receives merges from `staging` via PR when ready to ship to production.
-3. **Commit often, push deliberately.** Pushes trigger builds.
-4. **Never leave changes floating in the working tree across sessions.** Commit before ending a session.
+1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
+2. **Always branch from `main`**, never from `staging`. The `new-task.sh` script enforces this.
+3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
+4. **Never touch `main` or `staging` directly.** Only Nick merges.
+5. **Delete branches after merge.** Commits survive in the merge target's history.
 
-### When to revisit
-
-Add feature branches when: (a) a second developer joins, (b) production is live with real users, or (c) a feature genuinely needs isolated testing. Until then, branches add overhead and risk losing work.
+**Merge flow:** `task/` branch → PR to `main` → squash merge → staging merge → production.
 
 ## Session Discipline
 
