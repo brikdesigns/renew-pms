@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, type CSSProperties, type FormEvent } from 'react';
-import { Button, TextArea, Select, Tag, Badge } from '@bds/components';
+import { Button, TextArea, Select, Tag, Badge } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { StatusBadge } from '@/components/StatusBadge';

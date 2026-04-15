@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tooltip } from '@bds/components';
+import { Tooltip } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';

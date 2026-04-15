@@ -3,8 +3,8 @@
 import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Button, IconButton, useSheetStack } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Button, IconButton, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';

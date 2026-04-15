@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal, Button, TextArea } from '@bds/components';
+import { Modal, Button, TextArea } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 
 interface ResolveRequestModalProps {

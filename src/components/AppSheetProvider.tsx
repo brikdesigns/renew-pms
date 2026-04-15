@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useMemo, type ReactNode } from 'react';
-import { SheetStackProvider, SheetStackRenderer } from '@bds/components';
+import { SheetStackProvider, SheetStackRenderer } from '@brikdesigns/bds';
 import { sheetComponents } from '@/lib/sheet-components';
 import type { SheetType } from '@/lib/sheet-registry';
 import { SheetSkeleton } from '@/components/SheetSkeleton';

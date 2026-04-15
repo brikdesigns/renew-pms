@@ -1,5 +1,5 @@
-import { Badge } from '@bds/components';
-import type { BadgeSize, BadgeVariant } from '@bds/components';
+import { Badge } from '@brikdesigns/bds';
+import type { BadgeSize, BadgeVariant } from '@brikdesigns/bds';
 
 // ─── Status vocabularies ────────────────────────────────────────────────────
 // Every entity status in the product maps to a BDS Badge variant here.

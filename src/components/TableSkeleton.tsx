@@ -1,6 +1,6 @@
 'use client';
 
-import { TableRow, TableCell, Skeleton } from '@bds/components';
+import { TableRow, TableCell, Skeleton } from '@brikdesigns/bds';
 import { gap } from '@/lib/tokens';
 
 interface TableSkeletonProps {

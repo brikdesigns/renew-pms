@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, Select, TimePicker } from '@bds/components';
+import { Sheet, Button, TextInput, Select, TimePicker } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { useMembers } from '@/hooks/useMembers';
 import { gap } from '@/lib/tokens';

@@ -8,10 +8,10 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@bds/components';
+} from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton, useSheetStack } from '@bds/components';
+import { Badge, Button, IconButton, useSheetStack } from '@brikdesigns/bds';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';

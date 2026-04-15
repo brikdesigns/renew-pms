@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { Tag, Dot } from '@bds/components';
+import { Tag, Dot } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, space, border, gap, state, motion } from '@/lib/tokens';
 import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';

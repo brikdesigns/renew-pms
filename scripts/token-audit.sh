@@ -67,7 +67,7 @@ else
 fi
 
 # ── 3. Native <button> instead of BDS Button / IconButton ──────────
-section "Native <button> (use Button or IconButton from @bds/components)"
+section "Native <button> (use Button or IconButton from @brikdesigns/bds)"
 
 # Allowlist:
 #   - role="tab"  → PageHeader tabs (legitimate tablist semantics — convert to BDS TabBar when available)
@@ -235,10 +235,10 @@ else
 fi
 
 # ── 11. Direct BDS component path imports ───────────────────────────
-section "Direct BDS component imports (use '@bds/components' barrel)"
+section "Direct BDS component imports (use '@brikdesigns/bds' barrel)"
 
 DIRECT_HITS=$(grep -rn --include="*.tsx" --include="*.ts" \
-  "from '@bds/components/ui/" "$SRC" \
+  -E "from '@bds/components|from '@brikdesigns/bds/" "$SRC" \
   || true)
 
 DIRECT_COUNT=$(count_matches "$DIRECT_HITS")

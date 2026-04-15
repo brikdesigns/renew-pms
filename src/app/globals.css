@@ -14,10 +14,9 @@
 @layer theme, base, components, utilities;
 @layer bds-tokens, bds-components, client-theme, client-overrides;
 
-/* BDS token layer */
-@import '../../brik-bds/tokens/fonts.css'        layer(bds-tokens);
-@import '../../brik-bds/tokens/figma-tokens.css'  layer(bds-tokens);
-@import '../../brik-bds/tokens/gap-fills.css'     layer(bds-tokens);
+/* BDS token + component layers (npm package) */
+@import '@brikdesigns/bds/tokens.css' layer(bds-tokens);
+@import '@brikdesigns/bds/styles.css' layer(bds-components);
 /* Renew Dental brand override */
 @import '../styles/theme-renew.css' layer(client-theme);
 

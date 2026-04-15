@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Button, Sheet } from '@bds/components';
+import { IconButton, Button, Sheet } from '@brikdesigns/bds';
 import { color, font, space, gap, border, size } from '@/lib/tokens';
 
 const IS_DEV = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ENABLE_PERSONAS === 'true';

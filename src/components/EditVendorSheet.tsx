@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@bds/components';
+import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';

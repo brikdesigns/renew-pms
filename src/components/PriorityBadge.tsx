@@ -1,5 +1,5 @@
-import { Badge, Tooltip } from '@bds/components';
-import type { BadgeSize, BadgeVariant } from '@bds/components';
+import { Badge, Tooltip } from '@brikdesigns/bds';
+import type { BadgeSize, BadgeVariant } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 

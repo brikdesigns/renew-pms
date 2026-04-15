@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Badge, Button, useConfigureSheet } from '@bds/components';
+import { Badge, Button, useConfigureSheet } from '@brikdesigns/bds';
 import { color, font, gap } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';

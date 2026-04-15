@@ -27,18 +27,6 @@
       "@/*": [
         "./src/*"
       ],
-      "@bds/components": [
-        "./brik-bds/components"
-      ],
-      "@bds/components/*": [
-        "./brik-bds/components/*"
-      ],
-      "@bds/tokens": [
-        "./brik-bds/tokens"
-      ],
-      "@bds/tokens/*": [
-        "./brik-bds/tokens/*"
-      ],
       "collections/*": [
         "./.source/*"
       ]
@@ -50,20 +38,11 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "brik-bds/**/*.ts",
-    "brik-bds/**/*.tsx",
     ".source/**/*.ts",
     ".next-prepush/types/**/*.ts",
     ".next-prepush/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "brik-bds/node_modules",
-    "brik-bds/**/*.stories.ts",
-    "brik-bds/**/*.stories.tsx",
-    "brik-bds/.storybook",
-    "brik-bds/vite.config*.ts",
-    "brik-bds/vitest.config*.ts",
-    "brik-bds/tools"
+    "node_modules"
   ]
 }

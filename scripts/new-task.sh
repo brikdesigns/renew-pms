@@ -2,7 +2,7 @@
 # new-task.sh — Create an isolated git worktree for a single task.
 #
 # Always branches from origin/main. Enforces task/{scope}-{name} naming.
-# Initializes BDS submodule and installs dependencies in the new worktree.
+# Installs dependencies in the new worktree.
 #
 # Usage:
 #   ./scripts/new-task.sh {scope}-{name}
@@ -77,10 +77,7 @@ echo -e "${YELLOW}▸ Creating worktree at ${WORKTREE_BASE}/${TASK_NAME}...${NC}
 mkdir -p "$WORKTREE_BASE"
 git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" origin/main
 
-# ── Init BDS submodule ──
-echo -e "${YELLOW}▸ Initializing BDS submodule...${NC}"
 cd "${WORKTREE_BASE}/${TASK_NAME}"
-git submodule update --init --recursive
 
 # ── Install dependencies ──
 echo -e "${YELLOW}▸ Installing dependencies (npm ci --prefer-offline)...${NC}"

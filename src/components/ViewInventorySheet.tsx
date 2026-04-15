@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, useConfigureSheet } from '@bds/components';
+import { Tag, Button, useConfigureSheet } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import type { SheetTab } from '@bds/components';
+import type { SheetTab } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';

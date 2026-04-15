@@ -4,12 +4,12 @@ import { useState, useRef, useEffect, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, NotificationPopover } from '@bds/components';
-import { useSheetStack } from '@bds/components';
+import { IconButton, NotificationPopover } from '@brikdesigns/bds';
+import { useSheetStack } from '@brikdesigns/bds';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { color, border } from '@/lib/tokens';
 import type { SheetType } from '@/lib/sheet-registry';
-import type { NotificationItemData } from '@bds/components';
+import type { NotificationItemData } from '@brikdesigns/bds';
 
 // ─── Notification link → sheet mapping ─────────────────────────────────────
 

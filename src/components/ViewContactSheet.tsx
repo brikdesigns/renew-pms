@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Button, Badge, useConfigureSheet } from '@bds/components';
-import type { SheetTab } from '@bds/components';
+import { Button, Badge, useConfigureSheet } from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
 import { StatusBadge } from '@/components/StatusBadge';

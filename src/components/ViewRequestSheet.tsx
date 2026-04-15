@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@bds/components';
+import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@brikdesigns/bds';
 import { StatusBadge, statusLabel } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import type { SheetTab } from '@bds/components';
+import type { SheetTab } from '@brikdesigns/bds';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { ManageRequestModal } from '@/components/ManageRequestModal';
@@ -235,7 +235,7 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
         month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
       });
 
-    const timelineEvents: import('@bds/components').TimelineEvent[] = [];
+    const timelineEvents: import('@brikdesigns/bds').TimelineEvent[] = [];
     timelineEvents.push({
       icon: <Icon icon={icon.plus} />,
       label: 'Request submitted',

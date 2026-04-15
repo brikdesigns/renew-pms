@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
-import { Sheet, Button, TextInput, Select } from '@bds/components';
+import { Sheet, Button, TextInput, Select } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
-import { Button } from '@bds/components';
+import { Button } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,

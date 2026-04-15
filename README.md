@@ -6,7 +6,7 @@ Dental practice management and training platform. Staff-only back office tool fo
 
 - **Framework:** Next.js 16 (App Router, TypeScript, React 19)
 - **Database:** Supabase (PostgreSQL, Auth, RLS)
-- **UI:** Brik Design System (git submodule) + Tailwind CSS 4
+- **UI:** Brik Design System (`@brikdesigns/bds`) + Tailwind CSS 4
 - **Error tracking:** Sentry
 - **Docs:** Fumadocs (`/docs`, `/guide`)
 - **Hosting:** Netlify
@@ -41,7 +41,6 @@ src/
   hooks/             # Custom React hooks
   lib/               # Utilities, tokens, auth, Supabase clients
   styles/            # Client theme (theme-renew.css)
-brik-bds/            # BDS submodule (read-only — edit in brik/brik-bds)
 supabase/
   migrations/        # Database migrations
 ```

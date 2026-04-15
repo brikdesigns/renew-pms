@@ -1,8 +1,8 @@
 'use client';
 
-import { Skeleton } from '@bds/components';
+import { Skeleton } from '@brikdesigns/bds';
 import { TableSkeleton } from '@/components/TableSkeleton';
-import { Table, TableHeader, TableBody, TableRow, TableHead } from '@bds/components';
+import { Table, TableHeader, TableBody, TableRow, TableHead } from '@brikdesigns/bds';
 import { color, gap, space, border } from '@/lib/tokens';
 
 export default function RequestsLoading() {

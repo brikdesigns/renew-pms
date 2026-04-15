@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
-import type { MenuItemData } from '@bds/components';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, space, gap, border } from '@/lib/tokens';

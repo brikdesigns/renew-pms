@@ -3,9 +3,9 @@
 import { useState, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';

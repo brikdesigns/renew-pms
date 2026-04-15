@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
-import { Board, BoardColumn, BoardCard } from '@bds/components';
+import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@bds/components';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button } from '@bds/components';
+import { Button } from '@brikdesigns/bds';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
 import { AddTaskSheet } from '@/components/AddTaskSheet';

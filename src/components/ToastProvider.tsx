@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, type ReactNode, type CSSProperties } from 'react';
-import { Toast, type ToastVariant } from '@bds/components';
+import { Toast, type ToastVariant } from '@brikdesigns/bds';
 import { gap } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

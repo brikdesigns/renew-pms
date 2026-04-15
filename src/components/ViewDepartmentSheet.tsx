@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton, useConfigureSheet } from '@bds/components';
-import { Badge } from '@bds/components';
-import type { SheetTab } from '@bds/components';
+import { Sheet, Button, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Badge } from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';

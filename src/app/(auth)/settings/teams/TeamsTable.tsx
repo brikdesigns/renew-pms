@@ -3,8 +3,8 @@
 import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { ReadOnlyField } from '@/components/ReadOnlyField';

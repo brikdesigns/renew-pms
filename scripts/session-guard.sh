@@ -49,14 +49,4 @@ if [[ "$DIRTY_COUNT" -gt 0 ]]; then
   echo ""
 fi
 
-# Check BDS submodule status
-if [[ -f "$PROJECT_ROOT/brik-bds/.git" ]]; then
-  SUBMODULE_STATUS=$(cd "$PROJECT_ROOT" && git submodule status brik-bds 2>/dev/null || echo "")
-  if [[ "$SUBMODULE_STATUS" == +* ]]; then
-    echo "⚠️  SESSION GUARD: BDS submodule has uncommitted pointer change."
-    echo "   Run ./scripts/bds-sync.sh or commit the submodule update."
-    echo ""
-  fi
-fi
-
 exit 0

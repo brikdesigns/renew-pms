@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select } from '@bds/components';
+import { Sheet, Button, TextInput, TextArea, Select } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { useRooms } from '@/hooks/useRooms';
 import { useEquipment } from '@/hooks/useEquipment';

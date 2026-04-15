@@ -2,7 +2,7 @@
 
 import { CardSkeleton } from '@/components/CardSkeleton';
 import { color, gap, space, font, border } from '@/lib/tokens';
-import { Skeleton } from '@bds/components';
+import { Skeleton } from '@brikdesigns/bds';
 
 const CARD_MIN_HEIGHT = '340px';
 

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo, type CSSProperties } from 'react';
-import { Chip, SegmentedControl } from '@bds/components';
-import { Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+import { Chip, SegmentedControl } from '@brikdesigns/bds';
+import { Menu } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { gap, space, font, color, border } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 

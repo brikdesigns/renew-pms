@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { Skeleton } from '@bds/components';
+import { Skeleton } from '@brikdesigns/bds';
 import { gap, space } from '@/lib/tokens';
 
 /**

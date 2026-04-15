@@ -3,11 +3,11 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Board, BoardColumn, BoardCard } from '@bds/components';
-import { Tag, Chip, Button, Tooltip, useSheetStack } from '@bds/components';
+import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
+import { Tag, Chip, Button, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import { Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+import { Menu } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';

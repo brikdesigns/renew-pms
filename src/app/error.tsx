@@ -3,7 +3,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { useEffect, type CSSProperties } from 'react';
-import { Button } from '@bds/components';
+import { Button } from '@brikdesigns/bds';
 
 const containerStyle: CSSProperties = {
   display: 'flex',

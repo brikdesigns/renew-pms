@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from
 import {
   Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import type { SheetTab } from '@bds/components';
+} from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
