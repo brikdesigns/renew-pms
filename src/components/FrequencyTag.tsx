@@ -1,4 +1,4 @@
-import { Tag } from '@bds/components';
+import { Tag } from '@brikdesigns/bds';
 import { color } from '@/lib/tokens';
 import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
 

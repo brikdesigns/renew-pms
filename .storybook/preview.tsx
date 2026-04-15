@@ -9,17 +9,12 @@ import phData from '@iconify-json/ph/icons.json';
 addCollection(phData as Parameters<typeof addCollection>[0]);
 
 // Token cascade:
-// 1. BDS foundations (from submodule)
-// 2. BDS gap-fills (manual tokens not yet in Figma)
+// 1. BDS foundations + gap-fills (npm package)
+// 2. BDS component styles (npm package)
 // 3. Renew brand theme (light + dark)
-// 4. Font Audit tool (from submodule)
-import '../brik-bds/tokens/fonts.css';
-import '../brik-bds/tokens/figma-tokens.css';
-import '../brik-bds/tokens/gap-fills.css';
+import '@brikdesigns/bds/tokens.css';
+import '@brikdesigns/bds/styles.css';
 import '../src/styles/theme-renew.css';
-import '../brik-bds/tokens/font-audit.css';
-import '../brik-bds/css/animations.css';
-import '../brik-bds/css/premium-effects.css';
 
 // ─── Theme definitions ──────────────────────────────────────────
 // Only 3 themes: Renew Light, Renew Dark, Font Audit

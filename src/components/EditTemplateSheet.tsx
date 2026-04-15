@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, IconButton, TextInput, TextArea, Select, Switch } from '@bds/components';
+import { Sheet, Button, IconButton, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import type { SheetTab } from '@bds/components';
+import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import {

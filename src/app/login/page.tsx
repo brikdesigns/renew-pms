@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@bds/components';
-import { TextInput } from '@bds/components';
+import { Button } from '@brikdesigns/bds';
+import { TextInput } from '@brikdesigns/bds';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
 import type { CSSProperties } from 'react';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useSheetStack } from '@bds/components';
+import { useSheetStack } from '@brikdesigns/bds';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter, type EmployeeTypeSegment } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';

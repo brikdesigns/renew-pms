@@ -61,3 +61,16 @@ next-env.d.ts
 
 # Paper design artifacts (local only)
 paper/
+
+# Screen recordings and demo media
+# Canonical output location: /Users/nickstanerson/Documents/Brik/Clients/Renew/recordings/
+# The patterns below are a safety net for any binaries that land in recordings/ during a session.
+recordings/*.mp4
+recordings/*.webm
+recordings/*.gif
+recordings/**/*.ttf
+recordings/assembly/
+recordings/analysis/
+recordings/trimmed/
+recordings/narration/
+.playwright-mcp/

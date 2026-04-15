@@ -14,10 +14,9 @@
 @layer theme, base, components, utilities;
 @layer bds-tokens, bds-components, client-theme, client-overrides;
 
-/* BDS token layer */
-@import '../../brik-bds/tokens/fonts.css'        layer(bds-tokens);
-@import '../../brik-bds/tokens/figma-tokens.css'  layer(bds-tokens);
-@import '../../brik-bds/tokens/gap-fills.css'     layer(bds-tokens);
+/* BDS token + component layers (npm package) */
+@import '@brikdesigns/bds/tokens.css' layer(bds-tokens);
+@import '@brikdesigns/bds/styles.css' layer(bds-components);
 /* Renew Dental brand override */
 @import '../styles/theme-renew.css' layer(client-theme);
 
@@ -197,6 +196,17 @@ body {
     text-transform: uppercase;
     font-size: var(--label-tiny);
     font-weight: var(--font-weight-semi-bold);
+  }
+
+  /*
+   * Indicator height: 28px = 7 × 4px grid.
+   * BDS Badge/Tag sm natural height varies by content (26px text-only,
+   * 30px with icon). This locks both to 28px so any side-by-side
+   * pairing is always aligned. Upstream BDS fix pending.
+   */
+  .bds-tag--sm,
+  .bds-badge--sm {
+    height: 28px;
   }
 
   /* Tags: tighter horizontal padding (xs instead of sm) */

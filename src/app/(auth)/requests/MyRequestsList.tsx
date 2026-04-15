@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'r
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Tag, Button, useSheetStack } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Tag, Button, useSheetStack } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { StatusBadge } from '@/components/StatusBadge';

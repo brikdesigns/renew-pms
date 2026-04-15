@@ -27,20 +27,6 @@ const nextConfig = {
       },
     ];
   },
-  turbopack: {
-    resolveAlias: {
-      '@bds/components': './brik-bds/components',
-      '@bds/tokens': './brik-bds/tokens',
-    },
-  },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@bds/components': path.resolve(__dirname, 'brik-bds/components'),
-      '@bds/tokens': path.resolve(__dirname, 'brik-bds/tokens'),
-    };
-    return config;
-  },
 };
 
 const withMDX = createMDX();

@@ -8,10 +8,10 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@bds/components';
+} from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, IconButton, Tag, SegmentedControl, useSheetStack } from '@bds/components';
+import { Button, IconButton, Tag, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';

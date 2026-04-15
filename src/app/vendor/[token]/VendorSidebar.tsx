@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tooltip } from '@bds/components';
+import { Tooltip } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import { font, color, motion, state, gap, space, border } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@bds/components';
+import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@brikdesigns/bds';
 import { StatusBadge, statusLabel } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import type { SheetTab } from '@bds/components';
+import type { SheetTab } from '@brikdesigns/bds';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { ManageRequestModal } from '@/components/ManageRequestModal';
@@ -192,6 +192,13 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
                 ) : request.equipment_name
               } />
             </div>
+            {request.equipment_id && request.equipment_request_count != null && (
+              <ReadOnlyField label="Past Requests" value={
+                request.equipment_request_count === 0
+                  ? 'None'
+                  : `${request.equipment_request_count} past ${request.equipment_request_count === 1 ? 'request' : 'requests'}`
+              } />
+            )}
             {request.location_description && (
               <ReadOnlyField label="Location Details" value={request.location_description} />
             )}
@@ -209,7 +216,13 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
                   </button>
                 ) : request.vendor_name
               } />
-              <ReadOnlyField label="Contact" value={request.vendor_contact_name} />
+              <ReadOnlyField label="Contact" value={
+                onNavigate && request.vendor_contact_id ? (
+                  <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_contact_id) onNavigate('contact', { id: request.vendor_contact_id }, { title: request.vendor_contact_name ?? 'Contact' }); }}>
+                    {request.vendor_contact_name}
+                  </button>
+                ) : request.vendor_contact_name
+              } />
             </div>
           </>
         )}
@@ -222,7 +235,7 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
         month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
       });
 
-    const timelineEvents: import('@bds/components').TimelineEvent[] = [];
+    const timelineEvents: import('@brikdesigns/bds').TimelineEvent[] = [];
     timelineEvents.push({
       icon: <Icon icon={icon.plus} />,
       label: 'Request submitted',
@@ -279,6 +292,7 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
     const isAssignee = !!currentMemberId && request.assignee_id === currentMemberId;
 
     const canAct = !isTerminal && (isAdmin || isAssignee);
+    const isSubmitted = request.status === 'submitted';
 
     const footerContent = canAct ? (
       <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end', width: '100%' }}>
@@ -286,12 +300,19 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
           Reject
         </Button>
         <div style={{ flex: 1 }} />
-        <Button variant="secondary" size="md" type="button" onClick={() => setManageOpen(true)}>
-          Reassign
+        {isSubmitted && (
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+        )}
+        <Button variant={isSubmitted ? 'primary' : 'secondary'} size="md" type="button" onClick={() => setManageOpen(true)}>
+          {isSubmitted ? 'Assign' : 'Reassign'}
         </Button>
-        <Button variant="primary" size="md" type="button" onClick={() => setResolveOpen(true)}>
-          Resolve
-        </Button>
+        {!isSubmitted && (
+          <Button variant="primary" size="md" type="button" onClick={() => setResolveOpen(true)}>
+            Resolve
+          </Button>
+        )}
       </div>
     ) : (
       <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>

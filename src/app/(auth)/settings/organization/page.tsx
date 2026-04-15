@@ -7,7 +7,7 @@ import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Button } from '@bds/components';
+import { Button } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,

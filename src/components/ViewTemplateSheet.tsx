@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton } from '@bds/components';
-import type { SheetTab } from '@bds/components';
+import { Sheet, Button, Skeleton } from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';

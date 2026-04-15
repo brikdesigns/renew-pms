@@ -18,7 +18,7 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 | React | React 19 |
 | Auth | Supabase Auth (`@supabase/ssr`) — session refresh via `src/proxy.ts` |
 | Database | Supabase PostgreSQL (RLS) |
-| UI | BDS submodule + Tailwind CSS 4 + Radix UI |
+| UI | BDS npm package (`@brikdesigns/bds`) + Tailwind CSS 4 + Radix UI |
 | Styling | Tailwind CSS 4 (CSS-first config — no `tailwind.config.ts`; uses `@theme {}` in `globals.css`) |
 | Email | Resend |
 | Icons | FontAwesome 7 |
@@ -155,7 +155,7 @@ import { font, color, space, gap, border, shadow } from '@/lib/tokens';
 import { text, heading, detail } from '@/lib/styles';
 ```
 
-Path aliases: `@/*` → `./src/*` · `@bds/components` → `./brik-bds/components` · `@bds/tokens` → `./brik-bds/tokens`
+Path alias: `@/*` → `./src/*`. BDS components: `import { ... } from '@brikdesigns/bds'`
 
 **Never use raw `var(--...)` strings in CSSProperties.** Always import from `@/lib/tokens` — this is enforced by the pre-commit hook and `./scripts/token-audit.sh`. If a token is missing from the typed exports, add it to `src/lib/tokens.ts` first.
 
@@ -182,7 +182,7 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 ### Storybook MCP (use when building UI)
 
-When Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can query BDS components directly via MCP at `http://localhost:6006/mcp`. Start Storybook before building portal UI — do not read source files to guess props when the MCP is available.
+When BDS Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can query BDS components directly via MCP at `http://localhost:6006/mcp`. Start BDS Storybook before building portal UI — do not read source files to guess props when the MCP is available.
 
 - `list-all-documentation` — discover all components
 - `get-documentation` — full props + JSX examples
@@ -195,10 +195,9 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 ### BDS first
 
 - Check BDS before building custom. Query via Storybook MCP (`http://localhost:6006/mcp`) when running, or browse [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/). Read component props and examples before writing JSX.
-- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@bds/components`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
+- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@brikdesigns/bds`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
 - **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
 - Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
-- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules > Submodule Discipline.
 
 ### Server vs client components
 
@@ -212,41 +211,49 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
 - No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
-## Branching Model
+## Branch Workflow
 
-Pre-launch, single developer — keep it simple.
+**All work happens on `task/{scope}-{name}` branches created from `main`.** Never branch from `staging`. Never reuse a branch for unrelated work.
 
-```text
-main (production — protected, deploys to production)
-  └── staging (daily working branch — all work happens here)
+```bash
+# Start a new task (always use this — never manual git checkout -b)
+./scripts/new-task.sh {scope}-{name}
+
+# Examples:
+./scripts/new-task.sh renew-task-templates
+./scripts/new-task.sh auth-session-refresh
+./scripts/new-task.sh vendor-portal-v1
 ```
 
-### Rules
+**Rules:**
 
-1. **Work directly on `staging`.** No feature branches until there are multiple contributors or a live production environment to protect.
-2. **`main` is locked.** Only receives merges from `staging` via PR when ready to ship to production.
-3. **Commit often, push deliberately.** Pushes trigger builds.
-4. **Never leave changes floating in the working tree across sessions.** Commit before ending a session.
+1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
+2. **Always branch from `main`**, never from `staging`. The `new-task.sh` script enforces this.
+3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
+4. **Never touch `main` or `staging` directly.** Only Nick merges.
+5. **Delete branches after merge.** Commits survive in the merge target's history.
 
-### When to revisit
-
-Add feature branches when: (a) a second developer joins, (b) production is live with real users, or (c) a feature genuinely needs isolated testing. Until then, branches add overhead and risk losing work.
+**Merge flow:** `task/` branch → PR to `main` → squash merge → staging merge → production.
 
 ## Session Discipline
 
 Every Claude Code session follows a predictable lifecycle. These rules prevent the two most common failure modes: forgotten commits and scope drift.
 
+> **Cross-cutting changes & scope discipline:** See Global CLAUDE.md > Agent Scope Discipline. The rules there are mandatory and override any temptation to "fix it while I'm here."
+
 ### Session start (enforced by `scripts/session-guard.sh` PreToolUse hook)
 
 1. **The hook runs automatically** on your first Edit/Write of the session. If there are uncommitted changes from a prior session, it prints a warning with `git status --short` output.
 2. **Resolve before proceeding.** Commit, stash, or discard prior changes. Do not start new work on top of orphaned changes — that's how mixed commits happen.
-3. **Declare scope.** State what this session will accomplish in one sentence before writing code. If the scope changes mid-session, commit current work first.
+3. **Declare scope.** State what this session will accomplish in one sentence before writing code. Apply the one-sentence test: if you can't describe it without "and," split it into separate branches.
+4. **Check active worktrees.** Run `git worktree list` to see what other agents are working on. If another worktree touches the same files as your scope, coordinate — don't proceed blindly.
 
 ### During the session
 
 1. **One concern at a time.** Don't mix feature work, debugging, and docs in the same uncommitted state. If you need to context-switch (e.g., fix a bug discovered while building a feature), commit the feature WIP first.
 2. **Commit at each stable checkpoint.** After completing a logical unit (new component, migration, route wiring), commit immediately. Don't accumulate changes for a single big commit.
 3. **No scope drift without a commit.** If the task expands (e.g., "this also needs a new API route"), commit everything completed so far before starting the expansion.
+4. **Flag, don't fix, cross-cutting issues.** If you notice a widespread pattern problem (wrong button sizes, raw hex values, missing tokens) while working on a feature, log it in the PR description or memory. Do NOT fix it on this branch — it will conflict with every other branch.
 
 ### Session end
 
@@ -258,7 +265,7 @@ Every Claude Code session follows a predictable lifecycle. These rules prevent t
 
 | Guard | Type | What it does |
 | ----- | ---- | ------------ |
-| `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty or BDS submodule is out of sync |
+| `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty |
 | `.git/hooks/pre-push` | Git pre-push hook | Blocks push if `typecheck` or `build` fails |
 | `.git/hooks/pre-commit` | Git pre-commit hook | Runs `git-secrets` to prevent credential leaks |
 | `scripts/token-audit.sh` | Manual (run before PRs) | Catches 12 categories of token/component violations |
@@ -280,7 +287,6 @@ npm run db:seed-test-users  # Seed test user accounts
 ./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
 ./scripts/agent-preflight.sh # Pre-task environment validation
 ./scripts/token-audit.sh     # Full token + component compliance scan
-./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
 ./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
 ./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
 ./scripts/session-guard.sh   # PreToolUse hook — dirty tree warning (runs automatically)
@@ -316,4 +322,3 @@ The audit catches 12 violation categories including native `<button>` elements, 
 - Always build locally before pushing
 - Stage specific files, never `git add -A`
 - Never push without user confirmation
-- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules

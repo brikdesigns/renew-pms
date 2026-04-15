@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Modal, Button, Radio, Select, TextArea } from '@bds/components';
+import { Modal, Button, Radio, Select, TextArea } from '@brikdesigns/bds';
 import { color, font, gap, space } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 
