@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 # session-guard.sh — PreToolUse hook for Edit/Write operations
-# Warns Claude when the working tree has uncommitted changes from a prior session.
-# Runs once per session (creates a temp marker to avoid repeat warnings).
+#
+# Three checks, each fires at most once per parent shell:
+#   1. Warns Claude when the working tree has uncommitted changes from a
+#      prior session.
+#   2. Warns if the BDS submodule has an uncommitted pointer change.
+#   3. If the current edit targets a UI file (.tsx / .css / .stories.*)
+#      and the BDS Storybook isn't already running on port 6006, starts
+#      it in the background so the storybook-mcp server becomes
+#      reachable. Silent on success — agents shouldn't need to think
+#      about whether Storybook is up.
 #
 # Hook input: JSON on stdin with tool_name and tool_input fields.
 # Exit 0 = allow, non-zero = block (we always allow but warn via stdout).
@@ -18,44 +26,82 @@ case "$TOOL_NAME" in
 esac
 
 PROJECT_ROOT="/Users/nickstanerson/Documents/GitHub/product/renew-pms"
-MARKER="/tmp/.renew-pms-session-guard-$$"
 
-# Only run once per session (keyed to parent shell PID)
+# Once-per-session keying
 PARENT_PID=$(ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')
-MARKER="/tmp/.renew-pms-session-guard-${PARENT_PID:-unknown}"
+DIRTY_MARKER="/tmp/.renew-pms-session-guard-${PARENT_PID:-unknown}"
+STORYBOOK_MARKER="/tmp/.brik-storybook-autostart-${PARENT_PID:-unknown}"
 
-if [[ -f "$MARKER" ]]; then
-  exit 0
-fi
+# ── Storybook autostart (fires once per session on first UI edit) ──
+maybe_start_storybook() {
+  [[ -f "$STORYBOOK_MARKER" ]] && return 0
 
-touch "$MARKER"
+  # Extract target file path from tool_input
+  local file_path
+  file_path=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty')
+  [[ -z "$file_path" ]] && return 0
 
-cd "$PROJECT_ROOT"
+  # Only act on UI-relevant extensions
+  case "$file_path" in
+    *.tsx|*.jsx|*.css|*.scss|*.stories.ts|*.stories.tsx|*.stories.js|*.stories.jsx) ;;
+    *) return 0 ;;
+  esac
 
-# Check for uncommitted changes
-DIRTY_COUNT=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$DIRTY_COUNT" -gt 0 ]]; then
-  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-  echo ""
-  echo "⚠️  SESSION GUARD: $DIRTY_COUNT uncommitted change(s) on '$BRANCH'."
-  echo "   These may be from a prior session. Review before continuing:"
-  echo ""
-  git status --short 2>/dev/null | head -15
-  if [[ "$DIRTY_COUNT" -gt 15 ]]; then
-    echo "   ... and $((DIRTY_COUNT - 15)) more"
+  touch "$STORYBOOK_MARKER"
+
+  # Already running? nothing to do.
+  if curl -s -o /dev/null --max-time 1 http://localhost:6006/ 2>/dev/null; then
+    return 0
   fi
-  echo ""
-  echo "   → Commit, stash, or discard before starting new work."
-  echo ""
-fi
 
-# Check BDS submodule status
-if [[ -f "$PROJECT_ROOT/brik-bds/.git" ]]; then
-  SUBMODULE_STATUS=$(cd "$PROJECT_ROOT" && git submodule status brik-bds 2>/dev/null || echo "")
-  if [[ "$SUBMODULE_STATUS" == +* ]]; then
-    echo "⚠️  SESSION GUARD: BDS submodule has uncommitted pointer change."
-    echo "   Run ./scripts/bds-sync.sh or commit the submodule update."
+  # Locate BDS repo. Fall back silently if not on this machine.
+  local bds_dir="$HOME/Documents/GitHub/brik/brik-bds"
+  [[ -d "$bds_dir" && -f "$bds_dir/package.json" ]] || return 0
+
+  echo ""
+  echo "🔧  Storybook not running on :6006 — starting in background for the BDS MCP."
+  echo "    Logs: /tmp/brik-storybook.log"
+  echo ""
+
+  (
+    cd "$bds_dir"
+    nohup npm run storybook > /tmp/brik-storybook.log 2>&1 &
+    disown
+  ) >/dev/null 2>&1 || true
+}
+
+maybe_start_storybook
+
+# ── Dirty-tree + submodule warnings ───────────────────────────────────
+if [[ ! -f "$DIRTY_MARKER" ]]; then
+  touch "$DIRTY_MARKER"
+
+  cd "$PROJECT_ROOT"
+
+  DIRTY_COUNT=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+  if [[ "$DIRTY_COUNT" -gt 0 ]]; then
+    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
     echo ""
+    echo "⚠️  SESSION GUARD: $DIRTY_COUNT uncommitted change(s) on '$BRANCH'."
+    echo "   These may be from a prior session. Review before continuing:"
+    echo ""
+    git status --short 2>/dev/null | head -15
+    if [[ "$DIRTY_COUNT" -gt 15 ]]; then
+      echo "   ... and $((DIRTY_COUNT - 15)) more"
+    fi
+    echo ""
+    echo "   → Commit, stash, or discard before starting new work."
+    echo ""
+  fi
+
+  # BDS submodule pointer check
+  if [[ -f "$PROJECT_ROOT/brik-bds/.git" ]]; then
+    SUBMODULE_STATUS=$(cd "$PROJECT_ROOT" && git submodule status brik-bds 2>/dev/null || echo "")
+    if [[ "$SUBMODULE_STATUS" == +* ]]; then
+      echo "⚠️  SESSION GUARD: BDS submodule has uncommitted pointer change."
+      echo "   Run ./scripts/bds-sync.sh or commit the submodule update."
+      echo ""
+    fi
   fi
 fi
 
