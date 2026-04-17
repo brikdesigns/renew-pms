@@ -4,7 +4,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { TopUtilityBar } from '@/components/TopUtilityBar';
 import { AuthLayoutInner } from '@/components/AuthLayoutInner';
 import { ToastProvider } from '@/components/ToastProvider';
-import { DevPersonaSwitcher } from '@/components/DevPersonaSwitcher';
+import { DevTools } from '@/components/dev-tools';
 import { AppSheetProvider } from '@/components/AppSheetProvider';
 import type { CSSProperties } from 'react';
 import { color, font } from '@/lib/tokens';
@@ -60,7 +60,7 @@ export default async function AuthLayout({
             </AuthLayoutInner>
           </div>
         </div>
-        <DevPersonaSwitcher />
+        <DevTools />
       </AppSheetProvider>
     </ToastProvider>
   );
