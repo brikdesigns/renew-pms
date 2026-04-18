@@ -213,7 +213,9 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 
 ## Branch Workflow
 
-**All work happens on `task/{scope}-{name}` branches created from `main`.** Never branch from `staging`. Never reuse a branch for unrelated work.
+> **Pre-launch mode (as of 2026-04-18):** renew-pms is not live yet. `staging` is the **primary** branch — all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
+
+**All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
 
 ```bash
 # Start a new task (always use this — never manual git checkout -b)
@@ -228,12 +230,12 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 **Rules:**
 
 1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
-2. **Always branch from `main`**, never from `staging`. The `new-task.sh` script enforces this.
+2. **Branch from `staging` (pre-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=main ./scripts/new-task.sh ...` for the rare infra PR that needs to land on `main` directly.
 3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
 4. **Never touch `main` or `staging` directly.** Only Nick merges.
-5. **Delete branches after merge.** Commits survive in the merge target's history.
+5. **Delete branches after merge.** GitHub auto-deletes on merge by default; closed-without-merge branches (like superseded version bumps) get deleted manually.
 
-**Merge flow:** `task/` branch → PR to `main` → squash merge → staging merge → production.
+**Merge flow (pre-launch):** `task/` branch → PR to `staging` → squash merge → periodic `staging → main` promotion when the infra warrants it. **Post-launch flow** (future): `task/` → PR to `main` → squash merge → `main → staging` → production.
 
 ## Session Discipline
 

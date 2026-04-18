@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # new-task.sh — Create an isolated git worktree for a single task.
 #
-# Always branches from origin/main. Enforces task/{scope}-{name} naming.
-# Installs dependencies in the new worktree.
+# Branches from origin/$BASE_BRANCH (default: staging — we're pre-launch).
+# Enforces task/{scope}-{name} naming. Installs dependencies in the worktree.
+#
+# At go-live, change the BASE_BRANCH default below to "main" and update
+# the Branch Workflow section in CLAUDE.md to match.
 #
 # Usage:
 #   ./scripts/new-task.sh {scope}-{name}
-#   ./scripts/new-task.sh renew-task-templates
-#   ./scripts/new-task.sh renew-vendor-portal
+#   BASE_BRANCH=main ./scripts/new-task.sh infra-some-thing   # one-off override
 #
 # Creates:
 #   ../renew-pms-worktrees/{scope}-{name}/   on branch  task/{scope}-{name}
@@ -17,6 +19,9 @@
 #   - Requires a clean working tree (no uncommitted changes).
 
 set -euo pipefail
+
+# ── Base branch (pre-launch default: staging; flip to main at go-live) ──
+BASE_BRANCH="${BASE_BRANCH:-staging}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -69,13 +74,13 @@ if git show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
   exit 1
 fi
 
-# ── Fetch and branch from main ──
-echo -e "${YELLOW}▸ Fetching latest main...${NC}"
-git fetch origin main --quiet
+# ── Fetch and branch from base ──
+echo -e "${YELLOW}▸ Fetching latest ${BASE_BRANCH}...${NC}"
+git fetch origin "${BASE_BRANCH}" --quiet
 
 echo -e "${YELLOW}▸ Creating worktree at ${WORKTREE_BASE}/${TASK_NAME}...${NC}"
 mkdir -p "$WORKTREE_BASE"
-git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" origin/main
+git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
 
 cd "${WORKTREE_BASE}/${TASK_NAME}"
 
@@ -91,13 +96,13 @@ echo -e "${GREEN}═════════════════════
 echo ""
 echo "  Branch:    ${BRANCH_NAME}"
 echo "  Worktree:  ${WORKTREE_BASE}/${TASK_NAME}"
-echo "  Based on:  origin/main"
+echo "  Based on:  origin/${BASE_BRANCH}"
 echo ""
 echo "  Next steps:"
 echo "    cd ${WORKTREE_BASE}/${TASK_NAME}"
 echo "    claude -p \"Task: ... Follow CLAUDE.md rules.\""
 echo ""
 echo "  When done:"
-echo "    git diff main..${BRANCH_NAME}   # review changes"
-echo "    gh pr create --base main         # open PR"
+echo "    git diff ${BASE_BRANCH}..${BRANCH_NAME}   # review changes"
+echo "    gh pr create --base ${BASE_BRANCH}         # open PR"
 echo ""
