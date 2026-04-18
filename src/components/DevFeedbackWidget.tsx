@@ -7,12 +7,7 @@ import {
   type CSSProperties,
   type FormEvent,
 } from 'react';
-import {
-  Button,
-  IconButton,
-  SegmentedControl,
-  TextArea,
-} from '@brikdesigns/bds';
+import { Button, IconButton, TextArea } from '@brikdesigns/bds';
 import { border, color, font, gap, shadow, space } from '@/lib/tokens';
 
 const SHOW_WIDGET =
@@ -98,6 +93,12 @@ const headerTitleStyle: CSSProperties = {
   color: color.text.secondary,
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
+};
+
+const typeGridStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: gap.xs,
 };
 
 const urlStyle: CSSProperties = {
@@ -220,13 +221,25 @@ export function DevFeedbackWidget() {
               onSubmit={handleSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}
             >
-              <SegmentedControl
-                size="sm"
-                fullWidth
-                value={type}
-                onChange={setType}
-                items={FEEDBACK_TYPES.map(({ label, value }) => ({ label, value }))}
-              />
+              <div style={typeGridStyle} role="radiogroup" aria-label="Feedback type">
+                {FEEDBACK_TYPES.map(({ label, value }) => {
+                  const isActive = type === value;
+                  return (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={isActive ? 'selected' : 'secondary'}
+                      size="sm"
+                      fullWidth
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => setType(value)}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
 
               <TextArea
                 size="sm"
