@@ -62,16 +62,19 @@ if [ "$CURRENT_PATH" = "$PRIMARY_PATH" ]; then
   IN_PRIMARY=1
 fi
 
-# The specific violation we guard against: the primary worktree sitting on
-# a task/* branch. main, staging, and release/* are all legitimate primary
-# branches depending on the repo's release workflow.
-VIOLATION=0
+# Canonical rule (same across all four Brik repos): primary sits on a
+# base branch. The accepted set is {main, staging}. Any other value —
+# task/*, chore/*, feat/*, fix/*, a release branch, etc. — is flagged.
+# Repos without a staging branch (brik-bds, brikdesigns) still pass
+# because the primary will never land there; the accepted set is a
+# superset, not a claim that both branches exist.
+VIOLATION=1
 case "$PRIMARY_BRANCH" in
-  task/*) VIOLATION=1 ;;
+  main|staging) VIOLATION=0 ;;
 esac
 
-# The suggested recovery branch — prefer main, fall back to staging if the
-# repo uses a staging-based workflow (portal, renew-pms).
+# The recovery branch suggested in the warning — prefer main, fall back
+# to staging if the repo doesn't have main locally (edge case).
 SUGGEST_BRANCH="main"
 if ! git -C "$PRIMARY_PATH" show-ref --verify --quiet refs/heads/main \
    && git -C "$PRIMARY_PATH" show-ref --verify --quiet refs/heads/staging; then
