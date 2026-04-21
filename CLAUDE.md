@@ -6,6 +6,31 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
+## STOP — Worktree Rules (Non-Negotiable)
+
+**The primary worktree at `/Documents/GitHub/product/renew-pms` stays on `staging` (the pre-launch base branch; `main` after launch).** Task work always lives in `../renew-pms-worktrees/{slug}`. Never `git switch` the primary worktree to a `task/*` branch — it cross-contaminates work between concurrent agents. See the 2026-04-21 BDS Phase B incident for the class of bug this prevents.
+
+**How to start a task:**
+
+```bash
+# From the primary worktree (on staging), create an isolated worktree:
+./scripts/new-task.sh {scope}-{name}
+# e.g. ./scripts/new-task.sh renew-task-templates
+```
+
+The `new-task.sh` script refuses to run from anywhere but the primary on a base branch, so this rule is enforced automatically.
+
+**If you discover the primary is on a task branch:**
+
+1. `cd /Users/nickstanerson/Documents/GitHub/product/renew-pms`
+2. `git status` — inspect any uncommitted work
+3. If the work belongs to a real task, move it: `git worktree add ../renew-pms-worktrees/<slug> -b <existing-branch>` and stash/apply
+4. `git switch staging`
+
+A SessionStart + PreToolUse hook (`.claude/hooks/worktree-check.sh`) warns on every session and edit when this rule is violated. Set `BDS_WORKTREE_GUARD=strict` in your environment to make it blocking.
+
+---
+
 @../../brik/brik-bds/CLAUDE.md
 
 ---
