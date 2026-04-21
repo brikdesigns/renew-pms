@@ -35,6 +35,32 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 - Staff-only back office tool — no patient-facing features in V1
 - Brik provisions practices; practice admins invite staff (no self-serve signup)
 
+## Compliance Profile
+
+Renew PMS is a **dental practice management system and staff training platform** — a healthcare-regulated product by default. Every feature that handles patient data, practice workflows, or public-facing interfaces must be built with compliance in mind from the start.
+
+### Applicable regimes (all YES for this repo)
+
+| Regime | Applies | Reason |
+|--------|---------|--------|
+| **HIPAA** | Yes | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
+| **ACA §1557** | Yes | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
+| **Rehab Act §504** | Yes | Covered when the practice or platform receives federal funding |
+| **ADA Title III** | Yes | Public-facing web app used by patients (appointment booking, patient portal surfaces) |
+
+### Canonical reference
+
+Specific WCAG targets, implementation requirements, and standards details live in the BDS healthcare ADA doc:
+[`../brik/brik-bds/content-system/compliance/healthcare-ada.md`](../brik/brik-bds/content-system/compliance/healthcare-ada.md)
+
+This is the single source of truth maintained alongside BDS. When requirements are unclear, read that file — do not derive requirements from memory.
+
+### How to apply
+
+Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI handling, accessibility (WCAG 2.1 AA minimum), and language access as **default-on** for every feature — not optional add-ons. New features do not ship without verifying they don't introduce PHI exposure, accessibility regressions, or language access gaps.
+
+---
+
 ## Architecture
 
 ### Role model (two layers — keep distinct)
