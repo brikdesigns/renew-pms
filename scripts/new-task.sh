@@ -32,6 +32,40 @@ NC='\033[0m'
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 WORKTREE_BASE="$(dirname "$PROJECT_ROOT")/renew-pms-worktrees"
 
+# ── Must run from the primary worktree on a base branch ──
+# Running new-task.sh from inside another task worktree creates nested state
+# that breaks the one-worktree-per-task contract. The primary worktree is
+# the one place the base branch is meant to live — if it's on a task/*
+# branch, something else already broke. See scripts/worktree-guard.sh for
+# the full rationale and the 2026-04-21 BDS Phase B incident.
+PRIMARY_PATH="$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')"
+if [ "$PROJECT_ROOT" != "$PRIMARY_PATH" ]; then
+  echo -e "${RED}Error: new-task.sh must be run from the primary worktree.${NC}"
+  echo ""
+  echo "  Here:    $PROJECT_ROOT"
+  echo "  Primary: $PRIMARY_PATH"
+  echo ""
+  echo "  cd into the primary worktree first:"
+  echo "    cd $PRIMARY_PATH && ./scripts/new-task.sh $*"
+  exit 1
+fi
+
+PRIMARY_BRANCH="$(git -C "$PRIMARY_PATH" branch --show-current || echo '(detached)')"
+case "$PRIMARY_BRANCH" in
+  task/*)
+    echo -e "${RED}Error: primary worktree is on '${PRIMARY_BRANCH}', a task branch.${NC}"
+    echo ""
+    echo "  The primary worktree at $PRIMARY_PATH must stay on a base branch (${BASE_BRANCH} or main)."
+    echo "  Task work lives in ../renew-pms-worktrees/{slug} — never in the primary."
+    echo ""
+    echo "  To fix:"
+    echo "    cd $PRIMARY_PATH"
+    echo "    git status                  # inspect any uncommitted work"
+    echo "    git switch ${BASE_BRANCH}   # return to the base branch"
+    exit 1
+    ;;
+esac
+
 # ── Validate input ──
 if [ $# -lt 1 ]; then
   echo -e "${RED}Usage: $0 {scope}-{name}${NC}"
