@@ -53,6 +53,14 @@ A SessionStart + PreToolUse hook (`.claude/hooks/worktree-check.sh`) warns on ev
 | Docs | Fumadocs (fumadocs-ui, fumadocs-mdx, fumadocs-core) — `/docs` and `/guide` routes |
 | Hosting | Netlify |
 
+## LLM stack (when any future feature calls Claude)
+
+Renew-pms has no Claude calls today. When it adds any — treatment-plan drafting, training-module generation, vendor-communication drafts, scheduling-rationale summaries, anything — route through `@brikdesigns/claude-client` (or its Python twin `brik_claude_client`), not raw `@anthropic-ai/sdk`. Every call is Helicone-traced + `workflow_type`-tagged that way, and outputs land in the same dashboard as every other Brik Claude call.
+
+HIPAA implication: any Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md) — currently deferred, to be activated when a concrete ingestion surface defines what gets redacted. Do not ship PHI-in-prompt flows before that lands.
+
+Cross-repo rules: `~/Documents/GitHub/CLAUDE.md`. Canonical reasoning in [ADR-001](../../brik/brik-llm/software/docs/adr/ADR-001-llm-enrichment-architecture.md); module boundaries in [ADR-002](../../brik/brik-llm/software/docs/adr/ADR-002-module-boundaries.md) — note that `@brikdesigns/claude-client` is a platform dependency, not a module, so it's consumed, not extended.
+
 ## Business Context
 
 - Single dental practice client initially; validated before going to market
