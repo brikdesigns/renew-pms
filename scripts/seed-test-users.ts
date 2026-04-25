@@ -77,6 +77,19 @@ const PERSONA_TEMPLATES: PersonaTemplate[] = [
   { key: 'front_desk',       alias: 'frontdesk',  first_name: 'Rachel',  last_name: 'Foster',   system_role: 'staff',          employee_type: 'proficient', shift: 'full_day', practice_role_name: 'Business Administrator' },
 ];
 
+// ─── Practice 2 (RLS isolation testing) ─────────────────────────────────────
+// Minimal second practice so launch-checklist Tier 0.6 can prove RLS isolates
+// data across tenants. Distinct emails, distinct slug — never overlaps P1.
+
+const PRACTICE_2_NAME = 'Bayside Family Dental (Test)';
+const PRACTICE_2_SLUG = 'bayside-test';
+const PRACTICE_2_OFFICE = 'Main Office';
+
+const PRACTICE_2_TEMPLATES: PersonaTemplate[] = [
+  { key: 'p2_admin', alias: 'p2admin', first_name: 'Maria',  last_name: 'Hernandez', system_role: 'admin', employee_type: 'proficient', shift: 'full_day', practice_role_name: '(O) Owner' },
+  { key: 'p2_staff', alias: 'p2staff', first_name: 'Daniel', last_name: 'Park',      system_role: 'staff', employee_type: 'proficient', shift: 'full_day', practice_role_name: '(A) Dental Assistant' },
+];
+
 // ─── Build full persona list from testers × templates ───────────────────────
 
 interface Persona {
@@ -109,6 +122,21 @@ const PERSONAS: Persona[] = TESTERS.flatMap((tester, testerIdx) =>
     shift: tmpl.shift,
     practice_role_name: tmpl.practice_role_name,
     phone: `(555) ${String(testerIdx).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
+  }))
+);
+
+const PRACTICE_2_PERSONAS: Persona[] = TESTERS.flatMap((tester, testerIdx) =>
+  PRACTICE_2_TEMPLATES.map((tmpl, tmplIdx) => ({
+    key: `${tester.name.toLowerCase()}_${tmpl.key}`,
+    tester: tester.name,
+    email: buildAliasEmail(tester.baseEmail, tmpl.alias),
+    first_name: tmpl.first_name,
+    last_name: tmpl.last_name,
+    system_role: tmpl.system_role,
+    employee_type: tmpl.employee_type,
+    shift: tmpl.shift,
+    practice_role_name: tmpl.practice_role_name,
+    phone: `(555) ${String(testerIdx + 100).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
   }))
 );
 
@@ -263,6 +291,64 @@ async function upsertPracticeMember(
   console.log(`  ✓ Member: ${persona.practice_role_name} / ${persona.employee_type} / shift=${persona.shift ?? 'none'}`);
 }
 
+async function ensurePractice2(): Promise<{ practiceId: string; officeId: string }> {
+  // Find or create Practice 2 by slug — must stay disjoint from Practice 1
+  const { data: existing } = await supabase
+    .from('practices')
+    .select('id, name')
+    .eq('slug', PRACTICE_2_SLUG)
+    .maybeSingle();
+
+  let practiceId: string;
+  if (existing) {
+    practiceId = existing.id;
+    console.log(`✓ Reusing Practice 2: ${existing.name} (${practiceId})`);
+  } else {
+    const { data, error } = await supabase
+      .from('practices')
+      .insert({ name: PRACTICE_2_NAME, slug: PRACTICE_2_SLUG, status: 'active' })
+      .select('id')
+      .single();
+    if (error) throw new Error(`Failed to create Practice 2: ${error.message}`);
+    practiceId = data.id;
+    console.log(`+ Created Practice 2: ${PRACTICE_2_NAME} (${practiceId})`);
+  }
+
+  const { data: existingOffice } = await supabase
+    .from('offices')
+    .select('id')
+    .eq('practice_id', practiceId)
+    .limit(1)
+    .maybeSingle();
+
+  let officeId: string;
+  if (existingOffice) {
+    officeId = existingOffice.id;
+    console.log(`✓ P2 office exists (${officeId})`);
+  } else {
+    const { data: office, error } = await supabase
+      .from('offices')
+      .insert({ practice_id: practiceId, name: PRACTICE_2_OFFICE, is_primary: true })
+      .select('id')
+      .single();
+    if (error) throw new Error(`Failed to create P2 office: ${error.message}`);
+    officeId = office.id;
+    console.log(`+ Created P2 office: ${PRACTICE_2_OFFICE} (${officeId})`);
+
+    const { error: seedError } = await supabase.rpc('seed_practice_defaults', {
+      p_practice_id: practiceId,
+      p_office_id: officeId,
+    });
+    if (seedError) {
+      console.warn(`  ⚠ seed_practice_defaults failed for P2: ${seedError.message}`);
+    } else {
+      console.log(`  ✓ Seeded P2 practice defaults`);
+    }
+  }
+
+  return { practiceId, officeId };
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -273,7 +359,7 @@ async function main() {
   // 1. Ensure practice + office exist
   const { practiceId } = await ensurePractice();
 
-  // 2. Create each persona
+  // 2. Create each persona (Practice 1)
   for (const persona of PERSONAS) {
     console.log(`\n── ${persona.key} ──`);
     const userId = await upsertAuthUser(persona);
@@ -281,12 +367,27 @@ async function main() {
     await upsertPracticeMember(userId, practiceId, persona);
   }
 
+  // 3. Practice 2 — RLS isolation testing (launch-checklist Tier 0.6)
+  console.log('\n══ Practice 2 (RLS isolation) ══');
+  const { practiceId: practice2Id } = await ensurePractice2();
+  for (const persona of PRACTICE_2_PERSONAS) {
+    console.log(`\n── ${persona.key} ──`);
+    const userId = await upsertAuthUser(persona);
+    await upsertProfile(userId, persona);
+    await upsertPracticeMember(userId, practice2Id, persona);
+  }
+
   console.log('\n✅ All test personas seeded.\n');
   console.log('Login credentials:');
   console.log('─'.repeat(60));
   for (const tester of TESTERS) {
-    console.log(`\n  ${tester.name}:`);
+    console.log(`\n  ${tester.name} — Practice 1 (Renew Dental):`);
     for (const p of PERSONAS.filter((p) => p.tester === tester.name)) {
+      const shortKey = p.key.replace(`${tester.name.toLowerCase()}_`, '');
+      console.log(`    ${shortKey.padEnd(20)} ${p.email}`);
+    }
+    console.log(`\n  ${tester.name} — Practice 2 (Bayside, RLS test):`);
+    for (const p of PRACTICE_2_PERSONAS.filter((p) => p.tester === tester.name)) {
       const shortKey = p.key.replace(`${tester.name.toLowerCase()}_`, '');
       console.log(`    ${shortKey.padEnd(20)} ${p.email}`);
     }
