@@ -40,8 +40,8 @@ export default async function AuthLayout({
     redirect('/login');
   }
 
-  const { first_name, email, full_name } = authUser.profile;
-  const displayName = first_name ?? email?.split('@')[0] ?? 'there';
+  const { first_name, full_name } = authUser.profile;
+  const displayName = first_name ?? authUser.profile.email?.split('@')[0] ?? 'there';
   const userDepartment = authUser.membership?.department ?? null;
   const practiceName = authUser.membership?.organization ?? undefined;
   const role = authUser.profile.system_role;
@@ -54,7 +54,7 @@ export default async function AuthLayout({
           <AppSidebar userRole={authUser.profile.system_role} />
           <div style={mainStyle}>
             <AuthLayoutInner
-              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} practiceName={practiceName} />}
+              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} practiceName={practiceName} />}
             >
               {children}
             </AuthLayoutInner>
