@@ -4,7 +4,7 @@ import { useState, useMemo, type CSSProperties } from 'react';
 import { Chip } from '@brikdesigns/bds';
 import { Menu } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
-import { color, gap } from '@/lib/tokens';
+import { gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [

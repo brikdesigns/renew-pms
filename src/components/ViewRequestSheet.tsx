@@ -16,7 +16,7 @@ import {
 } from '@/app/(auth)/settings/_sheetStyles';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, gap, space, font, border } from '@/lib/tokens';
+import { color, gap } from '@/lib/tokens';
 import type { RequestRow } from '@/hooks/useRequests';
 import { useToast } from '@/components/ToastProvider';
 

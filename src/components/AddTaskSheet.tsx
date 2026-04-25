@@ -6,7 +6,6 @@ import { useToast } from '@/components/ToastProvider';
 import { useMembers } from '@/hooks/useMembers';
 import { useDepartments } from '@/hooks/useDepartments';
 import { color, font, gap, space, border } from '@/lib/tokens';
-import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
 import { FrequencyTag } from '@/components/FrequencyTag';
 import {
   sheetBodyStyle,

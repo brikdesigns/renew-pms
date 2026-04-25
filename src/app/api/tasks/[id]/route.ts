@@ -46,7 +46,6 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const first = <T,>(v: T | T[] | null): T | null => Array.isArray(v) ? (v[0] ?? null) : v;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,7 +64,6 @@ export async function GET(
   const memberRole = member ? first((member as any).practice_role_types) as { name: string } | null : null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assignedRole = first(data.assigned_role as any) as { name: string } | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const checklistItems = Array.isArray(data.checklist_items) ? data.checklist_items : [];
 
   return NextResponse.json({

@@ -11,7 +11,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { gap, color, font, space, border } from '@/lib/tokens';
+import { gap, color } from '@/lib/tokens';
 import type { Vendor } from '@/app/(auth)/settings/contacts/ContactsTable';
 
 // ─── Types ──────────────────────────────────────────────────────────────────

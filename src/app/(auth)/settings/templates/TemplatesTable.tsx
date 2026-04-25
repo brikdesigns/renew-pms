@@ -83,14 +83,6 @@ const subHeaderLeftStyle: CSSProperties = {
   gap: space.sm,
 };
 
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold,
-  color: color.text.primary,
-  margin: 0,
-};
-
 const subHeaderCountStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.label.sm,
