@@ -9,7 +9,6 @@ import { font, color, gap, space } from '@/lib/tokens';
 import { IconButton, Menu, Tooltip } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { FeedbackButton } from '@/components/FeedbackButton';
 import { NotificationBell } from '@/components/NotificationBell';
 import { createClient } from '@/lib/supabase/client';
 
@@ -99,11 +98,10 @@ interface TopUtilityBarProps {
   userFullName?: string;
   userDepartment?: string | null;
   userAvatarUrl?: string | null;
-  userEmail?: string;
   practiceName?: string;
 }
 
-export function TopUtilityBar({ userName, userFullName, userDepartment, userAvatarUrl, userEmail, practiceName }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment, userAvatarUrl, practiceName }: TopUtilityBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const pageLabel = getPageLabel(pathname);
@@ -130,9 +128,6 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userAvat
       <div style={rightStyle}>
         <Tooltip content="Add Request" placement="bottom" delay={600}>
           <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.plus} />} label="New Request" onClick={() => router.push('/requests?submit=true')} />
-        </Tooltip>
-        <Tooltip content="Share Feedback" placement="bottom" delay={600}>
-          <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
         </Tooltip>
         <Tooltip content="Notifications" placement="bottom" delay={600}>
           <NotificationBell />
