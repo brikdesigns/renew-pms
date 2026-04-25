@@ -103,7 +103,7 @@ function ChipFilter({
       <Chip
         label={selected}
         variant={isFiltered ? 'primary' : 'secondary'}
-        appearance={isFiltered ? 'solid' : 'light'}
+        appearance={isFiltered ? 'solid' : 'outline'}
         showDropdown
         onChipClick={() => setOpen((prev) => !prev)}
       />
@@ -169,13 +169,13 @@ export function TaskFilterBar({
       <Chip
         label="Show Overdue"
         variant={showOverdue ? 'primary' : 'secondary'}
-        appearance={showOverdue ? 'solid' : 'light'}
+        appearance={showOverdue ? 'solid' : 'outline'}
         onChipClick={() => onShowOverdueChange(!showOverdue)}
       />
       <Chip
         label="Show Resolved"
         variant={showResolved ? 'primary' : 'secondary'}
-        appearance={showResolved ? 'solid' : 'light'}
+        appearance={showResolved ? 'solid' : 'outline'}
         onChipClick={() => onShowResolvedChange(!showResolved)}
       />
     </div>

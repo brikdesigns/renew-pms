@@ -321,7 +321,7 @@ export function VendorResponseClient({
                         </div>
                         {msg.vendor_status && (
                           <div style={{ marginTop: space.xs }}>
-                            <Badge status="info" size="sm" variant="dark">
+                            <Badge status="info" size="sm" appearance="solid">
                               {VENDOR_STATUS_LABELS[msg.vendor_status] ?? msg.vendor_status}
                             </Badge>
                           </div>

@@ -461,7 +461,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
             <FrequencyTag value={task.freq} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
+                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
               </Tooltip>
             )}
           </>
@@ -472,7 +472,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
+                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
               </Tooltip>
             )}
           </>
@@ -549,7 +549,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
             <FrequencyTag value={task.freq} />
             {isOverdue && (
               <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
+                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
               </Tooltip>
             )}
           </>
