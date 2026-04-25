@@ -152,7 +152,7 @@ export function VendorMessagesTab({ requestId, vendorName }: VendorMessagesTabPr
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
           <h3 style={sheetSectionTitle}>{vendorName ?? 'Vendor'}</h3>
           {tokenInfo && (
-            <Badge status={tokenInfo.status} size="sm" variant="dark">{tokenInfo.label}</Badge>
+            <Badge status={tokenInfo.status} size="sm" appearance="solid">{tokenInfo.label}</Badge>
           )}
         </div>
         {tokenStatus === 'active' && tokenValue && (
@@ -199,7 +199,7 @@ export function VendorMessagesTab({ requestId, vendorName }: VendorMessagesTabPr
                 </div>
                 {msg.vendor_status && (
                   <div style={{ marginTop: space.xs }}>
-                    <Badge status="info" size="sm" variant="dark">
+                    <Badge status="info" size="sm" appearance="solid">
                       {VENDOR_STATUS_LABELS[msg.vendor_status] ?? msg.vendor_status}
                     </Badge>
                   </div>

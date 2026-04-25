@@ -95,7 +95,7 @@ function ChipFilter({
       <Chip
         label={selected}
         variant={isFiltered ? 'primary' : 'secondary'}
-        appearance={isFiltered ? 'solid' : 'light'}
+        appearance={isFiltered ? 'solid' : 'outline'}
         showDropdown
         onChipClick={() => setOpen((prev) => !prev)}
       />

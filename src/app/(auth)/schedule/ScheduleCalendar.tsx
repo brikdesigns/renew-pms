@@ -88,7 +88,7 @@ function ChipFilter({ options, selected, onChange }: {
       <Chip
         label={selected}
         variant={isFiltered ? 'primary' : 'secondary'}
-        appearance={isFiltered ? 'solid' : 'light'}
+        appearance={isFiltered ? 'solid' : 'outline'}
         showDropdown
         onChipClick={() => setOpen(prev => !prev)}
       />
@@ -244,7 +244,7 @@ export function ScheduleCalendar() {
           <span style={dateRangeStyle}>{dateTitle}</span>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous" onClick={() => navigate('prev')} />
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next" onClick={() => navigate('next')} />
-          <Chip label="Today" variant="secondary" appearance="light" onChipClick={() => navigate('today')} />
+          <Chip label="Today" variant="secondary" appearance="outline" onChipClick={() => navigate('today')} />
         </div>
 
         <div style={toolbarRightStyle}>

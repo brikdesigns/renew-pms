@@ -1,5 +1,5 @@
 import { Badge } from '@brikdesigns/bds';
-import type { BadgeSize, BadgeVariant } from '@brikdesigns/bds';
+import type { BadgeSize, BadgeAppearance } from '@brikdesigns/bds';
 
 // ─── Status vocabularies ────────────────────────────────────────────────────
 // Every entity status in the product maps to a BDS Badge variant here.
@@ -69,8 +69,8 @@ interface StatusBadgeProps {
   label?: string;
   /** Badge size */
   size?: BadgeSize;
-  /** Badge visual variant */
-  variant?: BadgeVariant;
+  /** Badge fill appearance */
+  appearance?: BadgeAppearance;
 }
 
 /**
@@ -84,12 +84,12 @@ interface StatusBadgeProps {
  * <StatusBadge status={vendor.is_active} />
  * <StatusBadge status="in_review" size="sm" />
  */
-export function StatusBadge({ status, label, size = 'sm', variant = 'dark' }: StatusBadgeProps) {
+export function StatusBadge({ status, label, size = 'sm', appearance = 'solid' }: StatusBadgeProps) {
   // Boolean shorthand (is_active fields)
   if (typeof status === 'boolean') {
     const resolved = status ? ALL_STATUSES.active : ALL_STATUSES.inactive;
     return (
-      <Badge status={resolved.variant} size={size} variant={variant}>
+      <Badge status={resolved.variant} size={size} appearance={appearance}>
         {label ?? resolved.label}
       </Badge>
     );
@@ -101,7 +101,7 @@ export function StatusBadge({ status, label, size = 'sm', variant = 'dark' }: St
   const key = status.toLowerCase().replace(/[\s/]+/g, '_');
   const resolved = ALL_STATUSES[key] ?? ALL_STATUSES[status] ?? FALLBACK;
   return (
-    <Badge status={resolved.variant} size={size} variant={variant}>
+    <Badge status={resolved.variant} size={size} appearance={appearance}>
       {label ?? resolved.label}
     </Badge>
   );

@@ -1,5 +1,5 @@
 import { Badge, Tooltip } from '@brikdesigns/bds';
-import type { BadgeSize, BadgeVariant } from '@brikdesigns/bds';
+import type { BadgeSize, BadgeAppearance } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 
@@ -32,8 +32,8 @@ interface PriorityBadgeProps {
   priority: string | null | undefined;
   /** Badge size */
   size?: BadgeSize;
-  /** Badge visual variant */
-  variant?: BadgeVariant;
+  /** Badge fill appearance */
+  appearance?: BadgeAppearance;
   /** Show icon (default true) */
   showIcon?: boolean;
   /** Icon-only mode — square badge with tooltip. Defaults to true when size="xs". */
@@ -50,7 +50,7 @@ interface PriorityBadgeProps {
  * <PriorityBadge priority="critical" />
  * <PriorityBadge priority={task.priority} iconOnly />
  */
-export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIcon = true, iconOnly }: PriorityBadgeProps) {
+export function PriorityBadge({ priority, size = 'sm', appearance = 'solid', showIcon = true, iconOnly }: PriorityBadgeProps) {
   if (!priority) return null;
 
   const resolved = PRIORITIES[priority] ?? FALLBACK;
@@ -59,7 +59,7 @@ export function PriorityBadge({ priority, size = 'sm', variant = 'dark', showIco
     <Badge
       status={resolved.status}
       size={isIconOnly ? 'xs' : size}
-      variant={variant}
+      appearance={appearance}
       icon={showIcon ? <Icon icon={resolved.icon} /> : undefined}
       style={isIconOnly ? { width: CARD_INDICATOR_SIZE, height: CARD_INDICATOR_SIZE } : undefined}
     >
