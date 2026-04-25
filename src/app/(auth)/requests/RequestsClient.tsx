@@ -295,7 +295,6 @@ function AssigneeAvatar({
         </div>
       </Tooltip>
       {open && pos && createPortal(
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}

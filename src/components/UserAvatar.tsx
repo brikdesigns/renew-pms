@@ -10,7 +10,7 @@ interface UserAvatarProps {
   /** Full name — used to derive initials */
   name: string;
   /** Department color key — stored on `departments.color` DB column (e.g. 'blue', 'green').
-   *  Unknown keys fall back to blue. @deprecated pass `departmentColorKey` instead of a name string. */
+   *  Unknown keys fall back to blue. */
   departmentColorKey?: string | null;
   /** Optional image URL (takes priority over initials) */
   avatarUrl?: string | null;

@@ -15,7 +15,7 @@ import {
   settingsPlaceholderStyle,
 } from '../_shared';
 import { StatusBadge } from '@/components/StatusBadge';
-import { color, font, space, gap } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
