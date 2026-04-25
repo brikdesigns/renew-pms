@@ -239,21 +239,32 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 `src/styles/theme-renew.css` overrides BDS semantic tokens with Renew Dental's palette. Values come from Figma file `kwNyWG6H3ifjZmytZnNJXd`. **Never edit this file without pulling the latest Figma export.** Never guess token values.
 
-### Storybook MCP (use when building UI)
+### Storybook MCP — query before writing UI
 
-When BDS Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can query BDS components directly via MCP at `http://localhost:6006/mcp`. Start BDS Storybook before building portal UI — do not read source files to guess props when the MCP is available.
+The BDS component library is exposed as a Storybook MCP server. **Always query it for component props, examples, and guidance before writing any JSX in this app.** Do not read source files in `brik/brik-bds/` to guess.
 
+**Endpoint (stable, hosted by Chromatic):**
+`https://main--69b8918cac3056b39424d5d3.chromatic.com/mcp`
+
+This URL tracks the latest build on BDS `main` and never goes stale. When BDS Storybook is running locally (`cd ~/Documents/GitHub/brik/brik-bds && npm run storybook`), `http://localhost:6006/mcp` is also available and reflects in-flight changes.
+
+⚠ Never use a per-build Chromatic URL (`<appid>-<random>.chromatic.com`) — those freeze on the build that produced them.
+
+**Tools:**
 - `list-all-documentation` — discover all components
-- `get-documentation` — full props + JSX examples
+- `get-documentation` — full props + JSX examples for a component
+- `get-documentation-for-story` — a specific story variant
 - `preview-stories` — live preview URLs
 
-Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/)
+**Filter by surface.** Every BDS story carries one of `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app, so when listing components filter to `surface-product` + `surface-shared`. **Do not use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — those belong on marketing surfaces and will misfit a clinical PMS UI.
+
+**MCP unreachable?** Read the cached fallback at [`../brik/brik-bds/docs/STORYBOOK-WRITING-GUIDE.md`](../brik/brik-bds/docs/STORYBOOK-WRITING-GUIDE.md).
 
 ## Component Rules
 
 ### BDS first
 
-- Check BDS before building custom. Query via Storybook MCP (`http://localhost:6006/mcp`) when running, or browse [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/). Read component props and examples before writing JSX.
+- Check BDS before building custom. Query via Storybook MCP (see "Storybook MCP" section above) — read component props and examples before writing JSX.
 - **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@brikdesigns/bds`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
 - **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
 - Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
