@@ -73,11 +73,13 @@ section "Native <button> (use Button or IconButton from @brikdesigns/bds)"
 #   - role="tab"  → PageHeader tabs (legitimate tablist semantics — convert to BDS TabBar when available)
 #   - DevPersonaSwitcher → dev-only tool, not production UI
 #   - TemplatesTable dropdown menu items → menu affordance (not a primary action button)
+#   - bds-sheet__nav-link → BDS-sanctioned pattern; styling ships in @brikdesigns/bds/dist/styles.css
 BUTTON_HITS=$(grep -rn --include="*.tsx" \
   -E "<button[ >]" "$SRC" \
   | grep -v 'role="tab"' \
   | grep -v "DevPersonaSwitcher" \
   | grep -v "TemplatesTable.*menu\|addMenuOpen\|handleAddClick" \
+  | grep -v 'bds-sheet__nav-link' \
   | grep -v "// " \
   || true)
 
