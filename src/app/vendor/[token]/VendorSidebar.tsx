@@ -109,7 +109,7 @@ const profileCircleStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '50%',
+  borderRadius: border.radius.circle,
   backgroundColor: color.background.brandPrimary,
   color: color.text.onColorDark,
   fontSize: font.size.label.sm,
