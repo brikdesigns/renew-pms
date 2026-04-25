@@ -1,21 +1,36 @@
-/* token-audit-ignore — error boundary uses hardcoded values; cannot depend on token system */
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
 import { useEffect, type CSSProperties } from 'react';
 import { Button } from '@brikdesigns/bds';
+import { color, font, gap, space } from '@/lib/tokens';
 
 const containerStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: '100%',
-  padding: '48px 24px',
+  padding: `${space.huge} ${space.xl}`,
 };
 
 const cardStyle: CSSProperties = {
   textAlign: 'center',
   maxWidth: '400px',
+};
+
+const headingStyle: CSSProperties = {
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.small,
+  fontWeight: font.weight.bold,
+  color: color.text.primary,
+  marginBottom: gap.md,
+};
+
+const bodyStyle: CSSProperties = {
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
+  marginBottom: gap.xl,
 };
 
 export default function ErrorPage({
@@ -32,8 +47,8 @@ export default function ErrorPage({
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Something went wrong</h1>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
+        <h1 style={headingStyle}>Something went wrong</h1>
+        <p style={bodyStyle}>
           An unexpected error occurred. Our team has been notified.
         </p>
         <Button variant="secondary" size="sm" onClick={reset}>Try again</Button>
