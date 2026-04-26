@@ -34,16 +34,43 @@ Workflows are ordered by **risk-on-launch-day**. Each row lists trigger → expe
 
 ---
 
+## Decisions made (durable — applies to all future spec work)
+
+### Resend (transactional email)
+
+**App-level emails** (`src/lib/email.ts` — request status, vendor messages) use the shared Brik Portal Resend API key with the sender overridden to `onboarding@resend.dev` (Resend's sandbox sender). This avoids needing renew-pms-specific domain verification while staying pre-launch. Override lives in `.env.local`:
+
+```
+RESEND_FROM_ADDRESS=Renew PMS Test <onboarding@resend.dev>
+```
+
+**Auth emails** (password reset for 0.2, invite acceptance for 0.5) flow through Supabase Auth's email config, **not** the Resend API key. Until that config routes through Resend (or Supabase's built-in SMTP is verified), 0.2 and 0.5 stay blocked. **Pre-beta TODO**: register a renew-pms sender domain in Resend and switch off the sandbox sender.
+
+### Tier 1.1 (recurring task generation) — split test strategy
+
+The generator (`generate_daily_pool_tasks`, migration 00031) reads Postgres `current_date` directly. The frontend task-list endpoint (`/api/tasks/route.ts`) uses `new Date()` independently. JS-side time travel doesn't reach the DB; DB-side time travel doesn't reach the JS query.
+
+- **Recurrence rule correctness** → Vitest DB-level integration test that overrides `current_date` via a test-schema function + `search_path`, calls the RPC, and asserts which tasks were created.
+- **UI surface** ("right user's board, today") → manual smoke for V1.
+- **Future option** (not blocking launch): add an optional `?as_of=YYYY-MM-DD` parameter to both `/api/tasks/generate-pool` and `/api/tasks`, gated by `NODE_ENV !== 'production'`, and a corresponding `p_as_of date default current_date` to the RPC. Then 1.1 can be fully Playwright.
+
+### Test data assumptions (seeded by `scripts/seed-test-users.ts`)
+
+- **Practice 1** — *Renew Dental* (slug `renew-dental`) — full 7-persona role matrix per tester
+- **Practice 2** — *Bayside Family Dental (Test)* (slug `bayside-test`) — 2 personas (admin + staff) per tester, distinct emails (`*+p2admin@`, `*+p2staff@`). Existence proves Tier 0.6.
+
+---
+
 ## Tier 0 — Blocking (cannot launch without all green)
 
 | # | Workflow | Steps to verify | Auto/Manual |
 |---|---|---|---|
-| 0.1 | **Login** | Visit `/login` → enter valid creds → land on dashboard. Invalid creds → error inline, no redirect loop. | Playwright |
-| 0.2 | **Password reset** | Request reset → email arrives (Resend) → token link → set new pw → login with new pw. | Playwright + manual inbox check |
-| 0.3 | **Logout** | From any page → logout → session cleared, protected routes redirect. | Playwright |
+| 0.1 | **Login** | Visit `/login` → enter valid creds → land on dashboard. Invalid creds → error inline, no redirect loop. | Playwright — [`tests/e2e/auth/login.spec.ts`](../../tests/e2e/auth/login.spec.ts) |
+| 0.2 | **Password reset** | Request reset → email arrives (Resend) → token link → set new pw → login with new pw. ⚠ **Blocked** on Supabase Auth email config (Resend SMTP routing). | Playwright + manual inbox check |
+| 0.3 | **Logout** | From any page → logout → session cleared, protected routes redirect. | Playwright — [`tests/e2e/auth/logout.spec.ts`](../../tests/e2e/auth/logout.spec.ts) |
 | 0.4 | **Edit account info** | Profile → change name/email → save → reflected in header + DB. | Playwright |
-| 0.5 | **Admin invites team member** | Settings → Add team member → email arrives → invitee accepts → lands in correct practice with correct role. **No other workflow works without this.** | Playwright + manual inbox |
-| 0.6 | **Multi-tenancy isolation (RLS)** | Seed two practices, log in as User A from Practice 1 → confirm zero rows from Practice 2 visible in tasks/requests/training/staff/settings. **HIPAA-critical.** | Playwright (parameterized) + SQL spot-check against `practice_members` |
+| 0.5 | **Admin invites team member** | Settings → Add team member → email arrives → invitee accepts → lands in correct practice with correct role. **No other workflow works without this.** ⚠ **Blocked** on Supabase Auth email config. | Playwright + manual inbox |
+| 0.6 | **Multi-tenancy isolation (RLS)** | Seed two practices, log in as User A from Practice 1 → confirm zero rows from Practice 2 visible in tasks/requests/training/staff/settings. **HIPAA-critical.** | Playwright — [`tests/e2e/rls/isolation.spec.ts`](../../tests/e2e/rls/isolation.spec.ts) |
 | 0.7 | **Role-gated permissions** | Staff cannot access Settings, cannot reassign others' tasks, cannot approve own requests. Manager scoped to department. Admin full access within practice. | Playwright per role |
 
 ## Tier 1 — Core daily loops
