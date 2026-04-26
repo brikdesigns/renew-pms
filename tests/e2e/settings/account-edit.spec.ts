@@ -9,14 +9,10 @@ import { test, expect, type Page } from '@playwright/test';
  * out of scope for an automated round-trip). Reverts the change at the end so
  * the persona returns to its seeded state.
  *
- * ⚠ Known issue surfaced by this spec (logged here so it doesn't get lost):
- *   The save endpoint is `PATCH /api/members/[id]`, which gates on
- *   `requirePracticeAdmin`. A staff user cannot save their own profile —
- *   the sheet stays open with no visible error. This blocks Tier 0.4 for
- *   non-admin users and must be fixed before launch (either allow self-edits
- *   in `/api/members/[id]` or add a dedicated `/api/profile` route).
- *   The staff-path test below is marked `fixme` so it's tracked as expected
- *   to fail until the route is fixed; remove the marker when shipping the fix.
+ * Self-edit support: this spec was the trigger for adding self-edit support
+ * to `PATCH /api/members/[id]`. Non-admins can edit their own first_name,
+ * last_name, and phone (admin-only fields like system_role and practice_role
+ * stay gated). Both admin-edits-self and staff-edits-self are exercised below.
  */
 
 const TEST_PASSWORD = 'TestUser123!';
@@ -61,11 +57,11 @@ test.describe('Account Edit (Tier 0.4)', () => {
     }
   });
 
-  test.fixme('staff can change their own last name and see it persist', async ({ page }) => {
-    // Tracking: PATCH /api/members/[id] gates on requirePracticeAdmin; staff
-    // self-edits hang silently. Remove `fixme` once the API allows self-edits.
+  test('staff can change their own last name and see it persist', async ({ page }) => {
     await loginAs(page, STAFF_EMAIL);
     await page.goto('/settings/account');
+
+    await expect(page.getByText(STAFF_LAST_NAME).first()).toBeVisible();
 
     const stamped = `${STAFF_LAST_NAME}-${Date.now()}`;
     try {
@@ -73,6 +69,7 @@ test.describe('Account Edit (Tier 0.4)', () => {
       await expect(page.getByText(stamped).first()).toBeVisible({ timeout: 5_000 });
     } finally {
       await saveLastName(page, STAFF_LAST_NAME);
+      await expect(page.getByText(STAFF_LAST_NAME).first()).toBeVisible({ timeout: 5_000 });
     }
   });
 });
