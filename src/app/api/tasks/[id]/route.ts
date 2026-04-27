@@ -39,7 +39,7 @@ export async function GET(
         practice_role_types(name)
       ),
       assigned_role:practice_role_types!tasks_assigned_role_id_fkey(name),
-      checklist_items(id)
+      task_checklist_items(id)
     `)
     .eq('id', id)
     .eq('practice_id', practiceId)
@@ -76,7 +76,7 @@ export async function GET(
   const memberRole = member ? first((member as any).practice_role_types) as { name: string } | null : null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assignedRole = first(data.assigned_role as any) as { name: string } | null;
-  const checklistItems = Array.isArray(data.checklist_items) ? data.checklist_items : [];
+  const checklistItems = Array.isArray(data.task_checklist_items) ? data.task_checklist_items : [];
 
   return NextResponse.json({
     id: data.id,
