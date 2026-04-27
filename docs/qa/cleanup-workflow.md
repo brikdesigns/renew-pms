@@ -83,8 +83,9 @@ Per CLAUDE.md "no speculative abstractions": three places with similar code is t
 For each cluster of findings, ask in order:
 
 1. **Does BDS already cover this?** Query Storybook MCP first. If yes → straight swap, schedule as a no-design-decision batch.
-2. **Is this an unnamed primitive that we're hand-rolling everywhere?** ("Inline drill-down link," "interactive list row with avatar + title + subtitle + trailing badge.") If yes and it appears in ≥3 surfaces → BDS promotion candidate. Schedule as a cross-repo PR pair (BDS first, then renew-pms swap).
-3. **Is this a one-off that just got out of hand?** Then fix in place — don't promote. Three similar lines is fine; abstraction is the worse outcome.
+2. **Does BDS provide only a CSS class, not a component?** Some BDS surfaces ship a class (e.g. `bds-sheet__nav-link` in `Sheet.css`) that the consumer applies to a raw element. This is a **legitimate BDS-sanctioned pattern** — the class lives in `@brikdesigns/bds/dist/styles.css` and changes to themed tokens propagate to consumers. The audit script's raw-`<button>` / raw-`<a>` rules whitelist these classes (e.g. `token-audit.sh` line 82). When you find a finding that turns out to be this pattern, mark it **resolved-as-acceptable** in the audit doc — don't promote a wrapping component for verbosity reduction alone unless ≥3 sites would benefit. Found in Batch 5 (PR #67): the 6 `ViewRequestSheet` "Cat 2b" sites turned out to consume `bds-sheet__nav-link` and needed no code change.
+3. **Is this an unnamed primitive that we're hand-rolling everywhere?** ("Inline drill-down link," "interactive list row with avatar + title + subtitle + trailing badge.") If yes and it appears in ≥3 surfaces → BDS promotion candidate. Schedule as a cross-repo PR pair (BDS first, then renew-pms swap).
+4. **Is this a one-off that just got out of hand?** Then fix in place — don't promote. Three similar lines is fine; abstraction is the worse outcome.
 
 Promotion candidates need:
 - A short proposed API in the audit doc (3–5 props, the typical JSX usage).
