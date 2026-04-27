@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { resolveTaskScope, taskInScope } from '@/lib/task-scope';
@@ -106,6 +106,11 @@ const ALLOWED_FIELDS = [
   'status', 'priority', 'frequency', 'due_date',
 ] as const;
 
+// Fields that constitute reassignment — admin-only (launch-checklist 0.7).
+// Non-admins can update other allowed fields (e.g. status), but never
+// change who a task is assigned to.
+const ASSIGNMENT_FIELDS = ['assigned_to', 'assigned_department'] as const;
+
 /**
  * PATCH /api/tasks/[id]
  * Update a task's fields.
@@ -124,6 +129,19 @@ export async function PATCH(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
+
+  // Reassignment (changing assigned_to / assigned_department) is admin-only.
+  // Non-admins changing only other fields (status etc.) is fine.
+  if (!isAdmin(authUser.profile.system_role)) {
+    for (const key of ASSIGNMENT_FIELDS) {
+      if (key in body) {
+        return NextResponse.json(
+          { error: 'Only admins can reassign tasks' },
+          { status: 403 },
+        );
+      }
+    }
+  }
 
   const updates: Record<string, unknown> = {};
   for (const key of ALLOWED_FIELDS) {
