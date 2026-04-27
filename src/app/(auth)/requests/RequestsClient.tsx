@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { Tag, Chip, Button, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import { Menu } from '@brikdesigns/bds';
+import { Menu, MenuItem } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -314,25 +314,33 @@ function AssigneeAvatar({
             padding: `${gap.xs} 0`,
           }}
         >
-          <AssignMenuItem
-            active={!assigneeId}
-            onClick={() => handleAssign(null, null)}
-            avatar={
-              <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
-                <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
-              </div>
-            }
-            label="Unassigned"
+          <MenuItem
+            item={{
+              id: 'unassigned',
+              label: 'Unassigned',
+              icon: (
+                <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
+                  <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
+                </div>
+              ),
+            }}
+            onClick={(e) => { e.stopPropagation(); handleAssign(null, null); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            isActive={!assigneeId}
           />
           {activeMembers.map(m => {
             const name = `${m.first_name} ${m.last_name}`.trim();
             return (
-              <AssignMenuItem
+              <MenuItem
                 key={m.id}
-                active={m.id === assigneeId}
-                onClick={() => handleAssign(m.id, name)}
-                avatar={<UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />}
-                label={name}
+                item={{
+                  id: m.id,
+                  label: name,
+                  icon: <UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />,
+                }}
+                onClick={(e) => { e.stopPropagation(); handleAssign(m.id, name); }}
+                onMouseDown={(e) => e.stopPropagation()}
+                isActive={m.id === assigneeId}
               />
             );
           })}
@@ -340,38 +348,6 @@ function AssigneeAvatar({
         document.body
       )}
     </>
-  );
-}
-
-/** Single menu item — stops React synthetic event propagation so portal clicks don't reach BoardCard */
-function AssignMenuItem({ active, onClick, avatar, label }: {
-  active: boolean;
-  onClick: () => void;
-  avatar: React.ReactNode;
-  label: string;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const highlighted = active || hovered;
-  return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: gap.md,
-        width: '100%', padding: `${space.xs} ${space.md}`,
-        backgroundColor: highlighted ? color.surface.accent : 'transparent',
-        border: 'none', cursor: 'pointer',
-        fontFamily: font.family.label, fontSize: font.size.label.sm,
-        fontWeight: active ? font.weight.semibold : font.weight.medium,
-        color: color.text.primary, textAlign: 'left',
-      }}
-    >
-      {avatar}
-      {label}
-    </button>
   );
 }
 
