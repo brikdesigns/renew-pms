@@ -34,17 +34,18 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 26 open / 42 originally / 38 verified across 9 categories
+## Findings — 25 open / 42 originally / 38 verified across 9 categories
 
 > **Batch progress:**
 > - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
 > - Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`, `987adfe`): 3 of 8 Cat 2c → resolved.
-> - Batch 3 (`task/bds-cleanup-title-naming`, PR #56): re-scoped Cat 6 from 5 false-positive size violations to 5 naming-drift renames (4 user-facing + 1 dev-only) — 4 of 5 resolved in PR #56; 1 promoted to Triage Batch 3b in this PR (DevPersonaSwitcher `headerStyle`, dev-only). Cat 6 net: -5 false-positives + 5 real-issues = audit total **42 → 42**, verified-issue total **37 → 38**. Audit-script regression rule (`token-audit.sh` check #14) added in same PR; consider extending to also flag `headerStyle`-holding-text-styles when 3b lands.
+> - Batch 3 (`task/bds-cleanup-title-naming`, PR #56): re-scoped Cat 6 from 5 false-positive size violations to 5 naming-drift renames (4 user-facing + 1 dev-only) — 4 of 5 resolved in PR #56; 1 promoted to Triage Batch 3b. Cat 6 net: -5 false-positives + 5 real-issues = audit total **42 → 42**, verified-issue total **37 → 38**. Audit-script regression rule (`token-audit.sh` check #14) added in same PR.
+> - Batch 3b (`task/bds-cleanup-devpersona-headerstyle`, this PR): final Cat 6 — `DevPersonaSwitcher.tsx:98` `headerStyle` → `categoryLabelStyle`. Audit rule extended in same PR (new check #15 flags `\w*headerStyle` declarations holding text styles; chrome `headerStyle` containers remain valid). **Cat 6 closes at 0 open.**
 > - Batch 4 (`task/bds-cleanup-menu-items-2a`, PR #58): partial Cat 2a — 2 of 6 swapped to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). 4 add-menu dropdowns deferred to Batch 4b (BDS `MenuItemData.description` promotion, cross-repo).
 > - Batch 6 (`task/bds-cleanup-clickable-divs-3`, PR #60): partial Cat 3 — 2 of 4 swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). Re-scoped from 4 → 2 after measuring: BDS `IconButton` works for the avatar wrappers (28px UserAvatar centers cleanly inside the 32px sm button), but the checklist row (#3) and inventory request row (#4) need their own BDS patterns — see triage row 6 / row 8 notes.
-> - Batch 6b (`task/bds-cleanup-utility-bar-avatar`, this PR): final Cat 2c — #17 (TopUtilityBar user-avatar menu toggle) swapped to BDS `IconButton size=md` with the 40px UserAvatar as `icon`. Same pattern as Batch 6 at md size. Cat 2c open: 2 → 1 (only #15 VendorSidebar nav remains, blocked by the BDS `NavItem` promotion — that finding never belonged under "toolbar buttons", it's a navigation pattern).
+> - Batch 6b (`task/bds-cleanup-utility-bar-avatar`, PR #61): final Cat 2c — #17 (TopUtilityBar user-avatar menu toggle) swapped to BDS `IconButton size=md` with the 40px UserAvatar as `icon`. Same pattern as Batch 6 at md size. Cat 2c open: 2 → 1 (only #15 VendorSidebar nav remains, blocked by the BDS `NavItem` promotion — that finding never belonged under "toolbar buttons", it's a navigation pattern).
 >
-> Open count after Batches 1–4 + 6 + 6b (+ Cat 6 dev-only finding now tracked as 3b): **26**.
+> Open count after Batches 1–4 + 6 + 6b + 3b: **25**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -162,11 +163,15 @@ The 2 originally-listed `sheetSectionTitle` / `sheetTitleStyle` variables alread
 
 **Regression prevention — rule landed in same PR.** Added check #14 to [`scripts/token-audit.sh`](../../scripts/token-audit.sh) flagging any `const \w*headingStyle` declaration in `src/`. Tested: clean codebase reports clean; planted regression (`const headingStyle: React.CSSProperties = …`) is caught and exits with non-zero. Future `headingStyle` reintroductions get blocked by the same audit run pre-PR. CLAUDE.md "12 categories" claim updated to "14".
 
-**Open (deferred to Triage Batch 3b):**
+**Resolved in `task/bds-cleanup-devpersona-headerstyle` (Triage Batch 3b):**
 
-| # | File | Mismatch |
-|---|------|----------|
-| 5 | [src/components/DevPersonaSwitcher.tsx:98](../../src/components/DevPersonaSwitcher.tsx#L98) | `headerStyle` *holding text styles* — uppercase 11px section label. Per the BDS `-label` family the target name is `categoryLabelStyle` (or similar `-Label` ending). Dev-only tool, not user-facing — was previously listed "Out of scope" while Batch 3 (the user-facing `headingStyle` rename) was in flight; promoted to a tracked Triage row now that PR #56 has landed. |
+| # | File | Before → After |
+|---|------|----------------|
+| 5 | [src/components/DevPersonaSwitcher.tsx:98](../../src/components/DevPersonaSwitcher.tsx#L98) | `headerStyle` → `categoryLabelStyle`. Variable held text styles (uppercase 11px section label) — BDS `-label` family is the right home, not `-header`. |
+
+**Regression prevention — rule landed in same PR.** Added check #15 to [`scripts/token-audit.sh`](../../scripts/token-audit.sh) flagging any `const \w*headerStyle` declaration whose body contains text-style properties (`fontSize`, `fontFamily`, `fontWeight`, `letterSpacing`, `lineHeight`, `textTransform`, `textDecoration`). Chrome `headerStyle` (flex containers, padding, alignment only) are not flagged. Tested: clean codebase reports clean; planted regression (`const fakeHeaderStyle: CSSProperties = { fontSize: '11px', … }`) is caught and exits with non-zero. Existing chrome `headerStyle`/`subHeaderStyle`/`cardHeaderStyle` declarations across the codebase remain valid.
+
+**Cat 6 closes at 0 open.** The category 6 lifecycle: 5 originally-flagged size violations → re-scoped to BEM naming drift in PR #56 (4 resolved + audit rule #14 added) → 1 dev-only finding (DevPersonaSwitcher `headerStyle`) tracked as Triage 3b → resolved here, audit rule #15 added.
 
 ### Category 7 — Hand-built segmented controls / chip rows / tab bars (1)
 
@@ -255,7 +260,7 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 1 | `task/bds-cleanup-css-properties` ✅ | Remove the 4 interactive `CSSProperties` exports (Category 8). Replace each call site with BDS `Button`. | 4 files | **Landed (commit `ce8179c`).** Visual change: ViewContactSheet vendor link rendered in BDS ghost text color rather than prior brand-purple. Inline-link affordance refinement deferred to Batch 5. |
 | 2 | `task/bds-cleanup-toolbar-buttons-2c` ✅ | Pattern D — swap sidebar bottom buttons (theme + help) to `IconButton`. | 2 files | **Landed (this PR).** Resolves 3 of 8 Cat 2c (#16, #18, #19). Cat 2c remainder: #20–#22 already done in Batch 1; #15 deferred to BDS NavItem promotion; #17 deferred to Batch 6 (clickable-avatar pattern). |
 | 3 | `task/bds-cleanup-title-naming` ✅ | Rename `headingStyle` style-object variables to `titleStyle` per BDS `__title` BEM slot convention. | 4 files | **Landed (PR #56).** Original Cat 6 framing (heading family + sub-18px) was a false-positive — `heading.tiny` is the 18px floor, `heading.small` is 20px. Re-scoped to naming-consistency only. Audit rule (`token-audit.sh` check #14) added in same PR. |
-| 3b | `task/bds-cleanup-devpersona-headerstyle` | Rename `headerStyle` → `categoryLabelStyle` (or similar `-Label` ending) in `DevPersonaSwitcher.tsx:98`. The variable holds text styles for an uppercase 11px section label, so the BDS `-label` family is the right home, not `header*`. | 1 file | Dev-only tool, not user-facing — kept off the main Cat 6 batch (#56) so the user-facing rename could ship without dev-tool churn. Consider extending `token-audit.sh` check #14 to also flag `\w*headerStyle` declarations holding text styles. Tiny mechanical PR, no design call. |
+| 3b | `task/bds-cleanup-devpersona-headerstyle` ✅ | Rename `headerStyle` → `categoryLabelStyle` in `DevPersonaSwitcher.tsx:98`. The variable holds text styles for an uppercase 11px section label, so the BDS `-label` family is the right home, not `header*`. | 1 file + audit script + audit doc | **Landed (this PR).** Closes Cat 6 (0 open). Audit rule extended in same PR — new check #15 in `token-audit.sh` flags any `\w*headerStyle` declaration whose body contains text-style properties (chrome `headerStyle` containers remain valid). |
 | 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (PR #58).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
 | 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
