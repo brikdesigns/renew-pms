@@ -94,6 +94,43 @@ export async function deleteTask(id: string): Promise<void> {
   await supabase.from('tasks').delete().eq('id', id);
 }
 
+export interface SeedRequestOptions {
+  practiceId: string;
+  submittedBy: string; // practice_member id
+  title: string;
+  category?: 'device_issue' | 'equipment_issue' | 'facility_maintenance';
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
+  status?: 'submitted' | 'in_review' | 'in_progress' | 'waiting_on_vendor' | 'resolved' | 'closed';
+  description?: string;
+}
+
+/** Insert a maintenance/equipment request and return its id. */
+export async function seedRequest(opts: SeedRequestOptions): Promise<string> {
+  const supabase = adminClient();
+  const { data, error } = await supabase
+    .from('requests')
+    .insert({
+      practice_id: opts.practiceId,
+      submitted_by: opts.submittedBy,
+      title: opts.title,
+      description: opts.description ?? null,
+      category: opts.category ?? 'equipment_issue',
+      urgency: opts.urgency ?? 'medium',
+      status: opts.status ?? 'submitted',
+    })
+    .select('id')
+    .single();
+  if (error || !data) {
+    throw new Error(`Failed to seed request "${opts.title}": ${error?.message ?? 'no row'}`);
+  }
+  return data.id;
+}
+
+/** Delete a request by id. Tolerates already-deleted rows. */
+export async function deleteRequest(id: string): Promise<void> {
+  await adminClient().from('requests').delete().eq('id', id);
+}
+
 export interface SeedChecklistItemInput {
   label: string;
   sortOrder?: number;
