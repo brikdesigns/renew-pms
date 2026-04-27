@@ -34,9 +34,9 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 38 open / 42 total across 9 categories
+## Findings — 35 open / 42 total across 9 categories
 
-> Batch 1 (`task/bds-cleanup-css-properties`, commit `ce8179c`) resolved Category 8 (4 violations) and 1 of 8 Cat 2b violations. Open count: **38**. Cat 2b: **7 open / 8 total**. See triage table for next batches.
+> Batch 1 (`task/bds-cleanup-css-properties`, commit `ce8179c`) resolved Category 8 (4) + 1 of 8 Cat 2b. Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`) resolves 3 of 8 Cat 2c (sidebar bottom buttons). Cat 2c remaining: 5 (3 of those — `EditTemplateSheet` 623/633/640 — were already resolved in Batch 1; the remaining 2 — `TopUtilityBar` avatar menu + `VendorSidebar` nav buttons — are deferred to Batch 6 / future BDS NavItem promotion respectively, see triage notes). Open count: **35**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -74,17 +74,18 @@ Inline links inside read-mode sheet data that navigate to another sheet.
 | 13 | [src/components/ViewRequestSheet.tsx:214](../../src/components/ViewRequestSheet.tsx#L214) | Vendor |
 | 14 | [src/components/ViewRequestSheet.tsx:221](../../src/components/ViewRequestSheet.tsx#L221) | Vendor contact |
 
-#### 2c. Toolbar / chrome buttons (icon-only or icon+label) (8)
-| # | File | Pattern |
-|---|------|---------|
-| 15 | [src/app/vendor/[token]/VendorSidebar.tsx:171](../../src/app/vendor/[token]/VendorSidebar.tsx#L171) | Nav icon button |
-| 16 | [src/app/vendor/[token]/VendorSidebar.tsx:196](../../src/app/vendor/[token]/VendorSidebar.tsx#L196) | Theme toggle |
-| 17 | [src/components/TopUtilityBar.tsx:136](../../src/components/TopUtilityBar.tsx#L136) | User avatar menu toggle |
-| 18 | [src/components/AppSidebar.tsx:200](../../src/components/AppSidebar.tsx#L200) | Theme toggle |
-| 19 | [src/components/AppSidebar.tsx:211](../../src/components/AppSidebar.tsx#L211) | Help button |
-| 20 | [src/components/EditTemplateSheet.tsx:623](../../src/components/EditTemplateSheet.tsx#L623) | "+ Link to inventory" |
-| 21 | [src/components/EditTemplateSheet.tsx:633](../../src/components/EditTemplateSheet.tsx#L633) | "Edit link" |
-| 22 | [src/components/EditTemplateSheet.tsx:640](../../src/components/EditTemplateSheet.tsx#L640) | "Remove link" |
+#### 2c. Toolbar / chrome buttons (icon-only or icon+label) — 2 open / 8 total
+
+| # | File | Pattern | Status |
+|---|------|---------|--------|
+| 15 | [src/app/vendor/[token]/VendorSidebar.tsx:171](../../src/app/vendor/[token]/VendorSidebar.tsx#L171) | Nav icon button | Deferred — visual parity with `AppSidebar`'s `<Link>`-based nav. Belongs in BDS NavItem promotion (cross-repo). |
+| 16 | ~~`VendorSidebar.tsx:196` Theme toggle~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
+| 17 | [src/components/TopUtilityBar.tsx:136](../../src/components/TopUtilityBar.tsx#L136) | User avatar menu toggle | Deferred to Batch 6 — same pattern as Cat 3 clickable avatars. |
+| 18 | ~~`AppSidebar.tsx:200` Theme toggle~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
+| 19 | ~~`AppSidebar.tsx:211` Help button~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
+| 20 | ~~`EditTemplateSheet.tsx:623` "+ Link to inventory"~~ | — | ✅ Batch 1 |
+| 21 | ~~`EditTemplateSheet.tsx:633` "Edit link"~~ | — | ✅ Batch 1 |
+| 22 | ~~`EditTemplateSheet.tsx:640` "Remove link"~~ | — | ✅ Batch 1 (`danger-ghost`) |
 
 #### 2d. Tab bar + dev tools (5)
 | # | File | Pattern |
@@ -209,7 +210,7 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | # | Branch | Scope | Files touched | Notes |
 |---|--------|-------|---------------|-------|
 | 1 | `task/bds-cleanup-css-properties` ✅ | Remove the 4 interactive `CSSProperties` exports (Category 8). Replace each call site with BDS `Button`. | 4 files | **Landed (commit `ce8179c`).** Visual change: ViewContactSheet vendor link rendered in BDS ghost text color rather than prior brand-purple. Inline-link affordance refinement deferred to Batch 5. |
-| 2 | `task/bds-cleanup-toolbar-buttons-2c` | Pattern D — swap 8 raw `<button>` to `Button` / `IconButton`. | 5 files | Pure swap, no new BDS. |
+| 2 | `task/bds-cleanup-toolbar-buttons-2c` ✅ | Pattern D — swap sidebar bottom buttons (theme + help) to `IconButton`. | 2 files | **Landed (this PR).** Resolves 3 of 8 Cat 2c (#16, #18, #19). Cat 2c remainder: #20–#22 already done in Batch 1; #15 deferred to BDS NavItem promotion; #17 deferred to Batch 6 (clickable-avatar pattern). |
 | 3 | `task/bds-cleanup-font-heading-misuse-6` | Fix the 5 `font.family.heading` + sub-18px style objects. Rename variables from `headingStyle` → `titleStyle` while there. | 5 files | Caught by manual review; not currently in `token-audit.sh`. Opportunity to add an audit rule. |
 | 4 | `task/bds-cleanup-menu-items-2a` | Pattern B — confirm BDS `MenuItem` exists, then swap 6 menu items. If absent, promote first. | 6 files | Storybook MCP check before starting. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
