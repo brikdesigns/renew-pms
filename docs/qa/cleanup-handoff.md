@@ -9,29 +9,19 @@ related: ./component-cleanup-audit.md, ./cleanup-workflow.md
 
 > **What this is:** a transient snapshot of in-flight cleanup work. Replace this file at the end of each cleanup session — do not append history. Audit history lives in [`component-cleanup-audit.md`](./component-cleanup-audit.md); workflow rules live in [`cleanup-workflow.md`](./cleanup-workflow.md).
 
-**Last session:** 2026-04-27. Audit state: **26 open / 42 originally / 38 verified.**
+**Last session:** 2026-04-27 (Batch 3b). Audit state after this PR lands: **25 open / 42 originally / 38 verified.** Cat 6 closes at 0 open.
 
-## In-flight PRs
+## In-flight PR
 
-The cleanup work this session sits on a stacked PR chain. Merge in order; each later PR rebases on the prior one.
+Single-PR session this time. Previous stack (#59 → #60 → #61 → #62 → #63) merged.
 
 | PR | Branch | Title | Files | Notes |
 |----|--------|-------|-------|-------|
-| [#59](https://github.com/brikdesigns/renew-pms/pull/59) | `task/docs-cleanup-workflow-pointer` | docs(claude): pointer to cleanup-workflow.md | 1 | Independent — can merge any time. |
-| [#60](https://github.com/brikdesigns/renew-pms/pull/60) | `task/bds-cleanup-clickable-divs-3` | refactor(bds): swap clickable avatars to IconButton (Cat 3 partial) | 3 | Cat 3 #1 + #2 → BDS `IconButton`. Visual verified at `/requests`. |
-| [#61](https://github.com/brikdesigns/renew-pms/pull/61) | `task/bds-cleanup-utility-bar-avatar` | refactor(bds): swap TopUtilityBar avatar to IconButton (Cat 2c #17) | 2 | Final Cat 2c. Stacks on #60. |
-| [#62](https://github.com/brikdesigns/renew-pms/pull/62) | `task/docs-devpersona-cat6-triage` | docs(qa): elevate DevPersonaSwitcher Cat 6 to triage row 3b | 1 | Doc-only. Stacks on #61. |
-| this | `task/docs-cleanup-handoff` | this file | 1 | Stacks on #62. |
-
-**Merge order:** #59 → #60 → #61 → #62 → this. GitHub's merge-queue can do it automatically.
+| this | `task/bds-cleanup-devpersona-headerstyle` | refactor(bds): rename DevPersonaSwitcher headerStyle + audit rule (Cat 6) | 3 | Closes Cat 6. Adds `token-audit.sh` check #15 (`headerStyle` holding text styles, with chrome-vs-text detection). Branched from `staging`. |
 
 ## Next sessions — kickoff prompts
 
 Paste any of these as the first message of a new session.
-
-### 3b — DevPersonaSwitcher headerStyle rename *(mechanical, unblocked)*
-
-> Rename `DevPersonaSwitcher.tsx:98` `headerStyle` → `categoryLabelStyle` (or whatever `-Label` ending fits the BDS `-label` family). Also extend `scripts/token-audit.sh` check #14 to flag any `\w*headerStyle` declaration holding text styles. Tiny PR, no design call. Update audit Cat 6 + Triage row 3b to mark resolved when done.
 
 ### 5 — Cat 2b inline drill-down links *(design call)*
 
@@ -59,40 +49,30 @@ Paste any of these as the first message of a new session.
 
 ## Worktree state
 
-`git worktree list` shows the current worktrees in `~/Documents/GitHub/product/renew-pms-worktrees/`. Worktrees from this session that can be cleaned up *after their PR merges:*
+After this PR merges, prune:
 
-```
-bds-cleanup-clickable-divs-3      # PR #60
-bds-cleanup-utility-bar-avatar    # PR #61 (rebased on #60)
-docs-cleanup-workflow-pointer     # PR #59
-docs-devpersona-cat6-triage       # PR #62 (rebased on #61)
-docs-cleanup-handoff              # this PR (rebased on #62)
+```bash
+rm -rf ~/Documents/GitHub/product/renew-pms-worktrees/bds-cleanup-devpersona-headerstyle
+git -C ~/Documents/GitHub/product/renew-pms worktree prune
 ```
 
 Other worktrees present (not from this cleanup session, do not touch without checking):
 
 ```
-bds-cleanup-title-naming          # PR #56 (already merged into staging — worktree is stale, safe to prune)
+auth-piggyback-domain             # unrelated
 docs-llm-stack-pointer            # unrelated
 infra-tier1-shift-tasks           # unrelated
 ```
 
-After a PR merges, clean up its worktree:
-
-```bash
-rm -rf ~/Documents/GitHub/product/renew-pms-worktrees/<slug>
-git -C ~/Documents/GitHub/product/renew-pms worktree prune
-```
-
 ## Primary worktree
 
-The primary worktree (`~/Documents/GitHub/product/renew-pms`) is on `staging` and may be 1–N commits behind `origin/staging` if PRs have merged this session. `git pull` to fast-forward when convenient.
+The primary worktree (`~/Documents/GitHub/product/renew-pms`) is on `staging`. After this PR merges, `git pull` to fast-forward.
 
-There is one untracked file in the primary tree: `tasks-list-before.png`. This is a pre-session screenshot artifact — leave it alone (the user owns it).
+There is one untracked file in the primary tree: `tasks-list-before.png`. This is a pre-session screenshot artifact — leave it alone (the user owns it). It's been added to `.git/info/exclude` (per-clone, not committed) so `new-task.sh`'s dirty-tree check passes.
 
 ## Audit status by category
 
-After all PRs in this session land:
+After this PR lands:
 
 | Cat | Status |
 |---|---|
@@ -102,7 +82,7 @@ After all PRs in this session land:
 | 2c — Toolbar / chrome buttons | 1 open (#15 VendorSidebar nav) — blocked on BDS NavItem promotion |
 | 2d — Tab bar + dev tools | 5 open — Batches 7 + 8 (covers #23, #25, #26, #27); #24 EditTemplateSheet collapse is its own pattern |
 | 3 — `<div onClick>` clickable divs | 2 open (#3 checklist, #4 inventory row) — pattern decisions / Batch 8 |
-| 6 — Title-naming drift | 1 open (DevPersonaSwitcher headerStyle) — Batch 3b |
+| 6 — Title-naming drift | 0 — RESOLVED (PR #56 + this PR; audit checks #14 + #15) |
 | 7 — Hand-built segmented controls/tabs | 1 open (PageHeader) — Batch 7 |
 | 8 — `CSSProperties` for interactive elements | 0 — RESOLVED |
 
@@ -110,7 +90,7 @@ When all categories drop to 0, fold the audit into [`launch-checklist.md`](./lau
 
 ## Notes for the next session
 
+- **`token-audit.sh` check #15 distinguishes chrome from text.** A `\w*headerStyle` declaration is only flagged if its body holds `fontSize`, `fontFamily`, `fontWeight`, `letterSpacing`, `lineHeight`, `textTransform`, or `textDecoration`. Chrome-only `headerStyle` (flex containers, padding, alignment) remain valid — there are ~17 of these across the codebase and they all pass clean. If you need to introduce a new "header" variable that holds text styles, name it `*labelStyle` or `*titleStyle` from the start.
 - **The IconButton-wrapping-avatar pattern is now load-bearing** for any future "clickable avatar" surface. Reuse it. Variant: `ghost`. Size: match the wrapped UserAvatar (sm UserAvatar → sm button, md → md). The 1em icon span overflows but flex-centers the avatar inside the button cleanly.
 - **Don't trust the audit's "mechanical" labels without measuring first.** Batch 6 looked like 4 mechanical violations from the triage notes; only 2 actually were (the avatars). The other 2 needed pattern decisions. Same likely applies elsewhere — measure BDS coverage before scoping a batch.
-- **Stack PRs explicitly** when they touch the same audit doc. The rebase trick (`git rebase origin/<prior-branch>`) keeps the diff clean and the merge automatic.
-- **`pr-task.sh` enforces a UI-verification prompt.** Pass `SKIP_UI_CHECK=1` for doc-only branches.
+- **`pr-task.sh` enforces a UI-verification prompt.** Pass `SKIP_UI_CHECK=1` for doc-only branches. Batch 3b is dev-tool-only (DevPersonaSwitcher) — variable rename has zero runtime effect; the new audit rule has zero runtime effect. `SKIP_UI_CHECK=1` is appropriate.

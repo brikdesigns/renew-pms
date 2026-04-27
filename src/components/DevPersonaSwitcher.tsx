@@ -95,7 +95,7 @@ const panelStyle: CSSProperties = {
   fontFamily: BDS.fontFamily,
 };
 
-const headerStyle: CSSProperties = {
+const categoryLabelStyle: CSSProperties = {
   fontSize: '11px',
   fontWeight: 700,
   color: BDS.grayDark,
@@ -264,7 +264,7 @@ export function DevPersonaSwitcher() {
 
   return (
     <div style={panelStyle}>
-      <div style={headerStyle}>Switch Persona</div>
+      <div style={categoryLabelStyle}>Switch Persona</div>
 
       {/* Tester tabs */}
       <div style={testerTabRowStyle}>
