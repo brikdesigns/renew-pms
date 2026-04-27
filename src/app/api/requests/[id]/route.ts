@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { createNotification } from '@/lib/notifications';
@@ -123,6 +123,18 @@ const ALLOWED_FIELDS = [
   'resolution_notes',
 ] as const;
 
+// Fields a non-admin caller cannot change (launch-checklist 0.7).
+//   - `status`              → "cannot approve own requests" — staff cannot
+//                             move a request through the pipeline (e.g. to
+//                             `resolved` / `closed`); admin/manager triages.
+//   - `assigned_to`         → reassignment is admin-only (matches tasks).
+//   - `vendor_id`           → vendor coordination is admin-only.
+//   - `vendor_contact_id`   → same as above.
+//   - `resolution_notes`    → sign-off field; admin/manager only.
+const ADMIN_ONLY_FIELDS = [
+  'status', 'assigned_to', 'vendor_id', 'vendor_contact_id', 'resolution_notes',
+] as const;
+
 /**
  * PATCH /api/requests/[id]
  * Update a request's fields (status, assignment, vendor, resolution).
@@ -141,6 +153,20 @@ export async function PATCH(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
+
+  // Admin-only fields (status / assignment / vendor / resolution). Non-admins
+  // can still revise their own submission (title, description, category, etc.)
+  // but cannot triage or sign off on requests.
+  if (!isAdmin(authUser.profile.system_role)) {
+    for (const key of ADMIN_ONLY_FIELDS) {
+      if (key in body) {
+        return NextResponse.json(
+          { error: 'Only admins can change this field on a request' },
+          { status: 403 },
+        );
+      }
+    }
+  }
 
   const updates: Record<string, unknown> = {};
   for (const key of ALLOWED_FIELDS) {
