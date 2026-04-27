@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@brikdesigns/bds';
-import { TextInput } from '@brikdesigns/bds';
+import { Button, TextInput } from '@brikdesigns/bds';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
 import type { CSSProperties } from 'react';
 
@@ -60,17 +58,16 @@ const formStyle: CSSProperties = {
   gap: gap.lg,
 };
 
-const errorStyle: CSSProperties = {
-  backgroundColor: color.surface.negative,
-  color: color.text.negative,
-  borderRadius: border.radius.md,
-  padding: `${space.sm} ${space.md}`,
-  fontSize: font.size.body.sm,
+const successStyle: CSSProperties = {
   fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
+  textAlign: 'center',
+  margin: 0,
   lineHeight: font.lineHeight.normal,
 };
 
-const forgotLinkStyle: CSSProperties = {
+const footerLinkStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.sm,
   color: color.system.link,
@@ -80,30 +77,23 @@ const forgotLinkStyle: CSSProperties = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     });
 
-    if (authError) {
-      setError('Invalid email or password. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    window.location.href = '/dashboard';
+    setSubmitted(true);
+    setLoading(false);
   };
 
   return (
@@ -111,50 +101,49 @@ export default function LoginPage() {
       <div style={cardStyle}>
         <div style={headerStyle}>
           <p style={logoStyle}>Renew PMS</p>
-          <p style={taglineStyle}>Sign in to your practice</p>
+          <p style={taglineStyle}>
+            {submitted ? 'Check your email' : 'Reset your password'}
+          </p>
         </div>
 
-        <form style={formStyle} onSubmit={handleLogin}>
-          {error && <div style={errorStyle}>{error}</div>}
+        {submitted ? (
+          <>
+            <p style={successStyle}>
+              If an account exists for <strong>{email}</strong>, a reset link is on its way. Check your inbox and spam folder.
+            </p>
+            <Link href="/login" style={footerLinkStyle}>
+              Back to sign in
+            </Link>
+          </>
+        ) : (
+          <form style={formStyle} onSubmit={handleSubmit}>
+            <TextInput
+              label="Email address"
+              type="email"
+              placeholder="you@yourpractice.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              size="md"
+              fullWidth
+              required
+              autoComplete="email"
+            />
 
-          <TextInput
-            label="Email address"
-            type="email"
-            placeholder="you@yourpractice.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            size="md"
-            fullWidth
-            required
-            autoComplete="email"
-          />
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
+            >
+              Send reset link
+            </Button>
 
-          <TextInput
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            size="md"
-            fullWidth
-            required
-            autoComplete="current-password"
-          />
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={loading}
-          >
-            Sign in
-          </Button>
-
-          <Link href="/forgot-password" style={forgotLinkStyle}>
-            Forgot your password?
-          </Link>
-        </form>
+            <Link href="/login" style={footerLinkStyle}>
+              Back to sign in
+            </Link>
+          </form>
+        )}
       </div>
     </div>
   );
