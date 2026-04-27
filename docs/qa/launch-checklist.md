@@ -71,7 +71,7 @@ The generator (`generate_daily_pool_tasks`, migration 00031) reads Postgres `cur
 | 0.4 | **Edit account info** | Profile → change name/email → save → reflected in header + DB. | Playwright |
 | 0.5 | **Admin invites team member** | Settings → Add team member → email arrives → invitee accepts → lands in correct practice with correct role. **No other workflow works without this.** ⚠ **Blocked** on Supabase Auth email config. | Playwright + manual inbox |
 | 0.6 | **Multi-tenancy isolation (RLS)** | Seed two practices, log in as User A from Practice 1 → confirm zero rows from Practice 2 visible in tasks/requests/training/staff/settings. **HIPAA-critical.** | Playwright — [`tests/e2e/rls/isolation.spec.ts`](../../tests/e2e/rls/isolation.spec.ts) |
-| 0.7 | **Role-gated permissions** | Staff cannot access Settings, cannot reassign others' tasks, cannot approve own requests. Manager scoped to department. Admin full access within practice. | Playwright per role |
+| 0.7 | **Role-gated permissions** | Staff cannot access Settings, cannot reassign others' tasks, cannot approve own requests. Manager scoped to department. Admin full access within practice. | Playwright — settings access [`tests/e2e/permissions/settings-access.spec.ts`](../../tests/e2e/permissions/settings-access.spec.ts); task visibility scope (admin/manager/staff) [`tests/e2e/permissions/task-scope.spec.ts`](../../tests/e2e/permissions/task-scope.spec.ts). Sub-cases still open: task **reassignment** (staff cannot reassign others'), request **approval** (staff cannot approve own request) |
 
 ## Tier 1 — Core daily loops
 
