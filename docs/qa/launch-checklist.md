@@ -39,12 +39,12 @@ Workflows are ordered by **risk-on-launch-day**. Each row lists trigger → expe
 
 **App-level emails** (`src/lib/email.ts` — request status, vendor messages) and **auth emails** (invite acceptance for 0.5, password reset for 0.2) share one Resend pipeline. The auth flow uses `auth.admin.generateLink({ type: 'invite' | 'recovery' })` to produce links, then sends them via the same `sendEmail` path as app email — Supabase's built-in mailer stays off so users never get duplicates. Path chosen 2026-04-27 over routing Supabase SMTP through Resend, to keep a single branded email surface and one place to update templates.
 
-**Sender:** one for MVP — `notifications@renew.brikdesigns.com`. Subject lines disambiguate the email type ("Reset your Renew PMS password" vs "New work order"). Splits to a dedicated `accounts@` sender when traffic, deliverability reputation, or recipient inbox-filtering UX requires it.
+**Sender:** `Renew PMS <renew@brikdesigns.com>` — piggybacks on the already-verified `brikdesigns.com` domain in the shared Brik Portal Resend account. Avoids burning the free-tier domain quota on a renew-pms-only subdomain. Subject lines + email body disambiguate which Brik product sent the email ("Reset your Renew PMS password" vs Brik Portal mail). Splits to a dedicated subdomain (`renew.brikdesigns.com` → `notifications@renew.brikdesigns.com`) when one of: deliverability reputation needs isolation, account count justifies a paid Resend tier, or branding requires a separate identity.
 
-**Domain:** `renew.brikdesigns.com` (temporary; planned pivot to a dedicated DNS later) to be DNS-verified in Resend, replacing the `onboarding@resend.dev` sandbox sender. Override in `.env.local`:
+**Domain:** `brikdesigns.com` (already verified in the shared Brik Portal Resend account — confirmed 2026-04-27). No new DNS work for the piggyback path. Override in `.env.local`:
 
 ```
-RESEND_FROM_ADDRESS=Renew PMS <notifications@renew.brikdesigns.com>
+RESEND_FROM_ADDRESS=Renew PMS <renew@brikdesigns.com>
 ```
 
 **Token lifetime:** invite + recovery links both 7 days (Supabase OTP expiry — single project-level setting, applies uniformly). Matches Slack/Notion/GitHub norms; long enough for "invited Friday, opened Monday" and to absorb staff PTO without forcing re-invites.
@@ -53,7 +53,7 @@ RESEND_FROM_ADDRESS=Renew PMS <notifications@renew.brikdesigns.com>
 
 **Practice-aware copy:** invite emails name the practice ("You've been invited to **Renew Dental**") for orientation. Practice name is non-PHI metadata, safe to include in email payload.
 
-Until DNS verification lands, 0.2 and 0.5 stay blocked.
+Until `RESEND_FROM_ADDRESS` is updated in `.env.local` (local dev) and Netlify env (deployed), 0.2 and 0.5 stay blocked. Once both are set and an end-to-end invite delivers, flip 0.2 + 0.5 to green.
 
 ### Tier 1.1 (recurring task generation) — split test strategy
 
