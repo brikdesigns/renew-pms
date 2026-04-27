@@ -133,19 +133,20 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userAvat
           <NotificationBell />
         </Tooltip>
         <div style={avatarWrapStyle}>
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            size="md"
+            label="User menu"
             onClick={() => setMenuOpen(prev => !prev)}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-            aria-label="User menu"
-          >
-            <UserAvatar
-              name={userFullName ?? userName ?? '?'}
-              departmentColorKey={userDepartment}
-              avatarUrl={userAvatarUrl}
-              size="md"
-            />
-          </button>
+            icon={
+              <UserAvatar
+                name={userFullName ?? userName ?? '?'}
+                departmentColorKey={userDepartment}
+                avatarUrl={userAvatarUrl}
+                size="md"
+              />
+            }
+          />
           <Menu
             items={menuItems}
             isOpen={menuOpen}

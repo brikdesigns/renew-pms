@@ -34,16 +34,17 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 26 open / 42 originally / 37 verified across 9 categories
+## Findings — 25 open / 42 originally / 37 verified across 9 categories
 
 > **Batch progress:**
 > - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
 > - Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`, `987adfe`): 3 of 8 Cat 2c → resolved.
 > - Batch 3 (`task/bds-cleanup-title-naming`, PR #56): re-scoped Cat 6 from 5 false-positive size violations to 4 naming-drift renames — all resolved. Cat 6 net: -5 false-positives + 4 real-issues = audit total **42 → 41**, but verified-issue total stays **37** since the 5 size violations were never real. Audit-script regression rule (`token-audit.sh` check #14) added in same PR.
 > - Batch 4 (`task/bds-cleanup-menu-items-2a`, PR #58): partial Cat 2a — 2 of 6 swapped to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). 4 add-menu dropdowns deferred to Batch 4b (BDS `MenuItemData.description` promotion, cross-repo).
-> - Batch 6 (`task/bds-cleanup-clickable-divs-3`, this PR): partial Cat 3 — 2 of 4 swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). Re-scoped from 4 → 2 after measuring: BDS `IconButton` works for the avatar wrappers (28px UserAvatar centers cleanly inside the 32px sm button), but the checklist row (#3) and inventory request row (#4) need their own BDS patterns — see triage row 6 / row 8 notes.
+> - Batch 6 (`task/bds-cleanup-clickable-divs-3`, PR #60): partial Cat 3 — 2 of 4 swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). Re-scoped from 4 → 2 after measuring: BDS `IconButton` works for the avatar wrappers (28px UserAvatar centers cleanly inside the 32px sm button), but the checklist row (#3) and inventory request row (#4) need their own BDS patterns — see triage row 6 / row 8 notes.
+> - Batch 6b (`task/bds-cleanup-utility-bar-avatar`, this PR): final Cat 2c — #17 (TopUtilityBar user-avatar menu toggle) swapped to BDS `IconButton size=md` with the 40px UserAvatar as `icon`. Same pattern as Batch 6 at md size. Cat 2c open: 2 → 1 (only #15 VendorSidebar nav remains, blocked by the BDS `NavItem` promotion — that finding never belonged under "toolbar buttons", it's a navigation pattern).
 >
-> Open count after Batches 1–4 + 6: **26**.
+> Open count after Batches 1–4 + 6 + 6b: **25**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -93,13 +94,13 @@ Inline links inside read-mode sheet data that navigate to another sheet.
 | 13 | [src/components/ViewRequestSheet.tsx:214](../../src/components/ViewRequestSheet.tsx#L214) | Vendor |
 | 14 | [src/components/ViewRequestSheet.tsx:221](../../src/components/ViewRequestSheet.tsx#L221) | Vendor contact |
 
-#### 2c. Toolbar / chrome buttons (icon-only or icon+label) — 2 open / 8 total
+#### 2c. Toolbar / chrome buttons (icon-only or icon+label) — 1 open / 8 total
 
 | # | File | Pattern | Status |
 |---|------|---------|--------|
 | 15 | [src/app/vendor/[token]/VendorSidebar.tsx:171](../../src/app/vendor/[token]/VendorSidebar.tsx#L171) | Nav icon button | Deferred — visual parity with `AppSidebar`'s `<Link>`-based nav. Belongs in BDS NavItem promotion (cross-repo). |
 | 16 | ~~`VendorSidebar.tsx:196` Theme toggle~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
-| 17 | [src/components/TopUtilityBar.tsx:136](../../src/components/TopUtilityBar.tsx#L136) | User avatar menu toggle | Deferred to Batch 6 — same pattern as Cat 3 clickable avatars. |
+| 17 | ~~`TopUtilityBar.tsx:136` User avatar menu toggle~~ | — | ✅ Batch 6b — `IconButton variant=ghost size=md` with the 40px UserAvatar passed as `icon`. Same pattern as Batch 6, just at md size to preserve the existing 40px avatar visual. |
 | 18 | ~~`AppSidebar.tsx:200` Theme toggle~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
 | 19 | ~~`AppSidebar.tsx:211` Help button~~ | — | ✅ Batch 2 — `IconButton variant=secondary size=sm` |
 | 20 | ~~`EditTemplateSheet.tsx:623` "+ Link to inventory"~~ | — | ✅ Batch 1 |
@@ -124,7 +125,7 @@ Inline links inside read-mode sheet data that navigate to another sheet.
 | 3 | [src/components/ViewTaskSheet.tsx:376-394](../../src/components/ViewTaskSheet.tsx#L376-L394) | Checklist item: checkbox + label, completion state styled by parent | Deferred — BDS `Checkbox` is an inline `<label>`-wrapped input with no row-level chrome (background, padding, completion-state styling). Current row is a clickable surface with three concerns (toggle target, completion bg, opacity-while-toggling). Needs either: (a) row-styling around BDS `Checkbox`, (b) a BDS `ChecklistItem` promotion. Pattern decision required. |
 | 4 | [src/components/ViewInventorySheet.tsx:243-277](../../src/components/ViewInventorySheet.tsx#L243-L277) | Request row: icon + title + metadata + caret | Deferred — Pattern A (`InteractiveListItem` BDS promotion, triage row 8). Same shape as the inventory-row class in the pattern grouping. |
 
-**Note for follow-up:** The IconButton-with-avatar pattern from #1+#2 is now proven and reusable. Cat 2c #17 (`TopUtilityBar.tsx:136` user avatar menu toggle) was deferred to Batch 6 with the same shape — it can be picked up in a small follow-up batch (`task/bds-cleanup-utility-bar-avatar`) without further design input.
+**Note for follow-up:** The IconButton-with-avatar pattern from #1+#2 was applied to Cat 2c #17 (TopUtilityBar) in Batch 6b — see Cat 2c table.
 
 ### Category 4 — Unclassed wrapper divs in BDS-imitating components (0)
 
@@ -254,7 +255,8 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (PR #58).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
 | 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
-| 6 | `task/bds-cleanup-clickable-divs-3` ✅ | Partial Cat 3 — 2 of 4 `<div role="button">` swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). | 2 files | **Landed (this PR).** Re-scoped from 4 → 2 after measuring BDS coverage: `IconButton` accepts a `ReactNode` icon and centers a 28×28 `UserAvatar` cleanly inside the 32×32 button. Cat 3 #3 (checklist row) and #4 (inventory request row) need pattern decisions and deferred — see Cat 3 status table. Follow-up: Cat 2c #17 (TopUtilityBar avatar) is the same shape as Batch 6 and can be picked up in a small follow-up. |
+| 6 | `task/bds-cleanup-clickable-divs-3` ✅ | Partial Cat 3 — 2 of 4 `<div role="button">` swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). | 2 files | **Landed (PR #60).** Re-scoped from 4 → 2 after measuring BDS coverage: `IconButton` accepts a `ReactNode` icon and centers a 28×28 `UserAvatar` cleanly inside the 32×32 button. Cat 3 #3 (checklist row) and #4 (inventory request row) need pattern decisions and deferred — see Cat 3 status table. |
+| 6b | `task/bds-cleanup-utility-bar-avatar` ✅ | Final Cat 2c — #17 TopUtilityBar user-avatar menu toggle swapped to BDS `IconButton size=md`. | 1 file | **Landed (this PR).** Reuses the Batch 6 pattern at md size (40px UserAvatar, 40×40 button — exact alignment, no overflow). Cat 2c is now fully resolved except #15 (VendorSidebar nav), which always belonged under "BDS NavItem promotion" rather than "toolbar buttons". |
 | 7 | `bds-promotion: TabBar` | Promote tab bar to BDS, then swap `PageHeader` (Category 2d #23 / Category 7). | BDS PR + 1 file in renew-pms | Cross-repo. Coordinate with BDS owner. |
 | 8 | `bds-promotion: InteractiveListItem` | Promote the EntityRow pattern. Then swap 6 call sites (Categories 1, 2a-avatar, 2d-persona, 3-#4). | BDS PR + 5 files in renew-pms | Cross-repo. Highest design surface area — pair with Figma spec before building. |
 
