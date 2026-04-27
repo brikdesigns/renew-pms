@@ -9,7 +9,9 @@ import { flattenMember } from '@/lib/flatten-member';
 /**
  * GET /api/members
  * Returns all practice members with profile and role/department details.
- * Accessible by all authenticated users.
+ * Accessible by all authenticated users. Each member also includes
+ * has_signed_in (derived from auth.users.last_sign_in_at) so the admin
+ * UI can offer "Resend invite" for accounts that haven't accepted yet.
  */
 export async function GET() {
   const supabase = await createClient();
@@ -33,7 +35,26 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json((data ?? []).map(flattenMember));
+  // Look up auth.users.last_sign_in_at to flag never-accepted invites.
+  // listUsers paginates; perPage=1000 covers MVP-scale single-tenant use.
+  const { data: authData, error: authErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (authErr) {
+    console.error('[members] listUsers failed (has_signed_in defaulting to true):', authErr.message);
+  }
+  const signedInIds = new Set(
+    (authData?.users ?? [])
+      .filter((u) => u.last_sign_in_at)
+      .map((u) => u.id),
+  );
+
+  const flattened = (data ?? []).map((m) => ({
+    ...flattenMember(m),
+    // If listUsers failed, default to true so we don't surface a misleading
+    // "never accepted" badge for users who actually have signed in.
+    has_signed_in: authErr ? true : signedInIds.has(m.user_id),
+  }));
+
+  return NextResponse.json(flattened);
 }
 
 /**

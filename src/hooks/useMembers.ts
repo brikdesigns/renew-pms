@@ -20,6 +20,10 @@ export interface Member {
   shift: string;
   is_active: boolean;
   joined_at: string;
+  /** True iff the user has logged in at least once (auth.users.last_sign_in_at != null).
+   *  Optional because endpoints that mutate a single member (PATCH, invite response) don't
+   *  re-query auth state. Treat undefined as "unknown — don't render auth-specific UI". */
+  has_signed_in?: boolean;
 }
 
 export function useMembers() {

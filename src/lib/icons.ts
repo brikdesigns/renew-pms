@@ -46,6 +46,7 @@ export const icon = {
   arrowRight:   'ph:arrow-right-fill',
   chevronLeft:  'ph:caret-left-fill',
   chevronRight: 'ph:caret-right-fill',
+  paperPlane:   'ph:paper-plane-tilt-fill',
 
   // UI chrome
   bell:         'ph:bell-fill',
