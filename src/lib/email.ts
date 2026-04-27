@@ -229,3 +229,48 @@ export function staffVendorReplyEmail(opts: {
     `),
   };
 }
+
+// ─── Auth email templates ──────────────────────────────────────────────────
+
+/** Sent when an admin invites a new staff member. Link sets their password and signs them in. */
+export function inviteAcceptanceEmail(opts: {
+  firstName: string;
+  practiceName: string;
+  inviterName: string;
+  actionLink: string;
+  expiresInDays: number;
+}): { subject: string; html: string } {
+  return {
+    subject: `You've been invited to ${opts.practiceName} on Renew PMS`,
+    html: emailWrapper(`
+      <h2 style="margin: 0 0 8px;">Welcome to Renew PMS</h2>
+      <p style="margin: 0 0 16px;">Hi ${opts.firstName},</p>
+      <p style="margin: 0 0 16px;"><strong>${opts.inviterName}</strong> has invited you to join <strong>${opts.practiceName}</strong> on Renew PMS — your dental practice's management and training platform.</p>
+      <p style="margin: 0 0 16px;">Click below to set your password and sign in:</p>
+      <p style="margin: 24px 0;">
+        <a href="${opts.actionLink}" style="${CTA_STYLE}">Accept invitation</a>
+      </p>
+      <p style="font-size: 13px; color: #888;">This invitation expires in ${opts.expiresInDays} days. If it expires, ask your practice admin to resend it.</p>
+    `),
+  };
+}
+
+/** Sent in response to a forgot-password request. Link signs them in and lets them set a new password. */
+export function passwordResetEmail(opts: {
+  firstName: string;
+  actionLink: string;
+  expiresInDays: number;
+}): { subject: string; html: string } {
+  return {
+    subject: 'Reset your Renew PMS password',
+    html: emailWrapper(`
+      <h2 style="margin: 0 0 8px;">Reset your password</h2>
+      <p style="margin: 0 0 16px;">Hi ${opts.firstName},</p>
+      <p style="margin: 0 0 16px;">We received a request to reset the password for your Renew PMS account.</p>
+      <p style="margin: 24px 0;">
+        <a href="${opts.actionLink}" style="${CTA_STYLE}">Reset password</a>
+      </p>
+      <p style="margin: 0 0 16px; font-size: 13px; color: #888;">This link expires in ${opts.expiresInDays} days. If you didn't request this reset, you can safely ignore this email — your password won't change.</p>
+    `),
+  };
+}
