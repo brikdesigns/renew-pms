@@ -4,19 +4,18 @@
 **Last updated:** 2026-04-25
 **Owner:** Nick Stanerson
 **Source:** Synthesized from [Notion — Renew JBTD](https://www.notion.so/34d97d34ed2880d0bedccb542109dce8) (40 jobs), Renew User Stories (1 entry), Renew Product Requirements (1 entry), and renew-pms codebase memory.
+**Broader catalog:** [Notion — Renew Workflows](https://www.notion.so/Workflows-34e97d34ed2880e7a0bfe6f74d41b876) — full surface-area catalog of every supported user flow, indexed by service and role. This file is the prioritized pre-launch subset; the Notion DB is the team-facing index.
 
 ---
 
 ## Coverage gap (raised at synthesis time, 2026-04-25)
 
-The Renew POS section in [Notion — Product Content](https://www.notion.so/34d97d34ed2880c7a7e3eaa48fc5da7e) has rich JBTD content (40 jobs) but the **User Stories** and **Product Requirements** databases each contain a single entry — both about "Recurring task daily appearance logic." There is no dedicated **Workflows** entry under Renew POS (Brik Client Portal has one).
+The Renew POS section in [Notion — Product Content](https://www.notion.so/34d97d34ed2880c7a7e3eaa48fc5da7e) has rich JBTD content (40 jobs) but the **User Stories** and **Product Requirements** databases each contain a single entry — both about "Recurring task daily appearance logic." The fact that *recurring task generation* is the only workflow appearing in all three Notion DBs is itself a signal — it is the most-watched, most-fragile surface area. Weighted accordingly in Tier 1 below.
 
-Two pre-launch follow-ups (do not block QA work):
+Two pre-launch follow-ups:
 
 1. Backfill the **Renew Product Requirements** DB so each Tier 0/1 workflow below has a corresponding requirement entry.
-2. Add a **Workflows** entry under Renew POS in the Product Content database for parity with Brik Client Portal. Reference this file or its merged location.
-
-The fact that *recurring task generation* is the only workflow appearing in all three Notion DBs is itself a signal — it is the most-watched, most-fragile surface area. Weighted accordingly in Tier 1 below.
+2. ~~Add a **Workflows** entry under Renew POS in the Product Content database for parity with Brik Client Portal.~~ ✅ **Done 2026-04-26** — see [Notion — Renew Workflows](https://www.notion.so/Workflows-34e97d34ed2880e7a0bfe6f74d41b876). 36 workflows seeded (14 Tier 0+1 fully, 22 Tier 2-4 stubs), grouped by service. The DB is the broader catalog; this file remains the pre-launch must-verify subset.
 
 ---
 
