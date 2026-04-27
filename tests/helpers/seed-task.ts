@@ -93,3 +93,33 @@ export async function deleteTask(id: string): Promise<void> {
   await supabase.from('task_checklist_items').delete().eq('task_id', id);
   await supabase.from('tasks').delete().eq('id', id);
 }
+
+export interface SeedChecklistItemInput {
+  label: string;
+  sortOrder?: number;
+}
+
+/** Insert checklist items on a task and return their ids in sort_order. */
+export async function seedChecklistItems(
+  taskId: string,
+  practiceId: string,
+  items: SeedChecklistItemInput[],
+): Promise<string[]> {
+  const supabase = adminClient();
+  const rows = items.map((it, idx) => ({
+    task_id: taskId,
+    practice_id: practiceId,
+    label: it.label,
+    sort_order: it.sortOrder ?? idx,
+    is_completed: false,
+  }));
+  const { data, error } = await supabase
+    .from('task_checklist_items')
+    .insert(rows)
+    .select('id, sort_order')
+    .order('sort_order');
+  if (error || !data) {
+    throw new Error(`Failed to seed checklist items: ${error?.message ?? 'no rows'}`);
+  }
+  return data.map((r) => r.id);
+}
