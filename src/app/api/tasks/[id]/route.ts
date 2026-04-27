@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { resolveTaskScope, taskInScope } from '@/lib/task-scope';
 
 /**
  * GET /api/tasks/[id]
@@ -27,6 +28,7 @@ export async function GET(
     .from('tasks')
     .select(`
       id, title, status, priority, frequency, due_date,
+      assigned_to, assigned_department, assigned_role_id,
       task_types(name),
       departments!tasks_assigned_department_fkey(name, color),
       rooms(name),
@@ -45,6 +47,16 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Authorize visibility — return 404 (not 403) so we don't leak existence.
+  const scope = await resolveTaskScope(admin, authUser, practiceId);
+  if (!taskInScope(scope, {
+    assigned_to: data.assigned_to,
+    assigned_department: data.assigned_department,
+    assigned_role_id: data.assigned_role_id,
+  })) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
 
   const first = <T,>(v: T | T[] | null): T | null => Array.isArray(v) ? (v[0] ?? null) : v;
 
@@ -130,6 +142,26 @@ export async function PATCH(
   }
 
   const admin = createAdminClient();
+
+  // Authorize: callers can only PATCH tasks they're allowed to see.
+  const { data: existing, error: existingErr } = await admin
+    .from('tasks')
+    .select('id, assigned_to, assigned_department, assigned_role_id')
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
+  if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+
+  const scope = await resolveTaskScope(admin, authUser, practiceId);
+  if (!taskInScope(scope, {
+    assigned_to: existing.assigned_to,
+    assigned_department: existing.assigned_department,
+    assigned_role_id: existing.assigned_role_id,
+  })) {
+    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+  }
+
   const { data, error } = await admin
     .from('tasks')
     .update(updates)
