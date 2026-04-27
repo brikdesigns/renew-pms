@@ -83,7 +83,7 @@ The generator (`generate_daily_pool_tasks`, migration 00031) reads Postgres `cur
 | 1.4 | **Assign to role (not just person)** | Admin assigns task to a `practice_role` → all members of that role see it OR triage view shows unassigned-by-role correctly. | Playwright |
 | 1.5 | **Recurring shift tasks (opening/closing)** | Staff sees their shift's recurring tasks at start of shift, ordered correctly. | Playwright |
 | 1.6 | **Add notes to a task** | Staff adds note → persists → admin sees it on review. | Playwright |
-| 1.7 | **Status transitions** | `not_started → in_progress → awaiting_approval → completed`; `blocked` and `skipped` reachable; `overdue` triggers when past `due_at`. | Playwright (state-table sweep) |
+| 1.7 | **Status transitions** | `not_started → in_progress → awaiting_approval → completed`; `blocked` and `skipped` reachable; `overdue` triggers when past `due_at`. ⚠ **Auto-overdue gap**: no app or DB trigger flips a task's status TO `overdue`; the UI derives "overdue" at query time for past-due daily/per_shift tasks but the column itself stays at its prior value. | Playwright — [`tests/e2e/tasks/status-transitions.spec.ts`](../../tests/e2e/tasks/status-transitions.spec.ts) (forward path, completed_at side-effects, blocked/skipped branches, every enum value accepted). Auto-overdue test is `test.skip`-marked until the trigger is implemented. |
 
 ## Tier 2 — Frequent secondary loops
 
