@@ -50,15 +50,27 @@ A `<button>` whose children are an entire layout (avatar + name + metadata + tra
 
 Most concentrate in three patterns: dropdown menu items, sheet drill-down nav-links, and one-off toggle buttons.
 
-#### 2a. Menu items (6)
-| # | File | Pattern |
-|---|------|---------|
-| 1 | [src/app/(auth)/settings/templates/TemplatesTable.tsx:379](../../src/app/(auth)/settings/templates/TemplatesTable.tsx#L379) | Menu item: icon + label, `flex w-full` |
-| 2 | [src/app/(auth)/tasks/TasksClient.tsx:630](../../src/app/(auth)/tasks/TasksClient.tsx#L630) | Add-menu item: icon + div |
-| 3 | [src/app/(auth)/requests/MyRequestsList.tsx:104](../../src/app/(auth)/requests/MyRequestsList.tsx#L104) | Category menu item |
-| 4 | [src/app/(auth)/requests/RequestsClient.tsx:356](../../src/app/(auth)/requests/RequestsClient.tsx#L356) | Menu item: avatar + label |
-| 5 | [src/app/(auth)/requests/RequestsClient.tsx:555](../../src/app/(auth)/requests/RequestsClient.tsx#L555) | Category menu item |
-| 6 | [src/components/TaskAssigneeAvatar.tsx:30](../../src/components/TaskAssigneeAvatar.tsx#L30) | Menu item: avatar + label |
+#### 2a. Menu items — 4 open / 6 total
+
+Original audit framed all 6 as "swap raw `<button>` to BDS Menu" but Batch 4 inspection split them into two distinct shapes:
+
+**Avatar + label (assignee picker)** — fits BDS `MenuItem` directly. Avatar passed via `item.icon` (`ReactNode`).
+
+| # | File | Status |
+|---|------|--------|
+| 4 | ~~`RequestsClient.tsx:356` AssignMenuItem~~ | ✅ Batch 4 — local component deleted, swapped to BDS `<MenuItem>` with stopPropagation in spread props. (Audit had originally mislabeled this as "FilterPill" — verified it's actually a sibling of #6, same shape.) |
+| 6 | ~~`TaskAssigneeAvatar.tsx:30` MenuItem~~ | ✅ Batch 4 — local component deleted, swapped to BDS `<MenuItem>`. |
+
+**Icon + label + description (add-menu category picker)** — BDS `MenuItemData` only exposes `label: string` + `icon?: ReactNode`. The 2-line shape with description is not representable. **Deferred to a future BDS `MenuItemData.description` promotion (cross-repo).**
+
+| # | File | Pattern | Status |
+|---|------|---------|--------|
+| 1 | [src/app/(auth)/settings/templates/TemplatesTable.tsx:379](../../src/app/(auth)/settings/templates/TemplatesTable.tsx#L379) | Add-template menu — `{label, desc, icon}` | Deferred (BDS gap) |
+| 2 | [src/app/(auth)/tasks/TasksClient.tsx:630](../../src/app/(auth)/tasks/TasksClient.tsx#L630) | Add-task menu — same shape | Deferred (BDS gap) |
+| 3 | [src/app/(auth)/requests/MyRequestsList.tsx:104](../../src/app/(auth)/requests/MyRequestsList.tsx#L104) | Add-request category menu — same shape | Deferred (BDS gap) |
+| 5 | [src/app/(auth)/requests/RequestsClient.tsx:555](../../src/app/(auth)/requests/RequestsClient.tsx#L555) | Add-request category menu (board view) — same shape | Deferred (BDS gap) |
+
+**Note on the deferred 4:** the entire dropdown panel is also hand-rolled (positioned `<div>` with `boxShadow` and `minWidth`), not using BDS `Menu`. A full fix needs both: (1) BDS `MenuItemData.description` (the item shape), and (2) BDS `Menu` adoption for the panel. Until BDS exposes both, swapping piecewise creates inconsistency.
 
 #### 2b. Sheet drill-down nav-links (8)
 Inline links inside read-mode sheet data that navigate to another sheet.
@@ -212,7 +224,8 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 1 | `task/bds-cleanup-css-properties` ✅ | Remove the 4 interactive `CSSProperties` exports (Category 8). Replace each call site with BDS `Button`. | 4 files | **Landed (commit `ce8179c`).** Visual change: ViewContactSheet vendor link rendered in BDS ghost text color rather than prior brand-purple. Inline-link affordance refinement deferred to Batch 5. |
 | 2 | `task/bds-cleanup-toolbar-buttons-2c` ✅ | Pattern D — swap sidebar bottom buttons (theme + help) to `IconButton`. | 2 files | **Landed (this PR).** Resolves 3 of 8 Cat 2c (#16, #18, #19). Cat 2c remainder: #20–#22 already done in Batch 1; #15 deferred to BDS NavItem promotion; #17 deferred to Batch 6 (clickable-avatar pattern). |
 | 3 | `task/bds-cleanup-font-heading-misuse-6` | Fix the 5 `font.family.heading` + sub-18px style objects. Rename variables from `headingStyle` → `titleStyle` while there. | 5 files | Caught by manual review; not currently in `token-audit.sh`. Opportunity to add an audit rule. |
-| 4 | `task/bds-cleanup-menu-items-2a` | Pattern B — confirm BDS `MenuItem` exists, then swap 6 menu items. If absent, promote first. | 6 files | Storybook MCP check before starting. |
+| 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (this PR).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
+| 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
 | 6 | `task/bds-cleanup-clickable-divs-3` | Refactor 3 of 4 `<div onClick>` to BDS components (the avatar ones become `IconButton`; the checklist item becomes a proper checkbox-row component). | 4 files | The `ViewTaskSheet` checklist row is the trickiest — likely needs its own BDS pattern. |
 | 7 | `bds-promotion: TabBar` | Promote tab bar to BDS, then swap `PageHeader` (Category 2d #23 / Category 7). | BDS PR + 1 file in renew-pms | Cross-repo. Coordinate with BDS owner. |
