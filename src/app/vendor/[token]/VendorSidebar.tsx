@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tooltip } from '@brikdesigns/bds';
+import { IconButton, Tooltip } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import { font, color, motion, state, gap, space, border } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
@@ -87,22 +87,6 @@ const bottomGroupStyle: CSSProperties = {
   gap: gap.lg,
 };
 
-function bottomBtnStyle(hovered: boolean): CSSProperties {
-  return {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: border.radius.sm,
-    backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
-    flexShrink: 0,
-    border: 'none',
-    cursor: 'pointer',
-    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
-  };
-}
-
 const profileCircleStyle: CSSProperties = {
   width: '40px',
   height: '40px',
@@ -143,7 +127,6 @@ interface VendorSidebarProps {
 export function VendorSidebar({ activeSection, onNavigate, vendorContactName }: VendorSidebarProps) {
   const { isDark, toggle } = useTheme();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [hoveredTheme, setHoveredTheme] = useState(false);
 
   const initials = vendorContactName
     ? vendorContactName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -193,15 +176,13 @@ export function VendorSidebar({ activeSection, onNavigate, vendorContactName }: 
       <div style={bottomGroupStyle}>
         {/* Theme toggle */}
         <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <button
+          <IconButton
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
+            label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             onClick={toggle}
-            style={bottomBtnStyle(hoveredTheme)}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onMouseEnter={() => setHoveredTheme(true)}
-            onMouseLeave={() => setHoveredTheme(false)}
-          >
-            <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
-          </button>
+          />
         </Tooltip>
 
         {/* Vendor avatar */}

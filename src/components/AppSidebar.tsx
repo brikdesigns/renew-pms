@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tooltip } from '@brikdesigns/bds';
+import { IconButton, Tooltip } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-import { font, color, motion, state, gap, space, border } from '@/lib/tokens';
+import { font, color, motion, state, gap, space } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -91,22 +91,6 @@ const bottomGroupStyle: CSSProperties = {
   gap: gap.lg,
 };
 
-function bottomBtnStyle(hovered: boolean): CSSProperties {
-  return {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: border.radius.sm,
-    backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
-    flexShrink: 0,
-    border: 'none',
-    cursor: 'pointer',
-    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
-  };
-}
-
 // ─── Nav definition ──────────────────────────────────────────────────────────
 
 interface NavItem {
@@ -140,8 +124,6 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const { isDark, toggle } = useTheme();
   const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [hoveredTheme, setHoveredTheme] = useState(false);
-  const [hoveredHelp, setHoveredHelp] = useState(false);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
@@ -197,26 +179,22 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
       {/* Bottom actions */}
       <div style={bottomGroupStyle}>
         <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <button
+          <IconButton
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
+            label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             onClick={toggle}
-            style={bottomBtnStyle(hoveredTheme)}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onMouseEnter={() => setHoveredTheme(true)}
-            onMouseLeave={() => setHoveredTheme(false)}
-          >
-            <Icon icon={isDark ? icon.sun : icon.moon} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
-          </button>
+          />
         </Tooltip>
         <Tooltip content="Help & User Guide" placement="right" delay={600}>
-          <button
+          <IconButton
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={icon.help} />}
+            label="Help & User Guide"
             onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
-            style={bottomBtnStyle(hoveredHelp)}
-            aria-label="Help & User Guide"
-            onMouseEnter={() => setHoveredHelp(true)}
-            onMouseLeave={() => setHoveredHelp(false)}
-          >
-            <Icon icon={icon.help} style={{ fontSize: font.size.body.sm, color: color.text.primary }} />
-          </button>
+          />
         </Tooltip>
       </div>
     </aside>
