@@ -215,7 +215,12 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { ...flattenMember(member), email_status: emailStatus },
+    {
+      ...flattenMember(member),
+      // Freshly created via generateLink — they cannot have signed in yet
+      has_signed_in: false,
+      email_status: emailStatus,
+    },
     { status: 201 },
   );
 }

@@ -155,6 +155,20 @@ export function UsersTable() {
   const handleViewClose = () => { setViewOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
 
+  const handleResendInvite = async (m: Member) => {
+    const res = await fetch(`/api/members/${m.id}/resend-invite`, { method: 'POST' });
+    if (res.ok) {
+      showToast({
+        title: 'Invite resent',
+        description: `A new invite link is on its way to ${m.email.toLowerCase()}.`,
+        variant: 'success',
+      });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to resend invite' }));
+      showToast({ title: 'Could not resend invite', description: err.error, variant: 'error' });
+    }
+  };
+
   const handleSave = async (data: UserFormData) => {
     if (editing) {
       const res = await fetch(`/api/members/${editing.id}`, {
@@ -195,8 +209,15 @@ export function UsersTable() {
         }),
       });
       if (res.ok) {
-        const newMember: Member = await res.json();
+        const newMember: Member & { email_status?: 'sent' | 'failed' } = await res.json();
         setMembers((prev) => [...prev, newMember]);
+        if (newMember.email_status === 'failed') {
+          showToast({
+            title: 'Member created — invite email failed',
+            description: `${newMember.first_name} was added but didn't receive the invite email. Try the Resend invite action on their row.`,
+            variant: 'error',
+          });
+        }
       } else {
         const err = await res.json().catch(() => ({ error: 'Failed to invite user' }));
         showToast({ title: 'Error', description: err.error, variant: 'error' });
@@ -317,6 +338,9 @@ export function UsersTable() {
                   </TableCell>
                   <TableCell>
                     <div style={actionBtnGroup}>
+                      {m.has_signed_in === false && (
+                        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.paperPlane} />} label={`Resend invite to ${m.first_name}`} onClick={() => handleResendInvite(m)} />
+                      )}
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
