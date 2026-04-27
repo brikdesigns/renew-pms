@@ -36,7 +36,13 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname === '/login';
   const isApiDebug = pathname.startsWith('/api/debug');
   const isVendorRoute = pathname.startsWith('/vendor/') || pathname.startsWith('/api/vendor/');
-  const isPublicRoute = pathname === '/login' || pathname === '/' || isApiDebug || isVendorRoute;
+  const isAuthFlow =
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    pathname === '/api/auth/forgot-password' ||
+    pathname === '/api/auth/callback';
+  const isPublicRoute =
+    pathname === '/login' || pathname === '/' || isApiDebug || isVendorRoute || isAuthFlow;
 
   // Redirect unauthenticated users to login
   if (!user && !isPublicRoute) {
