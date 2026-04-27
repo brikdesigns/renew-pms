@@ -113,14 +113,26 @@ export function buildAssignedScopeOr(scope: TaskScope): string | null {
 /**
  * Build the .or() clause body for pool (unassigned) tasks under this scope.
  *
- * V1 decision: pool tasks are visible to everyone. They're operational shared
- * work (open the door, prep the sterilizer) and today's seed data doesn't tag
- * them with a department. Once pool tasks carry `assigned_department` reliably,
- * tighten this for managers.
+ *  - admin   → null (sees all pool tasks)
+ *  - staff   → null (universal pool — every staff member can pick up any
+ *              shared work, regardless of department)
+ *  - manager → universal pool (no dept tag) + their department's pool (tagged
+ *              with dept or with a role in their dept). Other depts' tagged
+ *              pool tasks are excluded.
+ *
+ * Today's seed data has 0 pool tasks tagged with a dept, so manager output
+ * matches universal-pool behavior. Once authoring flows start tagging pool
+ * tasks, the dept clauses kick in automatically — no further code changes.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function buildPoolScopeOr(_scope: TaskScope): string | null {
-  return null;
+export function buildPoolScopeOr(scope: TaskScope): string | null {
+  if (scope.kind === 'all' || scope.kind === 'member') return null;
+  // department
+  const parts: string[] = [
+    `assigned_department.is.null`,
+    `assigned_department.eq.${scope.departmentId}`,
+  ];
+  if (scope.roleIds.length > 0) parts.push(`assigned_role_id.in.(${scope.roleIds.join(',')})`);
+  return parts.join(',');
 }
 
 /**
@@ -136,11 +148,11 @@ export function buildVisibilityOr(scope: TaskScope): string | null {
   if (scope.kind === 'member') {
     return `assigned_to.eq.${scope.memberId},assigned_to.is.null`;
   }
-  // department — include pool tasks (assigned_to IS NULL) so the dashboard
-  // matches the tasks-page rule that pool work is universal in V1.
+  // department — own dept's tasks (any of the 3 ways) + universal pool (no
+  // dept tag). Other depts' tagged pool tasks are excluded.
   const parts: string[] = [
     `assigned_department.eq.${scope.departmentId}`,
-    `assigned_to.is.null`,
+    `and(assigned_to.is.null,assigned_department.is.null)`,
   ];
   if (scope.memberIds.length > 0) parts.push(`assigned_to.in.(${scope.memberIds.join(',')})`);
   if (scope.roleIds.length > 0) parts.push(`assigned_role_id.in.(${scope.roleIds.join(',')})`);
@@ -161,14 +173,22 @@ export function taskInScope(
   },
 ): boolean {
   if (scope.kind === 'all') return true;
-  // Pool tasks (no assignee) are universal in V1 — see buildPoolScopeOr.
-  if (task.assigned_to === null) return true;
+
   if (scope.kind === 'member') {
+    // Staff: own assigned + any pool task (universal pool).
+    if (task.assigned_to === null) return true;
     return task.assigned_to === scope.memberId;
   }
-  // department
+
+  // department — manager
   if (task.assigned_department === scope.departmentId) return true;
-  if (scope.memberIds.includes(task.assigned_to)) return true;
+  if (task.assigned_to && scope.memberIds.includes(task.assigned_to)) return true;
   if (task.assigned_role_id && scope.roleIds.includes(task.assigned_role_id)) return true;
+  // Universal pool — pool task with no dept/role tag at all.
+  if (
+    task.assigned_to === null &&
+    task.assigned_department === null &&
+    task.assigned_role_id === null
+  ) return true;
   return false;
 }
