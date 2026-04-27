@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 // ─── Resend client ─────────────────────────────────────────────────────────
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? 'Renew PMS <notifications@renew.brikdesigns.com>';
+const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? 'Renew PMS <renew@brikdesigns.com>';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
