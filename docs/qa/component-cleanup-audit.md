@@ -34,15 +34,16 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 28 open / 42 originally / 37 verified across 9 categories
+## Findings — 26 open / 42 originally / 37 verified across 9 categories
 
 > **Batch progress:**
 > - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
 > - Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`, `987adfe`): 3 of 8 Cat 2c → resolved.
-> - Batch 3 (`task/bds-cleanup-title-naming`, this PR): re-scoped Cat 6 from 5 false-positive size violations to 4 naming-drift renames — all resolved. Cat 6 net: -5 false-positives + 4 real-issues = audit total **42 → 41**, but verified-issue total stays **37** since the 5 size violations were never real. Audit-script regression rule (`token-audit.sh` check #14) added in same PR.
+> - Batch 3 (`task/bds-cleanup-title-naming`, PR #56): re-scoped Cat 6 from 5 false-positive size violations to 4 naming-drift renames — all resolved. Cat 6 net: -5 false-positives + 4 real-issues = audit total **42 → 41**, but verified-issue total stays **37** since the 5 size violations were never real. Audit-script regression rule (`token-audit.sh` check #14) added in same PR.
 > - Batch 4 (`task/bds-cleanup-menu-items-2a`, PR #58): partial Cat 2a — 2 of 6 swapped to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). 4 add-menu dropdowns deferred to Batch 4b (BDS `MenuItemData.description` promotion, cross-repo).
+> - Batch 6 (`task/bds-cleanup-clickable-divs-3`, this PR): partial Cat 3 — 2 of 4 swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). Re-scoped from 4 → 2 after measuring: BDS `IconButton` works for the avatar wrappers (28px UserAvatar centers cleanly inside the 32px sm button), but the checklist row (#3) and inventory request row (#4) need their own BDS patterns — see triage row 6 / row 8 notes.
 >
-> Open count after Batches 1–4: **28**.
+> Open count after Batches 1–4 + 6: **26**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -114,14 +115,16 @@ Inline links inside read-mode sheet data that navigate to another sheet.
 | 26 | [src/components/DevPersonaSwitcher.tsx:297](../../src/components/DevPersonaSwitcher.tsx#L297) | Persona row: avatar + name + badge |
 | 27 | TrainingCard.tsx duplicate (Category 1) | — |
 
-### Category 3 — `<div onClick>` (clickable divs) (4)
+### Category 3 — `<div onClick>` (clickable divs) — 2 open / 4 total
 
-| # | File | Pattern |
-|---|------|---------|
-| 1 | [src/components/TaskAssigneeAvatar.tsx:145-160](../../src/components/TaskAssigneeAvatar.tsx#L145-L160) | `<div role="button">` wrapping avatar |
-| 2 | [src/app/(auth)/requests/RequestsClient.tsx:280-295](../../src/app/(auth)/requests/RequestsClient.tsx#L280-L295) | `<div role="button">` wrapping avatar / unassigned icon |
-| 3 | [src/components/ViewTaskSheet.tsx:376-394](../../src/components/ViewTaskSheet.tsx#L376-L394) | Checklist item: checkbox + label, completion state styled by parent |
-| 4 | [src/components/ViewInventorySheet.tsx:243-250](../../src/components/ViewInventorySheet.tsx#L243-L250) | Request row: icon + title + metadata |
+| # | File | Pattern | Status |
+|---|------|---------|--------|
+| 1 | ~~`TaskAssigneeAvatar.tsx:117-132` `<div role="button">` wrapping avatar~~ | — | ✅ Batch 6 — `IconButton variant=ghost size=sm` with the avatar passed as `icon`. The `.bds-icon-button__icon` span (16×16 logical) flex-centers a 28×28 UserAvatar inside the 32×32 button; visually clean, hover/focus states now BDS-themed. `aria-label` set to assignee name (or `"Assign to"` when unassigned). |
+| 2 | ~~`RequestsClient.tsx:280-295` `<div role="button">` wrapping avatar / unassigned icon~~ | — | ✅ Batch 6 — same swap as #1. |
+| 3 | [src/components/ViewTaskSheet.tsx:376-394](../../src/components/ViewTaskSheet.tsx#L376-L394) | Checklist item: checkbox + label, completion state styled by parent | Deferred — BDS `Checkbox` is an inline `<label>`-wrapped input with no row-level chrome (background, padding, completion-state styling). Current row is a clickable surface with three concerns (toggle target, completion bg, opacity-while-toggling). Needs either: (a) row-styling around BDS `Checkbox`, (b) a BDS `ChecklistItem` promotion. Pattern decision required. |
+| 4 | [src/components/ViewInventorySheet.tsx:243-277](../../src/components/ViewInventorySheet.tsx#L243-L277) | Request row: icon + title + metadata + caret | Deferred — Pattern A (`InteractiveListItem` BDS promotion, triage row 8). Same shape as the inventory-row class in the pattern grouping. |
+
+**Note for follow-up:** The IconButton-with-avatar pattern from #1+#2 is now proven and reusable. Cat 2c #17 (`TopUtilityBar.tsx:136` user avatar menu toggle) was deferred to Batch 6 with the same shape — it can be picked up in a small follow-up batch (`task/bds-cleanup-utility-bar-avatar`) without further design input.
 
 ### Category 4 — Unclassed wrapper divs in BDS-imitating components (0)
 
@@ -188,15 +191,15 @@ No `__heading` class names in renew-pms code. (Existing `__subtitle` references 
 
 ## Pattern grouping → BDS promotion candidates
 
-The 35 interactive misuses (Categories 1+2+3) collapse into **five reusable patterns**. Three are existing BDS components (straight swaps); two are net-new BDS promotion candidates.
+The originally-identified interactive misuses (Categories 1+2+3) collapsed into **five reusable patterns**. Three are existing BDS components (straight swaps); two are net-new BDS promotion candidates.
 
 ### A. `EntityRow` / `InteractiveListItem` *(new BDS component)*
 
 A clickable horizontal row: leading icon-or-avatar + title + optional subtitle + optional trailing badge/action. The whole row is the click target.
 
-**Covers:** Category 1 (TrainingCard), 2a #4 + #6 (avatar menu items), 2d #26 (DevPersonaSwitcher persona), 3 #4 (ViewInventorySheet request row), 3 #1 + #2 (clickable avatars).
+**Covers (post-Batch 6 scope):** Category 1 (TrainingCard), 2d #26 (DevPersonaSwitcher persona), 3 #4 (ViewInventorySheet request row). Original scope also listed 2a #4 + #6 and 3 #1 + #2 — those four resolved via BDS `MenuItem` (Batch 4) and BDS `IconButton` (Batch 6) instead. The remaining three are still the strongest case for an `InteractiveListItem` promotion (full row click target with leading visual + title + subtitle + trailing).
 
-**Why BDS, not local:** appears in ≥4 surfaces (training, tasks, requests, inventory), each currently rolls its own. Already three similar lines × six places — past the abstraction threshold.
+**Why BDS, not local:** appears in ≥3 surfaces (training, settings/dev, inventory) each currently rolls its own. Past the abstraction threshold.
 
 **Proposed API:**
 ```tsx
@@ -251,7 +254,7 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (PR #58).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
 | 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
-| 6 | `task/bds-cleanup-clickable-divs-3` | Refactor 3 of 4 `<div onClick>` to BDS components (the avatar ones become `IconButton`; the checklist item becomes a proper checkbox-row component). | 4 files | The `ViewTaskSheet` checklist row is the trickiest — likely needs its own BDS pattern. |
+| 6 | `task/bds-cleanup-clickable-divs-3` ✅ | Partial Cat 3 — 2 of 4 `<div role="button">` swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). | 2 files | **Landed (this PR).** Re-scoped from 4 → 2 after measuring BDS coverage: `IconButton` accepts a `ReactNode` icon and centers a 28×28 `UserAvatar` cleanly inside the 32×32 button. Cat 3 #3 (checklist row) and #4 (inventory request row) need pattern decisions and deferred — see Cat 3 status table. Follow-up: Cat 2c #17 (TopUtilityBar avatar) is the same shape as Batch 6 and can be picked up in a small follow-up. |
 | 7 | `bds-promotion: TabBar` | Promote tab bar to BDS, then swap `PageHeader` (Category 2d #23 / Category 7). | BDS PR + 1 file in renew-pms | Cross-repo. Coordinate with BDS owner. |
 | 8 | `bds-promotion: InteractiveListItem` | Promote the EntityRow pattern. Then swap 6 call sites (Categories 1, 2a-avatar, 2d-persona, 3-#4). | BDS PR + 5 files in renew-pms | Cross-repo. Highest design surface area — pair with Figma spec before building. |
 

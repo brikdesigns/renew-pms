@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
-import { Tag, Chip, Button, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Chip, Button, IconButton, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { Menu, MenuItem } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
@@ -179,7 +179,7 @@ function AssigneeAvatar({
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-  const avatarRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
@@ -243,7 +243,7 @@ function AssigneeAvatar({
     return () => document.removeEventListener('keydown', handler);
   }, [open, close]);
 
-  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (open) { close(); } else { openMenu(); }
@@ -277,22 +277,22 @@ function AssigneeAvatar({
   return (
     <>
       <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
-        <div
+        <IconButton
           ref={avatarRef}
-          style={{ cursor: 'pointer' }}
+          variant="ghost"
+          size="sm"
+          label={assigneeName ?? 'Assign to'}
           onClick={handleToggle}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
-        >
-          {assigneeName ? (
-            <UserAvatar name={assigneeName} size="sm" />
-          ) : (
-            <div style={unassignedAvatarStyle}>
-              <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
-            </div>
-          )}
-        </div>
+          icon={
+            assigneeName ? (
+              <UserAvatar name={assigneeName} size="sm" />
+            ) : (
+              <div style={unassignedAvatarStyle}>
+                <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
+              </div>
+            )
+          }
+        />
       </Tooltip>
       {open && pos && createPortal(
         <div
