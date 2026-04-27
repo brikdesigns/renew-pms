@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { resolveTaskScope, buildVisibilityOr } from '@/lib/task-scope';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -43,9 +44,11 @@ export async function GET() {
 
   const admin = createAdminClient();
   const today = new Date().toISOString().slice(0, 10);
+  const scope = await resolveTaskScope(admin, authUser, practiceId);
+  const visibilityOr = buildVisibilityOr(scope);
 
   // ── 1. Overdue tasks (6 most recent by due_date) ───────────────────────────
-  const { data: rawOverdue, error: overdueErr } = await admin
+  let overdueQuery = admin
     .from('tasks')
     .select(`
       id, title, priority, due_date, assigned_to, assigned_department,
@@ -57,7 +60,9 @@ export async function GET() {
       )
     `)
     .eq('practice_id', practiceId)
-    .eq('status', 'overdue')
+    .eq('status', 'overdue');
+  if (visibilityOr !== null) overdueQuery = overdueQuery.or(visibilityOr);
+  const { data: rawOverdue, error: overdueErr } = await overdueQuery
     .order('due_date', { ascending: false })
     .limit(6);
 
@@ -82,12 +87,13 @@ export async function GET() {
   });
 
   // ── 2. Today's progress (all tasks due today or overdue) ──────────────────
-  const { data: todayTasks, error: todayErr } = await admin
+  let todayQuery = admin
     .from('tasks')
     .select('id, status, assigned_department, departments(name, color), practice_members(practice_role_types(departments(name, color)))')
     .eq('practice_id', practiceId)
-    .or(`due_date.eq.${today},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${today},status.neq.completed,status.neq.skipped)`)
-    .limit(500);
+    .or(`due_date.eq.${today},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${today},status.neq.completed,status.neq.skipped)`);
+  if (visibilityOr !== null) todayQuery = todayQuery.or(visibilityOr);
+  const { data: todayTasks, error: todayErr } = await todayQuery.limit(500);
 
   if (todayErr) return NextResponse.json({ error: todayErr.message }, { status: 500 });
 

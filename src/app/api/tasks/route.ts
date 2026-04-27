@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { resolveTaskScope, buildAssignedScopeOr, buildPoolScopeOr } from '@/lib/task-scope';
 
 // ─── Join types ─────────────────────────────────────────────────────────────
 
@@ -124,6 +125,7 @@ export async function GET(request: Request) {
   const pool = searchParams.get('pool') === 'true';
 
   const admin = createAdminClient();
+  const scope = await resolveTaskScope(admin, authUser, practiceId);
 
   // Build query based on view mode:
   // - pool=false (default): individually assigned tasks for the selected date
@@ -142,6 +144,8 @@ export async function GET(request: Request) {
       .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped),and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`)
       .order('status', { ascending: true })
       .order('created_at', { ascending: true });
+    const poolScope = buildPoolScopeOr(scope);
+    if (poolScope !== null) query = query.or(poolScope);
   } else {
     // Assigned tasks: individually assigned, for the selected date
     query = query
@@ -149,6 +153,8 @@ export async function GET(request: Request) {
       .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`)
       .order('due_date', { ascending: true })
       .order('created_at', { ascending: true });
+    const assignedScope = buildAssignedScopeOr(scope);
+    if (assignedScope !== null) query = query.or(assignedScope);
   }
 
   const { data, error } = await query;
@@ -204,6 +210,13 @@ export async function POST(request: Request) {
 
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
+
+  // Only admins (and brik_admin) can create tasks. Managers/staff use the
+  // existing pool/assignment flows; bulk task authorship is an admin tool.
+  const role = authUser.profile.system_role;
+  if (role !== 'brik_admin' && role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   const body = await request.json();
 
