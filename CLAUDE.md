@@ -325,7 +325,7 @@ Every Claude Code session follows a predictable lifecycle. These rules prevent t
 1. **One concern at a time.** Don't mix feature work, debugging, and docs in the same uncommitted state. If you need to context-switch (e.g., fix a bug discovered while building a feature), commit the feature WIP first.
 2. **Commit at each stable checkpoint.** After completing a logical unit (new component, migration, route wiring), commit immediately. Don't accumulate changes for a single big commit.
 3. **No scope drift without a commit.** If the task expands (e.g., "this also needs a new API route"), commit everything completed so far before starting the expansion.
-4. **Flag, don't fix, cross-cutting issues.** If you notice a widespread pattern problem (wrong button sizes, raw hex values, missing tokens) while working on a feature, log it in the PR description or memory. Do NOT fix it on this branch — it will conflict with every other branch.
+4. **Flag, don't fix, cross-cutting issues.** If you notice a widespread pattern problem (wrong button sizes, raw hex values, missing tokens) while working on a feature, log it in the PR description or memory. Do NOT fix it on this branch — it will conflict with every other branch. When a flag matures into a real cleanup pass (≥3 occurrences, or a new BDS rule landed), follow [`docs/qa/cleanup-workflow.md`](docs/qa/cleanup-workflow.md) — audit-first, batched-PR, with explicit BDS-promotion handoff.
 
 ### Session end
 
