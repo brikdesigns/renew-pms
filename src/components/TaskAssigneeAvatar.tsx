@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useToast } from '@/components/ToastProvider';
-import { color, font, gap, border, shadow, space } from '@/lib/tokens';
+import { color, font, gap, border, shadow } from '@/lib/tokens';
 import type { Member } from '@/hooks/useMembers';
 
 const MENU_WIDTH = 220;
