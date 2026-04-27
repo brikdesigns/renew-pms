@@ -308,6 +308,31 @@ else
   VIOLATIONS=$((VIOLATIONS + THEME_VIOLATIONS))
 fi
 
+# ── 14. headingStyle variable naming drift ──────────────────────────
+# Per BDS naming-conventions: BEM slot for a heading-role text element is
+# __title; the typography token is named `heading`. Variables holding the
+# CSSProperties for a title-role text element should be `titleStyle`, not
+# `headingStyle`. Same role, different layer.
+# See docs/qa/component-cleanup-audit.md (Cat 6) and cleanup-workflow.md.
+section "headingStyle variable name (use titleStyle per BDS BEM convention)"
+
+HEADING_VAR_HITS=$(grep -rn --include="*.tsx" --include="*.ts" \
+  -E "const\s+\w*[Hh]eadingStyle\b" "$SRC" \
+  | grep -v "src/lib/styles\.ts" \
+  | grep -v "DevPersonaSwitcher" \
+  | grep -v "// " \
+  || true)
+
+HEADING_VAR_COUNT=$(count_matches "$HEADING_VAR_HITS")
+if [ "$HEADING_VAR_COUNT" -gt 0 ]; then
+  echo -e "  ${YELLOW}${HEADING_VAR_COUNT} headingStyle variable(s) — rename to titleStyle${NC}"
+  echo -e "  ${DIM}BDS naming: BEM slot is __title; typography token is heading. Variable holding title styles → titleStyle.${NC}"
+  echo "$HEADING_VAR_HITS" | head -10
+  VIOLATIONS=$((VIOLATIONS + HEADING_VAR_COUNT))
+else
+  echo -e "  ${GREEN}Clean${NC}"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────
 echo ""
 echo "========================================="
@@ -324,7 +349,8 @@ else
   echo "  5. Hardcoded fontFamily/fontSize — invisible until client theme"
   echo "  6. Hardcoded borderRadius/gap — breaks spacing scale"
   echo "  7. Badge missing size — admin UI standard"
-  echo "  8. Hardcoded px padding/margin — fix file-by-file"
+  echo "  8. headingStyle variable name — BEM slot drift, future debt"
+  echo "  9. Hardcoded px padding/margin — fix file-by-file"
 fi
 echo "========================================="
 echo ""

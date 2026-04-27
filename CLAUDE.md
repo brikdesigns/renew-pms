@@ -340,7 +340,7 @@ Every Claude Code session follows a predictable lifecycle. These rules prevent t
 | `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty |
 | `.git/hooks/pre-push` | Git pre-push hook | Blocks push if `typecheck` or `build` fails |
 | `.git/hooks/pre-commit` | Git pre-commit hook | Runs `git-secrets` to prevent credential leaks |
-| `scripts/token-audit.sh` | Manual (run before PRs) | Catches 12 categories of token/component violations |
+| `scripts/token-audit.sh` | Manual (run before PRs) | Catches 14 categories of token/component violations |
 
 ## Commands
 
@@ -386,7 +386,7 @@ npm run typecheck          # TypeScript
 npm run build              # Full build — catches what lint misses
 ```
 
-The audit catches 12 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius, and hardcoded gap/padding values. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
+The audit catches 14 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius/gap/padding values, and `headingStyle` variable name drift. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
 
 ## Rules
 

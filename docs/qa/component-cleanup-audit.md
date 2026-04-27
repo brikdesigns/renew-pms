@@ -156,7 +156,7 @@ Renamed in `task/bds-cleanup-title-naming`:
 
 The 2 originally-listed `sheetSectionTitle` / `sheetTitleStyle` variables already used the correct `Title` naming and needed no rename. The originally-listed `src/lib/styles.ts` `heading` export is the **typography group** (parallels the token name `heading.*`), not a slot — leaving as `heading` for consistency with the token family is correct.
 
-**Follow-up — prevent regression:** add an ESLint custom rule (or a `scripts/component-audit.sh` category) that flags new `headingStyle` / `headerStyle` `: CSSProperties` declarations whose body contains `fontFamily: font.family.heading`, suggesting `titleStyle` instead. Captured as a deferred task in `docs/qa/launch-checklist.md`.
+**Regression prevention — rule landed in same PR.** Added check #14 to [`scripts/token-audit.sh`](../../scripts/token-audit.sh) flagging any `const \w*headingStyle` declaration in `src/`. Tested: clean codebase reports clean; planted regression (`const headingStyle: React.CSSProperties = …`) is caught and exits with non-zero. Future `headingStyle` reintroductions get blocked by the same audit run pre-PR. CLAUDE.md "12 categories" claim updated to "14".
 
 **Out of scope (deliberately deferred):**
 - `src/components/DevPersonaSwitcher.tsx:98` — `headerStyle` *holding text styles* (uppercase 11px section label). Renaming target would be `categoryLabelStyle` per the BDS `-label` family. Dev-only tool, not user-facing — deferred to avoid scope creep.
