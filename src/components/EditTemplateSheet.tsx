@@ -211,20 +211,6 @@ const addItemRowStyle: React.CSSProperties = {
   alignItems: 'flex-end',
 };
 
-const linkContextBtnStyle: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.brand,
-  padding: `${space.tiny} ${space.xs}`,
-  borderRadius: border.radius.xs,
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function hasContext(item: ChecklistItem) {
@@ -620,40 +606,44 @@ export function EditTemplateSheet({
                     {item.label}
                   </span>
                   {!isExpanded && !itemHasContext && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="tiny"
                       onClick={() => toggleItemExpand(item.id)}
-                      style={linkContextBtnStyle}
                     >
                       + Link to inventory
-                    </button>
+                    </Button>
                   )}
                   {!isExpanded && itemHasContext && (
                     <>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="tiny"
                         onClick={() => toggleItemExpand(item.id)}
-                        style={linkContextBtnStyle}
                       >
                         Edit link
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="danger-ghost"
+                        size="tiny"
                         onClick={() => clearItemContext(item.id)}
-                        style={{ ...linkContextBtnStyle, color: color.system.error }}
                       >
                         Remove link
-                      </button>
+                      </Button>
                     </>
                   )}
                   {isExpanded && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="tiny"
                       onClick={() => toggleItemExpand(item.id)}
-                      style={linkContextBtnStyle}
                     >
                       Done
-                    </button>
+                    </Button>
                   )}
                   <IconButton
                     variant="danger-ghost"

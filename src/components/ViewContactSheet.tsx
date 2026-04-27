@@ -92,18 +92,6 @@ const headerRoleStyle: CSSProperties = {
 const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
 const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
-const linkStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.medium,
-  color: color.text.brand,
-  cursor: 'pointer',
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  textAlign: 'left',
-};
-
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
   fontFamily: font.family.body,
@@ -291,13 +279,14 @@ export function ViewContactSheet({ onClose, id, onNavigate }: ViewContactSheetPr
           label="Company"
           value={
             contact.vendor_name && onNavigate ? (
-              <button
+              <Button
                 type="button"
-                style={linkStyle}
+                variant="ghost"
+                size="sm"
                 onClick={() => onNavigate('vendor', { id: contact.vendor_id }, { title: contact.vendor_name ?? 'Company' })}
               >
                 {contact.vendor_name}
-              </button>
+              </Button>
             ) : (
               contact.vendor_name
             )
