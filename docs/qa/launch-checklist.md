@@ -39,12 +39,12 @@ Workflows are ordered by **risk-on-launch-day**. Each row lists trigger → expe
 
 **App-level emails** (`src/lib/email.ts` — request status, vendor messages) and **auth emails** (invite acceptance for 0.5, password reset for 0.2) share one Resend pipeline. The auth flow uses `auth.admin.generateLink({ type: 'invite' | 'recovery' })` to produce links, then sends them via the same `sendEmail` path as app email — Supabase's built-in mailer stays off so users never get duplicates. Path chosen 2026-04-27 over routing Supabase SMTP through Resend, to keep a single branded email surface and one place to update templates.
 
-**Sender:** `Renew PMS <renew@brikdesigns.com>` — piggybacks on the already-verified `brikdesigns.com` domain in the shared Brik Portal Resend account. Avoids burning the free-tier domain quota on a renew-pms-only subdomain. Subject lines + email body disambiguate which Brik product sent the email ("Reset your Renew PMS password" vs Brik Portal mail). Splits to a dedicated subdomain (`renew.brikdesigns.com` → `notifications@renew.brikdesigns.com`) when one of: deliverability reputation needs isolation, account count justifies a paid Resend tier, or branding requires a separate identity.
+**Sender:** `Renew PMS <support@brikdesigns.com>` — piggybacks on the already-verified `brikdesigns.com` domain in the shared Brik Portal Resend account. The `support@` mailbox is intentional: if a recipient hits Reply (e.g. "the link doesn't work"), the message lands in a real human inbox alongside other Brik product support, not a renew-only address that nobody monitors. Display name says "Renew PMS" so brand identity isn't lost. Splits to a dedicated subdomain (`renew.brikdesigns.com`) and/or a `noreply` + `Reply-To: support@` pattern when one of: deliverability reputation needs isolation, account count justifies a paid Resend tier, or Renew gets its own product domain post-signoff.
 
 **Domain:** `brikdesigns.com` (already verified in the shared Brik Portal Resend account — confirmed 2026-04-27). No new DNS work for the piggyback path. Override in `.env.local`:
 
 ```
-RESEND_FROM_ADDRESS=Renew PMS <renew@brikdesigns.com>
+RESEND_FROM_ADDRESS=Renew PMS <support@brikdesigns.com>
 ```
 
 **Token lifetime:** invite + recovery links both 7 days (Supabase OTP expiry — single project-level setting, applies uniformly). Matches Slack/Notion/GitHub norms; long enough for "invited Friday, opened Monday" and to absorb staff PTO without forcing re-invites.
