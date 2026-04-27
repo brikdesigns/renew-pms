@@ -37,13 +37,23 @@ Workflows are ordered by **risk-on-launch-day**. Each row lists trigger → expe
 
 ### Resend (transactional email)
 
-**App-level emails** (`src/lib/email.ts` — request status, vendor messages) use the shared Brik Portal Resend API key with the sender overridden to `onboarding@resend.dev` (Resend's sandbox sender). This avoids needing renew-pms-specific domain verification while staying pre-launch. Override lives in `.env.local`:
+**App-level emails** (`src/lib/email.ts` — request status, vendor messages) and **auth emails** (invite acceptance for 0.5, password reset for 0.2) share one Resend pipeline. The auth flow uses `auth.admin.generateLink({ type: 'invite' | 'recovery' })` to produce links, then sends them via the same `sendEmail` path as app email — Supabase's built-in mailer stays off so users never get duplicates. Path chosen 2026-04-27 over routing Supabase SMTP through Resend, to keep a single branded email surface and one place to update templates.
+
+**Sender:** one for MVP — `notifications@renew.brikdesigns.com`. Subject lines disambiguate the email type ("Reset your Renew PMS password" vs "New work order"). Splits to a dedicated `accounts@` sender when traffic, deliverability reputation, or recipient inbox-filtering UX requires it.
+
+**Domain:** `renew.brikdesigns.com` (temporary; planned pivot to a dedicated DNS later) to be DNS-verified in Resend, replacing the `onboarding@resend.dev` sandbox sender. Override in `.env.local`:
 
 ```
-RESEND_FROM_ADDRESS=Renew PMS Test <onboarding@resend.dev>
+RESEND_FROM_ADDRESS=Renew PMS <notifications@renew.brikdesigns.com>
 ```
 
-**Auth emails** (password reset for 0.2, invite acceptance for 0.5) flow through Supabase Auth's email config, **not** the Resend API key. Until that config routes through Resend (or Supabase's built-in SMTP is verified), 0.2 and 0.5 stay blocked. **Pre-beta TODO**: register a renew-pms sender domain in Resend and switch off the sandbox sender.
+**Token lifetime:** invite + recovery links both 7 days (Supabase OTP expiry — single project-level setting, applies uniformly). Matches Slack/Notion/GitHub norms; long enough for "invited Friday, opened Monday" and to absorb staff PTO without forcing re-invites.
+
+**Re-invite affordance:** "Resend invite" action on Settings → Users for accounts with `last_sign_in_at` null — ships in the same PR as the initial invite flow per 0.5 ("no other workflow works without this") so a single expired invite doesn't lock anyone out.
+
+**Practice-aware copy:** invite emails name the practice ("You've been invited to **Renew Dental**") for orientation. Practice name is non-PHI metadata, safe to include in email payload.
+
+Until DNS verification lands, 0.2 and 0.5 stay blocked.
 
 ### Tier 1.1 (recurring task generation) — split test strategy
 
