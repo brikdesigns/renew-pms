@@ -20,7 +20,7 @@ const cardStyle: CSSProperties = {
   padding: space.xl,
 };
 
-const headingStyle: CSSProperties = {
+const titleStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.small,
   fontWeight: font.weight.bold,
@@ -50,7 +50,7 @@ export default function GlobalError({
     <html lang="en">
       <body className="theme-renew" style={bodyStyle}>
         <div style={cardStyle}>
-          <h1 style={headingStyle}>Something went wrong</h1>
+          <h1 style={titleStyle}>Something went wrong</h1>
           <p style={paragraphStyle}>
             An unexpected error occurred. Our team has been notified.
           </p>

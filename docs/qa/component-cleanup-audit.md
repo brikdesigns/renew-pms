@@ -34,9 +34,15 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 35 open / 42 total across 9 categories
+## Findings — 28 open / 42 originally / 37 verified across 9 categories
 
-> Batch 1 (`task/bds-cleanup-css-properties`, commit `ce8179c`) resolved Category 8 (4) + 1 of 8 Cat 2b. Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`) resolves 3 of 8 Cat 2c (sidebar bottom buttons). Cat 2c remaining: 5 (3 of those — `EditTemplateSheet` 623/633/640 — were already resolved in Batch 1; the remaining 2 — `TopUtilityBar` avatar menu + `VendorSidebar` nav buttons — are deferred to Batch 6 / future BDS NavItem promotion respectively, see triage notes). Open count: **35**.
+> **Batch progress:**
+> - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
+> - Batch 2 (`task/bds-cleanup-toolbar-buttons-2c`, `987adfe`): 3 of 8 Cat 2c → resolved.
+> - Batch 3 (`task/bds-cleanup-title-naming`, this PR): re-scoped Cat 6 from 5 false-positive size violations to 4 naming-drift renames — all resolved. Cat 6 net: -5 false-positives + 4 real-issues = audit total **42 → 41**, but verified-issue total stays **37** since the 5 size violations were never real. Audit-script regression rule (`token-audit.sh` check #14) added in same PR.
+> - Batch 4 (`task/bds-cleanup-menu-items-2a`, PR #58): partial Cat 2a — 2 of 6 swapped to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). 4 add-menu dropdowns deferred to Batch 4b (BDS `MenuItemData.description` promotion, cross-repo).
+>
+> Open count after Batches 1–4: **28**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -125,17 +131,35 @@ No findings. Layout containers in renew-pms use inline styles rather than imitat
 
 No public component prop drift detected. Internal style-object naming has minor inconsistency (`headingStyle` for non-outline text) — captured under Category 6.
 
-### Category 6 — `font.family.heading` paired with sub-18px size (5)
+### Category 6 — RESOLVED + RE-SCOPED (was 5 false-positives → 4 naming-drift renames)
 
-Per repo CLAUDE.md, `font.family.heading` is for h1–h5 / card names / section titles — minimum size `font.size.heading.tiny` (18px). Smaller sizes should use `font.family.label` or `font.family.body`. Variable name `headingStyle` also drifts: BEM slot is `__title`.
+**Original framing was wrong.** The audit assumed `font.size.heading.small` was below the 18px floor. Verified actual token values:
 
-| # | File | Mismatch |
-|---|------|---------|
-| 1 | [src/app/global-error.tsx:23-25](../../src/app/global-error.tsx#L23-L25) | `headingStyle`: heading family + `size.heading.small` |
-| 2 | [src/app/error.tsx:21-24](../../src/app/error.tsx#L21-L24) | `headingStyle`: heading family + `size.heading.small` |
-| 3 | [src/app/(auth)/settings/_sheetStyles.ts:10-17](../../src/app/(auth)/settings/_sheetStyles.ts#L10-L17) | `sheetSectionTitle`: heading family + `size.heading.small` |
-| 4 | [src/components/ViewContactSheet.tsx:77-79](../../src/components/ViewContactSheet.tsx#L77-L79) | `sheetTitleStyle`: heading family + `size.heading.small` |
-| 5 | [src/lib/styles.ts:75-77](../../src/lib/styles.ts#L75-L77) | `sheetHeaderStyle`: heading family + `size.heading.tiny` |
+| Token | Value |
+|-------|-------|
+| `font.size.heading.tiny` | 18px (floor per CLAUDE.md) |
+| `font.size.heading.small` | 20px |
+| `font.size.heading.medium` | 22.5px |
+
+All 5 originally-flagged style objects pair `font.family.heading` with values ≥ 18px — none violate the size rule. The `tokens.ts` file even comments: *"18px (font-size/200) — smallest heading; do NOT use font-size/100 (16px) for headings"*. The token scale is consistent; the original audit logic was the bug.
+
+**Re-scoped to BEM slot naming consistency.** Per the [BDS naming-conventions doc](https://design.brikdesigns.com/docs/primitives/naming-conventions): *"title and heading refer to the same typographic role at different layers"* — BEM slot is `__title`, typography token is `heading`. Variables holding the **styles for a title-role text element** should be named `titleStyle`, not `headingStyle`.
+
+Renamed in `task/bds-cleanup-title-naming`:
+
+| # | File | Before → After |
+|---|------|----------------|
+| 1 | [src/app/global-error.tsx:23](../../src/app/global-error.tsx#L23) | `headingStyle` → `titleStyle` |
+| 2 | [src/app/error.tsx:21](../../src/app/error.tsx#L21) | `headingStyle` → `titleStyle` |
+| 3 | [src/app/(auth)/analytics/page.tsx:23](../../src/app/(auth)/analytics/page.tsx#L23) | `headingStyle` → `titleStyle` |
+| 4 | [src/app/(auth)/documents/page.tsx:23](../../src/app/(auth)/documents/page.tsx#L23) | `headingStyle` → `titleStyle` |
+
+The 2 originally-listed `sheetSectionTitle` / `sheetTitleStyle` variables already used the correct `Title` naming and needed no rename. The originally-listed `src/lib/styles.ts` `heading` export is the **typography group** (parallels the token name `heading.*`), not a slot — leaving as `heading` for consistency with the token family is correct.
+
+**Regression prevention — rule landed in same PR.** Added check #14 to [`scripts/token-audit.sh`](../../scripts/token-audit.sh) flagging any `const \w*headingStyle` declaration in `src/`. Tested: clean codebase reports clean; planted regression (`const headingStyle: React.CSSProperties = …`) is caught and exits with non-zero. Future `headingStyle` reintroductions get blocked by the same audit run pre-PR. CLAUDE.md "12 categories" claim updated to "14".
+
+**Out of scope (deliberately deferred):**
+- `src/components/DevPersonaSwitcher.tsx:98` — `headerStyle` *holding text styles* (uppercase 11px section label). Renaming target would be `categoryLabelStyle` per the BDS `-label` family. Dev-only tool, not user-facing — deferred to avoid scope creep.
 
 ### Category 7 — Hand-built segmented controls / chip rows / tab bars (1)
 
@@ -223,8 +247,8 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 |---|--------|-------|---------------|-------|
 | 1 | `task/bds-cleanup-css-properties` ✅ | Remove the 4 interactive `CSSProperties` exports (Category 8). Replace each call site with BDS `Button`. | 4 files | **Landed (commit `ce8179c`).** Visual change: ViewContactSheet vendor link rendered in BDS ghost text color rather than prior brand-purple. Inline-link affordance refinement deferred to Batch 5. |
 | 2 | `task/bds-cleanup-toolbar-buttons-2c` ✅ | Pattern D — swap sidebar bottom buttons (theme + help) to `IconButton`. | 2 files | **Landed (this PR).** Resolves 3 of 8 Cat 2c (#16, #18, #19). Cat 2c remainder: #20–#22 already done in Batch 1; #15 deferred to BDS NavItem promotion; #17 deferred to Batch 6 (clickable-avatar pattern). |
-| 3 | `task/bds-cleanup-font-heading-misuse-6` | Fix the 5 `font.family.heading` + sub-18px style objects. Rename variables from `headingStyle` → `titleStyle` while there. | 5 files | Caught by manual review; not currently in `token-audit.sh`. Opportunity to add an audit rule. |
-| 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (this PR).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
+| 3 | `task/bds-cleanup-title-naming` ✅ | Rename `headingStyle` style-object variables to `titleStyle` per BDS `__title` BEM slot convention. | 4 files | **Landed (this PR).** Original Cat 6 framing (heading family + sub-18px) was a false-positive — `heading.tiny` is the 18px floor, `heading.small` is 20px. Re-scoped to naming-consistency only. Follow-up: add an ESLint/audit rule so new `headingStyle` declarations are flagged. |
+| 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (PR #58).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
 | 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
 | 5 | `task/bds-cleanup-inline-links-2b` | Pattern C — 8 sheet drill-down links. Confirm BDS surface (probably `Button variant=ghost size=sm`) or promote `InlineLink`. | 2 files | Concentrated in `ViewRequestSheet` + `ViewContactSheet`. |
 | 6 | `task/bds-cleanup-clickable-divs-3` | Refactor 3 of 4 `<div onClick>` to BDS components (the avatar ones become `IconButton`; the checklist item becomes a proper checkbox-row component). | 4 files | The `ViewTaskSheet` checklist row is the trickiest — likely needs its own BDS pattern. |

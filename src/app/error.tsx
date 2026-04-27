@@ -18,7 +18,7 @@ const cardStyle: CSSProperties = {
   maxWidth: '400px',
 };
 
-const headingStyle: CSSProperties = {
+const titleStyle: CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.small,
   fontWeight: font.weight.bold,
@@ -47,7 +47,7 @@ export default function ErrorPage({
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        <h1 style={headingStyle}>Something went wrong</h1>
+        <h1 style={titleStyle}>Something went wrong</h1>
         <p style={bodyStyle}>
           An unexpected error occurred. Our team has been notified.
         </p>
