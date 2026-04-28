@@ -41,6 +41,11 @@ const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: sp
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── Form data ──────────────────────────────────────────────────────────────
 
 interface TeamFormData {
@@ -170,7 +175,7 @@ export function TeamsTable() {
               <TableSkeleton columns={5} />
             ) : teams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <TableCell colSpan={5} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                   No teams yet. Click &quot;Add Team&quot; to create one.
                 </TableCell>
               </TableRow>
@@ -178,10 +183,10 @@ export function TeamsTable() {
               const deptColors = t.department_color ? departmentColor(t.department_color) : null;
               return (
                 <TableRow key={t.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{t.name}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     {t.department_name ? (
                       <Tag size="sm" style={{ backgroundColor: deptColors?.light ?? color.surface.secondary, color: deptColors?.text ?? color.text.secondary }}>
                         {t.department_name}
@@ -190,15 +195,15 @@ export function TeamsTable() {
                       <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{t.member_count}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Badge status={t.is_active ? 'positive' : 'error'} size="sm">
                       {t.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />

@@ -48,6 +48,11 @@ const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', g
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
 function ChipFilter({ options, selected, onChange }: { options: readonly string[]; selected: string; onChange: (v: string) => void }) {
@@ -300,7 +305,7 @@ export function UsersTable() {
               const fullName = `${m.first_name} ${m.last_name}`;
               return (
                 <TableRow key={m.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={nameWrap}>
                       <UserAvatar name={fullName} departmentColorKey={m.department_color} size="button" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -313,30 +318,30 @@ export function UsersTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
                       {m.practice_role || '—'}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
                       {m.department || '—'}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
                       {SYSTEM_ROLE_LABELS[m.system_role] ?? m.system_role}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>{empType.label}</Tag>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Badge status={m.is_active ? 'positive' : 'error'} size="sm">
                       {m.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
                       {m.has_signed_in === false && (
                         <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.paperPlane} />} label={`Resend invite to ${m.first_name}`} onClick={() => handleResendInvite(m)} />

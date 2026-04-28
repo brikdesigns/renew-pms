@@ -46,6 +46,11 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 const nameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
 const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 const INVENTORY_SEGMENTS = [
   { label: 'Equipment', value: 'equipment' },
   { label: 'Supplies', value: 'supplies' },
@@ -251,7 +256,7 @@ export function InventoryTable() {
             )}
             {!loading && filteredItems.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <TableCell colSpan={6} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                   No items match the selected filters.
                 </TableCell>
               </TableRow>
@@ -259,22 +264,22 @@ export function InventoryTable() {
             {!loading && filteredItems.map((item) => {
               return (
                 <TableRow key={item.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={nameCellStyle}>{item.name}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={secondaryCellStyle}>{item.category || '—'}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={secondaryCellStyle}>{item.manufacturer || '—'}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={secondaryCellStyle}>{item.room_name || '—'}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <StatusBadge status={item.status} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${item.name}`} onClick={() => handleView(item)} />
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${item.name}`} onClick={() => handleEdit(item)} />

@@ -82,6 +82,11 @@ const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', g
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 const RECORD_SEGMENTS = [
   { label: 'Companies', value: 'companies' },
   { label: 'Contacts', value: 'contacts' },
@@ -132,7 +137,7 @@ function CompaniesView({
           <TableSkeleton columns={7} />
         ) : vendors.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
               No companies found.
             </TableCell>
           </TableRow>
@@ -140,7 +145,7 @@ function CompaniesView({
           const typeTag = TYPE_TAG_COLORS[v.type] ?? TYPE_TAG_COLORS.service;
           return (
             <TableRow key={v.id}>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                   {v.name}
                 </div>
@@ -150,30 +155,30 @@ function CompaniesView({
                   </div>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
                   {TYPE_LABELS[v.type] ?? v.type}
                 </Tag>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.phone ? color.text.primary : color.text.muted }}>
                   {v.phone ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
                   {v.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                   {v.contact_count}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <StatusBadge status={v.is_active} />
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
                   <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
                   <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
@@ -217,7 +222,7 @@ function ContactsView({
           <TableSkeleton columns={7} />
         ) : contacts.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
               No contacts found.
             </TableCell>
           </TableRow>
@@ -225,7 +230,7 @@ function ContactsView({
           const typeTag = TYPE_TAG_COLORS[c.vendor_type ?? ''] ?? TYPE_TAG_COLORS.service;
           return (
             <TableRow key={c.id}>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                   {c.name}
                 </div>
@@ -235,12 +240,12 @@ function ContactsView({
                   </div>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.vendor_name ? color.text.primary : color.text.muted }}>
                   {c.vendor_name ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 {c.vendor_type ? (
                   <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
                     {TYPE_LABELS[c.vendor_type] ?? c.vendor_type}
@@ -249,22 +254,22 @@ function ContactsView({
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted }}>—</span>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.role ? color.text.primary : color.text.muted }}>
                   {c.role ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.phone ? color.text.primary : color.text.muted }}>
                   {c.phone ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
                   {c.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
                   <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
                   <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
