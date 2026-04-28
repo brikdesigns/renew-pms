@@ -119,19 +119,21 @@ export default function LoginPage() {
           <TextInput
             label="Email address"
             type="email"
+            name="email"
             placeholder="you@yourpractice.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             size="md"
             fullWidth
             required
-            autoComplete="email"
+            autoComplete="username"
             data-1p-ignore={undefined}
             data-lpignore={undefined}
           />
 
           <PasswordInput
             label="Password"
+            name="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
