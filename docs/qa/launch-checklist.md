@@ -140,6 +140,7 @@ The generator (`generate_daily_pool_tasks`, migration 00031) reads Postgres `cur
 - **Accessibility** — WCAG 2.1 AA on every Tier 0 and Tier 1 workflow (keyboard navigation, focus order, label association). Required by ACA §1557 + ADA Title III per [renew-pms CLAUDE.md](../../CLAUDE.md).
 - **No PHI in URLs or query strings** (HIPAA).
 - `./scripts/token-audit.sh` clean, `npm run typecheck` clean, `npm run build` succeeds.
+- ✅ **Component cleanup audit** — closed 2026-04-28. All reusable-pattern clusters (≥3 sites of the same shape) resolved across 14 PRs and 6 BDS primitives (`<CompletionToggle>`, `<ChecklistItem>`, `<InteractiveListItem>`, `<TabBar>` adoption, `<Menu>` + `MenuItemData.description`, `<AddableFieldRowList>` adoption). 3 out-of-scope one-offs remain (Cat 2c #15 VendorSidebar nav blocked on BDS `NavItem`, Cat 2d #24 EditTemplateSheet collapse, Cat 2d #25 DevPersonaSwitcher tester tab — none require a BDS primitive). See [`component-cleanup-audit.md`](./component-cleanup-audit.md) (`status: resolved`) for full chronology and pattern decisions.
 
 ---
 
