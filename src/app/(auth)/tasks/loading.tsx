@@ -1,13 +1,13 @@
 'use client';
 
 import { Skeleton } from '@brikdesigns/bds';
-import { color, gap, space, border } from '@/lib/tokens';
+import { gap, space, border } from '@/lib/tokens';
 
 export default function TasksLoading() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      {/* Sub-header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}` }}>
+      {/* Sub-header bar — no divider during loading; live page has none either */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${space.md} ${space.xl}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
           <Skeleton variant="rectangular" width={200} height={32} style={{ borderRadius: border.radius.sm }} />
           <Skeleton variant="text" width={32} height={20} />
