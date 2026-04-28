@@ -19,7 +19,7 @@ test.describe('Logout (Tier 0.3)', () => {
     // 1. Log in
     await page.goto('/login');
     await page.getByLabel('Email address').fill(TEST_EMAIL);
-    await page.getByLabel('Password').fill(TEST_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/dashboard**', { timeout: 15_000 });
 

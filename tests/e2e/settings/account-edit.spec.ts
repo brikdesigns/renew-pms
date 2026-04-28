@@ -24,7 +24,7 @@ const STAFF_LAST_NAME = 'Foster';
 async function loginAs(page: Page, email: string) {
   await page.goto('/login');
   await page.getByLabel('Email address').fill(email);
-  await page.getByLabel('Password').fill(TEST_PASSWORD);
+  await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL('**/dashboard**', { timeout: 15_000 });
 }
