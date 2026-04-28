@@ -127,8 +127,6 @@ export default function LoginPage() {
             fullWidth
             required
             autoComplete="username"
-            data-1p-ignore={undefined}
-            data-lpignore={undefined}
           />
 
           <PasswordInput
