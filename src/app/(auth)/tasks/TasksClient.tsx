@@ -189,9 +189,24 @@ const ADD_TASK_TYPES = [
   { id: 'skill_training', label: 'Training',   desc: 'Continuing education',     icon: icon.typeSkillTraining },
 ] as const;
 
+// Source-of-truth statuses that mean "the work is done" for board purposes.
+const RESOLVED_STATUSES = new Set(['completed', 'skipped']);
+
+function isResolvedStatus(status: string): boolean {
+  return RESOLVED_STATUSES.has(status);
+}
+
 export default function TasksClient({ canAddTask, currentMemberId, initialData }: TasksClientProps) {
   const { pushSheet } = useSheetStack();
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  // `checked` mirrors `tasks.status` from the server, with optimistic flips
+  // applied immediately on click. Refetch reseeds it from the DB so a failed
+  // PATCH is corrected on the next render cycle.
+  const [checked, setChecked] = useState<Record<string, boolean>>(() => {
+    const seed: Record<string, boolean> = {};
+    for (const t of initialData.tasks) if (isResolvedStatus(t.status)) seed[t.id] = true;
+    for (const t of initialData.poolTasks) if (isResolvedStatus(t.status)) seed[t.id] = true;
+    return seed;
+  });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
   const [filtersVisible, setFiltersVisible] = useState(false);
@@ -216,8 +231,18 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate, { initialData: initialData.tasks });
   const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate, { initialData: initialData.poolTasks });
 
-  const refetchAll = () => { refetchAssigned(); refetchPool(); };
+  const refetchAll = useCallback(() => { refetchAssigned(); refetchPool(); }, [refetchAssigned, refetchPool]);
   const { showToast } = useToast();
+
+  // Resync `checked` whenever the server task lists update. We rebuild the
+  // map fully — any task no longer returned by the loader (e.g. moved off
+  // today's view) drops out, preventing stale flags from accumulating.
+  useEffect(() => {
+    const next: Record<string, boolean> = {};
+    for (const t of assignedTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+    for (const t of poolTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+    setChecked(next);
+  }, [assignedTasks, poolTasks]);
 
   const deptColorMap = useMemo(
     () => new Map(departments.map((d) => [d.name, d.color])),
@@ -292,8 +317,36 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     }
   }, [poolTasks, refetchPool, showToast]);
 
-  const toggle = (id: string) =>
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Persist completion to the DB. Optimistic flip first so the animation runs
+  // immediately; on failure we rollback and toast. On success we refetch so
+  // the list re-sorts (e.g. completed task leaves the overdue lane).
+  const toggle = useCallback(async (id: string) => {
+    const wasChecked = !!checked[id];
+    const nextChecked = !wasChecked;
+    const nextStatus = nextChecked ? 'completed' : 'not_started';
+
+    setChecked((prev) => ({ ...prev, [id]: nextChecked }));
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Failed to update status');
+      }
+      refetchAll();
+    } catch (err) {
+      setChecked((prev) => ({ ...prev, [id]: wasChecked }));
+      showToast({
+        title: 'Could not update task',
+        description: err instanceof Error ? err.message : 'Failed to update status',
+        variant: 'error',
+      });
+    }
+  }, [checked, refetchAll, showToast]);
 
   const hasActiveFilters = selectedDepartment !== 'All Departments'
     || selectedFrequency !== 'All Frequencies'
@@ -367,7 +420,10 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   function applyFilters(tasks: MockTask[]): MockTask[] {
     return tasks.filter((t) => {
-      if (!showResolved && checked[t.id]) return false;
+      // Hide resolved (completed/skipped) tasks by default. Status from the
+      // server is the authoritative signal; the optimistic `checked` flag
+      // covers the brief window before the next refetch lands.
+      if (!showResolved && (checked[t.id] || isResolvedStatus(t.status))) return false;
       if (selectedDepartment !== 'All Departments' && t.dept !== selectedDepartment) return false;
       if (selectedFrequency !== 'All Frequencies' && t.freq !== selectedFrequency) return false;
       if (selectedPriority !== 'All Priorities' && t.priority !== PRIORITY_FILTER_MAP[selectedPriority]) return false;

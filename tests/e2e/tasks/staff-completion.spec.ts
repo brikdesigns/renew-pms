@@ -13,20 +13,9 @@ import {
  * Drives the API contract behind the "Complete All" button on the task sheet:
  *
  *   - GET  /api/tasks/[id]/checklist  → returns the items
- *   - PATCH /api/tasks/[id]/checklist → marks items completed, sets completed_at
- *
- * ⚠ Coverage gap surfaced: the launch-checklist row 1.2 promises
- *   "mark complete with sign-off → status flips to completed". Today, marking
- *   every checklist item complete does NOT update the parent task's `status`
- *   column. The UI derives "Completed" visually when allDone is true, but the
- *   underlying tasks.status stays whatever it was. The status only flips when
- *   the user explicitly drags the card to the Complete column (or PATCHes
- *   /api/tasks/[id] with status=completed). Either:
- *     (a) PATCH /api/tasks/[id]/checklist should auto-flip status when the
- *         last incomplete item is marked done, or
- *     (b) the launch-checklist row should be reworded to match the actual
- *         "checklist done ≠ task done" model.
- *   The auto-flip test below is `test.skip` until that decision lands.
+ *   - PATCH /api/tasks/[id]/checklist → marks items completed, sets completed_at,
+ *                                       and rolls up tasks.status to 'completed'
+ *                                       when every item is_completed.
  */
 
 const TEST_PASSWORD = 'TestUser123!';
@@ -134,11 +123,10 @@ test.describe('Staff completes a task (Tier 1.2)', () => {
     });
   });
 
-  test.skip('completing every checklist item flips task status to completed — not auto-derived today', async ({ page }) => {
-    // Tracking: PATCH /api/tasks/[id]/checklist updates only the items;
-    // parent tasks.status is untouched even when all items are done.
-    // Remove `skip` once the auto-flip is implemented (or once the launch-
-    // checklist row is reworded to match the current model).
+  test('completing every checklist item flips task status to completed', async ({ page }) => {
+    // PATCH /api/tasks/[id]/checklist now rolls up to tasks.status when every
+    // item is_completed. Closes the gap that caused completed tasks to
+    // reappear on the board after refresh.
     const taskId = await seedTask({
       practiceId,
       title: `[${tag}] auto-status-flip`,
