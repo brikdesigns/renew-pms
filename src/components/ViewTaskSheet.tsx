@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, Tag, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Sheet, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
@@ -88,38 +86,6 @@ const TASK_TYPE_DISPLAY: Record<string, string> = {
 const rowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const halfStyle: CSSProperties = { flex: 1, minWidth: 0 };
 const tagRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
-
-const checklistItemStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-  padding: `${space.sm} ${space.md}`,
-  borderRadius: border.radius.sm,
-  cursor: 'pointer',
-  transition: 'background-color 0.15s ease',
-};
-
-const checkboxStyle = (checked: boolean): CSSProperties => ({
-  width: 20,
-  height: 20,
-  borderRadius: border.radius.xs,
-  border: checked ? 'none' : `2px solid ${color.border.primary}`,
-  backgroundColor: checked ? color.background.brandPrimary : 'transparent',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  transition: 'all 0.15s ease',
-});
-
-const checklistLabelStyle = (checked: boolean): CSSProperties => ({
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: checked ? color.text.muted : color.text.primary,
-  textDecoration: checked ? 'line-through' : 'none',
-  flex: 1,
-});
 
 const progressBarOuter: CSSProperties = {
   width: '100%',
@@ -373,25 +339,13 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
           {items.map(item => (
-            <div
+            <ChecklistItem
               key={item.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => !toggling.has(item.id) && toggleItem(item.id, item.is_completed)}
-              onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleItem(item.id, item.is_completed); } }}
-              style={{
-                ...checklistItemStyle,
-                opacity: toggling.has(item.id) ? 0.6 : 1,
-                backgroundColor: item.is_completed ? color.surface.secondary : 'transparent',
-              }}
-            >
-              <div style={checkboxStyle(item.is_completed)}>
-                {item.is_completed && (
-                  <Icon icon={icon.check} style={{ color: color.text.onColorDark, fontSize: font.size.body.sm } as CSSProperties & Record<string, string>} />
-                )}
-              </div>
-              <span style={checklistLabelStyle(item.is_completed)}>{item.label}</span>
-            </div>
+              label={item.label}
+              checked={item.is_completed}
+              disabled={toggling.has(item.id)}
+              onCheckedChange={() => toggleItem(item.id, item.is_completed)}
+            />
           ))}
         </div>
       )}
