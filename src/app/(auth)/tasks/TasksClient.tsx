@@ -171,9 +171,14 @@ function ChecklistProgress({ completed, total }: { completed: number; total: num
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+import type { TasksPageInitialData } from './loaders';
+
 interface TasksClientProps {
   canAddTask: boolean;
   currentMemberId: string | null;
+  /** Server-rendered initial data — passed straight into the per-resource hooks
+   *  so they skip their first useEffect fetch. Hooks still own refetches. */
+  initialData: TasksPageInitialData;
 }
 
 const ADD_TASK_TYPES = [
@@ -184,7 +189,7 @@ const ADD_TASK_TYPES = [
   { id: 'skill_training', label: 'Training',   desc: 'Continuing education',     icon: icon.typeSkillTraining },
 ] as const;
 
-export default function TasksClient({ canAddTask, currentMemberId }: TasksClientProps) {
+export default function TasksClient({ canAddTask, currentMemberId, initialData }: TasksClientProps) {
   const { pushSheet } = useSheetStack();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -206,10 +211,10 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   const [poolDropTarget, setPoolDropTarget] = useState<string | null>(null);
   const poolIsDragging = useRef(false);
 
-  const { departments } = useDepartments();
-  const { members } = useMembers();
-  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate);
-  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate);
+  const { departments } = useDepartments({ initialData: initialData.departments });
+  const { members } = useMembers({ initialData: initialData.members });
+  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate, { initialData: initialData.tasks });
+  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate, { initialData: initialData.poolTasks });
 
   const refetchAll = () => { refetchAssigned(); refetchPool(); };
   const { showToast } = useToast();
@@ -629,6 +634,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       {filtersVisible && (
         <div style={{ paddingRight: space.xl, paddingBottom: space.sm }}>
           <TaskFilterBar
+            departments={departments}
             selectedDepartment={selectedDepartment}
             onDepartmentChange={setSelectedDepartment}
             selectedFrequency={selectedFrequency}
@@ -774,6 +780,8 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         isOpen={addSheetOpen}
         onClose={() => { setAddSheetOpen(false); setAddTaskType(''); }}
         onSaved={refetchAll}
+        members={members}
+        departments={departments}
       />
     </div>
   );

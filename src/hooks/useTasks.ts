@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export interface TaskRow {
   id: string;
@@ -30,15 +30,27 @@ export interface TaskRow {
   checklist_completed: number;
 }
 
-export function useTasks(date?: Date) {
-  const [tasks, setTasks] = useState<TaskRow[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UseTasksOptions {
+  /** Server-loaded initial data. When provided, the first useEffect fetch
+   *  is skipped — subsequent date changes or refetch() calls fetch normally. */
+  initialData?: TaskRow[];
+}
+
+export function useTasks(date?: Date, options?: UseTasksOptions) {
+  const hasInitial = options?.initialData !== undefined;
+  const [tasks, setTasks] = useState<TaskRow[]>(options?.initialData ?? []);
+  const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const skipNextFetch = useRef(hasInitial);
 
   const refetch = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
