@@ -1,7 +1,13 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { TableRow, TableCell, Skeleton } from '@brikdesigns/bds';
-import { gap } from '@/lib/tokens';
+import { color, gap } from '@/lib/tokens';
+
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
 interface TableSkeletonProps {
   /** Number of columns to span */
@@ -23,7 +29,7 @@ export function TableSkeleton({ columns, rows = 5 }: TableSkeletonProps) {
       {Array.from({ length: rows }, (_, rowIdx) => (
         <TableRow key={rowIdx}>
           {Array.from({ length: columns }, (_, colIdx) => (
-            <TableCell key={colIdx}>
+            <TableCell key={colIdx} style={bodyCellStyle}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
                 <Skeleton
                   variant="text"

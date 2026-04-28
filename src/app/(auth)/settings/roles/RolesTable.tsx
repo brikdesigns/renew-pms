@@ -36,6 +36,11 @@ const countBadge: CSSProperties = {
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RolesTable() {
@@ -127,24 +132,24 @@ export function RolesTable() {
               <TableSkeleton columns={6} />
             ) : roles.filter((r) => r.name !== 'Everyone').map((r) => (
               <TableRow key={r.id}>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.department}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.member_count}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {r.is_default ? 'Default' : 'Custom'}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <StatusBadge status={r.is_active} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />

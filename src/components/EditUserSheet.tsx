@@ -94,6 +94,11 @@ const emptyState: CSSProperties = {
   textAlign: 'center',
 };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUserSheetProps) {
@@ -252,10 +257,10 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
           </TableHeader>
           <TableBody>
             <TableRow key={assocRole.id}>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{assocRole.role}</span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{assocRole.department}</span>
               </TableCell>
             </TableRow>
@@ -282,7 +287,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
           </TableHeader>
           <TableBody>
             <TableRow key={assocDept.id}>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{assocDept.department}</span>
               </TableCell>
             </TableRow>

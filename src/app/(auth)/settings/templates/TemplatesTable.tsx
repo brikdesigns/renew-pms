@@ -103,6 +103,11 @@ const tableWrapperStyle: CSSProperties = {
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 const ADD_MENU_TYPES = [
   { id: 'checklist',     label: 'Checklist',  desc: 'Recurring to-do lists',      icon: icon.typeChecklist },
   { id: 'procedure',     label: 'Procedure',  desc: 'Step-by-step workflows',      icon: icon.typeProcedure },
@@ -435,31 +440,31 @@ export function TemplatesTable() {
             <TableBody>
               {filteredTemplates.map((template) => (
                 <TableRow key={template.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                       {template.name}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <TypeChip type={template.type} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                       {resolveCategory(template.task_category_id)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <FrequencyTag value={template.frequency} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                       {resolveRole(template.assigned_role_id)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <StatusBadge status={template.status} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
                       <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
@@ -470,7 +475,7 @@ export function TemplatesTable() {
               ))}
               {filteredTemplates.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={7} style={bodyCellStyle}>
                     <div style={{ textAlign: 'center', padding: space.xl, color: color.text.muted, fontSize: font.size.body.sm }}>
                       No templates yet. Add your first template above.
                     </div>

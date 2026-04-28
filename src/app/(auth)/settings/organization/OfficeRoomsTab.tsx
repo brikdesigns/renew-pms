@@ -106,6 +106,11 @@ const typeChipStyle: CSSProperties = {
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -237,23 +242,23 @@ export function OfficeRoomsTab() {
           <TableBody>
             {rooms.map((room) => (
               <TableRow key={room.id}>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
                     {room.name}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <StatusIndicator active={room.is_active} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />

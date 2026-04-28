@@ -41,6 +41,11 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
@@ -130,22 +135,22 @@ export function DepartmentsTable() {
               <TableSkeleton columns={5} />
             ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   {d.color
                     ? <span style={{ ...colorDot, backgroundColor: departmentColor(d.color).base }} />
                     : <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
                   }
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{d.member_count}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <StatusBadge status={d.is_active} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
                     <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
