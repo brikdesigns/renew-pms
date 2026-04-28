@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Button, Badge, useConfigureSheet } from '@brikdesigns/bds';
+import { Button, Badge, InteractiveListItem, useConfigureSheet } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -13,7 +13,7 @@ import {
   sheetBodyStyle,
   sheetSectionTitle,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, gap, space, border, state, motion } from '@/lib/tokens';
+import { font, color, gap, space, border } from '@/lib/tokens';
 import type { SheetType } from '@/lib/sheet-registry';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -100,20 +100,6 @@ const emptyState: CSSProperties = {
   textAlign: 'center',
 };
 
-const activityCardStyle = (hovered: boolean): CSSProperties => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-  padding: space.md,
-  borderRadius: border.radius.md,
-  backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
-  cursor: 'pointer',
-  transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
-  border: 'none',
-  textAlign: 'left',
-  width: '100%',
-});
-
 const activityIconWrap: CSSProperties = {
   width: '36px',
   height: '36px',
@@ -125,33 +111,6 @@ const activityIconWrap: CSSProperties = {
   flexShrink: 0,
   color: color.text.secondary,
   fontSize: font.size.body.md,
-};
-
-const activityTextWrap: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.tiny,
-  flex: 1,
-  minWidth: 0,
-};
-
-const activityTitle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.primary,
-  lineHeight: 1.2,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const activityMeta: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.regular,
-  color: color.text.secondary,
-  lineHeight: 1.3,
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -180,29 +139,23 @@ function ActivityRow({
   request: ActivityRequest;
   onClick: () => void;
 }) {
-  const [hovered, setHovered] = useState(false);
   const parts: string[] = [];
   parts.push(CATEGORY_LABELS[request.category] ?? request.category);
   if (request.assignee_name) parts.push(`Assigned to ${request.assignee_name}`);
   parts.push(formatDate(request.created_at));
 
   return (
-    <button
-      type="button"
-      style={activityCardStyle(hovered)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <InteractiveListItem
+      leading={
+        <div style={activityIconWrap}>
+          <Icon icon={icon.requests} />
+        </div>
+      }
+      title={request.title}
+      subtitle={parts.join(' \u00b7 ')}
+      trailing={<StatusBadge status={request.status} size="sm" />}
       onClick={onClick}
-    >
-      <div style={activityIconWrap}>
-        <Icon icon={icon.requests} />
-      </div>
-      <div style={activityTextWrap}>
-        <span style={activityTitle}>{request.title}</span>
-        <span style={activityMeta}>{parts.join(' \u00b7 ')}</span>
-      </div>
-      <StatusBadge status={request.status} size="sm" />
-    </button>
+    />
   );
 }
 

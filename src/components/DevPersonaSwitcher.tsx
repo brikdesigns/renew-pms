@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { gap } from '@/lib/tokens';
-import { useDevBarSlot } from '@brikdesigns/bds';
+import { useDevBarSlot, InteractiveListItem } from '@brikdesigns/bds';
 
 // ─── Gate ───────────────────────────────────────────────────────────────────
 
@@ -131,19 +131,6 @@ const avatarStyle: CSSProperties = {
   fontWeight: 700,
   color: BDS.grayDarker,
   flexShrink: 0,
-};
-
-const nameStyle: CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 600,
-  color: BDS.grayDarkest,
-  lineHeight: 1.2,
-};
-
-const subStyle: CSSProperties = {
-  fontSize: '11px',
-  color: BDS.grayDark,
-  lineHeight: 1.2,
 };
 
 const badgeStyle = (bgColor: string): CSSProperties => ({
@@ -294,22 +281,15 @@ export function DevPersonaSwitcher() {
         }
 
         return (
-          <button
+          <InteractiveListItem
             key={p.key}
-            type="button"
-            style={personaBtnStyle}
+            leading={<span style={avatarStyle}>{initials}</span>}
+            title={p.label}
+            subtitle={p.sublabel}
+            trailing={<span style={badgeStyle(p.badgeColor)}>{p.badge}</span>}
             onClick={() => handleSwitch(p)}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BDS.tanLightest; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             disabled={loading !== null}
-          >
-            <span style={avatarStyle}>{initials}</span>
-            <div>
-              <div style={nameStyle}>{p.label}</div>
-              <div style={subStyle}>{p.sublabel}</div>
-            </div>
-            <span style={badgeStyle(p.badgeColor)}>{p.badge}</span>
-          </button>
+          />
         );
       })}
     </div>
