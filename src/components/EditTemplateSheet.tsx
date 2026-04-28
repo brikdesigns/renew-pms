@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, IconButton, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
+import { Sheet, Button, AddableFieldRowList, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space, border } from '@/lib/tokens';
@@ -172,32 +170,11 @@ const formRowHalf: React.CSSProperties = {
   minWidth: 0,
 };
 
-const itemListStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.md,
-};
-
-const itemRowStyle: React.CSSProperties = {
-  borderRadius: border.radius.sm,
-  border: `${border.width.sm} solid ${color.border.muted}`,
-  backgroundColor: color.surface.primary,
-  overflow: 'hidden',
-};
-
-const itemMainRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-  padding: `${space.sm} ${space.md}`,
-};
-
 const itemContextRowStyle: React.CSSProperties = {
+  gridColumn: '1 / -1',
   display: 'flex',
   gap: gap.md,
-  padding: `${space.xs} ${space.md} ${space.sm}`,
-  borderTop: `1px solid ${color.border.muted}`,
-  backgroundColor: color.surface.secondary,
+  padding: `${space.xs} 0 ${space.sm}`,
 };
 
 const contextSelectWrap: React.CSSProperties = {
@@ -205,10 +182,17 @@ const contextSelectWrap: React.CSSProperties = {
   minWidth: 0,
 };
 
-const addItemRowStyle: React.CSSProperties = {
+const itemActionsStyle: React.CSSProperties = {
   display: 'flex',
-  gap: gap.md,
-  alignItems: 'flex-end',
+  gap: gap.xs,
+  alignItems: 'center',
+};
+
+const itemIndexStyle: React.CSSProperties = {
+  color: color.text.muted,
+  fontSize: font.size.body.sm,
+  alignSelf: 'center',
+  minWidth: '24px',
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -236,7 +220,6 @@ export function EditTemplateSheet({
   const { showToast } = useToast();
   const [form, setForm] = useState<TemplateFormData>(EMPTY_FORM);
   const [items, setItems] = useState<ChecklistItem[]>([]);
-  const [newItem, setNewItem] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -250,7 +233,6 @@ export function EditTemplateSheet({
     if (isOpen) {
       setForm(initialData ?? EMPTY_FORM);
       setItems(initialItems ?? []);
-      setNewItem('');
       setActiveTab('details');
       // Auto-expand items that already have context set
       const withContext = new Set(
@@ -277,19 +259,32 @@ export function EditTemplateSheet({
     });
   };
 
-  const addItem = () => {
-    if (!newItem.trim()) return;
-    setItems((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), label: newItem.trim(), room_id: '', equipment_id: '', supply_category_id: '' },
-    ]);
-    setNewItem('');
+  /**
+   * `AddableFieldRowList` owns add/remove. When it removes a row, prune any
+   * expanded-id Set entry that no longer matches a live item — the Set is
+   * keyed by id, but BDS removes by index.
+   */
+  const handleItemsChange = (next: ChecklistItem[]) => {
+    setItems(next);
+    setExpandedItems((prev) => {
+      const validIds = new Set(next.map((i) => i.id));
+      let drift = false;
+      const cleaned = new Set<string>();
+      prev.forEach((id) => {
+        if (validIds.has(id)) cleaned.add(id);
+        else drift = true;
+      });
+      return drift ? cleaned : prev;
+    });
   };
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
-  };
+  const newChecklistItem = (): ChecklistItem => ({
+    id: crypto.randomUUID(),
+    label: '',
+    room_id: '',
+    equipment_id: '',
+    supply_category_id: '',
+  });
 
   const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
     setItems((prev) => prev.map((i) => {
@@ -573,138 +568,111 @@ export function EditTemplateSheet({
         </p>
       </div>
 
-      <div style={addItemRowStyle}>
-        <div style={{ flex: 1 }}>
-          <TextInput
-            label="New Item"
-            size="sm"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            placeholder="e.g. Check and refill hand sanitizer stations"
-            fullWidth
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } }}
-          />
-        </div>
-        <Button variant="primary" size="sm" type="button" onClick={addItem}>
-          Add
-        </Button>
-      </div>
-
-      {items.length > 0 && (
-        <div style={{ ...itemListStyle, marginTop: gap.lg }}>
-          {items.map((item, idx) => {
-            const isExpanded = expandedItems.has(item.id);
-            const itemHasContext = hasContext(item);
-            return (
-              <div key={item.id} style={itemRowStyle}>
-                {/* Main row */}
-                <div style={itemMainRowStyle}>
-                  <span style={{ color: color.text.muted, fontSize: font.size.body.sm, minWidth: '24px' }}>
-                    {idx + 1}.
-                  </span>
-                  <span style={{ color: color.text.primary, fontSize: font.size.body.sm, flex: 1 }}>
-                    {item.label}
-                  </span>
-                  {!isExpanded && !itemHasContext && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="tiny"
-                      onClick={() => toggleItemExpand(item.id)}
-                    >
-                      + Link to inventory
-                    </Button>
-                  )}
-                  {!isExpanded && itemHasContext && (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="tiny"
-                        onClick={() => toggleItemExpand(item.id)}
-                      >
-                        Edit link
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger-ghost"
-                        size="tiny"
-                        onClick={() => clearItemContext(item.id)}
-                      >
-                        Remove link
-                      </Button>
-                    </>
-                  )}
-                  {isExpanded && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="tiny"
-                      onClick={() => toggleItemExpand(item.id)}
-                    >
-                      Done
-                    </Button>
-                  )}
-                  <IconButton
-                    variant="danger-ghost"
+      <AddableFieldRowList<ChecklistItem>
+        values={items}
+        onChange={handleItemsChange}
+        newRow={newChecklistItem}
+        columns="auto 1fr auto"
+        addLabel={form.type === 'procedure' ? 'Add Step' : `Add ${typeLabel} Item`}
+        removeLabel={form.type === 'procedure' ? 'Remove step' : 'Remove item'}
+        emptyLabel={`No ${form.type === 'procedure' ? 'steps' : 'items'} added yet. Click "Add" to start.`}
+        size="sm"
+      >
+        {({ row, index, update }) => {
+          const isExpanded = expandedItems.has(row.id);
+          const itemHasContext = hasContext(row);
+          return (
+            <>
+              <span style={itemIndexStyle}>{index + 1}.</span>
+              <TextInput
+                size="sm"
+                value={row.label}
+                onChange={(e) => update({ label: e.target.value })}
+                placeholder={form.type === 'procedure'
+                  ? 'e.g. Verify autoclave temperature'
+                  : 'e.g. Check and refill hand sanitizer stations'}
+                fullWidth
+              />
+              <div style={itemActionsStyle}>
+                {!isExpanded && !itemHasContext && (
+                  <Button
+                    type="button"
+                    variant="ghost"
                     size="tiny"
-                    icon={<Icon icon={icon.remove} />}
-                    label={`Remove ${item.label}`}
-                    onClick={() => removeItem(item.id)}
-                  />
-                </div>
-
-                {/* Context row — shown when expanded or has existing context */}
+                    onClick={() => toggleItemExpand(row.id)}
+                  >
+                    + Link to inventory
+                  </Button>
+                )}
+                {!isExpanded && itemHasContext && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="tiny"
+                      onClick={() => toggleItemExpand(row.id)}
+                    >
+                      Edit link
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger-ghost"
+                      size="tiny"
+                      onClick={() => clearItemContext(row.id)}
+                    >
+                      Remove link
+                    </Button>
+                  </>
+                )}
                 {isExpanded && (
-                  <div style={itemContextRowStyle}>
-                    <div style={contextSelectWrap}>
-                      <Select
-                        label="Room"
-                        size="sm"
-                        options={roomOptions}
-                        value={item.room_id}
-                        onChange={(e) => updateItemContext(item.id, 'room_id', e.target.value)}
-                        fullWidth
-                      />
-                    </div>
-                    <div style={contextSelectWrap}>
-                      <Select
-                        label="Equipment"
-                        size="sm"
-                        options={getEquipmentOptions(item.room_id)}
-                        value={item.equipment_id}
-                        onChange={(e) => updateItemContext(item.id, 'equipment_id', e.target.value)}
-                        fullWidth
-                      />
-                    </div>
-                    <div style={contextSelectWrap}>
-                      <Select
-                        label="Supply Category"
-                        size="sm"
-                        options={supplyCategoryOptions}
-                        value={item.supply_category_id}
-                        onChange={(e) => updateItemContext(item.id, 'supply_category_id', e.target.value)}
-                        fullWidth
-                      />
-                    </div>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="tiny"
+                    onClick={() => toggleItemExpand(row.id)}
+                  >
+                    Done
+                  </Button>
                 )}
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {items.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: space.xl,
-          color: color.text.muted,
-          fontSize: font.size.body.sm,
-        }}>
-          No items added yet. Add items above to build the {typeLabel.toLowerCase()}.
-        </div>
-      )}
+              {isExpanded && (
+                <div style={itemContextRowStyle}>
+                  <div style={contextSelectWrap}>
+                    <Select
+                      label="Room"
+                      size="sm"
+                      options={roomOptions}
+                      value={row.room_id}
+                      onChange={(e) => updateItemContext(row.id, 'room_id', e.target.value)}
+                      fullWidth
+                    />
+                  </div>
+                  <div style={contextSelectWrap}>
+                    <Select
+                      label="Equipment"
+                      size="sm"
+                      options={getEquipmentOptions(row.room_id)}
+                      value={row.equipment_id}
+                      onChange={(e) => updateItemContext(row.id, 'equipment_id', e.target.value)}
+                      fullWidth
+                    />
+                  </div>
+                  <div style={contextSelectWrap}>
+                    <Select
+                      label="Supply Category"
+                      size="sm"
+                      options={supplyCategoryOptions}
+                      value={row.supply_category_id}
+                      onChange={(e) => updateItemContext(row.id, 'supply_category_id', e.target.value)}
+                      fullWidth
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        }}
+      </AddableFieldRowList>
     </div>
   );
 
