@@ -6,8 +6,8 @@ import { color, gap, space, border } from '@/lib/tokens';
 export default function TrainingLoading() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Filter bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}` }}>
+      {/* Filter bar — no divider during loading; live page has none either */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${space.md} ${space.xl}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
           <Skeleton variant="rectangular" width={240} height={32} style={{ borderRadius: border.radius.sm }} />
           <Skeleton variant="text" width={32} height={20} />

@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@brikdesigns/bds';
-import { color, gap, space, border } from '@/lib/tokens';
+import { gap, space, border } from '@/lib/tokens';
 
 // Shape-neutral chrome shown only while page.tsx awaits getAuthUser().
 // Each role-branched component (RequestsClient as Board / MyRequestsList as
@@ -16,7 +16,6 @@ export default function RequestsLoading() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: `${space.md} 0`,
-          borderBottom: `1px solid ${color.border.muted}`,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: space.sm }}>
