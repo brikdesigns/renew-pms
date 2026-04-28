@@ -283,6 +283,7 @@ export function DevPersonaSwitcher() {
         return (
           <InteractiveListItem
             key={p.key}
+            size="sm"
             leading={<span style={avatarStyle}>{initials}</span>}
             title={p.label}
             subtitle={p.sublabel}
