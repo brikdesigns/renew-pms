@@ -34,7 +34,7 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 15 open / 42 originally / 38 verified across 9 categories
+## Findings — 11 open / 42 originally / 38 verified across 9 categories
 
 > **Batch progress:**
 > - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
@@ -47,9 +47,10 @@ In renew-pms terms: every interactive surface routes through a BDS component, ev
 > - Batch 6b (`task/bds-cleanup-utility-bar-avatar`, landed via stack PR #63): final Cat 2c — #17 (TopUtilityBar user-avatar menu toggle) swapped to BDS `IconButton size=md` with the 40px UserAvatar as `icon`. Same pattern as Batch 6 at md size. Cat 2c open: 2 → 1 (only #15 VendorSidebar nav remains, blocked by the BDS `NavItem` promotion — that finding never belonged under "toolbar buttons", it's a navigation pattern).
 > - Batch C3#3 (`task/bds-cleanup-checklist-item-3`, PR #69): Cat 3 #3 — `ViewTaskSheet.tsx:376-394` checklist row swapped to BDS `<ChecklistItem>` (cross-repo BDS promotion in PR brik-bds#297, v0.43.0). Pre-work uncovered the **completion-state primitive** as a distinct concept from `<Checkbox>` (selection vs. completion; circle vs. square). New BDS exports: `<CompletionToggle>` (atomic circular `<button>`) + `<ChecklistItem>` (row composition with native `<label>` + hidden `<input type="checkbox">`); `<BoardCard>` internally consumes `<CompletionToggle>` so the circle visual is single-sourced. End-to-end visually verified (light + dark, toggle round-trip, progress counter advances). Cat 3 open: 2 → 1 (only #4 ViewInventorySheet remains, deferred to Batch 8).
 > - Batch 9 (`task/bds-cleanup-edittemplate-addable`, PR #74): EditTemplateSheet authoring tab adopted BDS `<AddableFieldRowList>` (per ADR-005 — canonical multi-field row primitive with render-prop children). UX shift: top "type-and-press-Enter" Add input replaced by bottom "Add Checklist Item" button + inline-editable label TextInput per row (matches BDS Addable conventions); per-item collapsible context panel preserved via `gridColumn: '1 / -1'` inside the render-prop. Drops `newItem` state + `addItem`/`removeItem` handlers + 4 layout style exports + 2 orphaned imports (`Icon`, `icon`). End-to-end browser-verified: add, inline label edit, expand → 3 Selects render, link to inventory, collapse, remove.
-> - Batch 7 (`task/bds-pageheader-tabbar`, this PR): PageHeader hand-rolled tab bar swapped to BDS `<TabBar variant="text">`. Pre-work re-scoped: BDS `TabBar` already exists with three variants (`text`/`tab`/`box`) — no BDS PR needed. None of the variants exactly matched PageHeader's hand-rolled hybrid (brand-active color **+** active underline); chose `text` variant to preserve brand-active color, accept loss of underline. **Cat 7 closes at 0 open**; Cat 2d #23 also resolved (same site). BDS variant gap (text + underline) flagged as followup — possible future BDS extension. Single call site swap (only `OrganizationSettingsClient` passes `tabs` to PageHeader).
+> - Batch 7 (`task/bds-pageheader-tabbar`, PR #75): PageHeader hand-rolled tab bar swapped to BDS `<TabBar variant="text">`. Pre-work re-scoped: BDS `TabBar` already exists with three variants (`text`/`tab`/`box`) — no BDS PR needed. None of the variants exactly matched PageHeader's hand-rolled hybrid (brand-active color **+** active underline); chose `text` variant to preserve brand-active color, accept loss of underline. **Cat 7 closes at 0 open**; Cat 2d #23 also resolved (same site). BDS variant gap (text + underline) flagged as followup. Single call site swap (only `OrganizationSettingsClient` passes `tabs` to PageHeader).
+> - Batch 4b (`task/bds-cleanup-add-menu-4b`, this PR): final Cat 2a — 4 add-menu sites adopted BDS `<Menu>` after cross-repo extension (`brik-bds#303`, v0.44.0) added `description?: string` to `MenuItemData`. Sites: TemplatesTable (Add Template), TasksClient (Add Task), MyRequestsList (New Request), RequestsClient (Add Request, board view). Each swap dropped a hand-rolled `<div>` panel + raw `<button>` items + (in TasksClient) the click-outside `useEffect` and `addBtnRef`. End-to-end browser-verified across all four surfaces — icons, 2-line label+description, click → trigger handler. **Cat 2a closes at 0 open.**
 >
-> Open count after Batches 1–4 + 5 + 6 + 6b + 3b + C3#3 + 9 + 7: **15**.
+> Open count after Batches 1–4 + 4b + 5 + 6 + 6b + 3b + C3#3 + 9 + 7: **11**. Cat 2a + Cat 7 + Cat 2d #23 close.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -63,7 +64,7 @@ A `<button>` whose children are an entire layout (avatar + name + metadata + tra
 
 Most concentrate in three patterns: dropdown menu items, sheet drill-down nav-links, and one-off toggle buttons.
 
-#### 2a. Menu items — 4 open / 6 total
+#### 2a. Menu items — RESOLVED (was 6 violations)
 
 Original audit framed all 6 as "swap raw `<button>` to BDS Menu" but Batch 4 inspection split them into two distinct shapes:
 
@@ -71,19 +72,19 @@ Original audit framed all 6 as "swap raw `<button>` to BDS Menu" but Batch 4 ins
 
 | # | File | Status |
 |---|------|--------|
-| 4 | ~~`RequestsClient.tsx:356` AssignMenuItem~~ | ✅ Batch 4 — local component deleted, swapped to BDS `<MenuItem>` with stopPropagation in spread props. (Audit had originally mislabeled this as "FilterPill" — verified it's actually a sibling of #6, same shape.) |
+| 4 | ~~`RequestsClient.tsx:356` AssignMenuItem~~ | ✅ Batch 4 — local component deleted, swapped to BDS `<MenuItem>` with stopPropagation in spread props. |
 | 6 | ~~`TaskAssigneeAvatar.tsx:30` MenuItem~~ | ✅ Batch 4 — local component deleted, swapped to BDS `<MenuItem>`. |
 
-**Icon + label + description (add-menu category picker)** — BDS `MenuItemData` only exposes `label: string` + `icon?: ReactNode`. The 2-line shape with description is not representable. **Deferred to a future BDS `MenuItemData.description` promotion (cross-repo).**
+**Icon + label + description (add-menu category picker)** — needed `MenuItemData.description` to support the 2-line shape. Closed in Batch 4b via cross-repo BDS extension (brik-bds#303 → 0.44.0).
 
-| # | File | Pattern | Status |
-|---|------|---------|--------|
-| 1 | [src/app/(auth)/settings/templates/TemplatesTable.tsx:379](../../src/app/(auth)/settings/templates/TemplatesTable.tsx#L379) | Add-template menu — `{label, desc, icon}` | Deferred (BDS gap) |
-| 2 | [src/app/(auth)/tasks/TasksClient.tsx:630](../../src/app/(auth)/tasks/TasksClient.tsx#L630) | Add-task menu — same shape | Deferred (BDS gap) |
-| 3 | [src/app/(auth)/requests/MyRequestsList.tsx:104](../../src/app/(auth)/requests/MyRequestsList.tsx#L104) | Add-request category menu — same shape | Deferred (BDS gap) |
-| 5 | [src/app/(auth)/requests/RequestsClient.tsx:555](../../src/app/(auth)/requests/RequestsClient.tsx#L555) | Add-request category menu (board view) — same shape | Deferred (BDS gap) |
+| # | File | Status |
+|---|------|--------|
+| 1 | ~~`TemplatesTable.tsx:379` Add Template menu~~ | ✅ Batch 4b — adopted BDS `<Menu>` with `description` per item. Hand-rolled `<div>` panel + raw `<button>` items dropped. |
+| 2 | ~~`TasksClient.tsx:630` Add Task menu~~ | ✅ Batch 4b — same swap. Click-outside `useEffect` + `addBtnRef` removed (BDS `<Menu>` owns outside-click handling). |
+| 3 | ~~`MyRequestsList.tsx:104` New Request menu~~ | ✅ Batch 4b — same swap. |
+| 5 | ~~`RequestsClient.tsx:555` Add Request menu (board view)~~ | ✅ Batch 4b — same swap. |
 
-**Note on the deferred 4:** the entire dropdown panel is also hand-rolled (positioned `<div>` with `boxShadow` and `minWidth`), not using BDS `Menu`. A full fix needs both: (1) BDS `MenuItemData.description` (the item shape), and (2) BDS `Menu` adoption for the panel. Until BDS exposes both, swapping piecewise creates inconsistency.
+**Cross-repo work**: `brik-bds#303` (v0.44.0) added `description?: string` to `MenuItemData`, plus a `bds-menu__item--with-description` modifier and new `bds-menu__text` / `bds-menu__label` / `bds-menu__description` slots for per-line styling. Single-line items unchanged (additive, non-breaking).
 
 #### 2b. Sheet drill-down nav-links — split into 2b-A (resolved) + 2b-B (moved to Batch 8)
 
@@ -288,7 +289,7 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 3 | `task/bds-cleanup-title-naming` ✅ | Rename `headingStyle` style-object variables to `titleStyle` per BDS `__title` BEM slot convention. | 4 files | **Landed (PR #56).** Original Cat 6 framing (heading family + sub-18px) was a false-positive — `heading.tiny` is the 18px floor, `heading.small` is 20px. Re-scoped to naming-consistency only. Audit rule (`token-audit.sh` check #14) added in same PR. |
 | 3b | `task/bds-cleanup-devpersona-headerstyle` ✅ | Rename `headerStyle` → `categoryLabelStyle` in `DevPersonaSwitcher.tsx:98`. The variable holds text styles for an uppercase 11px section label, so the BDS `-label` family is the right home, not `header*`. | 1 file + audit script + audit doc | **Landed (this PR).** Closes Cat 6 (0 open). Audit rule extended in same PR — new check #15 in `token-audit.sh` flags any `\w*headerStyle` declaration whose body contains text-style properties (chrome `headerStyle` containers remain valid). |
 | 4 | `task/bds-cleanup-menu-items-2a` ✅ | Partial Cat 2a — swap 2 of 6 to BDS `MenuItem` (TaskAssigneeAvatar + RequestsClient AssignMenuItem). | 2 files | **Landed (PR #58).** Storybook MCP check found BDS `MenuItem` exists and exports cleanly via barrel. The other 4 (add-menu category pickers) need a 2-line `{label, desc, icon}` shape that BDS `MenuItemData` doesn't expose — deferred to Batch 4b. |
-| 4b | `bds-promotion: MenuItemData.description` | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR + 4 files in renew-pms | Cross-repo. Confirm shape with design before promoting (Figma spec for "menu item with description" — the 2-line variant). The hand-rolled dropdown panels in those 4 files also need to adopt BDS `Menu`, not just the items. |
+| 4b | `task/bds-cleanup-add-menu-4b` ✅ | Add `description?: string` to BDS `MenuItemData` + render the second line. Then swap the 4 add-menu category dropdowns (TemplatesTable, TasksClient, MyRequestsList, RequestsClient #5) to BDS `Menu`. | BDS PR (brik-bds#303 → 0.44.0) + 4 renew-pms files | **Landed (this PR + brik-bds#303).** BDS extension was additive: new optional `description` field on `MenuItemData`, new `bds-menu__item--with-description` modifier + nested `bds-menu__text` / `bds-menu__label` / `bds-menu__description` slots. Renew-pms swap dropped 4 hand-rolled `<div>` panels, 4 raw `<button>` item lists, 1 click-outside `useEffect` + `addBtnRef`, and a few orphaned imports. End-to-end verified in browser (5 task types in Tasks; 3 categories in Requests / MyRequestsList; filtered list in Templates). **Cat 2a closes at 0 open.** |
 | 5 | `task/bds-cleanup-sheet-navlink-whitelist` ✅ | Cat 2b split: 6 `ViewRequestSheet` sites consume `bds-sheet__nav-link` (BDS-provided class) — marked resolved-as-acceptable; 2 `ViewContactSheet` activity-card sites moved to Batch 8 (`InteractiveListItem` row pattern). | doc-only | **Landed (PR #67).** Pre-work uncovered the BDS class already shipped in `Sheet.css` and the audit-script whitelist was already in place — no code change needed. Audit-script blind spot (multi-line `<button>` declaration regex) flagged as separate followup. |
 | 6 | `task/bds-cleanup-clickable-divs-3` ✅ | Partial Cat 3 — 2 of 4 `<div role="button">` swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). | 2 files | **Landed (via stack PR #63).** Re-scoped from 4 → 2 after measuring BDS coverage: `IconButton` accepts a `ReactNode` icon and centers a 28×28 `UserAvatar` cleanly inside the 32×32 button. Cat 3 #3 (checklist row) and #4 (inventory request row) need pattern decisions and deferred — see Cat 3 status table. |
 | 6b | `task/bds-cleanup-utility-bar-avatar` ✅ | Final Cat 2c — #17 TopUtilityBar user-avatar menu toggle swapped to BDS `IconButton size=md`. | 1 file | **Landed (via stack PR #63).** Reuses the Batch 6 pattern at md size (40px UserAvatar, 40×40 button — exact alignment, no overflow). Cat 2c is now fully resolved except #15 (VendorSidebar nav), which always belonged under "BDS NavItem promotion" rather than "toolbar buttons". |
