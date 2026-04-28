@@ -69,22 +69,51 @@ fi
 # ── 3. Native <button> instead of BDS Button / IconButton ──────────
 section "Native <button> (use Button or IconButton from @brikdesigns/bds)"
 
-# Allowlist:
-#   - role="tab"  → PageHeader tabs (legitimate tablist semantics — convert to BDS TabBar when available)
-#   - DevPersonaSwitcher → dev-only tool, not production UI
-#   - TemplatesTable dropdown menu items → menu affordance (not a primary action button)
-#   - bds-sheet__nav-link → BDS-sanctioned pattern; styling ships in @brikdesigns/bds/dist/styles.css
-BUTTON_HITS=$(grep -rn --include="*.tsx" \
-  -E "<button[ >]" "$SRC" \
-  | grep -v 'role="tab"' \
+# Allowlist (file-wide unless noted):
+#   - DevPersonaSwitcher → dev-only tool, not production UI (Cat 2d #25)
+#   - VendorSidebar → nav icon button deferred to BDS NavItem promotion (Cat 2c #15)
+#   - bds-sheet__nav-link → BDS-sanctioned class shipped in @brikdesigns/bds/dist/styles.css
+#
+# Detection: scan each .tsx file for <button> tag openings, including those
+# split across multiple lines. The opening tag accumulates from `<button`
+# through the first `>` so attributes on subsequent lines (className, style,
+# onClick) are captured in a single emitted record. Multi-line content is
+# joined with " <<< " so downstream `grep -v` filters still see every attr.
+BUTTON_HITS=$(find "$SRC" -type f -name "*.tsx" | while read -r f; do
+  awk '
+    function tag_closed(line,    t) {
+      t = line
+      gsub(/=>/, "==", t)
+      return index(t, ">") > 0
+    }
+    {
+      if (capturing) {
+        accumulated = accumulated " <<< " $0
+        if (tag_closed($0)) {
+          print FILENAME ":" start_line ":" accumulated
+          capturing = 0
+          accumulated = ""
+        }
+        next
+      }
+      if (match($0, /<button([[:space:]>]|$)/)) {
+        rest = substr($0, RSTART)
+        if (tag_closed(rest)) {
+          print FILENAME ":" NR ":" $0
+        } else {
+          capturing = 1
+          start_line = NR
+          accumulated = $0
+        }
+      }
+    }
+  ' "$f"
+done \
   | grep -v "DevPersonaSwitcher" \
-  | grep -v "TemplatesTable.*menu\|addMenuOpen\|handleAddClick" \
+  | grep -v "VendorSidebar" \
   | grep -v 'bds-sheet__nav-link' \
   | grep -v "// " \
   || true)
-
-# Filter TemplatesTable dropdown buttons by checking for the menu context
-BUTTON_HITS=$(echo "$BUTTON_HITS" | grep -v "TemplatesTable" || true)
 
 BUTTON_COUNT=$(count_matches "$BUTTON_HITS")
 if [ "$BUTTON_COUNT" -gt 0 ]; then
