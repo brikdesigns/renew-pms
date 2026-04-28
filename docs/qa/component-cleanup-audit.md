@@ -34,7 +34,7 @@ Both are cheap to fix in batches. Both are expensive once they multiply.
 
 In renew-pms terms: every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.
 
-## Findings — 17 open / 42 originally / 38 verified across 9 categories
+## Findings — 15 open / 42 originally / 38 verified across 9 categories
 
 > **Batch progress:**
 > - Batch 1 (`task/bds-cleanup-css-properties`, `ce8179c`): Cat 8 (4) + 1 of 8 Cat 2b → resolved.
@@ -46,9 +46,10 @@ In renew-pms terms: every interactive surface routes through a BDS component, ev
 > - Batch 6 (`task/bds-cleanup-clickable-divs-3`, landed via stack PR #63): partial Cat 3 — 2 of 4 swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). Re-scoped from 4 → 2 after measuring: BDS `IconButton` works for the avatar wrappers (28px UserAvatar centers cleanly inside the 32px sm button), but the checklist row (#3) and inventory request row (#4) need their own BDS patterns — see triage row 6 / row 8 notes.
 > - Batch 6b (`task/bds-cleanup-utility-bar-avatar`, landed via stack PR #63): final Cat 2c — #17 (TopUtilityBar user-avatar menu toggle) swapped to BDS `IconButton size=md` with the 40px UserAvatar as `icon`. Same pattern as Batch 6 at md size. Cat 2c open: 2 → 1 (only #15 VendorSidebar nav remains, blocked by the BDS `NavItem` promotion — that finding never belonged under "toolbar buttons", it's a navigation pattern).
 > - Batch C3#3 (`task/bds-cleanup-checklist-item-3`, PR #69): Cat 3 #3 — `ViewTaskSheet.tsx:376-394` checklist row swapped to BDS `<ChecklistItem>` (cross-repo BDS promotion in PR brik-bds#297, v0.43.0). Pre-work uncovered the **completion-state primitive** as a distinct concept from `<Checkbox>` (selection vs. completion; circle vs. square). New BDS exports: `<CompletionToggle>` (atomic circular `<button>`) + `<ChecklistItem>` (row composition with native `<label>` + hidden `<input type="checkbox">`); `<BoardCard>` internally consumes `<CompletionToggle>` so the circle visual is single-sourced. End-to-end visually verified (light + dark, toggle round-trip, progress counter advances). Cat 3 open: 2 → 1 (only #4 ViewInventorySheet remains, deferred to Batch 8).
-> - Batch 9 (`task/bds-cleanup-edittemplate-addable`, this PR): EditTemplateSheet authoring tab adopted BDS `<AddableFieldRowList>` (per ADR-005 — canonical multi-field row primitive with render-prop children). UX shift: top "type-and-press-Enter" Add input replaced by bottom "Add Checklist Item" button + inline-editable label TextInput per row (matches BDS Addable conventions); per-item collapsible context panel preserved via `gridColumn: '1 / -1'` inside the render-prop. Drops `newItem` state + `addItem`/`removeItem` handlers + 4 layout style exports + 2 orphaned imports (`Icon`, `icon`). End-to-end browser-verified: add, inline label edit, expand → 3 Selects render, link to inventory, collapse, remove. **Audit reaches the cleanup-workflow lifecycle's "all categories at 0 open" state for the renew-pms-only batches** — only Batches 4b, 7, 8 (cross-repo BDS promotions) and 2c #15 (blocked on BDS `NavItem`) remain.
+> - Batch 9 (`task/bds-cleanup-edittemplate-addable`, PR #74): EditTemplateSheet authoring tab adopted BDS `<AddableFieldRowList>` (per ADR-005 — canonical multi-field row primitive with render-prop children). UX shift: top "type-and-press-Enter" Add input replaced by bottom "Add Checklist Item" button + inline-editable label TextInput per row (matches BDS Addable conventions); per-item collapsible context panel preserved via `gridColumn: '1 / -1'` inside the render-prop. Drops `newItem` state + `addItem`/`removeItem` handlers + 4 layout style exports + 2 orphaned imports (`Icon`, `icon`). End-to-end browser-verified: add, inline label edit, expand → 3 Selects render, link to inventory, collapse, remove.
+> - Batch 7 (`task/bds-pageheader-tabbar`, this PR): PageHeader hand-rolled tab bar swapped to BDS `<TabBar variant="text">`. Pre-work re-scoped: BDS `TabBar` already exists with three variants (`text`/`tab`/`box`) — no BDS PR needed. None of the variants exactly matched PageHeader's hand-rolled hybrid (brand-active color **+** active underline); chose `text` variant to preserve brand-active color, accept loss of underline. **Cat 7 closes at 0 open**; Cat 2d #23 also resolved (same site). BDS variant gap (text + underline) flagged as followup — possible future BDS extension. Single call site swap (only `OrganizationSettingsClient` passes `tabs` to PageHeader).
 >
-> Open count after Batches 1–4 + 5 + 6 + 6b + 3b + C3#3 + 9: **17**. Batch 9 closes the last renew-pms-only audit-cleanup batch.
+> Open count after Batches 1–4 + 5 + 6 + 6b + 3b + C3#3 + 9 + 7: **15**.
 
 ### Category 1 — `<button>` wrapping non-button content (1)
 
@@ -131,14 +132,14 @@ Audit-script status: rule #3 (raw `<button>`) already whitelists `bds-sheet__nav
 | 21 | ~~`EditTemplateSheet.tsx:633` "Edit link"~~ | — | ✅ Batch 1 |
 | 22 | ~~`EditTemplateSheet.tsx:640` "Remove link"~~ | — | ✅ Batch 1 (`danger-ghost`) |
 
-#### 2d. Tab bar + dev tools (5)
-| # | File | Pattern |
-|---|------|---------|
-| 23 | [src/components/PageHeader.tsx:168](../../src/components/PageHeader.tsx#L168) | Hand-rolled tab buttons (`role="tab"`, `aria-selected`, underline border) |
-| 24 | [src/components/EditTemplateSheet.tsx:650](../../src/components/EditTemplateSheet.tsx#L650) | Collapse button |
-| 25 | [src/components/DevPersonaSwitcher.tsx:272](../../src/components/DevPersonaSwitcher.tsx#L272) | Tester tab |
-| 26 | [src/components/DevPersonaSwitcher.tsx:297](../../src/components/DevPersonaSwitcher.tsx#L297) | Persona row: avatar + name + badge |
-| 27 | TrainingCard.tsx duplicate (Category 1) | — |
+#### 2d. Tab bar + dev tools — 4 open / 5 total
+| # | File | Pattern | Status |
+|---|------|---------|--------|
+| 23 | ~~`PageHeader.tsx:168` Hand-rolled tab buttons~~ | — | ✅ Batch 7 — swapped to BDS `<TabBar variant="text">`. |
+| 24 | [src/components/EditTemplateSheet.tsx:650](../../src/components/EditTemplateSheet.tsx#L650) | Collapse button | Open |
+| 25 | [src/components/DevPersonaSwitcher.tsx:272](../../src/components/DevPersonaSwitcher.tsx#L272) | Tester tab | Open |
+| 26 | [src/components/DevPersonaSwitcher.tsx:297](../../src/components/DevPersonaSwitcher.tsx#L297) | Persona row: avatar + name + badge | Open — Batch 8 (`InteractiveListItem`) |
+| 27 | TrainingCard.tsx duplicate (Category 1) | — | Open — Batch 8 (`InteractiveListItem`) |
 
 ### Category 3 — `<div onClick>` (clickable divs) — 1 open / 4 total
 
@@ -196,13 +197,15 @@ The 2 originally-listed `sheetSectionTitle` / `sheetTitleStyle` variables alread
 
 **Cat 6 closes at 0 open.** The category 6 lifecycle: 5 originally-flagged size violations → re-scoped to BEM naming drift in PR #56 (4 resolved + audit rule #14 added) → 1 dev-only finding (DevPersonaSwitcher `headerStyle`) tracked as Triage 3b → resolved here, audit rule #15 added.
 
-### Category 7 — Hand-built segmented controls / chip rows / tab bars (1)
+### Category 7 — Hand-built segmented controls / chip rows / tab bars — RESOLVED (was 1 violation)
 
-| # | File | Pattern |
-|---|------|---------|
-| 1 | [src/components/PageHeader.tsx:165-179](../../src/components/PageHeader.tsx#L165-L179) | Hand-rolled tab bar. Same finding as Category 2d/#23. |
+| # | File | Resolution |
+|---|------|------------|
+| 1 | ~~`PageHeader.tsx:165-179` Hand-rolled tab bar~~ | ✅ Batch 7 — swapped to BDS `<TabBar variant="text">`. Same finding closed Category 2d/#23 in one move. |
 
-`SegmentedControl` is already adopted in `ContactsTable`, `TemplatesTable`, `TasksClient` — `PageHeader` is the lone exception and needs a BDS `TabBar`.
+`SegmentedControl` was already adopted in `ContactsTable`, `TemplatesTable`, `TasksClient`. `PageHeader` was the lone exception. Resolved via BDS `<TabBar>` (which already shipped — no BDS PR needed for Batch 7).
+
+> **BDS variant gap flagged during Batch 7** — the existing PageHeader visual was a hybrid (`text` variant's brand-active color **+** `tab` variant's underline). No BDS variant currently combines both. Adopted `text` variant (brand-active color, no underline) per design call; the underline is lost. If we want this combination as a first-class pattern, propose a BDS extension: either a 4th variant (`text-underline`) or a prop on `text` that opts into an active underline. Tracked in handoff as a followup, not in this PR scope.
 
 ### Category 8 — RESOLVED (was 4 violations)
 
@@ -289,7 +292,7 @@ Each row is a separate `task/bds-cleanup-*` branch off `staging`. Order is from 
 | 5 | `task/bds-cleanup-sheet-navlink-whitelist` ✅ | Cat 2b split: 6 `ViewRequestSheet` sites consume `bds-sheet__nav-link` (BDS-provided class) — marked resolved-as-acceptable; 2 `ViewContactSheet` activity-card sites moved to Batch 8 (`InteractiveListItem` row pattern). | doc-only | **Landed (PR #67).** Pre-work uncovered the BDS class already shipped in `Sheet.css` and the audit-script whitelist was already in place — no code change needed. Audit-script blind spot (multi-line `<button>` declaration regex) flagged as separate followup. |
 | 6 | `task/bds-cleanup-clickable-divs-3` ✅ | Partial Cat 3 — 2 of 4 `<div role="button">` swapped to BDS `IconButton` (TaskAssigneeAvatar + RequestsClient AssigneeAvatar). | 2 files | **Landed (via stack PR #63).** Re-scoped from 4 → 2 after measuring BDS coverage: `IconButton` accepts a `ReactNode` icon and centers a 28×28 `UserAvatar` cleanly inside the 32×32 button. Cat 3 #3 (checklist row) and #4 (inventory request row) need pattern decisions and deferred — see Cat 3 status table. |
 | 6b | `task/bds-cleanup-utility-bar-avatar` ✅ | Final Cat 2c — #17 TopUtilityBar user-avatar menu toggle swapped to BDS `IconButton size=md`. | 1 file | **Landed (via stack PR #63).** Reuses the Batch 6 pattern at md size (40px UserAvatar, 40×40 button — exact alignment, no overflow). Cat 2c is now fully resolved except #15 (VendorSidebar nav), which always belonged under "BDS NavItem promotion" rather than "toolbar buttons". |
-| 7 | `bds-promotion: TabBar` | Promote tab bar to BDS, then swap `PageHeader` (Category 2d #23 / Category 7). | BDS PR + 1 file in renew-pms | Cross-repo. Coordinate with BDS owner. |
+| 7 | `task/bds-pageheader-tabbar` ✅ | Swap `PageHeader` to BDS `<TabBar variant="text">` (Category 2d #23 / Category 7). | 1 renew-pms file (no BDS PR — TabBar already shipped) | **Landed (this PR).** Pre-work re-scoped: BDS `TabBar` already exists with `text`/`tab`/`box` variants. None exactly matched PageHeader's hand-rolled hybrid (brand-active color **+** active underline). Adopted `text` variant — preserves brand-active color, drops the underline. BDS variant gap flagged as a followup (could add `text-underline` variant or `underline` prop on `text`). Single call site (`OrganizationSettingsClient`); other PageHeader users don't pass `tabs`. |
 | 8 | `bds-promotion: InteractiveListItem` | Promote the EntityRow pattern. Then swap 5 call sites: Cat 1 (TrainingCard), Cat 2d #26 (DevPersonaSwitcher persona), Cat 3 #4 (ViewInventorySheet request row), Cat 2b-B #7 + #8 (ViewContactSheet activity cards — moved from Batch 5). | BDS PR + 4 files in renew-pms | Cross-repo. Highest design surface area — pair with Figma spec before building. |
 | 9 | `task/bds-cleanup-edittemplate-addable` ✅ | Adopt BDS `<AddableFieldRowList>` for the EditTemplateSheet checklist authoring tab. | 1 renew-pms file (no BDS PR needed) | **Landed (this PR).** Pre-work re-scoped: BDS already has the right primitive — `AddableFieldRowList` (per ADR-005) is the canonical multi-field row collection with a render-prop children API that lets the consumer own per-row markup. No `AddableEntryList` extension or drawer redesign needed. Design call A2 chosen: embrace BDS conventions — labels become inline-editable, Add button moves to the bottom (was top "type-and-press-Enter"), the per-item collapsible context panel renders inline below the row via `gridColumn: '1 / -1'`. Net effect on EditTemplateSheet: drops `newItem` state + `addItem`/`removeItem` handlers + 4 layout style exports + 2 orphaned imports (`Icon`, `icon`). End-to-end browser-verified: add, inline label edit, expand, link to inventory, collapse, remove. |
 | C3#3 | `task/bds-cleanup-checklist-item-3` ✅ | Cat 3 #3 — `ViewTaskSheet.tsx` checklist row swapped to BDS `<ChecklistItem>` (cross-repo: BDS PR brik-bds#297 promoted `<CompletionToggle>` + `<ChecklistItem>` and refactored BoardCard to consume the atom). | BDS PR + 1 renew-pms file (+ audit doc + handoff) | **Landed (this PR).** Pattern decision: completion-state primitive distinct from `<Checkbox>` (selection vs. completion; circle vs. square); single-sourced visual via `<CompletionToggle>` reused inside both `<ChecklistItem>` (row) and `<BoardCard>` (card chrome). End-to-end visually verified in browser (light + dark, toggle round-trip, progress counter advances). |
