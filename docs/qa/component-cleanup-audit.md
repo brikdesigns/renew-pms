@@ -1,7 +1,8 @@
 ---
-status: in-progress
+status: resolved
 owner: nick
-last-updated: 2026-04-27
+last-updated: 2026-04-28
+resolved: 2026-04-28
 canonical-naming-rules: https://design.brikdesigns.com/docs/primitives/naming-conventions
 workflow: ./cleanup-workflow.md
 related: ./launch-checklist.md
@@ -12,6 +13,35 @@ related: ./launch-checklist.md
 Systematic inventory of component-misuse and naming-drift in renew-pms `src/`. Feeds batched cleanup PRs that pre-launch debt does not leak into production. Findings are grouped so each batch lands cleanly without conflicting with feature branches and so BDS gets a clear signal on what to promote.
 
 > **Methodology:** this audit follows [`cleanup-workflow.md`](./cleanup-workflow.md). Read that doc before opening a new audit on a different topic — it captures the audit-first → batched-PR pattern as a reusable standard.
+
+## Resolved 2026-04-28 — closing summary
+
+**The audit's pattern-promotion goal is met.** Every reusable-pattern cluster (≥3 sites of the same shape) closed at 0 open. Eight categories (Cat 1, 2a, 2b, 3, 6, 7, 8, plus the BEM-class Cat 9) are fully resolved; the two categories with remaining items (2c, 2d) only carry one-off / out-of-scope findings.
+
+**14 PRs landed across 6 BDS primitives** over ~3 weeks of audit-driven cleanup:
+
+| BDS PR | Adds | Renew-pms PR(s) |
+|---|---|---|
+| brik-bds#297 (0.43.0) | `<CompletionToggle>` + `<ChecklistItem>` + BoardCard refactor | #69 (ViewTaskSheet checklist) |
+| brik-bds#303 (0.44.0) | `MenuItemData.description` | #76 (4 add-menu sites) |
+| brik-bds#304 (0.45.0) | `<InteractiveListItem>` | #77 (5 drill-down rows) |
+| (no BDS PR — used existing) | — | #66 (Cat 6 final), #67 (Cat 2b split), #74 (Batch 9 `AddableFieldRowList` adoption), #75 (TabBar swap) |
+
+Plus earlier batches (1, 2, 3, 4, 6, 6b) that landed before this audit's resolution sweep — see Triage table at the bottom for the full chronology.
+
+**3 items remain open** (intentionally — they don't justify a BDS primitive):
+
+- **Cat 2c #15** — `VendorSidebar.tsx:171` nav icon. Out of audit scope; needs a separate `bds-promotion: NavItem` cross-repo effort.
+- **Cat 2d #24** — `EditTemplateSheet.tsx:650` collapse button. Own one-off pattern. Best fixed in place when the file is next touched.
+- **Cat 2d #25** — `DevPersonaSwitcher.tsx:272` tester tab (parent navigator, dev-only). Own one-off pattern.
+
+Per `cleanup-workflow.md`'s lifecycle, status is now `resolved`. Will transition to `archived` once the BDS primitives shipped here have been stable for ≥1 release. The pattern-grouping decisions captured below — and the new tradeoff principles documented in `cleanup-workflow.md` decision step #2 ("Does BDS provide only a CSS class, not a component?") — should serve future audits.
+
+**Followups tracked, not in audit scope:**
+
+- BDS `<TabBar>` variant gap: brand-color active text + active underline (the renew-pms PageHeader hybrid). Decide whether to add a 4th variant (`text-underline`) or a `underline?: boolean` prop on `text`. Surface for future cross-repo BDS effort.
+- `scripts/token-audit.sh` rule #3 (raw `<button>`) uses a line-based regex; misses multi-line declarations. Tiny followup.
+- BDS publishing is manual today (`npm publish` from BDS primary after each merge). Add a `release.yml` GitHub Action triggered on tag push or `main` merge with a version bump.
 
 ## Why this exists
 
