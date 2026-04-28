@@ -2,9 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  });
+  // Pass the full `request` (not just headers) so request.cookies updates
+  // from setAll propagate to downstream Server Components — required by the
+  // canonical Supabase SSR pattern. Forwarding only headers leaves layouts
+  // (e.g. (auth)/layout.tsx -> getAuthUser) reading the pre-refresh cookies,
+  // which presents as random "logged out on refresh / view switch."
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
@@ -18,9 +21,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          response = NextResponse.next({
-            request: { headers: request.headers },
-          });
+          response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -51,9 +52,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from login. Carry the freshly-refreshed
+  // cookies from `response` onto the redirect — otherwise a token refresh
+  // that lands on /login is dropped and the next request re-refreshes.
   if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url));
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
   }
 
   return response;
