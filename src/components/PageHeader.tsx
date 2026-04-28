@@ -139,7 +139,7 @@ export function PageHeader({
       </div>
       {tabs && tabs.length > 0 && (
         <TabBar
-          variant="text"
+          variant="text-underline"
           items={tabs.map((tab) => ({
             label: tab.label,
             active: activeTab === tab.key,
