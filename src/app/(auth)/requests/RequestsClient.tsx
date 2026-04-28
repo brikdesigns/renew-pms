@@ -520,37 +520,18 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
             <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
               Add Request
             </Button>
-            {addMenuOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-                border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
-                minWidth: 280, overflow: 'hidden',
-              }}>
-                {ADD_MENU_CATEGORIES.map(c => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: gap.md,
-                      width: '100%', padding: `${space.sm} ${space.md}`,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: font.family.label, fontSize: font.size.label.sm,
-                      color: color.text.primary, textAlign: 'left',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <Icon icon={c.icon} style={{ width: 16, color: color.text.brand }} />
-                    <div>
-                      <div style={{ fontWeight: font.weight.semibold }}>{c.label}</div>
-                      <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{c.desc}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <Menu
+              isOpen={addMenuOpen}
+              onClose={() => setAddMenuOpen(false)}
+              items={ADD_MENU_CATEGORIES.map(c => ({
+                id: c.id,
+                label: c.label,
+                description: c.desc,
+                icon: <Icon icon={c.icon} />,
+                onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
+              }))}
+              style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+            />
           </div>
         </div>
       </div>

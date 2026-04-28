@@ -7,7 +7,7 @@ import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, u
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button } from '@brikdesigns/bds';
+import { Button, Menu } from '@brikdesigns/bds';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
 import { AddTaskSheet } from '@/components/AddTaskSheet';
@@ -200,22 +200,11 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addTaskType, setAddTaskType] = useState('');
-  const addBtnRef = useRef<HTMLDivElement>(null);
 
   // ── Drag-and-drop state (Open Tasks board) ────────────────────────────────
   const [poolDraggingId, setPoolDraggingId] = useState<string | null>(null);
   const [poolDropTarget, setPoolDropTarget] = useState<string | null>(null);
   const poolIsDragging = useRef(false);
-
-  // Close add menu on outside click
-  useEffect(() => {
-    if (!addMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (addBtnRef.current && !addBtnRef.current.contains(e.target as Node)) setAddMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [addMenuOpen]);
 
   const { departments } = useDepartments();
   const { members } = useMembers();
@@ -615,41 +604,22 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
             style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
           />
           {canAddTask && (
-            <div ref={addBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
                 Add Task
               </Button>
-              {addMenuOpen && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                  backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-                  border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
-                  minWidth: 260, overflow: 'hidden',
-                }}>
-                  {ADD_TASK_TYPES.map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: gap.md,
-                        width: '100%', padding: `${space.sm} ${space.md}`,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontFamily: font.family.label, fontSize: font.size.label.sm,
-                        color: color.text.primary, textAlign: 'left',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
-                      <div>
-                        <div style={{ fontWeight: font.weight.semibold }}>{t.label}</div>
-                        <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <Menu
+                isOpen={addMenuOpen}
+                onClose={() => setAddMenuOpen(false)}
+                items={ADD_TASK_TYPES.map(t => ({
+                  id: t.id,
+                  label: t.label,
+                  description: t.desc,
+                  icon: <Icon icon={t.icon} />,
+                  onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
+                }))}
+                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
+              />
             </div>
           )}
         </div>

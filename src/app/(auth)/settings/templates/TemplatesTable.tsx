@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import {
   Table,
   TableHeader,
@@ -11,7 +11,7 @@ import {
 } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, IconButton, Tag, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { Button, IconButton, Menu, Tag, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -168,7 +168,6 @@ export function TemplatesTable() {
   const [viewingTemplate, setViewingTemplate] = useState<TaskTemplate | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const addBtnRef = useRef<HTMLDivElement>(null);
 
   const filteredTemplates = typeFilter
     ? templates.filter((t) => typeFilter.includes(t.type))
@@ -362,7 +361,7 @@ export function TemplatesTable() {
           />
           <span style={subHeaderCountStyle}>{filteredTemplates.length}</span>
         </div>
-        <div ref={addBtnRef} style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
           <Button
             variant="primary"
             size="sm"
@@ -371,39 +370,18 @@ export function TemplatesTable() {
           >
             Add Template
           </Button>
-          {addMenuOpen && (
-            <div
-              style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-                border: `1px solid ${color.border.muted}`,
-                boxShadow: shadow.md, minWidth: 240, overflow: 'hidden',
-              }}
-            >
-              {filteredAddTypes.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => handleAddClick(t.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: gap.md,
-                    width: '100%', padding: `${space.sm} ${space.md}`,
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: font.family.label, fontSize: font.size.label.sm,
-                    color: color.text.primary, textAlign: 'left',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
-                  <div>
-                    <div style={{ fontWeight: font.weight.semibold }}>{t.label}</div>
-                    <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          <Menu
+            isOpen={addMenuOpen}
+            onClose={() => setAddMenuOpen(false)}
+            items={filteredAddTypes.map((t) => ({
+              id: t.id,
+              label: t.label,
+              description: t.desc,
+              icon: <Icon icon={t.icon} />,
+              onClick: () => handleAddClick(t.id),
+            }))}
+            style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 240 }}
+          />
         </div>
       </div>
 
