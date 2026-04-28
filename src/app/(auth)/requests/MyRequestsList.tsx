@@ -52,6 +52,11 @@ const countBadge: CSSProperties = {
 
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session on the other machine is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 const nameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
 const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
 
@@ -236,21 +241,21 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
             ) : sorted.map(r => {
               return (
                 <TableRow key={r.id} onClick={() => openRequest(r)} style={{ cursor: 'pointer' }}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={nameCellStyle}>{r.title}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary }}>
                       {CATEGORY_LABELS[r.category] ?? r.category}
                     </Tag>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <PriorityBadge priority={r.urgency} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <StatusBadge status={r.status} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={secondaryCellStyle}>{timeAgo(r.created_at)}</span>
                   </TableCell>
                 </TableRow>
