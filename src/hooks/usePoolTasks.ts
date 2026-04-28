@@ -1,20 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { TaskRow } from './useTasks';
 
 /** Pool task row — same shape as TaskRow but assigned_to is always empty */
 export type PoolTaskRow = TaskRow;
 
-export function usePoolTasks(date?: Date) {
-  const [tasks, setTasks] = useState<PoolTaskRow[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UsePoolTasksOptions {
+  /** Server-loaded initial data. When provided, the first useEffect fetch
+   *  is skipped — subsequent date changes or refetch() calls fetch normally. */
+  initialData?: PoolTaskRow[];
+}
+
+export function usePoolTasks(date?: Date, options?: UsePoolTasksOptions) {
+  const hasInitial = options?.initialData !== undefined;
+  const [tasks, setTasks] = useState<PoolTaskRow[]>(options?.initialData ?? []);
+  const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const skipNextFetch = useRef(hasInitial);
 
   const refetch = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);

@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from 'react';
 import { Sheet, Button, Select, TextInput } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import { useMembers } from '@/hooks/useMembers';
-import { useDepartments } from '@/hooks/useDepartments';
+import type { Member } from '@/hooks/useMembers';
+import type { Department } from '@/hooks/useDepartments';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import { FrequencyTag } from '@/components/FrequencyTag';
 import {
@@ -43,6 +43,11 @@ interface AddTaskSheetProps {
   onSaved: () => void;
   /** Pre-filter templates by type (e.g., 'checklist', 'procedure') */
   defaultType?: string;
+  /** Members list — passed in by the parent so the sheet shares the
+   *  parent's already-loaded data instead of triggering its own fetch. */
+  members: Member[];
+  /** Departments list — same rationale as `members`. */
+  departments: Department[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -105,10 +110,8 @@ const emptyStateStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskSheetProps) {
+export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType, members, departments }: AddTaskSheetProps) {
   const { showToast } = useToast();
-  const { members } = useMembers();
-  const { departments } = useDepartments();
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');

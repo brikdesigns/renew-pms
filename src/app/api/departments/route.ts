@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { getDeptMemberCounts } from './_helpers';
+import { loadDepartments } from './_helpers';
 
 /**
  * GET /api/departments
@@ -21,17 +21,14 @@ export async function GET() {
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from('departments')
-    .select('id, name, color, is_active, sort_order')
-    .eq('practice_id', practiceId)
-    .order('sort_order');
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const deptCountMap = await getDeptMemberCounts(admin, practiceId, data ?? []);
-  const result = (data ?? []).map((d) => ({ ...d, member_count: deptCountMap[d.id] ?? 0 }));
-  return NextResponse.json(result);
+  try {
+    const result = await loadDepartments(admin, practiceId);
+    return NextResponse.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to load departments';
+    console.error('[GET /api/departments] failed:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 /**

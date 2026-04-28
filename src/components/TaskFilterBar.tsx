@@ -5,7 +5,7 @@ import { Chip } from '@brikdesigns/bds';
 import { Menu } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { gap } from '@/lib/tokens';
-import { useDepartments } from '@/hooks/useDepartments';
+import type { Department } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
   'All Frequencies',
@@ -36,6 +36,9 @@ const TEMPLATE_TYPES = [
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TaskFilterBarProps {
+  /** Departments list — passed in by the parent so the bar shares the
+   *  parent's already-loaded data instead of triggering its own fetch. */
+  departments: Department[];
   selectedDepartment: string;
   onDepartmentChange: (dept: string) => void;
   selectedFrequency: string;
@@ -121,6 +124,7 @@ function ChipFilter({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TaskFilterBar({
+  departments,
   selectedDepartment,
   onDepartmentChange,
   selectedFrequency,
@@ -134,7 +138,6 @@ export function TaskFilterBar({
   showOverdue,
   onShowOverdueChange,
 }: TaskFilterBarProps) {
-  const { departments } = useDepartments();
   const departmentOptions = useMemo(
     () => ['All Departments', ...departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => d.name)],
     [departments]
