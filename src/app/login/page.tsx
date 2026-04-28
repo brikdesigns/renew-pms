@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@brikdesigns/bds';
-import { TextInput } from '@brikdesigns/bds';
+import { Button, PasswordInput, TextInput } from '@brikdesigns/bds';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
 import type { CSSProperties } from 'react';
 
@@ -127,11 +126,12 @@ export default function LoginPage() {
             fullWidth
             required
             autoComplete="email"
+            data-1p-ignore={undefined}
+            data-lpignore={undefined}
           />
 
-          <TextInput
+          <PasswordInput
             label="Password"
-            type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
