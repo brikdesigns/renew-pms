@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
+import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
 import { Tag, Chip, Button, IconButton, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { Menu, MenuItem } from '@brikdesigns/bds';
@@ -153,6 +153,37 @@ const columnDropTargetStyle: CSSProperties = {
   outline: `2px solid ${color.border.brand}`,
   boxShadow: shadow.md,
 };
+
+// ─── Loading skeleton ──────────────────────────────────────────────────────
+
+// Stagger card counts so the loading state looks like a real board, not a grid.
+const SKELETON_CARDS_PER_COLUMN = [3, 2, 2, 1, 0, 0];
+
+function BoardCardSkeleton() {
+  return (
+    <div
+      style={{
+        backgroundColor: color.surface.overlay,
+        boxShadow: shadow.sm,
+        borderRadius: border.radius.md,
+        padding: space.md,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: gap.sm,
+      }}
+    >
+      <Skeleton variant="text" width="70%" height={16} />
+      <Skeleton variant="text" width="45%" height={12} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: gap.xs }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs }}>
+          <Skeleton variant="rectangular" width={56} height={20} style={{ borderRadius: border.radius.sm }} />
+          <Skeleton variant="rectangular" width={20} height={20} style={{ borderRadius: border.radius.sm }} />
+        </div>
+        <Skeleton variant="rectangular" width={28} height={28} style={{ borderRadius: border.radius.pill }} />
+      </div>
+    </div>
+  );
+}
 
 // ─── Assignee menu constants ────────────────────────────────────────────────
 
@@ -359,7 +390,7 @@ interface RequestsClientProps {
 }
 
 export default function RequestsClient({ isAdmin }: RequestsClientProps) {
-  const { requests, refetch, updateOptimistic } = useRequests();
+  const { requests, loading, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
   const { openSheet, closeAll } = useSheetStack();
   const searchParams = useSearchParams();
@@ -537,9 +568,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       </div>
 
       <Board style={{ flex: 1, minHeight: 0 }}>
-        {columns.map(col => {
+        {columns.map((col, colIdx) => {
           const isDropTarget = dropTargetKey === col.key;
           const isDragMode = draggingId !== null;
+          const skeletonCount = loading && col.requests.length === 0 ? SKELETON_CARDS_PER_COLUMN[colIdx] ?? 0 : 0;
           const colStyle = isDropTarget
             ? columnDropTargetStyle
             : isDragMode
@@ -605,7 +637,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                   />
                 );
               })}
-              {col.requests.length === 0 && !isDragMode && (
+              {skeletonCount > 0 && Array.from({ length: skeletonCount }).map((_, i) => (
+                <BoardCardSkeleton key={`skeleton-${col.key}-${i}`} />
+              ))}
+              {!loading && col.requests.length === 0 && !isDragMode && (
                 <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
                   No requests
                 </div>
