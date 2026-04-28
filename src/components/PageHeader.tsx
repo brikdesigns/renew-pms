@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
+import { TabBar } from '@brikdesigns/bds';
 import { font, color, gap, space } from '@/lib/tokens';
 
 // ─── Styles (all via BDS semantic tokens) ────────────────────────────────────
@@ -43,32 +44,6 @@ const actionsStyle: CSSProperties = {
   alignItems: 'center',
   gap: gap.md,
 };
-
-const tabBarStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.xl,
-  paddingTop: space.lg,
-  width: '100%',
-};
-
-function tabStyle(active: boolean): CSSProperties {
-  return {
-    fontFamily: font.family.label,
-    fontSize: font.size.label.md,
-    fontWeight: active ? font.weight.semibold : font.weight.medium,
-    lineHeight: font.lineHeight.tight,
-    color: active ? color.text.brand : color.text.secondary,
-    cursor: 'pointer',
-    background: 'none',
-    border: 'none',
-    borderBottom: active ? `2px solid ${color.border.brand}` : '2px solid transparent',
-    paddingBottom: gap.sm,
-    paddingTop: 0,
-    paddingInline: 0,
-    whiteSpace: 'nowrap',
-  };
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -163,19 +138,14 @@ export function PageHeader({
         {actions && <div style={actionsStyle}>{actions}</div>}
       </div>
       {tabs && tabs.length > 0 && (
-        <div style={tabBarStyle} role="tablist">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={activeTab === tab.key}
-              style={tabStyle(activeTab === tab.key)}
-              onClick={() => onTabChange?.(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <TabBar
+          variant="text"
+          items={tabs.map((tab) => ({
+            label: tab.label,
+            active: activeTab === tab.key,
+            onClick: () => onTabChange?.(tab.key),
+          }))}
+        />
       )}
     </header>
   );
