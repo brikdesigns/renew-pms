@@ -9,91 +9,104 @@ related: ./component-cleanup-audit.md, ./cleanup-workflow.md
 
 > **What this is:** a transient snapshot of in-flight cleanup work. Replace this file at the end of each cleanup session — do not append history. Audit history lives in [`component-cleanup-audit.md`](./component-cleanup-audit.md); workflow rules live in [`cleanup-workflow.md`](./cleanup-workflow.md).
 
-**Last session:** 2026-04-28 (Batch 4b — BDS `MenuItemData.description` extension + 4 add-menu swaps). Audit state after this PR + PR #75 both land: **11 open / 42 originally / 38 verified.** Cat 2a closes; Cat 7 closes via parallel PR #75 (already open). Only Batch 8 (`InteractiveListItem`) and 2c #15 (out of scope, blocked on BDS `NavItem`) remain.
+**Last session:** 2026-04-28 (Batch 8 — `<InteractiveListItem>` BDS promotion + 5-site swap). Audit state after this PR + #75 + #76 land: **3 open / 42 originally / 38 verified.** Cat 1, Cat 2a, Cat 2b, Cat 3, Cat 6, Cat 7, Cat 8 all closed at 0. **The audit's pattern-promotion goal is met.** The 3 remaining items don't belong to a ≥3-site reusable pattern (they're own-pattern one-offs or out-of-scope) — see "What's left and why" below.
 
 ## In-flight PRs
 
-| PR | Branch | Title | Files | Notes |
-|----|--------|-------|-------|-------|
-| `brik-bds#303` ✅ MERGED | — | feat(bds): add MenuItemData.description for 2-line menu items | 5 | Published 0.44.0 to GitHub Packages. |
-| this | `task/bds-cleanup-add-menu-4b` | refactor(bds): adopt BDS Menu for 4 add-menu surfaces (Cat 2a final) | 5 (4 component swaps + audit doc) | Renew-pms swap. Bumps `@brikdesigns/bds` 0.43 → 0.44. |
-| `#75` (parallel) | `task/bds-pageheader-tabbar` | refactor(bds): swap PageHeader tabs to BDS TabBar variant=text | 3 | Closes Cat 7 + Cat 2d #23. Open, awaiting review. |
+| PR | Status | Notes |
+|----|--------|-------|
+| `brik-bds#304` ✅ MERGED | published 0.45.0 | Adds `<InteractiveListItem>` |
+| this | open | Renew-pms swap of 5 sites; bumps `@brikdesigns/bds` 0.43 → 0.45 |
+| `#75` | open | Batch 7 (PageHeader → TabBar text) |
+| `#76` | open | Batch 4b (4 add-menu sites → BDS Menu) |
+
+When all three open PRs merge, audit-doc count edits will need reconciling — each PR independently updates the count + batch-progress lines. Resolve by summing the deltas:
+- staging baseline: 17
+- −2 from #75 (Cat 7 + Cat 2d #23 close)
+- −4 from #76 (Cat 2a four sites close)
+- −8 from this PR (Cat 1 + Cat 2b-B ×2 + Cat 2d #26 + #27 + Cat 3 #4)
+- = **3 open** after all three land
 
 ## Pattern + naming decisions documented in this batch
 
-- **`MenuItemData.description?: string`** is now a first-class BDS field. Use for "what does this option do?" 2-line items in `Menu`. When `description` is absent, the item renders single-line (existing behavior, additive change).
-- **Don't manage outside-click yourself.** When swapping a hand-rolled menu to BDS `<Menu>`, drop the `useRef` + `useEffect` outside-click handler — `<Menu>`'s `onClose` already fires on outside click + Escape. Same for the `flexShrink` wrapper div that existed only to position the menu — `<Menu>` accepts `style={{ top, right, marginTop }}` as positioning props.
-- **The Add-menu pattern is canonical now.** Five surfaces converged on the same shape: `<Button>` trigger + `<Menu>` dropdown with description-bearing `MenuItemData[]`. Future add-X menus should mirror this exact shape — `addMenuOpen` state, `Menu`'s `onClose` handles all dismiss paths, items are mapped via `.map(c => ({ id, label, description, icon: <Icon icon={c.icon} />, onClick }))`.
+- **`<InteractiveListItem>` is the canonical "drill-down row" primitive.** Whole row is a `<button>`; slots are `leading: ReactNode + title: string + subtitle?: ReactNode + trailing?: ReactNode + disabled?`. Use for: training member cards, activity feeds, persona switchers, inventory request rows — anywhere clicking the row opens a sheet, drawer, or detail page.
+- **Distinct from `CardControl` / `Card preset="control"`.** CardControl's trailing **action** (Switch / Button) is the click target; the card itself is decorative. InteractiveListItem inverts that — the **row** is interactive, trailing is decorative (Tag, Badge, progress block, caret).
+- **Distinct from `ChecklistItem`.** ChecklistItem represents *completion state* on a unit of work. InteractiveListItem represents a *drill-down* — no toggle, no completion semantics.
+- **`subtitle: ReactNode` is load-bearing.** Pre-work for Batch 8 cataloged the 5 sites and found the audit's "subtitle: string" assumption was too narrow. ViewInventorySheet has multi-line subtitle (text + StatusBadge + PriorityBadge inline); TrainingCard has structured trailing (Tag + progress block). The ReactNode types let consumers compose freely while BDS owns the row chrome (padding, hover, focus, disabled).
 
-## Next sessions — kickoff prompts
+## What's left and why
 
-### 8 — BDS `InteractiveListItem` promotion *(cross-repo, design call, biggest)*
+3 items remain open after Batches 1–9 + 4b + 7 + 8 + C3#3 + 3b. None are within the audit's pattern-promotion goals:
 
-> Cross-repo BDS promotion. Highest design surface area in the audit — pair with a Figma spec before any code. Promote `InteractiveListItem` (clickable horizontal row: leading icon-or-avatar + title + optional subtitle + optional trailing badge/action). Then swap **5** call sites in renew-pms: `TrainingCard.tsx:134` (Cat 1), `DevPersonaSwitcher.tsx:297` (Cat 2d #26 persona row), `ViewInventorySheet.tsx:243-277` (Cat 3 #4 request row), and `ViewContactSheet.tsx:202` + `ViewContactSheet.tsx:294` (Cat 2b-B activity cards, moved here from Batch 5 in PR #67). Pre-work: Figma spec for the row pattern across training, inventory, dev-tools, and contact-activity surfaces. Pre-work also: check whether BDS already has the primitive (lessons from Batches 5/9/7) — likely not but verify.
+| # | Item | Why open |
+|---|------|----------|
+| Cat 2c #15 | `VendorSidebar.tsx:171` nav icon button | Out of audit scope — needs a separate `bds-promotion: NavItem` cross-repo effort. Tracked but not under this audit. |
+| Cat 2d #24 | `EditTemplateSheet.tsx:650` collapse button | Own one-off pattern. No `≥3 sites` to promote against. Best left as-is or fixed in place when next touched. |
+| Cat 2d #25 | `DevPersonaSwitcher.tsx:272` tester tab (parent navigator) | Dev-only tool. Sibling of #26 but at parent navigator level (above the persona row), not row-style. Own pattern. Out of scope. |
 
-### 2c #15 — VendorSidebar nav *(blocked on BDS NavItem promotion)*
+Per `cleanup-workflow.md`: when remaining items don't form a reusable pattern, **fold the audit into `launch-checklist.md`** rather than continue chasing one-off items. Recommend doing so — the cleanup audit has served its purpose.
 
-> Out of cleanup scope — needs a separate `bds-promotion: NavItem` cross-repo effort. Track here, but do not start under this audit.
+## Next sessions — followups (not audit batches)
 
-### Followup: BDS TabBar variant gap *(small, useful)*
+### Fold audit into launch-checklist + close the audit doc
 
-> The current BDS `<TabBar>` has three variants (`text`/`tab`/`box`). renew-pms's PageHeader was historically a hybrid (`text` variant's brand-active color **+** `tab` variant's active underline). Adopted `text` in Batch 7 (PR #75); the underline was dropped. If we want the combo as a first-class pattern: add a 4th variant (e.g. `text-underline`) **or** add a boolean prop to `text` (`underline?: boolean`).
+> Per `cleanup-workflow.md` lifecycle: when all reusable patterns have closed (Cat 1, 2a, 2b, 3, 6, 7, 8 all at 0), the audit's purpose is served. Move the 3 remaining out-of-scope items to `launch-checklist.md` (or a separate "deferred BDS work" doc), then archive `component-cleanup-audit.md`. Doc-only PR.
+
+### Followup: BDS TabBar variant gap *(small)*
+
+> BDS `<TabBar>` has three variants (`text`/`tab`/`box`); none combines `text` variant's brand-active color with `tab` variant's underline. PageHeader (Batch 7) chose `text` and lost the underline. If the combo turns out to be load-bearing for other surfaces, propose extending BDS — either a `text-underline` variant or a `underline?: boolean` prop on `text`.
 
 ### Followup: audit-script multi-line `<button>` regex
 
-> Rule #3 in `scripts/token-audit.sh` (raw `<button>` check) uses a line-based regex (`<button[ >]`). It misses multi-line declarations. Tiny audit-script-only change.
+> Rule #3 in `scripts/token-audit.sh` (raw `<button>` check) uses a line-based regex. Misses multi-line declarations.
 
 ### Followup: BDS publish workflow automation
 
-> Today BDS publishing to GitHub Packages is manual (`npm publish` from BDS primary worktree). A small `release.yml` GitHub Action that triggers `npm publish` on a tag push or on every `main` merge with a version bump would close this drift class.
+> Today BDS publishing to GitHub Packages is manual. A small `release.yml` GitHub Action that triggers `npm publish` on tag push or `main` merge with a version bump would close this drift class. Tracked in BDS infra backlog.
 
 ## Worktree state
 
 After this PR merges, prune:
 
 ```bash
-rm -rf ~/Documents/GitHub/product/renew-pms-worktrees/bds-cleanup-add-menu-4b
+rm -rf ~/Documents/GitHub/product/renew-pms-worktrees/bds-interactive-list-item-8
 git -C ~/Documents/GitHub/product/renew-pms worktree prune
 ```
 
-Other worktrees present:
+Other worktrees from in-flight cleanup PRs (will prune after their PRs merge):
 
 ```
-bds-pageheader-tabbar   # PR #75 (parallel cleanup batch — Batch 7)
-docs-llm-stack-pointer  # unrelated
-infra-tier1-shift-tasks # unrelated
+bds-cleanup-add-menu-4b   # PR #76
+bds-pageheader-tabbar     # PR #75
+docs-llm-stack-pointer    # unrelated
+infra-tier1-shift-tasks   # unrelated
 ```
-
-## Primary worktree
-
-The primary worktree (`~/Documents/GitHub/product/renew-pms`) is on `staging`. After this PR + PR #75 merge, `git pull` to fast-forward.
-
-There are two untracked items in the primary tree: `tasks-list-before.png` (pre-session screenshot artifact, user-owned) and `supabase/.temp/` (Supabase CLI scratch dir). Both are added to `.git/info/exclude`.
 
 ## Audit status by category
 
-After this PR + PR #75 land:
+After this PR + PR #75 + PR #76 all land:
 
 | Cat | Status |
 |---|---|
-| 1 — `<button>` wrapping non-button content | 1 open (TrainingCard) — Batch 8 |
-| 2a — Menu items | 0 — RESOLVED (this PR + PR #58 prior) |
-| 2b — Sheet drill-down nav-links | 0 — RESOLVED (PR #67) |
-| 2c — Toolbar / chrome buttons | 1 open (#15 VendorSidebar nav) — blocked on BDS NavItem promotion |
-| 2d — Tab bar + dev tools | 4 open (#23 closed via PR #75) — Batch 8 covers #26 + #27; #24 EditTemplateSheet collapse + #25 DevPersonaSwitcher tester tab are own patterns |
-| 3 — `<div onClick>` clickable divs | 1 open (#4 inventory row) — Batch 8 |
-| 6 — Title-naming drift | 0 — RESOLVED (PR #56 + PR #66; audit checks #14 + #15) |
+| 1 — `<button>` wrapping non-button content | 0 — RESOLVED (this PR via `<InteractiveListItem>`) |
+| 2a — Menu items | 0 — RESOLVED (PR #76 final) |
+| 2b — Sheet drill-down nav-links | 0 — RESOLVED (PR #67; 2b-B closed via this PR's ViewContactSheet swap) |
+| 2c — Toolbar / chrome buttons | 1 open (#15 VendorSidebar nav) — out of audit scope (BDS NavItem promotion) |
+| 2d — Tab bar + dev tools | 2 open (#24 EditTemplateSheet collapse, #25 DevPersonaSwitcher tester tab — own one-off patterns) |
+| 3 — `<div onClick>` clickable divs | 0 — RESOLVED (this PR's ViewInventorySheet swap closes #4) |
+| 6 — Title-naming drift | 0 — RESOLVED |
 | 7 — Hand-built segmented controls/tabs | 0 — RESOLVED (PR #75) |
 | 8 — `CSSProperties` for interactive elements | 0 — RESOLVED |
 
-When all categories drop to 0, fold the audit into [`launch-checklist.md`](./launch-checklist.md) per the lifecycle in `cleanup-workflow.md`.
+**The audit's pattern-promotion goal is met.** Recommend folding into launch-checklist + archiving the audit doc.
 
 ## Notes for the next session
 
-- **`<Menu>` owns dismiss; consumers don't.** When adopting BDS `<Menu>` from a hand-rolled dropdown, drop the click-outside `useEffect` + `addBtnRef`. `<Menu>`'s `onClose` fires on outside click *and* Escape — covers both dismiss paths. Same for any cleanup of state in the close handler — fold it into `onClose`.
-- **`MenuItemData.description` is the canonical 2-line item.** Don't render label + secondary text by hand inside `MenuItem`'s `label` prop. Use the new `description` field; BDS owns the visual styling.
-- **The Addable family is bigger than I first scoped it.** From Batch 9. Four variants — `AddableTextList`, `AddableComboList`, `AddableEntryList`, `AddableFieldRowList`. Pick by data shape.
-- **Always check whether the BDS primitive already exists.** Five batches in a row (5/9/7/4b's BDS half/4b's renew-pms half — well, 4b's BDS half *did* need extension) have re-scoped after pre-work. First step of any BDS-promotion batch should be `ls components/ui/` in BDS + grep for the suspected primitive.
-- **Completion-state primitive ≠ Checkbox.** From Batch C3#3.
-- **BDS publishing is manual today.** Run `npm publish` from BDS primary after merging a BDS PR. Tracked as a followup.
-- **`pr-task.sh` enforces a UI-verification prompt.** Pass `SKIP_UI_CHECK=1` for doc-only branches. Batch 4b has a real UI change — visual verification done in browser, answer "y" when prompted.
+- **`<InteractiveListItem>` is the new canonical drill-down row.** Reach for it any time you have a leading visual + primary text + optional subtitle + optional trailing. Don't compose `<Card>` + custom button wrapping — that's how we got into this audit in the first place.
+- **`subtitle: ReactNode` lets you embed badges, multi-line metadata, structured content.** From Batch 8 pre-work — the audit's "string subtitle" assumption was too narrow.
+- **`<Menu>` + `MenuItemData.description` (v0.44.0) handles the "Add X" menu pattern** with icon + label + 2-line description. From Batch 4b.
+- **`<ChecklistItem>` (v0.43.0) handles completion-state rows** with circular toggle. Distinct from `<Checkbox>` (rectangular form selection). From Batch C3#3.
+- **`<AddableFieldRowList>` handles authoring-mode lists** with add/remove + custom row content. From Batch 9.
+- **`<TabBar>` handles page-level tab navigation** (3 variants, none currently support brand-color + underline combo). From Batch 7.
+- **Always check whether the BDS primitive already exists.** Five pre-works in a row uncovered "BDS already has it" or "BDS has the visual buried in another component" findings (Batches 5/9/7/4b's pre-checks). For Batch 8 + 4b, real BDS extensions were genuinely needed; for the others, swap-only batches.
+- **BDS publishing is manual today.** `npm publish` from BDS primary worktree after each merge.

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, useConfigureSheet } from '@brikdesigns/bds';
+import { Tag, Button, InteractiveListItem, useConfigureSheet } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@brikdesigns/bds';
@@ -68,15 +68,6 @@ const halfStyle: CSSProperties = {
   minWidth: 0,
 };
 
-const requestRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: gap.md,
-  padding: `${space.md} 0`,
-  borderBottom: `1px solid ${color.border.muted}`,
-  cursor: 'pointer',
-};
-
 const requestIconStyle: CSSProperties = {
   width: 28,
   height: 28,
@@ -85,21 +76,6 @@ const requestIconStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-};
-
-const requestTitleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.primary,
-  lineHeight: font.lineHeight.tight,
-};
-
-const requestMetaStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.xs,
-  color: color.text.secondary,
-  marginTop: '2px',
 };
 
 const emptyActivityStyle: CSSProperties = {
@@ -240,41 +216,40 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
             {requests.map(req => {
               const isResolved = req.status === 'resolved' || req.status === 'closed';
               return (
-                <div
+                <InteractiveListItem
                   key={req.id}
-                  style={requestRowStyle}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onNavigate?.('request', { id: req.id }, { title: req.title })}
-                  onKeyDown={e => { if (e.key === 'Enter') onNavigate?.('request', { id: req.id }, { title: req.title }); }}
-                >
-                  <div style={{
-                    ...requestIconStyle,
-                    backgroundColor: isResolved ? color.surface.positive : color.surface.secondary,
-                  }}>
+                  leading={
+                    <div style={{
+                      ...requestIconStyle,
+                      backgroundColor: isResolved ? color.surface.positive : color.surface.secondary,
+                    }}>
+                      <Icon
+                        icon={isResolved ? icon.circleCheck : icon.requests}
+                        style={{
+                          fontSize: font.size.body.sm,
+                          color: isResolved ? color.text.positive : color.text.secondary,
+                        } as CSSProperties & Record<string, string>}
+                      />
+                    </div>
+                  }
+                  title={req.title}
+                  subtitle={
+                    <>
+                      <span>{req.submitter_name ? `${req.submitter_name} · ` : ''}{timeAgo(req.created_at)}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
+                        <StatusBadge status={req.status} size="xs" />
+                        <PriorityBadge priority={req.urgency} size="xs" />
+                      </span>
+                    </>
+                  }
+                  trailing={
                     <Icon
-                      icon={isResolved ? icon.circleCheck : icon.requests}
-                      style={{
-                        fontSize: font.size.body.sm,
-                        color: isResolved ? color.text.positive : color.text.secondary,
-                      } as CSSProperties & Record<string, string>}
+                      icon="ph:caret-right"
+                      style={{ fontSize: font.size.body.md, color: color.text.muted } as CSSProperties & Record<string, string>}
                     />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={requestTitleStyle}>{req.title}</div>
-                    <div style={requestMetaStyle}>
-                      {req.submitter_name ? `${req.submitter_name} · ` : ''}{timeAgo(req.created_at)}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, marginTop: gap.xs }}>
-                      <StatusBadge status={req.status} size="xs" />
-                      <PriorityBadge priority={req.urgency} size="xs" />
-                    </div>
-                  </div>
-                  <Icon
-                    icon="ph:caret-right"
-                    style={{ fontSize: font.size.body.md, color: color.text.muted, flexShrink: 0, marginTop: '2px' } as CSSProperties & Record<string, string>}
-                  />
-                </div>
+                  }
+                  onClick={() => onNavigate?.('request', { id: req.id }, { title: req.title })}
+                />
               );
             })}
           </div>
