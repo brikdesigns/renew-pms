@@ -241,32 +241,53 @@ export function TemplatesTable() {
       display_mode: data.display_mode,
     };
 
+    const itemsBody = items.map((i) => ({
+      label: i.label,
+      room_id: i.room_id || null,
+      equipment_id: i.equipment_id || null,
+      supply_category_id: i.supply_category_id || null,
+    }));
+
     if (editingTemplate) {
-      // Update template
+      // Update template fields
       const res = await fetch(`/api/templates/${editingTemplate.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to save template' }));
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
+        return;
+      }
       const updated = await res.json() as TaskTemplate;
 
-      // Replace items (full replace)
+      // Replace items (full replace). If this fails, the template fields
+      // already saved — surface the partial-save state rather than silently
+      // reverting to the old items, which makes the UI lie about persistence.
       const itemsRes = await fetch(`/api/templates/${editingTemplate.id}/items`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(items.map((i) => ({
-          label: i.label,
-          room_id: i.room_id || null,
-          equipment_id: i.equipment_id || null,
-          supply_category_id: i.supply_category_id || null,
-        }))),
+        body: JSON.stringify(itemsBody),
       });
-      const updatedItems = itemsRes.ok ? await itemsRes.json() : editingTemplate.checklist_items;
-
+      if (!itemsRes.ok) {
+        const err = await itemsRes.json().catch(() => ({ error: 'Failed to save checklist items' }));
+        showToast({
+          title: 'Checklist not saved',
+          description: `Template details saved, but checklist items did not: ${err.error}`,
+          variant: 'error',
+        });
+        // Reflect the saved fields; leave items untouched so the user can retry.
+        setTemplates((prev) =>
+          prev.map((t) => t.id === editingTemplate.id ? { ...t, ...updated } : t)
+        );
+        return;
+      }
+      const updatedItems = await itemsRes.json();
       setTemplates((prev) =>
         prev.map((t) => t.id === editingTemplate.id ? { ...t, ...updated, checklist_items: updatedItems } : t)
       );
+      showToast({ title: 'Saved', description: `${updated.name} updated.`, variant: 'success' });
     } else {
       // Create template
       const res = await fetch('/api/templates', {
@@ -274,24 +295,34 @@ export function TemplatesTable() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, type: data.type }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to create template' }));
+        showToast({ title: 'Error', description: err.error, variant: 'error' });
+        return;
+      }
       const created = await res.json() as TaskTemplate;
 
       if (items.length > 0) {
         const itemsRes = await fetch(`/api/templates/${created.id}/items`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(items.map((i) => ({
-            label: i.label,
-            room_id: i.room_id || null,
-            equipment_id: i.equipment_id || null,
-            supply_category_id: i.supply_category_id || null,
-          }))),
+          body: JSON.stringify(itemsBody),
         });
-        if (itemsRes.ok) created.checklist_items = await itemsRes.json();
+        if (!itemsRes.ok) {
+          const err = await itemsRes.json().catch(() => ({ error: 'Failed to save checklist items' }));
+          showToast({
+            title: 'Checklist not saved',
+            description: `Template created, but checklist items did not save: ${err.error}`,
+            variant: 'error',
+          });
+          setTemplates((prev) => [...prev, created]);
+          return;
+        }
+        created.checklist_items = await itemsRes.json();
       }
 
       setTemplates((prev) => [...prev, created]);
+      showToast({ title: 'Created', description: `${created.name} added.`, variant: 'success' });
     }
   };
 
