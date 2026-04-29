@@ -123,6 +123,19 @@ cd "${WORKTREE_BASE}/${TASK_NAME}"
 echo -e "${YELLOW}▸ Installing dependencies (npm ci --prefer-offline)...${NC}"
 npm ci --prefer-offline 2>&1 | tail -1
 
+# ── Copy .env.local from primary ──
+# .env.local is git-ignored and not tracked by `git worktree add`, so a fresh
+# worktree starts without it. Without these vars the dev server crashes on
+# Supabase init and the husky pre-push hook fails (the integration test setup
+# in tests/integration/_setup.ts asserts NEXT_PUBLIC_SUPABASE_URL +
+# SUPABASE_SERVICE_ROLE_KEY are present).
+if [ -f "${PRIMARY_PATH}/.env.local" ]; then
+  cp "${PRIMARY_PATH}/.env.local" "${WORKTREE_BASE}/${TASK_NAME}/.env.local"
+  echo -e "${YELLOW}▸ Copied .env.local from primary${NC}"
+else
+  echo -e "${YELLOW}▸ No .env.local in primary — skipping env copy${NC}"
+fi
+
 # ── Summary ──
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
