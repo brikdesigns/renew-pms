@@ -108,8 +108,16 @@ export type TaskRow = ReturnType<typeof flattenTask> & {
 /**
  * Loads tasks for a practice + date, scoped to the caller's visibility.
  *
- * - `options.pool = false` → individually-assigned tasks the caller can see
- * - `options.pool = true`  → unassigned (pool) tasks the caller can pick up
+ * - `options.pool = false`           → individually-assigned tasks the caller can see
+ * - `options.pool = true`            → unassigned (pool) tasks the caller can pick up
+ * - `options.includeResolved = true` → also surface completed/skipped rows that
+ *                                      would otherwise drop out the moment they
+ *                                      resolve (overdue→completed, recurring-stale→
+ *                                      completed). Required for the "Show resolved"
+ *                                      toggle to actually expose resolved work, and
+ *                                      so a just-completed row stays in view long
+ *                                      enough for the optimistic check on the client
+ *                                      to reconcile cleanly on refetch.
  *
  * Same logic the GET /api/tasks handler runs; extracted so the page-level
  * server loader can run it in parallel with departments/members without
@@ -120,17 +128,47 @@ export async function loadTasks(
   practiceId: string,
   scope: TaskScope,
   dateValue: string,
-  options: { pool: boolean },
+  options: { pool: boolean; includeResolved?: boolean },
 ): Promise<TaskRow[]> {
+  const includeResolved = options.includeResolved ?? false;
+
   let query = admin
     .from('tasks')
     .select(TASK_SELECT)
     .eq('practice_id', practiceId);
 
+  // Visibility OR — rows that "should be on the board today": due today,
+  // currently overdue, or recurring-stale. When includeResolved is on we also
+  // accept completed/skipped variants of those shapes (resolved-overdue,
+  // resolved-recurring-stale). Today's completed rows already match the
+  // unconditional due_date.eq clause.
+  const orClauses: string[] = [
+    `due_date.eq.${dateValue}`,
+    `status.eq.overdue`,
+    `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`,
+  ];
+  if (options.pool) {
+    orClauses.push(
+      `and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`,
+    );
+  }
+  if (includeResolved) {
+    orClauses.push(`and(due_date.lt.${dateValue},status.in.(completed,skipped))`);
+    orClauses.push(
+      `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.in.(completed,skipped))`,
+    );
+    if (options.pool) {
+      orClauses.push(
+        `and(frequency.in.(daily,per_shift),due_date.is.null,status.in.(completed,skipped))`,
+      );
+    }
+  }
+  const visibilityOr = orClauses.join(',');
+
   if (options.pool) {
     query = query
       .is('assigned_to', null)
-      .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped),and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`)
+      .or(visibilityOr)
       .order('status', { ascending: true })
       .order('created_at', { ascending: true });
     const poolScope = buildPoolScopeOr(scope);
@@ -138,7 +176,7 @@ export async function loadTasks(
   } else {
     query = query
       .not('assigned_to', 'is', null)
-      .or(`due_date.eq.${dateValue},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`)
+      .or(visibilityOr)
       .order('due_date', { ascending: true })
       .order('created_at', { ascending: true });
     const assignedScope = buildAssignedScopeOr(scope);

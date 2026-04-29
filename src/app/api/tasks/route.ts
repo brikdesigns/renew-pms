@@ -25,12 +25,13 @@ export async function GET(request: Request) {
   const dateParam = searchParams.get('date');
   const dateValue = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10);
   const pool = searchParams.get('pool') === 'true';
+  const includeResolved = searchParams.get('includeResolved') === 'true';
 
   const admin = createAdminClient();
   const scope = await resolveTaskScope(admin, authUser, practiceId);
 
   try {
-    const flatTasks = await loadTasks(admin, practiceId, scope, dateValue, { pool });
+    const flatTasks = await loadTasks(admin, practiceId, scope, dateValue, { pool, includeResolved });
     return NextResponse.json(flatTasks);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load tasks';
