@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -358,6 +358,11 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     });
   }, [poolTasks]);
 
+  // ── Overdue presence (drives the single indicator next to the filter icon) ─
+
+  const hasOverdueInView = (taskView === 'open' ? poolBoard : assignedBoard)
+    .some((col) => col.tasks.some((t) => t.overdue && !checked[t.id]));
+
   // ── Apply filters (shared logic) ──────────────────────────────────────────
 
   function applyFilters(tasks: MockTask[]): MockTask[] {
@@ -435,7 +440,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   function renderTaskCard(task: MockTask, accentColor: string, assignee?: string, assigneeRole?: string, pool = false) {
     const taskDeptColors = getDeptColors(task.dept);
-    const isOverdue = task.overdue && !checked[task.id];
 
     return (
       <BoardCard
@@ -446,29 +450,14 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         checked={!!checked[task.id]}
         onCheckedChange={() => toggle(task.id)}
         onClick={() => setViewingTask(buildTaskViewData(task, assignee, assigneeRole))}
-        style={isOverdue
-          ? { backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)', boxShadow: shadow.sm, cursor: 'pointer' } as React.CSSProperties // token-audit-ignore — CSS custom property override
-          : { backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }
-        }
+        style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
         tags={pool ? (
-          <>
-            <FrequencyTag value={task.freq} />
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
-              </Tooltip>
-            )}
-          </>
+          <FrequencyTag value={task.freq} />
         ) : (
           <>
             {task.dept && <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
             <FrequencyTag value={task.freq} />
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
-              </Tooltip>
-            )}
           </>
         )}
         trailingTag={pool ? (
@@ -511,7 +500,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   // ── Render a draggable pool task card ─────────────────────────────────────
 
   function renderPoolDragCard(task: MockTask, isBeingDragged: boolean, isDragMode: boolean) {
-    const isOverdue = task.overdue && !checked[task.id];
     const rawTask = poolTasks.find(t => t.id === task.id);
     const assigneeName = rawTask?.member_first_name
       ? `${rawTask.member_first_name} ${rawTask.member_last_name}`.trim()
@@ -529,25 +517,13 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         onDragStart={(e: React.DragEvent<HTMLDivElement>) => handlePoolDragStart(e, task.id)}
         onDragEnd={handlePoolDragEnd}
         style={{
-          ...(isOverdue
-            ? { backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)' } as React.CSSProperties // token-audit-ignore — CSS custom property override
-            : { backgroundColor: color.surface.overlay }
-          ),
+          backgroundColor: color.surface.overlay,
           boxShadow: isBeingDragged ? 'none' : shadow.sm,
           cursor: isDragMode ? 'grabbing' : 'grab',
           ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
           transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
         }}
-        tags={
-          <>
-            <FrequencyTag value={task.freq} />
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" appearance="solid" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0, width: 28, height: 28 }} />
-              </Tooltip>
-            )}
-          </>
-        }
+        tags={<FrequencyTag value={task.freq} />}
         trailingTag={
           checked[task.id] ? (
             <AnimatedIcon
@@ -600,14 +576,21 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
         {/* Right: filter toggle + add task */}
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-          <IconButton
-            variant="secondary"
-            size="sm"
-            icon={<Icon icon={icon.filter} />}
-            label="Toggle filters"
-            onClick={() => setFiltersVisible((p) => !p)}
-            style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
+            {hasOverdueInView && (
+              <Tooltip content="Overdue tasks present" placement="top">
+                <Dot status="warning" size="sm" pulse />
+              </Tooltip>
+            )}
+            <IconButton
+              variant="secondary"
+              size="sm"
+              icon={<Icon icon={icon.filter} />}
+              label="Toggle filters"
+              onClick={() => setFiltersVisible((p) => !p)}
+              style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
+            />
+          </div>
           {canAddTask && (
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
@@ -652,45 +635,50 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       )}
 
       {/* ── Board ── */}
-      {taskView === 'mine' && filteredMyBoard.length === 0 ? (
-        /* My Tasks — empty state */
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: gap.lg, minHeight: '40vh' }}>
-          <h2 style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, color: color.text.primary, margin: 0 }}>
-            No Tasks Assigned
-          </h2>
-          <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, textAlign: 'center', maxWidth: '400px', lineHeight: font.lineHeight.normal, margin: 0 }}>
-            You don&apos;t have any tasks assigned for this date. Check back later or switch to All Tasks to see what&apos;s happening across the team.
-          </p>
-        </div>
-      ) : (taskView === 'all' || taskView === 'mine') ? (
+      {(() => {
+        const isMineEmpty = taskView === 'mine' && filteredMyBoard.length === 0;
+        const isAllEmpty = taskView === 'all' && filteredAssignedBoard.length === 0;
+        const isOpenEmpty = taskView === 'open' && filteredPoolBoard.every((c) => c.tasks.length === 0);
+        if (!isMineEmpty && !isAllEmpty && !isOpenEmpty) return null;
+        const heading = isMineEmpty
+          ? 'No Tasks Assigned'
+          : isOpenEmpty
+            ? hasActiveFilters ? 'No Open Tasks Match' : 'No Open Tasks'
+            : hasActiveFilters ? 'No Tasks Match' : 'No Tasks Today';
+        const body = isMineEmpty
+          ? "You don't have any tasks assigned for this date. Check back later or switch to All Tasks to see what's happening across the team."
+          : isOpenEmpty
+            ? hasActiveFilters
+              ? 'No open tasks match the current filters. Try adjusting or clearing them.'
+              : 'No unassigned tasks for this date. Open tasks appear here when they need to be picked up.'
+            : hasActiveFilters
+              ? 'No tasks match the current filters. Try adjusting or clearing them.'
+              : 'Nothing is scheduled for the team on this date. Try a different day or check back later.';
+        return (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: gap.lg, minHeight: '40vh' }}>
+            <h2 style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, color: color.text.primary, margin: 0 }}>
+              {heading}
+            </h2>
+            <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, textAlign: 'center', maxWidth: '400px', lineHeight: font.lineHeight.normal, margin: 0 }}>
+              {body}
+            </p>
+          </div>
+        );
+      })() || ((taskView === 'all' || taskView === 'mine') ? (
         /* All Tasks / My Tasks — person-based columns */
         <Board style={{ flex: 1, minHeight: 0 }}>
-          {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => {
-            const overdueTasks = col.tasks.filter((t) => t.overdue && !checked[t.id]);
-            const normalTasks = col.tasks.filter((t) => !t.overdue || checked[t.id]);
-
-            return (
-              <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
-                  <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
-                  <div>
-                    <div style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, lineHeight: 'normal', color: color.text.primary }}>{col.person.name}</div>
-                    <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.regular, lineHeight: 'normal', color: color.text.primary }}>{col.person.subtitle}</div>
-                  </div>
+          {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => (
+            <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
+                <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
+                <div>
+                  <div style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, lineHeight: 'normal', color: color.text.primary }}>{col.person.name}</div>
+                  <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.regular, lineHeight: 'normal', color: color.text.primary }}>{col.person.subtitle}</div>
                 </div>
-                {overdueTasks.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs, paddingInline: space.sm }}>
-                      <Dot status="warning" size="sm" pulse />
-                      <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.negative }}>Overdue</span>
-                    </div>
-                    {overdueTasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
-                  </div>
-                )}
-                {normalTasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
-              </BoardColumn>
-            );
-          })}
+              </div>
+              {col.tasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
+            </BoardColumn>
+          ))}
         </Board>
       ) : (
         /* Open Tasks — status-based columns for pool tasks (drag-and-drop enabled) */
@@ -767,7 +755,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
             );
           })}
         </Board>
-      )}
+      ))}
 
       <ViewTaskSheet
         isOpen={viewingTask !== null}
