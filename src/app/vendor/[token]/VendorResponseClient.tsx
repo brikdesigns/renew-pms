@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, type CSSProperties, type FormEvent } from 'react';
-import { Button, TextArea, Select, Tag, Badge } from '@brikdesigns/bds';
+import { Button, TextArea, Select, Tag, Badge, Field, FieldGrid } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { rowStyle } from '@/app/(auth)/settings/_shared';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import { VendorSidebar } from './VendorSidebar';
 import type { VendorMessage } from '@/lib/vendor-tokens';
@@ -237,39 +235,35 @@ export function VendorResponseClient({
               <div style={sheetBodyStyle}>
                 <h3 style={sheetSectionTitle}>{request.title}</h3>
 
-                <div style={rowStyle}>
-                  <ReadOnlyField label="Submitted" value={createdDate} />
-                  <ReadOnlyField label="Vendor" value={vendorContact ? `${vendorContact.name} — ${vendor.name}` : vendor.name} />
-                </div>
+                <FieldGrid columns={2} gap="lg">
+                  <Field label="Submitted" empty="—">{createdDate}</Field>
+                  <Field label="Vendor" empty="—">{vendorContact ? `${vendorContact.name} — ${vendor.name}` : vendor.name}</Field>
+                </FieldGrid>
 
-                <ReadOnlyField label="Category" value={
-                  <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
+                <Field label="Category" empty="—">
+                  <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
                     {categoryLabel}
                   </Tag>
-                } />
+                </Field>
 
-                <div style={rowStyle}>
-                  <ReadOnlyField label="Priority" value={
-                    <PriorityBadge priority={request.urgency} />
-                  } />
-                  <ReadOnlyField label="Status" value={
-                    <StatusBadge status={request.status} />
-                  } />
-                </div>
+                <FieldGrid columns={2} gap="lg">
+                  <Field label="Priority" empty="—"><PriorityBadge priority={request.urgency} /></Field>
+                  <Field label="Status" empty="—"><StatusBadge status={request.status} /></Field>
+                </FieldGrid>
 
                 {request.description && (
-                  <ReadOnlyField label="Description" value={request.description} />
+                  <Field label="Description" empty="—">{request.description}</Field>
                 )}
 
                 {(roomName || equipmentName || request.location_description) && (
                   <>
                     <h3 style={sheetSectionTitle}>Location & Equipment</h3>
-                    <div style={rowStyle}>
-                      {roomName && <ReadOnlyField label="Room" value={roomName} />}
-                      {equipmentName && <ReadOnlyField label="Equipment" value={equipmentName} />}
-                    </div>
+                    <FieldGrid columns={2} gap="lg">
+                      {roomName && <Field label="Room" empty="—">{roomName}</Field>}
+                      {equipmentName && <Field label="Equipment" empty="—">{equipmentName}</Field>}
+                    </FieldGrid>
                     {request.location_description && (
-                      <ReadOnlyField label="Location Details" value={request.location_description} />
+                      <Field label="Location Details" empty="—">{request.location_description}</Field>
                     )}
                   </>
                 )}
@@ -378,15 +372,13 @@ export function VendorResponseClient({
               <h3 style={sheetSectionTitle}>Profile</h3>
 
               <h3 style={sheetSectionTitle}>Contact</h3>
-              <div style={rowStyle}>
-                <ReadOnlyField label="Name" value={vendorContact?.name} />
-                <ReadOnlyField label="Email" value={vendorContact?.email} />
-              </div>
+              <FieldGrid columns={2} gap="lg">
+                <Field label="Name" empty="—">{vendorContact?.name}</Field>
+                <Field label="Email" empty="—">{vendorContact?.email}</Field>
+              </FieldGrid>
 
               <h3 style={sheetSectionTitle}>Company</h3>
-              <div style={rowStyle}>
-                <ReadOnlyField label="Company Name" value={vendor.name} />
-              </div>
+              <Field label="Company Name" empty="—">{vendor.name}</Field>
             </div>
           </div>
         )}

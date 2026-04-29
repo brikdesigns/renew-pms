@@ -1,14 +1,9 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Badge, Button, useConfigureSheet } from '@brikdesigns/bds';
-import { color, font, gap } from '@/lib/tokens';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { Badge, Button, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
-
-const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
-const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -83,34 +78,21 @@ export function ViewRoomSheet({ onClose, room: roomProp, id, onNavigate }: ViewR
       body: (
         <div style={sheetBodyStyle}>
           <h3 style={sheetSectionTitle}>Room Details</h3>
-          <div style={fieldRow}>
-            <div style={fieldHalf}>
-              <ReadOnlyField label="Name" value={room.name} />
-            </div>
-            <div style={fieldHalf}>
-              <ReadOnlyField label="Type" value={ROOM_TYPE_LABELS[room.room_type] || room.room_type} />
-            </div>
-          </div>
+          <FieldGrid columns={2} gap="lg">
+            <Field label="Name" empty="—">{room.name}</Field>
+            <Field label="Type" empty="—">{ROOM_TYPE_LABELS[room.room_type] || room.room_type}</Field>
+          </FieldGrid>
           {room.description && (
-            <ReadOnlyField label="Description" value={room.description} />
+            <Field label="Description" empty="—">{room.description}</Field>
           )}
-          <div style={fieldRow}>
-            <div style={fieldHalf}>
-              <ReadOnlyField label="Source" value={room.is_custom ? 'Custom' : 'Default'} />
-            </div>
-            <div style={fieldHalf}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-                  Status
-                </span>
-                <div style={{ display: 'inline-flex' }}>
-                  <Badge status={room.is_active ? 'positive' : 'error'} size="sm">
-                    {room.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
+          <FieldGrid columns={2} gap="lg">
+            <Field label="Source" empty="—">{room.is_custom ? 'Custom' : 'Default'}</Field>
+            <Field label="Status" empty="—">
+              <Badge status={room.is_active ? 'positive' : 'error'} size="sm">
+                {room.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            </Field>
+          </FieldGrid>
         </div>
       ),
       footer: <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>,

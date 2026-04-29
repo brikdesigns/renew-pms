@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Badge, Tag, Button, useConfigureSheet } from '@brikdesigns/bds';
+import { Badge, Tag, Button, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import {
   sheetBodyStyle,
@@ -36,7 +35,6 @@ const TYPE_LABELS: Record<string, string> = {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const rowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -106,26 +104,26 @@ export function ViewVendorSheet({ onClose, vendor: vendorProp, id, onEdit, onNav
     const detailsContent = (
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Company Details</h3>
-        <ReadOnlyField label="Name" value={vendor.name} />
-        <div style={rowStyle}>
-          <ReadOnlyField label="Type" value={
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
+        <Field label="Name" empty="—">{vendor.name}</Field>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Type" empty="—">
+            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
               {TYPE_LABELS[vendor.type] ?? vendor.type}
             </Tag>
-          } />
-          <ReadOnlyField label="Status" value={
-            <Badge status={vendor.is_active ? 'positive' : 'error'} size="sm" style={{ display: 'inline-flex' }}>
+          </Field>
+          <Field label="Status" empty="—">
+            <Badge status={vendor.is_active ? 'positive' : 'error'} size="sm">
               {vendor.is_active ? 'Active' : 'Inactive'}
             </Badge>
-          } />
-        </div>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Phone" value={vendor.phone} />
-          <ReadOnlyField label="Email" value={vendor.email} />
-        </div>
-        {vendor.website_url && <ReadOnlyField label="Website" value={vendor.website_url} />}
-        {vendor.address && <ReadOnlyField label="Address" value={vendor.address} />}
-        {vendor.notes && <ReadOnlyField label="Relationship Details" value={vendor.notes} />}
+          </Field>
+        </FieldGrid>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Phone" empty="—">{vendor.phone}</Field>
+          <Field label="Email" empty="—">{vendor.email}</Field>
+        </FieldGrid>
+        {vendor.website_url && <Field label="Website" empty="—">{vendor.website_url}</Field>}
+        {vendor.address && <Field label="Address" empty="—">{vendor.address}</Field>}
+        {vendor.notes && <Field label="Relationship Details" empty="—">{vendor.notes}</Field>}
       </div>
     );
 

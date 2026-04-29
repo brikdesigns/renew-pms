@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Sheet, Button, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { color, font, gap, space, departmentColor } from '@/lib/tokens';
@@ -43,9 +42,6 @@ interface ViewRoleSheetProps {
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
-const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -103,32 +99,19 @@ export function ViewRoleSheet({ isOpen = true, onClose, role: roleProp, id, onEd
   const detailsContent = role ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Role Details</h3>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Name" value={role.name} />
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Department" value={role.department} />
-        </div>
-      </div>
-      <ReadOnlyField label="Description" value={role.description} />
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Source" value={role.is_default ? 'Default' : 'Custom'} />
-        </div>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={role.is_active ? 'positive' : 'error'} size="sm">
-                {role.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Name" empty="—">{role.name}</Field>
+        <Field label="Department" empty="—">{role.department}</Field>
+      </FieldGrid>
+      <Field label="Description" empty="—">{role.description}</Field>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Source" empty="—">{role.is_default ? 'Default' : 'Custom'}</Field>
+        <Field label="Status" empty="—">
+          <Badge status={role.is_active ? 'positive' : 'error'} size="sm">
+            {role.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </Field>
+      </FieldGrid>
     </div>
   ) : null;
 

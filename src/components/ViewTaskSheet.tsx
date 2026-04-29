@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Sheet, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
 import {
@@ -84,8 +83,6 @@ const TASK_TYPE_DISPLAY: Record<string, string> = {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const rowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
-const halfStyle: CSSProperties = { flex: 1, minWidth: 0 };
 const tagRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 
 const progressBarOuter: CSSProperties = {
@@ -227,91 +224,56 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       <h3 style={sheetSectionTitle}>Task Details</h3>
 
       {/* Assignment */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Assigned To" value={t.assignee} />
-        </div>
-        <div style={halfStyle}>
-          {(() => {
-            switch (t.assignmentType) {
-              case 'role':       return <ReadOnlyField label="Assigned Role"       value={t.assignmentValue || '—'} />;
-              case 'department': return <ReadOnlyField label="Assigned Department" value={t.assignmentValue || '—'} />;
-              case 'individual': return <ReadOnlyField label="Assignment Type"     value="Individual" />;
-              case 'pool':
-              default:           return <ReadOnlyField label="Assignment Type"     value="Pool (All Staff)" />;
-            }
-          })()}
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Assigned To" empty="—">{t.assignee}</Field>
+        {(() => {
+          switch (t.assignmentType) {
+            case 'role':       return <Field label="Assigned Role"       empty="—">{t.assignmentValue}</Field>;
+            case 'department': return <Field label="Assigned Department" empty="—">{t.assignmentValue}</Field>;
+            case 'individual': return <Field label="Assignment Type"     empty="—">Individual</Field>;
+            case 'pool':
+            default:           return <Field label="Assignment Type"     empty="—">Pool (All Staff)</Field>;
+          }
+        })()}
+      </FieldGrid>
 
       {/* Schedule */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Due" value={t.due} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={<FrequencyTag value={t.freq} />} />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Due" empty="—">{t.due}</Field>
+        <Field label="Frequency" empty="—"><FrequencyTag value={t.freq} /></Field>
+      </FieldGrid>
 
       {/* Classification */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Task Type" value={TASK_TYPE_DISPLAY[t.taskType] ?? t.taskType} />
-        </div>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Department
-            </span>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Task Type" empty="—">{TASK_TYPE_DISPLAY[t.taskType] ?? t.taskType}</Field>
+        <Field label="Department" empty="—">
+          {t.dept ? (
             <div style={tagRowStyle}>
-              {t.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>}
+              <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>
             </div>
-          </div>
-        </div>
-      </div>
+          ) : null}
+        </Field>
+      </FieldGrid>
 
       {/* Context: Room & Equipment */}
       {(t.room || t.equipment) && (
-        <div style={rowStyle}>
-          {t.room && (
-            <div style={halfStyle}>
-              <ReadOnlyField label="Room" value={t.room} />
-            </div>
-          )}
-          {t.equipment && (
-            <div style={halfStyle}>
-              <ReadOnlyField label="Equipment" value={t.equipment} />
-            </div>
-          )}
-        </div>
+        <FieldGrid columns={2} gap="lg">
+          {t.room && <Field label="Room" empty="—">{t.room}</Field>}
+          {t.equipment && <Field label="Equipment" empty="—">{t.equipment}</Field>}
+        </FieldGrid>
       )}
 
       {/* Status & Priority */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Priority
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={pri.status} size="sm">{pri.label}</Badge>
-            </div>
-          </div>
-        </div>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={allDone || t.checked ? 'positive' : 'warning'} size="sm">
-                {allDone || t.checked ? 'Completed' : 'In Progress'}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Priority" empty="—">
+          <Badge status={pri.status} size="sm">{pri.label}</Badge>
+        </Field>
+        <Field label="Status" empty="—">
+          <Badge status={allDone || t.checked ? 'positive' : 'warning'} size="sm">
+            {allDone || t.checked ? 'Completed' : 'In Progress'}
+          </Badge>
+        </Field>
+      </FieldGrid>
     </div>
   );
 

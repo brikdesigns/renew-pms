@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton } from '@brikdesigns/bds';
+import { Sheet, Button, Skeleton, Field, FieldGrid } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { color, font, gap, space, border } from '@/lib/tokens';
 import { FrequencyTag } from '@/components/FrequencyTag';
@@ -84,17 +83,6 @@ const DISPLAY_MODE_LABELS: Record<string, string> = {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const rowStyle: CSSProperties = {
-  display: 'flex',
-  gap: gap.lg,
-  width: '100%',
-};
-
-const halfStyle: CSSProperties = {
-  flex: 1,
-  minWidth: 0,
-};
-
 const taskItemStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -148,89 +136,57 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
   const detailsContent = (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>{typeLabel} Details</h3>
-      <ReadOnlyField label="Name" value={template.name} />
+      <Field label="Name" empty="—">{template.name}</Field>
       {template.description && (
-        <ReadOnlyField label="Description" value={template.description} />
+        <Field label="Description" empty="—">{template.description}</Field>
       )}
 
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Type" value={typeLabel} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Category" value={template.category || '—'} />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Type" empty="—">{typeLabel}</Field>
+        <Field label="Category" empty="—">{template.category}</Field>
+      </FieldGrid>
 
       {template.compliance_type && (
-        <ReadOnlyField label="Compliance Type" value={template.compliance_type} />
+        <Field label="Compliance Type" empty="—">{template.compliance_type}</Field>
       )}
 
       <h3 style={sheetSectionTitle}>Assignment & Scheduling</h3>
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Assignment Mode" value={ASSIGNMENT_MODE_LABELS[template.assignment_mode] ?? template.assignment_mode} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Display Mode" value={DISPLAY_MODE_LABELS[template.display_mode] ?? template.display_mode} />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Assignment Mode" empty="—">{ASSIGNMENT_MODE_LABELS[template.assignment_mode] ?? template.assignment_mode}</Field>
+        <Field label="Display Mode" empty="—">{DISPLAY_MODE_LABELS[template.display_mode] ?? template.display_mode}</Field>
+      </FieldGrid>
       {template.assignment_mode === 'individual' && (
-        <ReadOnlyField label="Assigned To" value={template.assigned_user || '—'} />
+        <Field label="Assigned To" empty="—">{template.assigned_user}</Field>
       )}
       {template.assignment_mode === 'role' && (
-        <ReadOnlyField label="Assigned Role" value={template.assigned_role || '—'} />
+        <Field label="Assigned Role" empty="—">{template.assigned_role}</Field>
       )}
       {template.assignment_mode === 'department' && (
-        <ReadOnlyField label="Department" value={template.department || '—'} />
+        <Field label="Department" empty="—">{template.department}</Field>
       )}
 
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={<FrequencyTag value={template.frequency} />} />
-        </div>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Priority
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <PriorityBadge priority={template.priority} />
-            </div>
-          </div>
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Frequency" empty="—"><FrequencyTag value={template.frequency} /></Field>
+        <Field label="Priority" empty="—"><PriorityBadge priority={template.priority} /></Field>
+      </FieldGrid>
 
-      <div style={rowStyle}>
-        {template.estimated_duration && (
-          <div style={halfStyle}>
-            <ReadOnlyField label="Est. Duration" value={`${template.estimated_duration} min`} />
-          </div>
-        )}
-        {template.room && (
-          <div style={halfStyle}>
-            <ReadOnlyField label="Room" value={template.room} />
-          </div>
-        )}
-      </div>
+      {(template.estimated_duration || template.room) && (
+        <FieldGrid columns={2} gap="lg">
+          {template.estimated_duration && (
+            <Field label="Est. Duration" empty="—">{`${template.estimated_duration} min`}</Field>
+          )}
+          {template.room && (
+            <Field label="Room" empty="—">{template.room}</Field>
+          )}
+        </FieldGrid>
+      )}
 
       <h3 style={sheetSectionTitle}>Status & Settings</h3>
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <StatusBadge status={template.status} />
-            </div>
-          </div>
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Requires Approval" value={template.requires_approval ? 'Yes' : 'No'} />
-        </div>
-      </div>
-      <ReadOnlyField label="Source" value={template.is_default ? 'Default' : 'Custom'} />
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Status" empty="—"><StatusBadge status={template.status} /></Field>
+        <Field label="Requires Approval" empty="—">{template.requires_approval ? 'Yes' : 'No'}</Field>
+      </FieldGrid>
+      <Field label="Source" empty="—">{template.is_default ? 'Default' : 'Custom'}</Field>
     </div>
   );
 

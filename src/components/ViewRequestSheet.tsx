@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet } from '@brikdesigns/bds';
+import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { StatusBadge, statusLabel } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@brikdesigns/bds';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { ManageRequestModal } from '@/components/ManageRequestModal';
 import { ResolveRequestModal } from '@/components/ResolveRequestModal';
@@ -26,14 +25,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   device_issue: 'Device Issue',
   equipment_issue: 'Equipment Issue',
   facility_maintenance: 'Facility / Maintenance',
-};
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const rowStyle: CSSProperties = {
-  display: 'flex',
-  gap: gap.lg,
-  width: '100%',
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -137,70 +128,66 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
     const detailsContent = (
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Request Details</h3>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Submitted By" value={
-            onNavigate && request.submitter_id ? (
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Submitted By" empty="—">
+            {onNavigate && request.submitter_id ? (
               <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.submitter_id) onNavigate('user', { id: request.submitter_id }, { title: request.submitter_name ?? 'User' }); }}>
                 {request.submitter_name}
               </button>
-            ) : request.submitter_name
-          } />
-          <ReadOnlyField label="Submitted" value={createdDate} />
-        </div>
+            ) : request.submitter_name}
+          </Field>
+          <Field label="Submitted" empty="—">{createdDate}</Field>
+        </FieldGrid>
         {request.assignee_name && (
-          <ReadOnlyField label="Assigned To" value={
-            onNavigate && request.assignee_id ? (
+          <Field label="Assigned To" empty="—">
+            {onNavigate && request.assignee_id ? (
               <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.assignee_id) onNavigate('user', { id: request.assignee_id }, { title: request.assignee_name ?? 'User' }); }}>
                 {request.assignee_name}
               </button>
-            ) : request.assignee_name
-          } />
+            ) : request.assignee_name}
+          </Field>
         )}
-        <ReadOnlyField label="Category" value={
-          <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, display: 'inline-flex' }}>
+        <Field label="Category" empty="—">
+          <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
             {categoryLabel}
           </Tag>
-        } />
-        <div style={rowStyle}>
-          <ReadOnlyField label="Priority" value={
-            <PriorityBadge priority={request.urgency} />
-          } />
-          <ReadOnlyField label="Status" value={
-            <StatusBadge status={request.status} />
-          } />
-        </div>
+        </Field>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Priority" empty="—"><PriorityBadge priority={request.urgency} /></Field>
+          <Field label="Status" empty="—"><StatusBadge status={request.status} /></Field>
+        </FieldGrid>
         {request.description && (
-          <ReadOnlyField label="Description" value={request.description} />
+          <Field label="Description" empty="—">{request.description}</Field>
         )}
 
         {(request.room_name || request.equipment_name || request.location_description) && (
           <>
             <h3 style={sheetSectionTitle}>Location & Equipment</h3>
-            <div style={rowStyle}>
-              <ReadOnlyField label="Room" value={
-                onNavigate && request.room_id ? (
+            <FieldGrid columns={2} gap="lg">
+              <Field label="Room" empty="—">
+                {onNavigate && request.room_id ? (
                   <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.room_id) onNavigate('room', { id: request.room_id }, { title: request.room_name ?? 'Room' }); }}>
                     {request.room_name}
                   </button>
-                ) : request.room_name
-              } />
-              <ReadOnlyField label="Equipment" value={
-                onNavigate && request.equipment_id ? (
+                ) : request.room_name}
+              </Field>
+              <Field label="Equipment" empty="—">
+                {onNavigate && request.equipment_id ? (
                   <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.equipment_id) onNavigate('inventory', { id: request.equipment_id }, { title: request.equipment_name ?? 'Equipment' }); }}>
                     {request.equipment_name}
                   </button>
-                ) : request.equipment_name
-              } />
-            </div>
+                ) : request.equipment_name}
+              </Field>
+            </FieldGrid>
             {request.equipment_id && request.equipment_request_count != null && (
-              <ReadOnlyField label="Past Requests" value={
-                request.equipment_request_count === 0
+              <Field label="Past Requests" empty="—">
+                {request.equipment_request_count === 0
                   ? 'None'
-                  : `${request.equipment_request_count} past ${request.equipment_request_count === 1 ? 'request' : 'requests'}`
-              } />
+                  : `${request.equipment_request_count} past ${request.equipment_request_count === 1 ? 'request' : 'requests'}`}
+              </Field>
             )}
             {request.location_description && (
-              <ReadOnlyField label="Location Details" value={request.location_description} />
+              <Field label="Location Details" empty="—">{request.location_description}</Field>
             )}
           </>
         )}
@@ -208,22 +195,22 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
         {request.vendor_name && (
           <>
             <h3 style={sheetSectionTitle}>Vendor</h3>
-            <div style={rowStyle}>
-              <ReadOnlyField label="Vendor" value={
-                onNavigate && request.vendor_id ? (
+            <FieldGrid columns={2} gap="lg">
+              <Field label="Vendor" empty="—">
+                {onNavigate && request.vendor_id ? (
                   <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_id) onNavigate('vendor', { id: request.vendor_id }, { title: request.vendor_name ?? 'Vendor' }); }}>
                     {request.vendor_name}
                   </button>
-                ) : request.vendor_name
-              } />
-              <ReadOnlyField label="Contact" value={
-                onNavigate && request.vendor_contact_id ? (
+                ) : request.vendor_name}
+              </Field>
+              <Field label="Contact" empty="—">
+                {onNavigate && request.vendor_contact_id ? (
                   <button type="button" className="bds-sheet__nav-link" onClick={() => { if (request.vendor_contact_id) onNavigate('contact', { id: request.vendor_contact_id }, { title: request.vendor_contact_name ?? 'Contact' }); }}>
                     {request.vendor_contact_name}
                   </button>
-                ) : request.vendor_contact_name
-              } />
-            </div>
+                ) : request.vendor_contact_name}
+              </Field>
+            </FieldGrid>
           </>
         )}
       </div>
