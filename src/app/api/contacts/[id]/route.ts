@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePracticeAdmin, requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -74,7 +75,8 @@ export async function PATCH(
   if (body.email !== undefined) updates.email = body.email?.trim() || null;
   if (body.is_primary !== undefined) updates.is_primary = body.is_primary;
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from('vendor_contacts')
     .update(updates)
     .eq('id', id)
@@ -115,7 +117,8 @@ export async function DELETE(
   const practiceId = await getPracticeId(supabase, authUser);
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('vendor_contacts')
     .delete()
     .eq('id', id)

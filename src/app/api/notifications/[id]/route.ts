@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 
@@ -11,7 +12,8 @@ export async function PATCH(_request: Request, { params }: { params: Promise<{ i
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
-  const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id).eq('user_id', authUser.profile.id);
+  const admin = createAdminClient();
+  const { error } = await admin.from('notifications').update({ is_read: true }).eq('id', id).eq('user_id', authUser.profile.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
