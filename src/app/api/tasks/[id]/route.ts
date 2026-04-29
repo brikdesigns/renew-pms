@@ -78,6 +78,26 @@ export async function GET(
   const assignedRole = first(data.assigned_role as any) as { name: string } | null;
   const checklistItems = Array.isArray(data.task_checklist_items) ? data.task_checklist_items : [];
 
+  // Mirror TasksClient.toMockTask: discriminate by which FK is set, since tasks
+  // have no assignment_mode column. Order: individual > role > department > pool.
+  let assignmentType: 'individual' | 'role' | 'department' | 'pool';
+  let assignmentValue: string;
+  if (data.assigned_to) {
+    assignmentType = 'individual';
+    assignmentValue = memberProfile
+      ? `${memberProfile.first_name} ${memberProfile.last_name}`.trim()
+      : '';
+  } else if (assignedRole) {
+    assignmentType = 'role';
+    assignmentValue = assignedRole.name;
+  } else if (dept) {
+    assignmentType = 'department';
+    assignmentValue = dept.name;
+  } else {
+    assignmentType = 'pool';
+    assignmentValue = '';
+  }
+
   return NextResponse.json({
     id: data.id,
     title: data.title,
@@ -91,8 +111,8 @@ export async function GET(
     assignee: memberProfile ? `${memberProfile.first_name} ${memberProfile.last_name}`.trim() : 'Unassigned',
     assigneeRole: memberRole?.name ?? '',
     checked: data.status === 'completed',
-    assignmentType: assignedRole ? 'role' : 'department',
-    assignmentValue: assignedRole?.name ?? dept?.name ?? '',
+    assignmentType,
+    assignmentValue,
     room: room?.name,
     equipment: equip?.name,
     checklistTotal: checklistItems.length,
