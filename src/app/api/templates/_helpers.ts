@@ -90,3 +90,67 @@ export async function spawnTodayForTemplate(
   }
   return { ok: true };
 }
+
+interface PropagatableTemplate {
+  assignment_mode: string | null;
+  assigned_member_id: string | null;
+  assigned_role_id: string | null;
+  department_id: string | null;
+}
+
+/**
+ * Propagate a template's current assignment to today's existing un-completed
+ * task instances spawned from it. The daily generator is idempotent on
+ * (template_id, due_date=today), so once today's task exists, a subsequent
+ * PATCH that changes the template's assignee won't trigger a re-spawn — we
+ * have to mirror the change onto the existing task explicitly.
+ *
+ * Skips tasks already in `completed` or `skipped` status — those are
+ * historical and shouldn't be yanked out from under whoever finished them.
+ *
+ * Note: task-row column names (`assigned_to`, `assigned_role_id`,
+ * `assigned_department`) intentionally don't mirror the template-row columns
+ * (`assigned_member_id`, `assigned_role_id`, `department_id`) — see
+ * migration 00045 for the rationale.
+ */
+export async function propagateAssignmentToTodaysTasks(
+  admin: SupabaseClient,
+  practiceId: string,
+  templateId: string,
+  template: PropagatableTemplate,
+): Promise<{ ok: true; updatedCount: number } | { ok: false; error: string }> {
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  let patch: { assigned_to: string | null; assigned_role_id: string | null; assigned_department: string | null };
+  switch (template.assignment_mode) {
+    case 'individual':
+      patch = { assigned_to: template.assigned_member_id, assigned_role_id: null, assigned_department: null };
+      break;
+    case 'role':
+      patch = { assigned_to: null, assigned_role_id: template.assigned_role_id, assigned_department: null };
+      break;
+    case 'department':
+      patch = { assigned_to: null, assigned_role_id: null, assigned_department: template.department_id };
+      break;
+    case 'pool':
+    default:
+      patch = { assigned_to: null, assigned_role_id: null, assigned_department: null };
+      break;
+  }
+
+  const { data, error } = await admin
+    .from('tasks')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('practice_id', practiceId)
+    .eq('template_id', templateId)
+    .eq('due_date', todayIso)
+    .not('status', 'in', '(completed,skipped)')
+    .select('id');
+
+  if (error) {
+    console.error('[templates] propagateAssignmentToTodaysTasks failed:', error);
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, updatedCount: data?.length ?? 0 };
+}

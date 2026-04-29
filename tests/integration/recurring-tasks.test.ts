@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll, afterEach } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
+import { propagateAssignmentToTodaysTasks } from '@/app/api/templates/_helpers';
 
 /**
  * Recurring task generation — Launch checklist Tier 1.1
@@ -178,5 +179,175 @@ describe('Recurring task generation (Tier 1.1)', () => {
     // saved but no task ever spawns from them. Until a generator extension
     // lands, launch-checklist Tier 1.1 cannot claim full coverage. Remove
     // `skip` from this test once the expanded generator is implemented.
+  });
+});
+
+describe('Template reassignment propagation', () => {
+  let practiceId: string;
+  const createdTemplateIds: string[] = [];
+  const createdTaskIds: string[] = [];
+
+  beforeAll(async () => {
+    const { data, error } = await supabase
+      .from('practices')
+      .select('id')
+      .eq('slug', RENEW_DENTAL_SLUG)
+      .single();
+    if (error || !data) {
+      throw new Error(`Test practice "${RENEW_DENTAL_SLUG}" not found in dev DB: ${error?.message}`);
+    }
+    practiceId = data.id;
+  });
+
+  afterEach(async () => {
+    if (createdTaskIds.length) {
+      await supabase.from('task_checklist_items').delete().in('task_id', createdTaskIds);
+      await supabase.from('tasks').delete().in('id', createdTaskIds);
+      createdTaskIds.length = 0;
+    }
+    if (createdTemplateIds.length) {
+      await supabase.from('tasks').delete().in('template_id', createdTemplateIds);
+      await supabase.from('checklist_items').delete().in('template_id', createdTemplateIds);
+      await supabase.from('task_templates').delete().in('id', createdTemplateIds);
+      createdTemplateIds.length = 0;
+    }
+  });
+
+  async function getTwoActiveMembers(): Promise<[string, string]> {
+    const { data, error } = await supabase
+      .from('practice_members')
+      .select('id')
+      .eq('practice_id', practiceId)
+      .eq('is_active', true)
+      .limit(2);
+    if (error || !data || data.length < 2) {
+      throw new Error(`Need at least 2 active members in test practice: ${error?.message}`);
+    }
+    return [data[0].id, data[1].id];
+  }
+
+  async function createIndividualTemplate(memberId: string, suffix: string): Promise<string> {
+    const { data, error } = await supabase
+      .from('task_templates')
+      .insert({
+        practice_id: practiceId,
+        name: `[QA reassign] ${suffix} ${Date.now()}`,
+        type: 'checklist',
+        frequency: 'daily',
+        priority: 'medium',
+        status: 'active',
+        assignment_mode: 'individual',
+        assigned_member_id: memberId,
+      })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error(`template insert failed: ${error?.message}`);
+    createdTemplateIds.push(data.id);
+    return data.id;
+  }
+
+  test('reassigning an individual template propagates to today\'s un-completed task', async () => {
+    const [memberA, memberB] = await getTwoActiveMembers();
+    const templateId = await createIndividualTemplate(memberA, 'reassign-individual');
+
+    // Spawn today's task via the generator.
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
+
+    // Reassign the template.
+    const { data: updated, error: updateErr } = await supabase
+      .from('task_templates')
+      .update({ assigned_member_id: memberB })
+      .eq('id', templateId)
+      .select('assignment_mode, assigned_member_id, assigned_role_id, department_id')
+      .single();
+    expect(updateErr?.message).toBeUndefined();
+    if (!updated) throw new Error('template update returned no row');
+
+    const result = await propagateAssignmentToTodaysTasks(supabase, practiceId, templateId, updated);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.updatedCount).toBe(1);
+
+    const { data: tasks, error: taskErr } = await supabase
+      .from('tasks')
+      .select('id, assigned_to')
+      .eq('template_id', templateId);
+    expect(taskErr?.message).toBeUndefined();
+    expect(tasks).toHaveLength(1);
+    expect(tasks?.[0].assigned_to).toBe(memberB);
+    tasks?.forEach((t) => createdTaskIds.push(t.id));
+  });
+
+  test('reassignment skips tasks already in completed/skipped status', async () => {
+    const [memberA, memberB] = await getTwoActiveMembers();
+    const templateId = await createIndividualTemplate(memberA, 'preserve-completed');
+
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
+
+    // Mark today's task complete before reassignment.
+    const { data: tasksBefore } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('template_id', templateId);
+    const completedTaskId = tasksBefore?.[0].id;
+    if (!completedTaskId) throw new Error('no spawned task to complete');
+    createdTaskIds.push(completedTaskId);
+    await supabase.from('tasks').update({ status: 'completed' }).eq('id', completedTaskId);
+
+    const { data: updated } = await supabase
+      .from('task_templates')
+      .update({ assigned_member_id: memberB })
+      .eq('id', templateId)
+      .select('assignment_mode, assigned_member_id, assigned_role_id, department_id')
+      .single();
+    if (!updated) throw new Error('template update returned no row');
+
+    const result = await propagateAssignmentToTodaysTasks(supabase, practiceId, templateId, updated);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.updatedCount).toBe(0);
+
+    const { data: after } = await supabase
+      .from('tasks')
+      .select('assigned_to, status')
+      .eq('id', completedTaskId)
+      .single();
+    expect(after?.assigned_to).toBe(memberA);
+    expect(after?.status).toBe('completed');
+  });
+
+  test('mode switch (individual → role) clears assigned_to and sets assigned_role_id', async () => {
+    const [memberA] = await getTwoActiveMembers();
+    const templateId = await createIndividualTemplate(memberA, 'mode-switch');
+
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
+
+    // Pick any active practice role for the switch target.
+    const { data: roles } = await supabase
+      .from('practice_role_types')
+      .select('id')
+      .eq('practice_id', practiceId)
+      .limit(1);
+    const roleId = roles?.[0]?.id;
+    if (!roleId) throw new Error('no practice_role_types in test practice');
+
+    const { data: updated } = await supabase
+      .from('task_templates')
+      .update({ assignment_mode: 'role', assigned_member_id: null, assigned_role_id: roleId })
+      .eq('id', templateId)
+      .select('assignment_mode, assigned_member_id, assigned_role_id, department_id')
+      .single();
+    if (!updated) throw new Error('template update returned no row');
+
+    const result = await propagateAssignmentToTodaysTasks(supabase, practiceId, templateId, updated);
+    expect(result.ok).toBe(true);
+
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id, assigned_to, assigned_role_id, assigned_department')
+      .eq('template_id', templateId);
+    expect(tasks).toHaveLength(1);
+    expect(tasks?.[0].assigned_to).toBeNull();
+    expect(tasks?.[0].assigned_role_id).toBe(roleId);
+    expect(tasks?.[0].assigned_department).toBeNull();
+    tasks?.forEach((t) => createdTaskIds.push(t.id));
   });
 });
