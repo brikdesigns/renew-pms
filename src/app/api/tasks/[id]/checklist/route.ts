@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -57,9 +58,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'items array is required' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Update each item
   for (const item of body.items) {
-    await supabase
+    await admin
       .from('task_checklist_items')
       .update({
         is_completed: item.is_completed,
@@ -72,15 +75,12 @@ export async function PATCH(
   }
 
   // Return fresh list
-  const { data } = await supabase
+  const { data } = await admin
     .from('task_checklist_items')
     .select('id, label, sort_order, is_completed, completed_at, room_id, equipment_id, supply_category_id')
     .eq('task_id', id)
     .eq('practice_id', practiceId)
     .order('sort_order');
-
-  // Also suppress the unused variable warning for the route param
-  void id;
 
   return NextResponse.json(data ?? []);
 }
