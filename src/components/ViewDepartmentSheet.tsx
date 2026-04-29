@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Sheet, Button, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { departmentColor, color, font, gap, space, border } from '@/lib/tokens';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
@@ -69,9 +68,6 @@ const colorDot: CSSProperties = {
   display: 'inline-block',
   flexShrink: 0,
 };
-
-const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
-const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -147,45 +143,27 @@ export function ViewDepartmentSheet({ isOpen = true, onClose, department: depart
   const detailsContent = department ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Department Details</h3>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Name" value={department.name} />
-        </div>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Color Tag
-            </span>
-            {department.color ? (
-              <span style={colorSwatchRow}>
-                <span style={{ ...colorDot, backgroundColor: departmentColor(department.color).base }} />
-                <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>
-                  {colorLabel}
-                </span>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Name" empty="—">{department.name}</Field>
+        <Field label="Color Tag" empty="None">
+          {department.color ? (
+            <span style={colorSwatchRow}>
+              <span style={{ ...colorDot, backgroundColor: departmentColor(department.color).base }} />
+              <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>
+                {colorLabel}
               </span>
-            ) : (
-              <span style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary }}>None</span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
             </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={department.is_active ? 'positive' : 'error'} size="sm">
-                {department.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Members" value={String(department.member_count)} />
-        </div>
-      </div>
+          ) : null}
+        </Field>
+      </FieldGrid>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Status" empty="—">
+          <Badge status={department.is_active ? 'positive' : 'error'} size="sm">
+            {department.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </Field>
+        <Field label="Members" empty="—">{String(department.member_count)}</Field>
+      </FieldGrid>
     </div>
   ) : null;
 
