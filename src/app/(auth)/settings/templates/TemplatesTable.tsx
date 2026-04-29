@@ -147,7 +147,7 @@ function TypeChip({ type }: { type: string }) {
 
 export function TemplatesTable() {
   const { pushSheet } = useSheetStack();
-  const { templates, setTemplates, loading } = useTemplates();
+  const { templates, setTemplates, loading: templatesLoading } = useTemplates();
   const [segment, setSegment] = useState<TemplateSegment>('tasks');
   const typeFilter = SEGMENT_TYPES[segment];
 
@@ -156,9 +156,14 @@ export function TemplatesTable() {
   const { equipment } = useEquipment();
   const { supplyCategories } = useSupplyCategories();
   const { departments } = useDepartments();
-  const { roles } = useRoles();
-  const { taskCategories } = useTaskCategories();
+  const { roles, loading: rolesLoading } = useRoles();
+  const { taskCategories, loading: categoriesLoading } = useTaskCategories();
   const { complianceTypes } = useComplianceTypes();
+
+  // Hold the skeleton until templates AND the body lookups (Category, Assigned
+  // Role) resolve — otherwise rows render with "—" placeholders that pop into
+  // real values after the fact.
+  const loading = templatesLoading || rolesLoading || categoriesLoading;
 
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -387,36 +392,24 @@ export function TemplatesTable() {
 
       {/* Templates table */}
       <div style={tableWrapperStyle}>
-        {loading ? (
-          <Table size="default" flush>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>{' '}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableSkeleton columns={5} />
-            </TableBody>
-          </Table>
-        ) : (
-          <Table size="default" flush>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Assigned Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead style={{ width: '120px' }}>{' '}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTemplates.map((template) => (
+        <Table size="default" flush>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Frequency</TableHead>
+              <TableHead>Assigned Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeleton columns={7} />
+            ) : (
+              <>
+                {filteredTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
@@ -451,18 +444,19 @@ export function TemplatesTable() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredTemplates.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} style={bodyCellStyle}>
-                    <div style={{ textAlign: 'center', padding: space.xl, color: color.text.muted, fontSize: font.size.body.sm }}>
-                      No templates yet. Add your first template above.
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        )}
+                {filteredTemplates.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} style={bodyCellStyle}>
+                      <div style={{ textAlign: 'center', padding: space.xl, color: color.text.muted, fontSize: font.size.body.sm }}>
+                        No templates yet. Add your first template above.
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <EditTemplateSheet
