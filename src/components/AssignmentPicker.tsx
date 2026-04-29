@@ -40,9 +40,37 @@ const rowStyle: CSSProperties = {
   width: '100%',
 };
 
-function memberLabel(m: Member): string {
-  const name = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
-  return name || m.email || 'Unnamed member';
+function memberDisplayName(m: Member): string {
+  return `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
+}
+
+/**
+ * Build labels for a member list, appending the email parenthetically only
+ * when two or more active members share the same display name. Keeps the
+ * common case clean ("Jessica Torres") and disambiguates duplicates
+ * ("Jessica Torres (nick+manager@brikdesigns.com)") without the picker
+ * silently steering the admin to the wrong record.
+ *
+ * Surfaced 2026-04-29: two seeded test users with the persona "Jessica
+ * Torres" appeared as identical options; the admin picked one but the
+ * spawned task ended up assigned to the other Jessica's member_id, hidden
+ * from the admin's My Tasks board.
+ */
+export function buildMemberOptions(members: Member[]): { label: string; value: string }[] {
+  const active = members.filter((m) => m.is_active);
+  const nameCounts = new Map<string, number>();
+  for (const m of active) {
+    const name = memberDisplayName(m);
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+  }
+
+  return active.map((m) => {
+    const name = memberDisplayName(m);
+    const fallback = name || m.email || 'Unnamed member';
+    const isDuplicate = name !== '' && (nameCounts.get(name) ?? 0) > 1;
+    const label = isDuplicate && m.email ? `${name} (${m.email})` : fallback;
+    return { label, value: m.id };
+  });
 }
 
 /**
@@ -74,9 +102,7 @@ export function AssignmentPicker({
 
   const memberOptions = [
     { label: 'Select person', value: '' },
-    ...members
-      .filter((m) => m.is_active)
-      .map((m) => ({ label: memberLabel(m), value: m.id })),
+    ...buildMemberOptions(members),
   ];
 
   const roleOptions = [
