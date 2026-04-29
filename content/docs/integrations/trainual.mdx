@@ -23,13 +23,13 @@ API docs: [trainual.docs.apiary.io](https://trainual.docs.apiary.io/)
 
 ```
 Trainual API → practice_members.trainual_user_id
-Trainual API → employee_status (new → maturing → active)
-employee_status → task personalization + dashboard widgets
+Trainual API → practice_members.employee_type (new → maturing → proficient)
+employee_type → task personalization + dashboard widgets
 ```
 
 1. Each practice member is linked to their Trainual person via `practice_members.trainual_user_id`
-2. Training completion data informs `employee_status` transitions
-3. Employee status drives which tasks and workflows are surfaced
+2. Training completion data informs `employee_type` transitions
+3. Employee type drives which tasks and workflows are surfaced
 
 ## Configuration
 
@@ -45,10 +45,12 @@ The API key is stored per-practice in the `integrations` JSONB column:
 
 This lives in `practices.integrations` and is **server-side only** — never expose to the client.
 
-## Employee status lifecycle
+## Employee type lifecycle
 
-| Status | Trainual signal |
+`practice_members.employee_type` is constrained to one of three values:
+
+| Value | Trainual signal |
 |--------|----------------|
 | `new` | User created, minimal training completed |
 | `maturing` | Progressing through required assignments |
-| `active` | All required training completed |
+| `proficient` | All required training completed |
