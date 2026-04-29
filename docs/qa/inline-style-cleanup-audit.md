@@ -14,6 +14,20 @@ Systematic inventory of inline-styled `<div>` / `<span>` / `<p>` elements (and e
 
 > **Methodology:** this audit follows [`cleanup-workflow.md`](./cleanup-workflow.md). Counts and call sites here feed batched cleanup PRs (one branch = one batch of fixes that share the same shape). The goal is not "delete every inline style" — it is **every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.**
 
+## Batch progress
+
+> **Batch 1a (`task/bds-cleanup-inline-styles-sheets-1a`, this PR):** ViewUserSheet + ViewTaskSheet. Established the sheet skeleton pattern that subsequent batches copy:
+> - `<SheetSection heading="...">` replaces `<div style={sheetBodyStyle}><h3 style={sheetSectionTitle}>...` — visual change: section heading goes from heading-family h3 to BDS canonical uppercase `--label-sm` treatment. The cleanup-workflow doc explicitly calls out this kind of "BDS spec produces a different look" trade — documented, not silently changed.
+> - `<EmptyState>` replaces inline `<p style={emptyState}>` for tab-level empties (Roles, Departments, Assigned Modules, Checklist Items).
+> - `<ProgressBar>` + `<SheetHelperText>` replaces hand-rolled progress bars (training progress, checklist progress). **BDS `<Meter>` was the wrong primitive** — it hardcodes a ` Score` suffix (`bds-meter__value-suffix`) into the value display, fits score gauges only. ProgressBar is documented as "horizontal bar showing completion progress." Tradeoff: ProgressBar has no built-in value/max text — caption goes in adjacent `<SheetHelperText>`.
+> - ViewTaskSheet two-line manual title `<div>` (title + templateName) → `<Sheet title>` + `<Sheet description>` props.
+> - `<Field>` / `<FieldGrid>` were already adopted before this batch; kept.
+> - Both files removed all imports from `_sheetStyles.ts`. The file is kept on disk for Batch 1b consumers (EditUserSheet, EditProfileSheet, ViewInventorySheet, ViewContactSheet) — delete in a final pass once those are migrated.
+>
+> **26 markers resolved this batch.** Total: 463 → 449 div, 114 → 108 span, 42 → 39 p, 92 → 90 inline fontSize.
+>
+> **BDS issue surfaced (not blocking):** Meter's hardcoded ` Score` suffix should be configurable (`valueSuffix?: string` or `showSuffix?: boolean`). Worth opening a brik-bds issue.
+
 ## Guiding rules (from BDS naming conventions)
 
 Cited verbatim from the [BDS naming conventions doc](https://design.brikdesigns.com/docs/primitives/naming-conventions) so the audit remains usable when the canonical doc rotates:
@@ -28,17 +42,17 @@ Cited verbatim from the [BDS naming conventions doc](https://design.brikdesigns.
 
 In renew-pms terms: when DevTools shows `<div>` with inline styles, that's an unclassed wrapper. Either it should be a BDS primitive (Card, DataSection, SheetSection, Stack, Text, Label) or its container should be — and the inner element should carry a `__slot` BEM class.
 
-## Findings — 619 unclassed inline-styled elements across 4 categories
+## Findings — 596 / originally 619 unclassed inline-styled elements across 4 categories
 
 Scan run 2026-04-29 against `staging` (`ce249a5`).
 
 > **One fix often resolves multiple categories.** Replacing `<div style={cardStyle}><span style={titleStyle}>X</span></div>` with `<Card><Card.Title>X</Card.Title></Card>` resolves both Cat 1 (the wrapping div) and Cat 2 (the inner span) in one swap. Cross-references called out where they apply.
 
-### Category 1 — Unclassed `<div>` containers (463)
+### Category 1 — Unclassed `<div>` containers (449 / originally 463)
 
 `<div style={…}>` with no class name. Splits into two by source-style:
-- **1a. Inline literal styles** (119 sites): `<div style={{ display: 'flex', gap: gap.md }}>` — entirely unnamed.
-- **1b. Imported style consts** (344 sites): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
+- **1a. Inline literal styles** (114 / originally 119): `<div style={{ display: 'flex', gap: gap.md }}>` — entirely unnamed.
+- **1b. Imported style consts** (335 / originally 344): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
 
 Both shapes share the same fix surface: replace the wrapping element with a BDS component (which renders with the proper `bds-*` slot class) when one applies, or attach a named slot class when no BDS primitive is right.
 
@@ -84,7 +98,7 @@ These are scattered across every file in 1a plus most of the settings tables and
 
 The fix shape is identical: where the wrapping intent matches a BDS container (`Card`, `DataSection`, `SheetSection`, `PageHeader`), replace the element. Where it's pure layout (`Stack`, `Cluster`, `Inline`), use the BDS layout primitive if one exists, else keep the const but attach a slot class.
 
-### Category 2 — Unclassed `<span>` text elements (114)
+### Category 2 — Unclassed `<span>` text elements (108 / originally 114)
 
 `<span style={…}>` carrying typography styles. These are labels, metadata, captions, inline values — exactly the surface the BDS naming-conventions doc calls out (`field-label`, `chip__label`, `button-label`, `tab-label`).
 
@@ -112,7 +126,7 @@ Representative shapes:
 
 - **Sub-shape C — Profile/avatar metadata.** [`ProfileCard.tsx:179-180`](../../src/components/ProfileCard.tsx#L179-L180) `nameStyle` + `subtitleStyle`. The component already exists as a card pattern; the inner spans need named slots (`profile-card__name`, `profile-card__subtitle`).
 
-### Category 3 — Unclassed `<p>` text elements (42)
+### Category 3 — Unclassed `<p>` text elements (39 / originally 42)
 
 `<p style={…}>` — same problem as Cat 2 but the element is `<p>`. Most are paragraph-style descriptions or empty-state copy.
 
@@ -133,7 +147,7 @@ Top files:
 
 These collapse into the same fix surface as Cat 2 — a BDS text primitive (`Body`, `Description`, etc.) once the right one is identified.
 
-### Category 4 — Inline `fontSize:` in JSX style props (92)
+### Category 4 — Inline `fontSize:` in JSX style props (90 / originally 92)
 
 Counts elements where `fontSize:` appears literally inside a JSX `style={{…}}` prop (vs. inside a named const in `_shared.ts`). Examples:
 
