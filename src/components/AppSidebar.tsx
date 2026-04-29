@@ -98,17 +98,21 @@ interface NavItem {
   icon: string;
   label: string;
   match: (p: string) => boolean;
+  /** Visible to practice admin (admin) and Brik staff (brik_admin). */
   adminOnly?: boolean;
+  /** Visible only to Brik staff (brik_admin) — gates pre-launch features
+   *  away from practice users until they are demo/client-ready. */
+  platformAdminOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', icon: icon.home,      label: 'Dashboard', match: (p) => p === '/dashboard' || p === '/' },
-  { href: '/schedule',  icon: icon.calendar,  label: 'Schedule',  match: (p) => p.startsWith('/schedule'), adminOnly: true },
+  { href: '/schedule',  icon: icon.calendar,  label: 'Schedule',  match: (p) => p.startsWith('/schedule'), platformAdminOnly: true },
   { href: '/tasks',     icon: icon.tasks,     label: 'Tasks',     match: (p) => p.startsWith('/tasks') },
   { href: '/requests',  icon: icon.requests,  label: 'Requests',  match: (p) => p.startsWith('/requests') },
-  { href: '/training',  icon: icon.training,  label: 'Training',  match: (p) => p.startsWith('/training') },
-  { href: '/documents', icon: icon.documents, label: 'Documents', match: (p) => p.startsWith('/documents'), adminOnly: true },
-  { href: '/analytics', icon: icon.analytics, label: 'Analytics', match: (p) => p.startsWith('/analytics'), adminOnly: true },
+  { href: '/training',  icon: icon.training,  label: 'Training',  match: (p) => p.startsWith('/training'), platformAdminOnly: true },
+  { href: '/documents', icon: icon.documents, label: 'Documents', match: (p) => p.startsWith('/documents'), platformAdminOnly: true },
+  { href: '/analytics', icon: icon.analytics, label: 'Analytics', match: (p) => p.startsWith('/analytics'), platformAdminOnly: true },
   // Settings href overridden below for non-admin roles (staff/manager → account only)
   { href: '/settings',  icon: icon.settings,  label: 'Settings',  match: (p) => p.startsWith('/settings') },
 ];
@@ -123,11 +127,14 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
   const pathname = usePathname();
   const { isDark, toggle } = useTheme();
   const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
+  const isPlatformAdmin = userRole === 'brik_admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.adminOnly || isAdmin
-  ).map((item) =>
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.platformAdminOnly && !isPlatformAdmin) return false;
+    if (item.adminOnly && !isAdmin) return false;
+    return true;
+  }).map((item) =>
     // Non-admins only have access to Account — skip the settings landing page
     item.label === 'Settings' && !isAdmin
       ? { ...item, href: '/settings/account' }
