@@ -10,10 +10,14 @@ interface UsePoolTasksOptions {
   /** Server-loaded initial data. When provided, the first useEffect fetch
    *  is skipped — subsequent date changes or refetch() calls fetch normally. */
   initialData?: PoolTaskRow[];
+  /** When true, include completed/skipped pool tasks. Drives the "Show
+   *  resolved" toggle. Flipping it triggers a refetch. */
+  includeResolved?: boolean;
 }
 
 export function usePoolTasks(date?: Date, options?: UsePoolTasksOptions) {
   const hasInitial = options?.initialData !== undefined;
+  const includeResolved = options?.includeResolved ?? false;
   const [tasks, setTasks] = useState<PoolTaskRow[]>(options?.initialData ?? []);
   const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +37,9 @@ export function usePoolTasks(date?: Date, options?: UsePoolTasksOptions) {
 
     const d = date ?? new Date();
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const url = `/api/tasks?date=${dateStr}&pool=true${includeResolved ? '&includeResolved=true' : ''}`;
 
-    fetch(`/api/tasks?date=${dateStr}&pool=true`)
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled) {
@@ -50,7 +55,7 @@ export function usePoolTasks(date?: Date, options?: UsePoolTasksOptions) {
       });
 
     return () => { cancelled = true; };
-  }, [date, refreshKey]);
+  }, [date, refreshKey, includeResolved]);
 
   return { tasks, loading, error, refetch };
 }

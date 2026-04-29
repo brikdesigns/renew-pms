@@ -228,20 +228,38 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   const { departments } = useDepartments({ initialData: initialData.departments });
   const { members } = useMembers({ initialData: initialData.members });
-  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate, { initialData: initialData.tasks });
-  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate, { initialData: initialData.poolTasks });
+  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate, {
+    initialData: initialData.tasks,
+    includeResolved: showResolved,
+  });
+  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate, {
+    initialData: initialData.poolTasks,
+    includeResolved: showResolved,
+  });
 
   const refetchAll = useCallback(() => { refetchAssigned(); refetchPool(); }, [refetchAssigned, refetchPool]);
   const { showToast } = useToast();
 
+  // IDs with an in-flight toggle PATCH. The resync effect skips these so the
+  // optimistic flip isn't clobbered by a stale refetch landing mid-PATCH (or
+  // by the user toggling Show Resolved — which itself triggers a refetch — at
+  // exactly the wrong moment).
+  const pendingToggleIds = useRef<Set<string>>(new Set());
+
   // Resync `checked` whenever the server task lists update. We rebuild the
-  // map fully — any task no longer returned by the loader (e.g. moved off
-  // today's view) drops out, preventing stale flags from accumulating.
+  // map from the server response — any task no longer returned (e.g. moved
+  // off today's view) drops out, preventing stale flags from accumulating —
+  // but preserve optimistic flips for IDs whose PATCH is still in flight.
   useEffect(() => {
-    const next: Record<string, boolean> = {};
-    for (const t of assignedTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
-    for (const t of poolTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
-    setChecked(next);
+    setChecked((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const t of assignedTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+      for (const t of poolTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+      for (const id of pendingToggleIds.current) {
+        if (id in prev) next[id] = prev[id];
+      }
+      return next;
+    });
   }, [assignedTasks, poolTasks]);
 
   const deptColorMap = useMemo(
@@ -326,6 +344,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     const nextStatus = nextChecked ? 'completed' : 'not_started';
 
     setChecked((prev) => ({ ...prev, [id]: nextChecked }));
+    pendingToggleIds.current.add(id);
 
     try {
       const res = await fetch(`/api/tasks/${id}`, {
@@ -335,16 +354,27 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Failed to update status');
+        // Prefer the API's error message; otherwise expose the HTTP status so
+        // the toast carries diagnostic info instead of a generic fallback.
+        const reason = typeof data?.error === 'string' && data.error.length > 0
+          ? data.error
+          : `${res.status} ${res.statusText || 'request failed'}`;
+        throw new Error(reason);
       }
       refetchAll();
     } catch (err) {
       setChecked((prev) => ({ ...prev, [id]: wasChecked }));
+      const description = err instanceof Error && err.message
+        ? err.message
+        : 'Failed to update status';
+      console.error('[TasksClient.toggle] PATCH failed:', description);
       showToast({
         title: 'Could not update task',
-        description: err instanceof Error ? err.message : 'Failed to update status',
+        description,
         variant: 'error',
       });
+    } finally {
+      pendingToggleIds.current.delete(id);
     }
   }, [checked, refetchAll, showToast]);
 
