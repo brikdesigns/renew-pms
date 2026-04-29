@@ -2,15 +2,12 @@
 
 import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
-import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
-import { Button } from '@brikdesigns/bds';
-import { font, color, gap } from '@/lib/tokens';
+import { Button, Field, FieldGrid } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,
-  rowStyle,
 } from '../_shared';
 
 interface AccountSettingsClientProps {
@@ -48,50 +45,45 @@ export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSet
       <div style={contentStyle}>
         {/* Contact Information */}
         <h2 style={sectionTitleStyle}>Contact Information</h2>
-        <div style={rowStyle}>
-          <ReadOnlyField label="First Name" value={currentProfile.first_name || null} />
-          <ReadOnlyField label="Last Name" value={currentProfile.last_name || null} />
-          <ReadOnlyField label="Email" value={currentProfile.email || null} />
-        </div>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="First Name" empty="—">{currentProfile.first_name || null}</Field>
+          <Field label="Last Name" empty="—">{currentProfile.last_name || null}</Field>
+          <Field label="Email" empty="—">{currentProfile.email || null}</Field>
+        </FieldGrid>
 
         {/* User Information */}
         <h2 style={sectionTitleStyle}>User Information</h2>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Role" value={ROLE_LABELS[currentProfile.system_role] ?? currentProfile.system_role} />
-          <ReadOnlyField label="Practice Role" value={currentProfile.practice_role || null} />
-          <ReadOnlyField label="Department" value={currentProfile.department || null} />
-        </div>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Team" value={currentProfile.team || null} />
-          <ReadOnlyField label="Organization" value={currentProfile.organization || null} />
-          <ReadOnlyField label="Start Date" value={currentProfile.start_date || null} />
-        </div>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Role" empty="—">{ROLE_LABELS[currentProfile.system_role] ?? currentProfile.system_role}</Field>
+          <Field label="Practice Role" empty="—">{currentProfile.practice_role || null}</Field>
+          <Field label="Department" empty="—">{currentProfile.department || null}</Field>
+        </FieldGrid>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Team" empty="—">{currentProfile.team || null}</Field>
+          <Field label="Organization" empty="—">{currentProfile.organization || null}</Field>
+          <Field label="Start Date" empty="—">{currentProfile.start_date || null}</Field>
+        </FieldGrid>
 
         {/* Status */}
         <h2 style={sectionTitleStyle}>Status</h2>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Employee Type" value={(STATUS_LABELS[currentProfile.employee_type] ?? currentProfile.employee_type) || null} />
-          <ReadOnlyField label="Shift" value={(SHIFT_LABELS[currentProfile.shift] ?? currentProfile.shift) || null} />
-          <EmptyField />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
-            Days in Office
-          </span>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Employee Type" empty="—">{(STATUS_LABELS[currentProfile.employee_type] ?? currentProfile.employee_type) || null}</Field>
+          <Field label="Shift" empty="—">{(SHIFT_LABELS[currentProfile.shift] ?? currentProfile.shift) || null}</Field>
+          <div />
+        </FieldGrid>
+        <Field label="Days in Office" empty="—">
           {currentProfile.office_days.length > 0 ? (
             <DaysOfWeekPicker value={currentProfile.office_days} readOnly />
-          ) : (
-            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>—</span>
-          )}
-        </div>
+          ) : null}
+        </Field>
 
         {/* Password */}
         <h2 style={sectionTitleStyle}>Password</h2>
-        <div style={rowStyle}>
-          <ReadOnlyField label="Password" value="••••••••" />
-          <ReadOnlyField label="Last Changed" value={null} />
-          <EmptyField />
-        </div>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Password" empty="—">••••••••</Field>
+          <Field label="Last Changed" empty="—">{null}</Field>
+          <div />
+        </FieldGrid>
       </div>
 
       <EditProfileSheet

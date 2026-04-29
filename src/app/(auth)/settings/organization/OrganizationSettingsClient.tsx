@@ -3,19 +3,16 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import type { TabItem } from '@/components/PageHeader';
-import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Button } from '@brikdesigns/bds';
+import { Button, Field, FieldGrid } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,
-  rowStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
 import { StatusBadge } from '@/components/StatusBadge';
-import { color, font, gap } from '@/lib/tokens';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
@@ -32,42 +29,37 @@ function DetailsTab({ practice }: { practice: OrganizationData }) {
     <div style={contentStyle}>
       {/* Practice Information */}
       <h2 style={sectionTitleStyle}>Practice Information</h2>
-      <div style={rowStyle}>
-        <ReadOnlyField label="Practice Name" value={practice.name || null} />
-        <ReadOnlyField label="Website" value={practice.website_url || null} />
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: gap.md, alignItems: 'flex-start' }}>
-          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, lineHeight: font.lineHeight.tight, color: color.text.primary }}>
-            Status
-          </span>
-          <StatusBadge status={practice.status} />
-        </div>
-      </div>
-      <div style={rowStyle}>
-        <ReadOnlyField label="NPI Number" value={practice.npi_number || null} />
-        <ReadOnlyField label="Tax ID" value={practice.tax_id || null} />
-        <EmptyField />
-      </div>
+      <FieldGrid columns={3} gap="lg">
+        <Field label="Practice Name" empty="—">{practice.name || null}</Field>
+        <Field label="Website" empty="—">{practice.website_url || null}</Field>
+        <Field label="Status" empty="—"><StatusBadge status={practice.status} /></Field>
+      </FieldGrid>
+      <FieldGrid columns={3} gap="lg">
+        <Field label="NPI Number" empty="—">{practice.npi_number || null}</Field>
+        <Field label="Tax ID" empty="—">{practice.tax_id || null}</Field>
+        <div />
+      </FieldGrid>
 
       {/* Address */}
       <h2 style={sectionTitleStyle}>Address</h2>
-      <div style={rowStyle}>
-        <ReadOnlyField label="Address Line 1" value={practice.address_line1 || null} />
-        <ReadOnlyField label="Address Line 2" value={practice.address_line2 || null} />
-        <ReadOnlyField label="City" value={practice.city || null} />
-      </div>
-      <div style={rowStyle}>
-        <ReadOnlyField label="State" value={practice.state || null} />
-        <ReadOnlyField label="ZIP Code" value={practice.zip || null} />
-        <EmptyField />
-      </div>
+      <FieldGrid columns={3} gap="lg">
+        <Field label="Address Line 1" empty="—">{practice.address_line1 || null}</Field>
+        <Field label="Address Line 2" empty="—">{practice.address_line2 || null}</Field>
+        <Field label="City" empty="—">{practice.city || null}</Field>
+      </FieldGrid>
+      <FieldGrid columns={3} gap="lg">
+        <Field label="State" empty="—">{practice.state || null}</Field>
+        <Field label="ZIP Code" empty="—">{practice.zip || null}</Field>
+        <div />
+      </FieldGrid>
 
       {/* Contact */}
       <h2 style={sectionTitleStyle}>Contact</h2>
-      <div style={rowStyle}>
-        <ReadOnlyField label="Email" value={practice.email || null} />
-        <ReadOnlyField label="Phone" value={practice.phone || null} />
-        <EmptyField />
-      </div>
+      <FieldGrid columns={3} gap="lg">
+        <Field label="Email" empty="—">{practice.email || null}</Field>
+        <Field label="Phone" empty="—">{practice.phone || null}</Field>
+        <div />
+      </FieldGrid>
     </div>
   );
 }

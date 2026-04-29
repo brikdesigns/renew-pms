@@ -4,10 +4,9 @@ import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput } from '@brikdesigns/bds';
+import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput, Field } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useTeams, type Team } from '@/hooks/useTeams';
@@ -283,24 +282,23 @@ export function TeamsTable() {
         {viewing && (
           <div style={sheetBodyStyle}>
             <h3 style={sheetSectionTitle}>Details</h3>
-            <ReadOnlyField label="Name" value={viewing.name} />
-            <ReadOnlyField label="Department" value={
-              viewing.department_name ? (
+            <Field label="Name" empty="—">{viewing.name}</Field>
+            <Field label="Department" empty="—">
+              {viewing.department_name ? (
                 <Tag size="sm" style={{
                   backgroundColor: viewing.department_color ? departmentColor(viewing.department_color).light : color.surface.secondary,
                   color: viewing.department_color ? departmentColor(viewing.department_color).text : color.text.secondary,
-                  display: 'inline-flex',
                 }}>
                   {viewing.department_name}
                 </Tag>
-              ) : '—'
-            } />
-            <ReadOnlyField label="Status" value={
-              <Badge status={viewing.is_active ? 'positive' : 'error'} size="sm" style={{ display: 'inline-flex' }}>
+              ) : null}
+            </Field>
+            <Field label="Status" empty="—">
+              <Badge status={viewing.is_active ? 'positive' : 'error'} size="sm">
                 {viewing.is_active ? 'Active' : 'Inactive'}
               </Badge>
-            } />
-            <ReadOnlyField label="Members" value={String(viewing.member_count)} />
+            </Field>
+            <Field label="Members" empty="—">{String(viewing.member_count)}</Field>
           </div>
         )}
       </Sheet>
