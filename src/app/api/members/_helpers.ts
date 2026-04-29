@@ -18,7 +18,7 @@ export async function loadMembers(
   const { data, error } = await admin
     .from('practice_members')
     .select(`
-      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      id, user_id, practice_role_id, employee_type, shift, office_days, is_active, joined_at,
       profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
       practice_role_types(id, name, department_id, departments(id, name, color))
     `)

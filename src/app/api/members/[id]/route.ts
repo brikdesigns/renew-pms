@@ -27,7 +27,7 @@ export async function GET(
   const { data, error } = await admin
     .from('practice_members')
     .select(`
-      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      id, user_id, practice_role_id, employee_type, shift, office_days, is_active, joined_at,
       profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
       practice_role_types(id, name, department_id, departments(id, name, color))
     `)
@@ -52,7 +52,7 @@ export async function GET(
  *     practice metadata — those stay admin-only.
  *
  * Accepted fields (admin only):
- *   practice_members: practice_role_id, employee_type, shift, is_active
+ *   practice_members: practice_role_id, employee_type, shift, office_days, is_active
  *   profiles:         system_role
  *
  * Accepted fields (self or admin):
@@ -95,7 +95,7 @@ export async function PATCH(
   // Field allowlists — staff/manager self-edits cannot escalate role or
   // change practice metadata.
   const selfProfileFields = ['first_name', 'last_name', 'phone'] as const;
-  const adminMemberFields = ['practice_role_id', 'employee_type', 'shift', 'is_active'] as const;
+  const adminMemberFields = ['practice_role_id', 'employee_type', 'shift', 'office_days', 'is_active'] as const;
   const adminProfileFields = ['system_role'] as const;
 
   const memberUpdates: Record<string, unknown> = {};
@@ -111,6 +111,20 @@ export async function PATCH(
     for (const key of adminProfileFields) {
       if (key in body) profileUpdates[key] = body[key];
     }
+  }
+
+  // Validate office_days input — must be an array of canonical day codes,
+  // deduplicated. Reject anything else loudly so the UI can show a clear error.
+  if ('office_days' in memberUpdates) {
+    const VALID_DAYS = new Set(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
+    const raw = memberUpdates.office_days;
+    if (!Array.isArray(raw) || !raw.every((d) => typeof d === 'string' && VALID_DAYS.has(d))) {
+      return NextResponse.json(
+        { error: 'office_days must be an array of: sun, mon, tue, wed, thu, fri, sat' },
+        { status: 400 },
+      );
+    }
+    memberUpdates.office_days = Array.from(new Set(raw as string[]));
   }
 
   if (Object.keys(memberUpdates).length === 0 && Object.keys(profileUpdates).length === 0) {
@@ -142,7 +156,7 @@ export async function PATCH(
   const { data, error } = await adminClient
     .from('practice_members')
     .select(`
-      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      id, user_id, practice_role_id, employee_type, shift, office_days, is_active, joined_at,
       profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
       practice_role_types(id, name, department_id, departments(id, name, color))
     `)

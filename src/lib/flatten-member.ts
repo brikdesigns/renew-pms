@@ -36,6 +36,7 @@ export interface RawMemberRow {
   practice_role_id: string | null;
   employee_type: string;
   shift: string | null;
+  office_days: string[] | null;
   is_active: boolean;
   joined_at: string;
   profiles: ProfileJoin | ProfileJoin[] | null;
@@ -64,6 +65,7 @@ export function flattenMember(m: RawMemberRow) {
     department_color: dept?.color ?? '',
     employee_type: m.employee_type,
     shift: m.shift ?? '',
+    office_days: m.office_days ?? [],
     is_active: m.is_active,
     joined_at: m.joined_at,
   };

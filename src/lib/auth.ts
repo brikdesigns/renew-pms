@@ -59,6 +59,7 @@ export interface AuthUser {
     practice_role_id: string | null;
     employee_type: string;
     shift: string | null;
+    office_days: string[];
     joined_at: string | null;
     organization: string | null;
   } | null;
@@ -92,7 +93,7 @@ export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser |
   const { data: memberRow } = await client
     .from('practice_members')
     .select(`
-      id, practice_id, practice_role_id, employee_type, shift, joined_at,
+      id, practice_id, practice_role_id, employee_type, shift, office_days, joined_at,
       practice_role_types(name, departments(name)),
       practices(name)
     `)
@@ -121,6 +122,7 @@ export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser |
           practice_role_id: memberRow.practice_role_id,
           employee_type: memberRow.employee_type,
           shift: memberRow.shift ?? null,
+          office_days: memberRow.office_days ?? [],
           joined_at: memberRow.joined_at,
           organization: practice?.name ?? null,
         }

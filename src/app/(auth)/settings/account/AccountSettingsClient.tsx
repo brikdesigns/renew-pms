@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
 import { ReadOnlyField, EmptyField } from '@/components/ReadOnlyField';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
+import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 import { Button } from '@brikdesigns/bds';
+import { font, color, gap } from '@/lib/tokens';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -71,6 +73,16 @@ export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSet
           <ReadOnlyField label="Employee Type" value={(STATUS_LABELS[currentProfile.employee_type] ?? currentProfile.employee_type) || null} />
           <ReadOnlyField label="Shift" value={(SHIFT_LABELS[currentProfile.shift] ?? currentProfile.shift) || null} />
           <EmptyField />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+          <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+            Days in Office
+          </span>
+          {currentProfile.office_days.length > 0 ? (
+            <DaysOfWeekPicker value={currentProfile.office_days} readOnly />
+          ) : (
+            <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: color.text.secondary }}>—</span>
+          )}
         </div>
 
         {/* Password */}
