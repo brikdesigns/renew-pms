@@ -47,19 +47,52 @@ const PERSONA_DEFS: Omit<Persona, 'key' | 'email'>[] = [
 
 const ALIASES = ['brikadmin', 'owner', 'manager', 'newhire', 'maturing', 'hygienist', 'frontdesk'];
 
-const TESTERS: TesterGroup[] = [
-  { name: 'Nick', personas: buildPersonas('nick@brikdesigns.com') },
-  { name: 'Abbey', personas: buildPersonas('abbey@brikdesigns.com') },
+interface TesterDef {
+  name: string;
+  baseEmail: string;
+  /**
+   * Optional per-alias label override. Mirrors the `personaNames` map in
+   * `scripts/seed-test-users.ts` so each tester owns a distinct named set
+   * and the persona switcher reads the same labels the AssignmentPicker
+   * shows. Keys are PERSONA_DEFS aliases (e.g. 'owner', 'manager');
+   * unspecified keys fall through to the default label.
+   */
+  labelOverrides?: Record<string, string>;
+}
+
+const TESTER_DEFS: TesterDef[] = [
+  { name: 'Nick',  baseEmail: 'nick@brikdesigns.com' },
+  {
+    name: 'Abbey',
+    baseEmail: 'abbey@brikdesigns.com',
+    labelOverrides: {
+      owner:     'Maya Ortiz',
+      manager:   'Priya Shah',
+      newhire:   'Lily Brooks',
+      maturing:  'Marcus Lee',
+      hygienist: 'Olivia Bennett',
+      frontdesk: 'Naomi Patel',
+    },
+  },
 ];
 
-function buildPersonas(baseEmail: string): Persona[] {
-  const [local, domain] = baseEmail.split('@');
-  return PERSONA_DEFS.map((def, i) => ({
-    ...def,
-    key: `${local}_${ALIASES[i]}`,
-    email: `${local}+${ALIASES[i]}@${domain}`,
-  }));
+function buildPersonas(tester: TesterDef): Persona[] {
+  const [local, domain] = tester.baseEmail.split('@');
+  return PERSONA_DEFS.map((def, i) => {
+    const alias = ALIASES[i];
+    return {
+      ...def,
+      label: tester.labelOverrides?.[alias] ?? def.label,
+      key: `${local}_${alias}`,
+      email: `${local}+${alias}@${domain}`,
+    };
+  });
 }
+
+const TESTERS: TesterGroup[] = TESTER_DEFS.map((td) => ({
+  name: td.name,
+  personas: buildPersonas(td),
+}));
 
 const TEST_PASSWORD = process.env.NEXT_PUBLIC_TEST_PASSWORD ?? 'TestUser123!';
 

@@ -47,11 +47,33 @@ const OFFICE_NAME = 'Main Office';
 interface Tester {
   name: string;
   baseEmail: string;  // e.g. 'nick@brikdesigns.com' → nick+brikadmin@brikdesigns.com
+  /**
+   * Optional per-persona name overrides keyed by `PersonaTemplate.key`.
+   * When omitted for a given key, the template's default first/last name is
+   * used. Lets each tester own a distinct named persona-set so duplicate
+   * names don't pollute pickers/dropdowns. brik_admin is intentionally
+   * unrenamed — that role is cross-practice and never appears in the
+   * practice-scoped AssignmentPicker.
+   */
+  personaNames?: Record<string, { first_name: string; last_name: string }>;
 }
 
 const TESTERS: Tester[] = [
   { name: 'Nick', baseEmail: 'nick@brikdesigns.com' },
-  { name: 'Abbey', baseEmail: 'abbey@brikdesigns.com' },
+  {
+    name: 'Abbey',
+    baseEmail: 'abbey@brikdesigns.com',
+    personaNames: {
+      practice_owner:   { first_name: 'Maya',   last_name: 'Ortiz'   },
+      dept_manager:     { first_name: 'Priya',  last_name: 'Shah'    },
+      new_hire:         { first_name: 'Lily',   last_name: 'Brooks'  },
+      maturing_staff:   { first_name: 'Marcus', last_name: 'Lee'     },
+      active_hygienist: { first_name: 'Olivia', last_name: 'Bennett' },
+      front_desk:       { first_name: 'Naomi',  last_name: 'Patel'   },
+      p2_admin:         { first_name: 'Sofia',  last_name: 'Reyes'   },
+      p2_staff:         { first_name: 'Caleb',  last_name: 'Wright'  },
+    },
+  },
 ];
 
 // ─── Persona templates ──────────────────────────────────────────────────────
@@ -110,34 +132,44 @@ function buildAliasEmail(baseEmail: string, alias: string): string {
   return `${local}+${alias}@${domain}`;
 }
 
+function resolveName(tester: Tester, tmpl: PersonaTemplate): { first_name: string; last_name: string } {
+  return tester.personaNames?.[tmpl.key] ?? { first_name: tmpl.first_name, last_name: tmpl.last_name };
+}
+
 const PERSONAS: Persona[] = TESTERS.flatMap((tester, testerIdx) =>
-  PERSONA_TEMPLATES.map((tmpl, tmplIdx) => ({
-    key: `${tester.name.toLowerCase()}_${tmpl.key}`,
-    tester: tester.name,
-    email: buildAliasEmail(tester.baseEmail, tmpl.alias),
-    first_name: tmpl.first_name,
-    last_name: tmpl.last_name,
-    system_role: tmpl.system_role,
-    employee_type: tmpl.employee_type,
-    shift: tmpl.shift,
-    practice_role_name: tmpl.practice_role_name,
-    phone: `(555) ${String(testerIdx).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
-  }))
+  PERSONA_TEMPLATES.map((tmpl, tmplIdx) => {
+    const { first_name, last_name } = resolveName(tester, tmpl);
+    return {
+      key: `${tester.name.toLowerCase()}_${tmpl.key}`,
+      tester: tester.name,
+      email: buildAliasEmail(tester.baseEmail, tmpl.alias),
+      first_name,
+      last_name,
+      system_role: tmpl.system_role,
+      employee_type: tmpl.employee_type,
+      shift: tmpl.shift,
+      practice_role_name: tmpl.practice_role_name,
+      phone: `(555) ${String(testerIdx).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
+    };
+  })
 );
 
 const PRACTICE_2_PERSONAS: Persona[] = TESTERS.flatMap((tester, testerIdx) =>
-  PRACTICE_2_TEMPLATES.map((tmpl, tmplIdx) => ({
-    key: `${tester.name.toLowerCase()}_${tmpl.key}`,
-    tester: tester.name,
-    email: buildAliasEmail(tester.baseEmail, tmpl.alias),
-    first_name: tmpl.first_name,
-    last_name: tmpl.last_name,
-    system_role: tmpl.system_role,
-    employee_type: tmpl.employee_type,
-    shift: tmpl.shift,
-    practice_role_name: tmpl.practice_role_name,
-    phone: `(555) ${String(testerIdx + 100).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
-  }))
+  PRACTICE_2_TEMPLATES.map((tmpl, tmplIdx) => {
+    const { first_name, last_name } = resolveName(tester, tmpl);
+    return {
+      key: `${tester.name.toLowerCase()}_${tmpl.key}`,
+      tester: tester.name,
+      email: buildAliasEmail(tester.baseEmail, tmpl.alias),
+      first_name,
+      last_name,
+      system_role: tmpl.system_role,
+      employee_type: tmpl.employee_type,
+      shift: tmpl.shift,
+      practice_role_name: tmpl.practice_role_name,
+      phone: `(555) ${String(testerIdx + 100).padStart(3, '0')}-${String(tmplIdx + 1).padStart(4, '0')}`,
+    };
+  })
 );
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
