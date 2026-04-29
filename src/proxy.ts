@@ -37,13 +37,17 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname === '/login';
   const isApiDebug = pathname.startsWith('/api/debug');
   const isVendorRoute = pathname.startsWith('/vendor/') || pathname.startsWith('/api/vendor/');
+  // Cron endpoints authenticate via shared-secret Bearer token (CRON_SECRET),
+  // not user session — exempt them from the session-based redirect so the
+  // scheduled function and curl smoke tests aren't bounced to /login.
+  const isCronRoute = pathname.startsWith('/api/cron/');
   const isAuthFlow =
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
     pathname === '/api/auth/forgot-password' ||
     pathname === '/api/auth/callback';
   const isPublicRoute =
-    pathname === '/login' || pathname === '/' || isApiDebug || isVendorRoute || isAuthFlow;
+    pathname === '/login' || pathname === '/' || isApiDebug || isVendorRoute || isCronRoute || isAuthFlow;
 
   // Redirect unauthenticated users to login
   if (!user && !isPublicRoute) {
