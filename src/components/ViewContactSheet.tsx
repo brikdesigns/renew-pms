@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Button, Badge, InteractiveListItem, useConfigureSheet } from '@brikdesigns/bds';
+import { Button, Badge, InteractiveListItem, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { UserAvatar } from '@/components/UserAvatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
@@ -88,9 +87,6 @@ const headerRoleStyle: CSSProperties = {
   fontWeight: font.weight.regular,
   color: color.text.secondary,
 };
-
-const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
-const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -217,47 +213,36 @@ export function ViewContactSheet({ onClose, id, onNavigate }: ViewContactSheetPr
 
         {/* Contact details */}
         <h3 style={sheetSectionTitle}>Contact Details</h3>
-        <div style={fieldRow}>
-          <div style={fieldHalf}>
-            <ReadOnlyField label="Phone" value={contact.phone} />
-          </div>
-          <div style={fieldHalf}>
-            <ReadOnlyField label="Email" value={contact.email?.toLowerCase() ?? null} />
-          </div>
-        </div>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Phone" empty="—">{contact.phone}</Field>
+          <Field label="Email" empty="—">{contact.email?.toLowerCase() ?? null}</Field>
+        </FieldGrid>
 
         {/* Company details */}
         <h3 style={sheetSectionTitle}>Company</h3>
-        <ReadOnlyField
-          label="Company"
-          value={
-            contact.vendor_name && onNavigate ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate('vendor', { id: contact.vendor_id }, { title: contact.vendor_name ?? 'Company' })}
-              >
-                {contact.vendor_name}
-              </Button>
-            ) : (
-              contact.vendor_name
-            )
-          }
-        />
-        <div style={fieldRow}>
-          <div style={fieldHalf}>
-            <ReadOnlyField label="Company Phone" value={contact.vendor_phone} />
-          </div>
-          <div style={fieldHalf}>
-            <ReadOnlyField label="Company Email" value={contact.vendor_email?.toLowerCase() ?? null} />
-          </div>
-        </div>
+        <Field label="Company" empty="—">
+          {contact.vendor_name && onNavigate ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onNavigate('vendor', { id: contact.vendor_id }, { title: contact.vendor_name ?? 'Company' })}
+            >
+              {contact.vendor_name}
+            </Button>
+          ) : (
+            contact.vendor_name
+          )}
+        </Field>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Company Phone" empty="—">{contact.vendor_phone}</Field>
+          <Field label="Company Email" empty="—">{contact.vendor_email?.toLowerCase() ?? null}</Field>
+        </FieldGrid>
         {contact.vendor_website_url && (
-          <ReadOnlyField label="Website" value={contact.vendor_website_url} />
+          <Field label="Website" empty="—">{contact.vendor_website_url}</Field>
         )}
         {contact.vendor_address && (
-          <ReadOnlyField label="Address" value={contact.vendor_address} />
+          <Field label="Address" empty="—">{contact.vendor_address}</Field>
         )}
       </div>
     );

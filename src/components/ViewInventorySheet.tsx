@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, InteractiveListItem, useConfigureSheet } from '@brikdesigns/bds';
+import { Tag, Button, InteractiveListItem, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@brikdesigns/bds';
@@ -9,7 +9,6 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -56,17 +55,6 @@ interface ViewInventorySheetProps {
 
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
-
-const rowStyle: CSSProperties = {
-  display: 'flex',
-  gap: gap.lg,
-  width: '100%',
-};
-
-const halfStyle: CSSProperties = {
-  flex: 1,
-  minWidth: 0,
-};
 
 const requestIconStyle: CSSProperties = {
   width: 28,
@@ -156,50 +144,28 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
     const detailsContent = (
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>Item Details</h3>
-        <div style={rowStyle}>
-          <div style={halfStyle}>
-            <ReadOnlyField label="Name" value={item.name} />
-          </div>
-          <div style={halfStyle}>
-            <ReadOnlyField label="Type" value={item.type || '—'} />
-          </div>
-        </div>
-        <div style={rowStyle}>
-          <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-                Status
-              </span>
-              <div style={{ display: 'inline-flex' }}>
-                <StatusBadge status={item.status} />
-              </div>
-            </div>
-          </div>
-          <div style={halfStyle}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-              <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-                Department
-              </span>
-              {item.department && (
-                <div style={{ display: 'inline-flex' }}>
-                  <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{item.department}</Tag>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Name" empty="—">{item.name}</Field>
+          <Field label="Type" empty="—">{item.type}</Field>
+        </FieldGrid>
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Status" empty="—">
+            <StatusBadge status={item.status} />
+          </Field>
+          <Field label="Department" empty="—">
+            {item.department ? (
+              <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{item.department}</Tag>
+            ) : null}
+          </Field>
+        </FieldGrid>
         {item.description && (
-          <ReadOnlyField label="Description" value={item.description} />
+          <Field label="Description" empty="—">{item.description}</Field>
         )}
-        <div style={rowStyle}>
-          <div style={halfStyle}>
-            <ReadOnlyField label="Vendor" value={item.company || '—'} />
-          </div>
-          <div style={halfStyle}>
-            <ReadOnlyField label="Team" value={item.team || '—'} />
-          </div>
-        </div>
-        <ReadOnlyField label="Room" value={item.room || '—'} />
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Vendor" empty="—">{item.company}</Field>
+          <Field label="Team" empty="—">{item.team}</Field>
+        </FieldGrid>
+        <Field label="Room" empty="—">{item.room}</Field>
       </div>
     );
 
