@@ -132,12 +132,31 @@ export async function DELETE(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const admin = createAdminClient();
+
+  // Precondition: confirm the template exists in this practice and isn't a default.
+  // A `.eq('is_default', false)` filter on .delete() silently no-ops with 204
+  // when the row IS default — the UI then thinks the delete succeeded.
+  const { data: existing, error: existingErr } = await admin
+    .from('task_templates')
+    .select('is_default')
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
+  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
+  if (!existing) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+  if (existing.is_default) {
+    return NextResponse.json(
+      { error: 'Default templates cannot be deleted.' },
+      { status: 403 },
+    );
+  }
+
   const { error } = await admin
     .from('task_templates')
     .delete()
     .eq('id', id)
-    .eq('practice_id', practiceId)
-    .eq('is_default', false); // belt-and-suspenders; admin client bypasses RLS but we keep this guard
+    .eq('practice_id', practiceId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
