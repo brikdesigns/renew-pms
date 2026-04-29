@@ -226,6 +226,21 @@ body {
     font-family: var(--font-family-label);
   }
 
+  /*
+   * InteractiveListItem hover override for rows whose idle bg is surface-primary.
+   * BDS default hover paints surface-secondary (a different tier), which reads as
+   * a tier-jump rather than a state-shift when the consumer has set idle to
+   * surface-primary.
+   *
+   * TODO(bds-token): swap to var(--surface-primary-hover) once
+   * brikdesigns/brik-bds#320 lands the missing surface-primary-hover and
+   * surface-primary-pressed tokens. background-primary-hover is the same
+   * chromatic step BDS will pick when the proper token ships.
+   */
+  .renew-list-item-primary.bds-interactive-list-item:hover:not(:disabled) {
+    background-color: var(--background-primary-hover);
+  }
+
   /* Board overrides (neutral column backgrounds) */
   .bds-board-column .bds-avatar {
     background-color: var(--dept-avatar-bg, var(--background-brand-primary));
