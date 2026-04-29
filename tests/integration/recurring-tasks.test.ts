@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
  *
  * Tier 1.1 is the most-fragile workflow per the launch checklist (the only
  * row that appears in all three Notion DBs). This spec exercises the
- * generator function `generate_daily_pool_tasks(p_practice_id)` directly via
+ * generator function `generate_daily_tasks(p_practice_id)` directly via
  * service-role RPC, asserting the three behaviors that matter at launch:
  *
  *   1. A daily pool template generates today's task instance.
@@ -112,7 +112,7 @@ describe('Recurring task generation (Tier 1.1)', () => {
     // Sanity: starting state has no task for this template today.
     expect(await tasksForTemplateOn(templateId, todayIso())).toHaveLength(0);
 
-    const { error } = await supabase.rpc('generate_daily_pool_tasks', {
+    const { error } = await supabase.rpc('generate_daily_tasks', {
       p_practice_id: practiceId,
     });
     expect(error?.message).toBeUndefined();
@@ -126,8 +126,8 @@ describe('Recurring task generation (Tier 1.1)', () => {
   test('running the generator twice does not duplicate (idempotent)', async () => {
     const templateId = await createDailyPoolTemplate('idempotent');
 
-    await supabase.rpc('generate_daily_pool_tasks', { p_practice_id: practiceId });
-    await supabase.rpc('generate_daily_pool_tasks', { p_practice_id: practiceId });
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
 
     const tasks = await tasksForTemplateOn(templateId, todayIso());
     expect(tasks).toHaveLength(1);
@@ -156,7 +156,7 @@ describe('Recurring task generation (Tier 1.1)', () => {
     createdTaskIds.push(stale.id);
     expect(stale.status).toBe('not_started');
 
-    await supabase.rpc('generate_daily_pool_tasks', { p_practice_id: practiceId });
+    await supabase.rpc('generate_daily_tasks', { p_practice_id: practiceId });
 
     const { data: refreshed, error: refreshErr } = await supabase
       .from('tasks')
@@ -172,8 +172,8 @@ describe('Recurring task generation (Tier 1.1)', () => {
   });
 
   test.skip('weekly/monthly templates also fire on the right day — generator does not yet support these frequencies', () => {
-    // Tracking: generate_daily_pool_tasks (migration 00031/00032) only loops
-    // over `daily` and `per_shift`. Templates with frequency in (weekly,
+    // Tracking: generate_daily_tasks (migration 00045) only loops over
+    // `daily` and `per_shift`. Templates with frequency in (weekly,
     // bi_weekly, monthly, quarterly, semi_annually, annually, custom) can be
     // saved but no task ever spawns from them. Until a generator extension
     // lands, launch-checklist Tier 1.1 cannot claim full coverage. Remove
