@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton, useConfigureSheet } from '@brikdesigns/bds';
+import { Sheet, Button, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import { Tag } from '@brikdesigns/bds';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 import { EMPLOYEE_TYPE_TAG, SHIFT_LABELS, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
@@ -56,9 +55,6 @@ const TEXT_PRIMARY = color.text.primary;
 const TEXT_SECONDARY = color.text.secondary;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-
-const fieldRow: CSSProperties = { display: 'flex', gap: gap.lg };
-const fieldHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
 const emptyState: CSSProperties = {
   padding: `${space.lg} 0`,
@@ -129,76 +125,41 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
   const detailsContent = user ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>User Details</h3>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="First Name" value={user.first_name} />
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Last Name" value={user.last_name} />
-        </div>
-      </div>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Email" value={user.email} />
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Phone" value={user.phone || null} />
-        </div>
-      </div>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="System Role" value={SYSTEM_ROLE_LABELS[user.system_role] ?? user.system_role} />
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Practice Role" value={user.practice_role || null} />
-        </div>
-      </div>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Department" value={user.department || null} />
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Shift" value={user.shift ? (SHIFT_LABELS[user.shift] ?? user.shift) : null} />
-        </div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
-          Days in Office
-        </span>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="First Name" empty="—">{user.first_name}</Field>
+        <Field label="Last Name" empty="—">{user.last_name}</Field>
+      </FieldGrid>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Email" empty="—">{user.email}</Field>
+        <Field label="Phone" empty="—">{user.phone || null}</Field>
+      </FieldGrid>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="System Role" empty="—">{SYSTEM_ROLE_LABELS[user.system_role] ?? user.system_role}</Field>
+        <Field label="Practice Role" empty="—">{user.practice_role || null}</Field>
+      </FieldGrid>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Department" empty="—">{user.department || null}</Field>
+        <Field label="Shift" empty="—">{user.shift ? (SHIFT_LABELS[user.shift] ?? user.shift) : null}</Field>
+      </FieldGrid>
+      <Field label="Days in Office" empty="—">
         {user.office_days.length > 0 ? (
           <DaysOfWeekPicker value={user.office_days} readOnly />
-        ) : (
-          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>—</span>
-        )}
-      </div>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
-              Employee Type
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
-                {empType.label}
-              </Tag>
-            </div>
-          </div>
-        </div>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
-              Account Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={user.is_active ? 'positive' : 'error'} size="sm">
-                {user.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
+        ) : null}
+      </Field>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Employee Type" empty="—">
+          <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
+            {empType.label}
+          </Tag>
+        </Field>
+        <Field label="Account Status" empty="—">
+          <Badge status={user.is_active ? 'positive' : 'error'} size="sm">
+            {user.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </Field>
+      </FieldGrid>
       {user.joined_at && (
-        <ReadOnlyField label="Joined" value={new Date(user.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
+        <Field label="Joined" empty="—">{new Date(user.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</Field>
       )}
     </div>
   ) : null;
@@ -250,23 +211,14 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
   const trainingContent = user ? (
     <div style={sheetBodyStyle}>
       <h3 style={sheetSectionTitle}>Employee Status</h3>
-      <div style={fieldRow}>
-        <div style={fieldHalf}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
-              Employee Type
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
-                {empType.label}
-              </Tag>
-            </div>
-          </div>
-        </div>
-        <div style={fieldHalf}>
-          <ReadOnlyField label="Department" value={user.department || null} />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Employee Type" empty="—">
+          <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
+            {empType.label}
+          </Tag>
+        </Field>
+        <Field label="Department" empty="—">{user.department || null}</Field>
+      </FieldGrid>
 
       <h3 style={sheetSectionTitle}>Training Progress</h3>
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: gap.md }}>
