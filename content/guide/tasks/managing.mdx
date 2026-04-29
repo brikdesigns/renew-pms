@@ -1,7 +1,19 @@
 ---
 title: Managing Tasks
-description: Assigning, tracking, and completing your tasks.
+description: The tasks board, status views, filters, and completing tasks.
 ---
+
+## The tasks board
+
+The Tasks page shows everything happening across your practice for a given day. The view toggle at the top switches between three perspectives:
+
+| View | What you see |
+|------|--------------|
+| **All Tasks** | Every task assigned to anyone, grouped by person |
+| **My Tasks** | Just the tasks assigned to you, grouped the same way |
+| **Open Tasks** | Unassigned pool tasks, grouped by status — drag a card between columns to change its status |
+
+Use the date navigation at the top to step backward or forward day-by-day; the board reflects what's scheduled for the date you're viewing.
 
 ## Task status
 
@@ -17,16 +29,32 @@ Every task moves through a lifecycle:
 | **Skipped** | Intentionally skipped (with reason) |
 | **Overdue** | Past its due date |
 
+In **Open Tasks** view, the four columns map to these statuses: **Open** (`Not Started`), **In Progress**, **Needs Attention** (`Blocked`, `Overdue`, `Awaiting Approval`), and **Complete** (`Completed`, `Skipped`).
+
 ## Completing a task
 
-1. Open the task
-2. Click **Mark Complete** (or **Submit for Approval** if it requires sign-off)
-3. The task moves to the appropriate status
+You have two paths to mark a task complete, depending on whether it has checklist items.
+
+**Simple tasks (no checklist):**
+1. Click the check button on the task card on the board
+2. The task is marked complete and disappears from the default view
+
+**Tasks with a checklist:**
+1. Click the card to open the task sheet
+2. Tick off each checklist item as you complete it — items save individually
+3. When the last item is checked, the parent task is marked complete automatically; if you uncheck an item later, the parent reverts to In Progress
+
+Approval-required tasks stop at `Awaiting Approval` instead of `Completed` — a manager or admin needs to confirm before the task closes out.
 
 ## Filtering and finding tasks
 
-Use the filters at the top of the Tasks page to narrow by:
-- Status (e.g., show only overdue tasks)
-- Priority (e.g., critical items first)
-- Department or assigned person
-- Category or type
+Click the filter icon to open the filter bar at the top of the board. You can filter by:
+
+- **Department** — narrow to a single team
+- **Frequency** — Daily, Weekly, Per Shift, etc.
+- **Priority** — Critical, High, Medium, Low
+- **Type** — Checklist, Procedure, Compliance, Skill Training, Onboarding
+- **Show Resolved** — surface tasks already marked complete or skipped (hidden by default)
+- **Show Overdue** — narrow to overdue items only
+
+A small dot near the filter icon flags when overdue tasks are present in the current view, even if Show Overdue is off.
