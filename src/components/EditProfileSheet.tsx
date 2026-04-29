@@ -28,6 +28,8 @@ export interface ProfileFormData {
   start_date: string;
   employee_type: string;
   shift: string;
+  /** Read-only on this surface — only admins can edit via /settings/users. */
+  office_days: string[];
 }
 
 interface EditProfileSheetProps {
@@ -141,6 +143,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdm
         department: updated.department ?? '',
         employee_type: updated.employee_type ?? '',
         shift: updated.shift ?? '',
+        office_days: updated.office_days ?? form.office_days,
       };
 
       onSaved?.(updatedProfile);

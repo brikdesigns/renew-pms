@@ -9,6 +9,7 @@ import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { ReadOnlyField } from '@/components/ReadOnlyField';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
+import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 import { EMPLOYEE_TYPE_TAG, SHIFT_LABELS, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ export interface UserViewData {
   department_color: string;
   employee_type: string;
   shift: string;
+  office_days: string[];
   is_active: boolean;
   joined_at: string;
 }
@@ -158,6 +160,16 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
         <div style={fieldHalf}>
           <ReadOnlyField label="Shift" value={user.shift ? (SHIFT_LABELS[user.shift] ?? user.shift) : null} />
         </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
+        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>
+          Days in Office
+        </span>
+        {user.office_days.length > 0 ? (
+          <DaysOfWeekPicker value={user.office_days} readOnly />
+        ) : (
+          <span style={{ fontFamily: font.family.body, fontSize: font.size.body.sm, color: TEXT_SECONDARY }}>—</span>
+        )}
       </div>
       <div style={fieldRow}>
         <div style={fieldHalf}>

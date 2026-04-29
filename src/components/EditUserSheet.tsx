@@ -15,6 +15,7 @@ import {
 import { font, color, space, gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
+import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ export interface UserFormData {
   department: string;
   employee_type: string;
   shift: string;
+  office_days: string[];
   is_active: boolean;
 }
 
@@ -77,6 +79,7 @@ const EMPTY_FORM: UserFormData = {
   department: '',
   employee_type: 'new',
   shift: '',
+  office_days: [],
   is_active: true,
 };
 
@@ -84,6 +87,15 @@ const EMPTY_FORM: UserFormData = {
 
 const formRowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const formRowHalf: CSSProperties = { flex: 1, minWidth: 0 };
+
+const fieldLabelStyle: CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: font.weight.medium,
+  color: color.text.primary,
+};
+
+const fieldGroupStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: gap.sm };
 
 
 const emptyState: CSSProperties = {
@@ -223,6 +235,13 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             <div style={formRowHalf}>
               <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
             </div>
+          </div>
+          <div style={fieldGroupStyle}>
+            <span style={fieldLabelStyle}>Days in Office</span>
+            <DaysOfWeekPicker
+              value={form.office_days}
+              onChange={(days) => setForm((prev) => ({ ...prev, office_days: days }))}
+            />
           </div>
         </div>
 

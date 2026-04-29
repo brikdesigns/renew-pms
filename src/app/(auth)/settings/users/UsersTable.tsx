@@ -187,6 +187,7 @@ export function UsersTable() {
           practice_role_id: data.practice_role_id,
           employee_type: data.employee_type,
           shift: data.shift || null,
+          office_days: data.office_days,
           is_active: data.is_active,
         }),
       });
@@ -243,6 +244,7 @@ export function UsersTable() {
         department: editing.department,
         employee_type: editing.employee_type,
         shift: editing.shift,
+        office_days: editing.office_days,
         is_active: editing.is_active,
       }
     : null;
@@ -262,6 +264,7 @@ export function UsersTable() {
         department_color: viewing.department_color,
         employee_type: viewing.employee_type,
         shift: viewing.shift,
+        office_days: viewing.office_days,
         is_active: viewing.is_active,
         joined_at: viewing.joined_at,
       }

@@ -18,6 +18,7 @@ export interface Member {
   department_color: string;
   employee_type: string;
   shift: string;
+  office_days: string[];
   is_active: boolean;
   joined_at: string;
   /** True iff the user has logged in at least once (auth.users.last_sign_in_at != null).
