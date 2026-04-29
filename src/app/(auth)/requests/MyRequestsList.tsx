@@ -13,7 +13,7 @@ import { PriorityBadge } from '@/components/PriorityBadge';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
 import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Display maps ──────────────────────────────────────────────────────────
 
@@ -50,7 +50,18 @@ const countBadge: CSSProperties = {
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+// Surface shell that wraps the table. Mirrors the dashboard card pattern
+// (background.primary + shadow.sm + space.lg padding + border.radius.lg) so
+// the table reads as a contained display layer instead of floating flat
+// against the page. Header / "New Request" button stay outside this shell.
+const tableShellStyle: CSSProperties = {
+  flex: 1,
+  overflowX: 'auto',
+  backgroundColor: color.background.primary,
+  borderRadius: border.radius.lg,
+  boxShadow: shadow.sm,
+  padding: space.lg,
+};
 
 // TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
 // (.bds-table-cell { background-color: var(--background-primary) }) once the
@@ -205,7 +216,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         <AddRequestButton onSelect={handleAddSelect} />
       </div>
 
-      <div style={tableWrap}>
+      <div style={tableShellStyle}>
         <Table size="default" flush>
           <TableHeader>
             <TableRow>
