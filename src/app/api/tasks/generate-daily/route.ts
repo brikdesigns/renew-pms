@@ -6,9 +6,10 @@ import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 
 /**
- * POST /api/tasks/generate-pool
- * Triggers daily pool task generation for the current practice.
- * Calls the DB function generate_daily_pool_tasks(practice_id).
+ * POST /api/tasks/generate-daily
+ * Triggers daily task generation for the current practice across all
+ * assignment modes (individual, role, department, pool).
+ * Calls the DB function generate_daily_tasks(practice_id).
  * Admin-only — intended for manual trigger or future cron webhook.
  */
 export async function POST() {
@@ -21,11 +22,11 @@ export async function POST() {
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const admin = createAdminClient();
-  const { error } = await admin.rpc('generate_daily_pool_tasks', {
+  const { error } = await admin.rpc('generate_daily_tasks', {
     p_practice_id: practiceId,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ success: true, message: 'Pool tasks generated for today.' });
+  return NextResponse.json({ success: true, message: 'Daily tasks generated for today.' });
 }

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { normalizeAssignmentFKs } from './_helpers';
 
 /**
  * GET /api/templates
@@ -26,7 +27,7 @@ export async function GET() {
       id, name, description, type, frequency, priority, status,
       requires_approval, estimated_duration, is_default,
       task_category_id, compliance_type_id, room_id,
-      assigned_role_id, department_id,
+      assigned_member_id, assigned_role_id, department_id,
       assignment_mode, display_mode,
       created_at, updated_at,
       checklist_items (
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     task_category_id?: string | null;
     compliance_type_id?: string | null;
     room_id?: string | null;
+    assigned_member_id?: string | null;
     assigned_role_id?: string | null;
     department_id?: string | null;
     frequency?: string | null;
@@ -76,6 +78,13 @@ export async function POST(request: Request) {
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   if (!body.type) return NextResponse.json({ error: 'Type is required' }, { status: 400 });
 
+  const assignmentMode = body.assignment_mode ?? 'pool';
+  const normalizedFKs = normalizeAssignmentFKs(assignmentMode, {
+    assigned_member_id: body.assigned_member_id,
+    assigned_role_id: body.assigned_role_id,
+    department_id: body.department_id,
+  });
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('task_templates')
@@ -87,18 +96,17 @@ export async function POST(request: Request) {
       task_category_id: body.task_category_id || null,
       compliance_type_id: body.compliance_type_id || null,
       room_id: body.room_id || null,
-      assigned_role_id: body.assigned_role_id || null,
-      department_id: body.department_id || null,
+      ...normalizedFKs,
       frequency: body.frequency || null,
       priority: body.priority ?? 'medium',
       estimated_duration: body.estimated_duration ?? null,
       requires_approval: body.requires_approval ?? false,
       status: body.status ?? 'draft',
-      assignment_mode: body.assignment_mode ?? 'pool',
+      assignment_mode: assignmentMode,
       display_mode: body.display_mode ?? 'nested',
       created_by: authUser.profile.id,
     })
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, assignment_mode, display_mode, created_at, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, created_at, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -4,17 +4,19 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Sheet, Button, AddableFieldRowList, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import { color, font, gap, space, border } from '@/lib/tokens';
+import { color, font, gap, space } from '@/lib/tokens';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
+import { AssignmentPicker, type AssignmentMode, type AssignmentValue } from '@/components/AssignmentPicker';
 import type { Room } from '@/hooks/useRooms';
 import type { EquipmentItem } from '@/hooks/useEquipment';
 import type { SupplyCategory } from '@/hooks/useSupplyCategories';
 import type { Department } from '@/hooks/useDepartments';
 import type { Role } from '@/hooks/useRoles';
+import type { Member } from '@/hooks/useMembers';
 import type { TaskCategory } from '@/hooks/useTaskCategories';
 import type { ComplianceType } from '@/hooks/useComplianceTypes';
 
@@ -25,6 +27,7 @@ export interface TemplateFormData {
   type: string;
   task_category_id: string;
   frequency: string;
+  assigned_member_id: string;
   assigned_role_id: string;
   department_id: string;
   assignment_mode: string;
@@ -59,6 +62,7 @@ interface EditTemplateSheetProps {
   supplyCategories?: SupplyCategory[];
   departments?: Department[];
   roles?: Role[];
+  members?: Member[];
   taskCategories?: TaskCategory[];
   complianceTypes?: ComplianceType[];
 }
@@ -119,13 +123,6 @@ const PRIORITY_OPTIONS = [
   { label: 'Critical', value: 'critical' },
 ];
 
-const ASSIGNMENT_MODE_OPTIONS = [
-  { label: 'Individual (specific person)', value: 'individual' },
-  { label: 'Role (anyone in role)',         value: 'role' },
-  { label: 'Department (anyone in dept)',   value: 'department' },
-  { label: 'Pool (everyone)',               value: 'pool' },
-];
-
 const DISPLAY_MODE_OPTIONS = [
   { label: 'Nested (single card with checklist)', value: 'nested' },
   { label: 'Expanded (one card per item)',         value: 'expanded' },
@@ -144,12 +141,13 @@ const EMPTY_FORM: TemplateFormData = {
   type: 'checklist',
   task_category_id: '',
   frequency: 'daily',
+  assigned_member_id: '',
   assigned_role_id: '',
   department_id: '',
   assignment_mode: 'pool',
   display_mode: 'nested',
   priority: 'medium',
-  status: 'draft',
+  status: 'active',
   description: '',
   requires_approval: false,
   estimated_duration: '',
@@ -201,6 +199,12 @@ function hasContext(item: ChecklistItem) {
   return !!(item.room_id || item.equipment_id || item.supply_category_id);
 }
 
+function toAssignmentMode(value: string): AssignmentMode {
+  return value === 'individual' || value === 'role' || value === 'department'
+    ? value
+    : 'pool';
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function EditTemplateSheet({
@@ -214,6 +218,7 @@ export function EditTemplateSheet({
   supplyCategories = [],
   departments = [],
   roles = [],
+  members = [],
   taskCategories = [],
   complianceTypes = [],
 }: EditTemplateSheetProps) {
@@ -249,6 +254,16 @@ export function EditTemplateSheet({
   const updateSelect = (field: keyof TemplateFormData) =>
     (e: React.ChangeEvent<HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleAssignmentChange = (next: AssignmentValue) => {
+    setForm((prev) => ({
+      ...prev,
+      assignment_mode: next.mode,
+      assigned_member_id: next.memberId,
+      assigned_role_id: next.roleId,
+      department_id: next.departmentId,
+    }));
+  };
 
   const toggleItemExpand = (id: string) => {
     setExpandedItems((prev) => {
@@ -301,12 +316,29 @@ export function EditTemplateSheet({
     setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
+  /**
+   * Submit handler. Reachable from either tab — the footer Save button calls
+   * this directly via onClick, and the Details form's onSubmit reuses it for
+   * Enter-key submission. Earlier the button used the HTML `form=` attribute
+   * to submit the Details form by ID, which silently no-op'd whenever the
+   * Details tab was unmounted (i.e. user was on the Tasks tab). Routing
+   * through React state instead of the DOM form makes the save reachable
+   * from either tab.
+   */
+  const submit = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
+    if (saving) return;
+    if (!form.name.trim()) {
+      // Force back to Details so the validation surfaces against the Name field.
+      setActiveTab('details');
+      return;
+    }
     setSaving(true);
-    await onSave(form, items);
-    setSaving(false);
+    try {
+      await onSave(form, items);
+    } finally {
+      setSaving(false);
+    }
     showToast({
       title: isEdit ? 'Template updated' : 'Template created',
       description: isEdit ? `${form.name} has been updated.` : `${form.name} has been created.`,
@@ -322,10 +354,16 @@ export function EditTemplateSheet({
     ...rooms.map((r) => ({ label: r.name, value: r.id })),
   ];
 
-  /** Equipment options filtered by room — call per item */
-  function getEquipmentOptions(roomId: string) {
-    const filtered = roomId
-      ? equipment.filter((e) => e.room_id === roomId || !e.room_id)
+  /**
+   * Equipment options filtered by room.
+   * Falls back to the template's default room when an item has none, so a
+   * checklist tied to a Default Room offers room-relevant equipment by
+   * default while still allowing per-item overrides for multi-room checklists.
+   */
+  function getEquipmentOptions(itemRoomId: string) {
+    const effectiveRoom = itemRoomId || form.room_id;
+    const filtered = effectiveRoom
+      ? equipment.filter((e) => e.room_id === effectiveRoom || !e.room_id)
       : equipment;
     return [
       { label: 'Select equipment', value: '' },
@@ -338,16 +376,6 @@ export function EditTemplateSheet({
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
 
-  const departmentOptions = [
-    { label: 'Select department', value: '' },
-    ...departments.map((d) => ({ label: d.name, value: d.id })),
-  ];
-
-  const roleOptions = [
-    { label: 'All Staff', value: '' },
-    ...roles.map((r) => ({ label: r.name, value: r.id })),
-  ];
-
   const categoryOptions = [
     { label: 'Select category', value: '' },
     ...taskCategories.map((c) => ({ label: c.name, value: c.id })),
@@ -358,10 +386,17 @@ export function EditTemplateSheet({
     ...complianceTypes.map((c) => ({ label: c.name, value: c.id })),
   ];
 
+  const assignmentValue: AssignmentValue = {
+    mode: toAssignmentMode(form.assignment_mode),
+    memberId: form.assigned_member_id,
+    roleId: form.assigned_role_id,
+    departmentId: form.department_id,
+  };
+
   // ─── Details tab ─────────────────────────────────────────────────────────
 
   const detailsContent = (
-    <form id="edit-template-form" onSubmit={handleSave}>
+    <form id="edit-template-form" onSubmit={submit}>
       <div style={sheetBodyStyle}>
         <h3 style={sheetSectionTitle}>{typeLabel} Details</h3>
         <div style={sheetFormGroup}>
@@ -409,13 +444,12 @@ export function EditTemplateSheet({
         <div style={sheetFormGroup}>
           <div style={formRowStyle}>
             <div style={formRowHalf}>
-              <Select
-                label="Assignment Mode"
-                size="sm"
-                options={ASSIGNMENT_MODE_OPTIONS}
-                value={form.assignment_mode}
-                onChange={updateSelect('assignment_mode')}
-                fullWidth
+              <AssignmentPicker
+                value={assignmentValue}
+                onChange={handleAssignmentChange}
+                members={members}
+                roles={roles}
+                departments={departments}
               />
             </div>
             <div style={formRowHalf}>
@@ -429,42 +463,6 @@ export function EditTemplateSheet({
               />
             </div>
           </div>
-
-          {(form.assignment_mode === 'role' || form.assignment_mode === 'individual') && (
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <Select
-                  label="Assigned Role"
-                  size="sm"
-                  options={roleOptions}
-                  value={form.assigned_role_id}
-                  onChange={updateSelect('assigned_role_id')}
-                  fullWidth
-                />
-              </div>
-              <div style={formRowHalf}>
-                <Select
-                  label="Department"
-                  size="sm"
-                  options={departmentOptions}
-                  value={form.department_id}
-                  onChange={updateSelect('department_id')}
-                  fullWidth
-                />
-              </div>
-            </div>
-          )}
-
-          {form.assignment_mode === 'department' && (
-            <Select
-              label="Department"
-              size="sm"
-              options={departmentOptions}
-              value={form.department_id}
-              onChange={updateSelect('department_id')}
-              fullWidth
-            />
-          )}
 
           <div style={formRowStyle}>
             {fields.frequency && (
@@ -693,7 +691,13 @@ export function EditTemplateSheet({
       onTabChange={setActiveTab}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" size="md" type="submit" form="edit-template-form" disabled={saving}>
+        <Button
+          variant="primary"
+          size="md"
+          type="button"
+          onClick={() => { void submit(); }}
+          disabled={saving}
+        >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </>}

@@ -25,6 +25,7 @@ import { useEquipment } from '@/hooks/useEquipment';
 import { useSupplyCategories } from '@/hooks/useSupplyCategories';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
+import { useMembers } from '@/hooks/useMembers';
 import { useTaskCategories } from '@/hooks/useTaskCategories';
 import { useComplianceTypes } from '@/hooks/useComplianceTypes';
 import type { TaskTemplate } from '@/hooks/useTemplates';
@@ -47,8 +48,8 @@ const TYPE_META: Record<string, { label: string; icon: string }> = {
 
 const EMPTY_FORM_BASE: TemplateFormData = {
   name: '', type: 'checklist', task_category_id: '', frequency: 'daily',
-  assigned_role_id: '', department_id: '', assignment_mode: 'pool', display_mode: 'nested',
-  priority: 'medium', status: 'draft',
+  assigned_member_id: '', assigned_role_id: '', department_id: '', assignment_mode: 'pool', display_mode: 'nested',
+  priority: 'medium', status: 'active',
   description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '',
 };
 
@@ -157,6 +158,7 @@ export function TemplatesTable() {
   const { supplyCategories } = useSupplyCategories();
   const { departments } = useDepartments();
   const { roles, loading: rolesLoading } = useRoles();
+  const { members } = useMembers();
   const { taskCategories, loading: categoriesLoading } = useTaskCategories();
   const { complianceTypes } = useComplianceTypes();
 
@@ -235,6 +237,7 @@ export function TemplatesTable() {
       task_category_id: data.task_category_id || null,
       compliance_type_id: data.compliance_type_id || null,
       room_id: data.room_id || null,
+      assigned_member_id: data.assigned_member_id || null,
       assigned_role_id: data.assigned_role_id || null,
       department_id: data.department_id || null,
       frequency: data.frequency || null,
@@ -339,6 +342,7 @@ export function TemplatesTable() {
         type: editingTemplate.type,
         task_category_id: editingTemplate.task_category_id ?? '',
         frequency: editingTemplate.frequency ?? '',
+        assigned_member_id: editingTemplate.assigned_member_id ?? '',
         assigned_role_id: editingTemplate.assigned_role_id ?? '',
         department_id: editingTemplate.department_id ?? '',
         priority: editingTemplate.priority,
@@ -363,12 +367,21 @@ export function TemplatesTable() {
 
   // ─── Resolve view data ────────────────────────────────────────────────────
 
+  const resolveAssignedMember = (id: string | null) => {
+    if (!id) return '';
+    const m = members.find((mem) => mem.id === id);
+    if (!m) return '';
+    const name = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
+    return name || m.email || '';
+  };
+
   const buildViewTemplate = (t: TaskTemplate) => ({
     id: t.id,
     name: t.name,
     type: t.type,
     category: resolveCategory(t.task_category_id),
     frequency: resolveFrequency(t.frequency),
+    assigned_user: resolveAssignedMember(t.assigned_member_id),
     assigned_role: resolveRole(t.assigned_role_id),
     department: departments.find((d) => d.id === t.department_id)?.name ?? '—',
     assignment_mode: t.assignment_mode ?? 'pool',
@@ -383,6 +396,13 @@ export function TemplatesTable() {
     is_default: t.is_default,
     tasks: t.checklist_items.map((i) => ({ id: i.id, label: i.label })),
   });
+
+  const handleEditFromView = () => {
+    if (!viewingTemplate) return;
+    setViewSheetOpen(false);
+    setEditingTemplate(viewingTemplate);
+    setSheetOpen(true);
+  };
 
   return (
     <div style={tabContentStyle}>
@@ -501,6 +521,7 @@ export function TemplatesTable() {
         supplyCategories={supplyCategories}
         departments={departments}
         roles={roles}
+        members={members}
         taskCategories={taskCategories}
         complianceTypes={complianceTypes}
       />
@@ -509,6 +530,7 @@ export function TemplatesTable() {
         isOpen={viewSheetOpen}
         onClose={handleViewClose}
         template={viewingTemplate ? buildViewTemplate(viewingTemplate) : null}
+        onEdit={handleEditFromView}
         onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog

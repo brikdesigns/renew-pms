@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
+import { normalizeAssignmentFKs } from '../_helpers';
 
 /**
  * GET /api/templates/[id]
@@ -29,7 +30,7 @@ export async function GET(
       id, name, description, type, frequency, priority, status,
       requires_approval, estimated_duration, is_default,
       task_category_id, compliance_type_id, room_id,
-      assigned_role_id, department_id,
+      assigned_member_id, assigned_role_id, department_id,
       assignment_mode, display_mode,
       created_at, updated_at,
       checklist_items (
@@ -71,6 +72,7 @@ export async function PUT(
     task_category_id?: string | null;
     compliance_type_id?: string | null;
     room_id?: string | null;
+    assigned_member_id?: string | null;
     assigned_role_id?: string | null;
     department_id?: string | null;
     frequency?: string | null;
@@ -82,6 +84,25 @@ export async function PUT(
     display_mode?: string;
   };
 
+  // When the caller is touching assignment_mode in this request, normalize
+  // the three assignment FKs together so non-mode FKs are forced to null.
+  // Otherwise the existing row's invariant holds and we only patch the FKs
+  // the caller explicitly sent.
+  const assignmentPatch = body.assignment_mode !== undefined
+    ? {
+        assignment_mode: body.assignment_mode,
+        ...normalizeAssignmentFKs(body.assignment_mode, {
+          assigned_member_id: body.assigned_member_id,
+          assigned_role_id: body.assigned_role_id,
+          department_id: body.department_id,
+        }),
+      }
+    : {
+        ...(body.assigned_member_id !== undefined && { assigned_member_id: body.assigned_member_id || null }),
+        ...(body.assigned_role_id !== undefined && { assigned_role_id: body.assigned_role_id || null }),
+        ...(body.department_id !== undefined && { department_id: body.department_id || null }),
+      };
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('task_templates')
@@ -92,20 +113,18 @@ export async function PUT(
       ...(body.task_category_id !== undefined && { task_category_id: body.task_category_id || null }),
       ...(body.compliance_type_id !== undefined && { compliance_type_id: body.compliance_type_id || null }),
       ...(body.room_id !== undefined && { room_id: body.room_id || null }),
-      ...(body.assigned_role_id !== undefined && { assigned_role_id: body.assigned_role_id || null }),
-      ...(body.department_id !== undefined && { department_id: body.department_id || null }),
+      ...assignmentPatch,
       ...(body.frequency !== undefined && { frequency: body.frequency || null }),
       ...(body.priority !== undefined && { priority: body.priority }),
       ...(body.estimated_duration !== undefined && { estimated_duration: body.estimated_duration }),
       ...(body.requires_approval !== undefined && { requires_approval: body.requires_approval }),
       ...(body.status !== undefined && { status: body.status }),
-      ...(body.assignment_mode !== undefined && { assignment_mode: body.assignment_mode }),
       ...(body.display_mode !== undefined && { display_mode: body.display_mode }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_role_id, department_id, assignment_mode, display_mode, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, updated_at')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -419,7 +419,7 @@ except:
 " 2>/dev/null || echo "0")
 
     if [ "$RLS_FN_COUNT" -ge 2 ]; then
-      pass "Core DB functions present ($RLS_FN_COUNT found: get_my_system_role, generate_daily_pool_tasks, etc.)"
+      pass "Core DB functions present ($RLS_FN_COUNT found: get_my_system_role, generate_daily_tasks, etc.)"
     else
       fail "Missing core DB functions ($RLS_FN_COUNT found, expected >= 2)"
     fi

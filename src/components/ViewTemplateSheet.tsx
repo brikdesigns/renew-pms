@@ -3,6 +3,8 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { Sheet, Button, Skeleton } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
@@ -24,6 +26,7 @@ export interface TemplateViewData {
   type: string;
   category: string;
   frequency: string;
+  assigned_user: string;
   assigned_role: string;
   department: string;
   assignment_mode: string;
@@ -47,6 +50,10 @@ interface ViewTemplateSheetProps {
   template?: TemplateViewData | null;
   /** Template ID (global mode — fetches data) */
   id?: string;
+  /** Edit handler — when provided (page-level mode with edit permissions),
+   *  an Edit button is rendered in the footer. Global-stack mode does not
+   *  surface this since there's no in-stack edit sheet. */
+  onEdit?: () => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
 }
@@ -109,7 +116,7 @@ const emptyState: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewTemplateSheet({ isOpen = true, onClose, template: templateProp, id, onNavigate }: ViewTemplateSheetProps) {
+export function ViewTemplateSheet({ isOpen = true, onClose, template: templateProp, id, onEdit, onNavigate }: ViewTemplateSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
   const [fetched, setFetched] = useState<TemplateViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -168,14 +175,15 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
           <ReadOnlyField label="Display Mode" value={DISPLAY_MODE_LABELS[template.display_mode] ?? template.display_mode} />
         </div>
       </div>
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Assigned Role" value={template.assigned_role || 'All Staff'} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Department" value={template.department || '—'} />
-        </div>
-      </div>
+      {template.assignment_mode === 'individual' && (
+        <ReadOnlyField label="Assigned To" value={template.assigned_user || '—'} />
+      )}
+      {template.assignment_mode === 'role' && (
+        <ReadOnlyField label="Assigned Role" value={template.assigned_role || '—'} />
+      )}
+      {template.assignment_mode === 'department' && (
+        <ReadOnlyField label="Department" value={template.department || '—'} />
+      )}
 
       <div style={rowStyle}>
         <div style={halfStyle}>
@@ -271,7 +279,20 @@ export function ViewTemplateSheet({ isOpen = true, onClose, template: templatePr
       activeTab={activeTab}
       onTabChange={setActiveTab}
       footer={
-        <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+        <>
+          <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
+          {onEdit && (
+            <Button
+              variant="primary"
+              size="md"
+              type="button"
+              iconBefore={<Icon icon={icon.edit} />}
+              onClick={onEdit}
+            >
+              Edit
+            </Button>
+          )}
+        </>
       }
     />
   );
