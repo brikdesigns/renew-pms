@@ -1,10 +1,37 @@
 ---
-status: in-progress
+status: resolved
 owner: nick
 last-updated: 2026-04-29
+resolved: 2026-04-29
 canonical-rules: https://design.brikdesigns.com/docs/primitives/naming-conventions
 workflow: ./cleanup-workflow.md
 related: ./component-cleanup-audit.md, ./launch-checklist.md
+---
+
+# Field primitive adoption audit
+
+## Resolved 2026-04-29 — closing summary
+
+**All four categories closed in a single batch (`task/renew-sheets-cleanup`, PR pending).**
+
+| Cat | Pattern | Before | After | Status |
+|-----|---------|--------|-------|--------|
+| 1 | `ReadOnlyField` callsites | 114 in 14 files | 0 | ✓ migrated to BDS `Field` |
+| 2 | Ad-hoc field-label `<span>` (sheets only) | ~14 in-scope | 0 | ✓ migrated to BDS `Field` |
+| 3 | `fieldRow` / `fieldHalf` flex helpers | 5 sheet files (+ `rowStyle` in `_shared.ts`) | 0 | ✓ migrated to BDS `FieldGrid` |
+| 4 | Dead-code deletions | 1 file + 6 exports | 0 | ✓ deleted |
+
+Verified: `grep -rE "<ReadOnlyField " src/ --include="*.tsx"` returns 0. Typecheck + token-audit clean.
+
+**Empty-state convention adopted:** `empty="—"` on every Field, preserving the renew em-dash convention from the prior `ReadOnlyField` behavior.
+
+**Out-of-scope items confirmed during the sweep:**
+- `EditUserSheet.tsx:280, 283, 310` — entity-row name + subtitle text inside associated-roles / associated-departments lists. NOT field labels. Belongs to the InteractiveListItem family (already covered in `component-cleanup-audit.md`).
+- `EditDepartmentSheet.tsx:175, 178, 210, 213` — same pattern (associated-roles / associated-users lists). Same disposition.
+- ~30 ad-hoc field-label-shaped `<span>`s inside `bds-table` body cells across `ContactsTable`, `UsersTable`, `RolesTable`, `TemplatesTable`, `TeamsTable`, `DepartmentsTable`, `OfficeRoomsTab`, `VendorMessagesTab`, `VendorResponseClient`, `OrganizationSettingsClient`, `AccountSettingsClient`, `RequestsClient`. Different concern — table cell typography drift, not label-value pairs. Catalog separately if recurring.
+
+Per `cleanup-workflow.md` lifecycle, status is now `resolved`. Will transition to `archived` once BDS Field / FieldGrid have been stable for ≥1 release in renew-pms.
+
 ---
 
 # Field primitive adoption audit
