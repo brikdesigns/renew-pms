@@ -19,6 +19,7 @@ export interface TaskTemplate {
   task_category_id: string | null;
   compliance_type_id: string | null;
   room_id: string | null;
+  assigned_member_id: string | null;
   assigned_role_id: string | null;
   department_id: string | null;
   frequency: string | null;
@@ -50,6 +51,7 @@ export function useTemplates() {
         setLoading(false);
       })
       .catch((err: Error) => {
+        console.error('[useTemplates] failed to load:', err);
         setError(err.message);
         setLoading(false);
       });
