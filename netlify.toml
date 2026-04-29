@@ -10,6 +10,14 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Standalone Netlify functions live alongside the Next.js app — used for
+# scheduled (cron) work that runs without a user session. The Next.js app
+# is published from `.next` per the [build] block above; this directory is
+# discovered separately by Netlify.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # ── Staging (branch deploys) ────────────────────────────────────────
 # main     → renew-pms.netlify.app  (production, custom domain TBD)
 # staging  → staging--renew-pms.netlify.app
