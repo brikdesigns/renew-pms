@@ -28,8 +28,9 @@ export interface TaskViewData {
   assignee: string;
   assigneeRole: string;
   checked: boolean;
-  // Assignment model
-  assignmentType: 'role' | 'department';
+  // Assignment model — discriminator for which FK is set on the underlying
+  // task. 'individual' tasks have a member assignee; 'pool' tasks have none.
+  assignmentType: 'individual' | 'role' | 'department' | 'pool';
   assignmentValue: string;
   // Context relations
   room?: string;
@@ -225,12 +226,15 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       {/* Assignment */}
       <FieldGrid columns={2} gap="lg">
         <Field label="Assigned To" empty="—">{t.assignee}</Field>
-        <Field
-          label={t.assignmentType === 'role' ? 'Assigned Role' : 'Assigned Department'}
-          empty="—"
-        >
-          {t.assignmentValue}
-        </Field>
+        {(() => {
+          switch (t.assignmentType) {
+            case 'role':       return <Field label="Assigned Role"       empty="—">{t.assignmentValue}</Field>;
+            case 'department': return <Field label="Assigned Department" empty="—">{t.assignmentValue}</Field>;
+            case 'individual': return <Field label="Assignment Type"     empty="—">Individual</Field>;
+            case 'pool':
+            default:           return <Field label="Assignment Type"     empty="—">Pool (All Staff)</Field>;
+          }
+        })()}
       </FieldGrid>
 
       {/* Schedule */}
