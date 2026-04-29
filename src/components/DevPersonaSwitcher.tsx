@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { gap } from '@/lib/tokens';
-import { useDevBarSlot, InteractiveListItem } from '@brikdesigns/bds';
+import { border, color, font, gap, shadow, space } from '@/lib/tokens';
+import { Badge, InteractiveListItem, useDevBarSlot } from '@brikdesigns/bds';
 
 // ─── Gate ───────────────────────────────────────────────────────────────────
 
@@ -13,13 +13,17 @@ const SHOW_WIDGET =
 
 // ─── Persona definitions (must match seed-test-users.ts) ────────────────────
 
+type BadgeStatus = 'brand' | 'info';
+type BadgeAppearance = 'solid' | 'subtle';
+
 interface Persona {
   key: string;
   label: string;
   sublabel: string;
   email: string;
   badge: string;
-  badgeColor: string;
+  badgeStatus: BadgeStatus;
+  badgeAppearance: BadgeAppearance;
   redirectTo: string;
 }
 
@@ -29,15 +33,16 @@ interface TesterGroup {
 }
 
 // 7 personas matching seed-test-users.ts PERSONA_TEMPLATES.
-// Badge colors use BDS palette: Poppy for elevated roles, grayscale for staff.
+// Tier signal via BDS Badge: `brand` (poppy) for elevated roles, `info`
+// solid → subtle for staff levels.
 const PERSONA_DEFS: Omit<Persona, 'key' | 'email'>[] = [
-  { label: 'Brik Admin',     sublabel: 'brik_admin',                     badge: 'PLATFORM',  badgeColor: '#e35335', redirectTo: '/dashboard' }, // poppy-light
-  { label: 'Sarah Mitchell', sublabel: 'admin · proficient',             badge: 'ADMIN',     badgeColor: '#b0351b', redirectTo: '/dashboard' }, // poppy-dark
-  { label: 'Jessica Torres', sublabel: 'manager · proficient',           badge: 'MANAGER',   badgeColor: '#333333', redirectTo: '/dashboard' }, // grayscale-darkest
-  { label: 'Emily Rivera',   sublabel: 'staff · new · opening',          badge: 'NEW',       badgeColor: '#828282', redirectTo: '/dashboard' }, // grayscale-dark
-  { label: 'Tyler Nguyen',   sublabel: 'staff · maturing · closing',     badge: 'MATURING',  badgeColor: '#828282', redirectTo: '/dashboard' },
-  { label: 'Amanda Chen',    sublabel: 'staff · proficient · hygienist', badge: 'STAFF',     badgeColor: '#bdbdbd', redirectTo: '/dashboard' }, // grayscale-light
-  { label: 'Rachel Foster',  sublabel: 'staff · proficient · frontdesk', badge: 'STAFF',     badgeColor: '#bdbdbd', redirectTo: '/dashboard' },
+  { label: 'Brik Admin',     sublabel: 'brik_admin',                     badge: 'PLATFORM',  badgeStatus: 'brand', badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Sarah Mitchell', sublabel: 'admin · proficient',             badge: 'ADMIN',     badgeStatus: 'brand', badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Jessica Torres', sublabel: 'manager · proficient',           badge: 'MANAGER',   badgeStatus: 'info',  badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Emily Rivera',   sublabel: 'staff · new · opening',          badge: 'NEW',       badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Tyler Nguyen',   sublabel: 'staff · maturing · closing',     badge: 'MATURING',  badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Amanda Chen',    sublabel: 'staff · proficient · hygienist', badge: 'STAFF',     badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Rachel Foster',  sublabel: 'staff · proficient · frontdesk', badge: 'STAFF',     badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
 ];
 
 const ALIASES = ['brikadmin', 'owner', 'manager', 'newhire', 'maturing', 'hygienist', 'frontdesk'];
@@ -60,20 +65,9 @@ const TEST_PASSWORD = process.env.NEXT_PUBLIC_TEST_PASSWORD ?? 'TestUser123!';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 //
-// Inline BDS palette constants — dev-tool overlay, not a consumer surface.
-// Mirrors the portal's DevPersonaSwitcher styling for visual consistency
-// across products.
-
-const BDS = {
-  poppy:       '#e35335', // --color-poppy-light / --background-brand-primary
-  white:       '#ffffff',
-  tanLightest: '#f1f0ec', // --color-tan-lightest (hover surface)
-  grayLighter: '#e0e0e0', // --border-primary
-  grayDark:    '#828282', // --text-muted
-  grayDarker:  '#4f4f4f', // --text-secondary
-  grayDarkest: '#333333', // --text-primary
-  fontFamily:  "'Poppins', system-ui, sans-serif",
-} as const;
+// All values come from BDS canonical tokens via @/lib/tokens — the panel
+// adapts to the active theme (light / dark / brand) like every other product
+// surface. No hardcoded hex.
 
 // Panel anchored above the DevBar (bottom-center). z-index must exceed the
 // DevBar shell (2147483647) so the panel renders above it.
@@ -84,93 +78,68 @@ const panelStyle: CSSProperties = {
   transform: 'translateX(-50%)',
   zIndex: 2147483647,
   width: '280px',
-  backgroundColor: BDS.white,
-  borderRadius: '12px',
-  border: `1px solid ${BDS.grayLighter}`,
-  boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
-  padding: '12px',
+  backgroundColor: color.surface.overlay,
+  borderRadius: border.radius.md,
+  border: `${border.width.sm} solid ${color.border.primary}`,
+  boxShadow: shadow.lg,
+  padding: space.sm,
   display: 'flex',
   flexDirection: 'column',
   gap: gap.xs,
-  fontFamily: BDS.fontFamily,
 };
 
 const categoryLabelStyle: CSSProperties = {
-  fontSize: '11px',
-  fontWeight: 700,
-  color: BDS.grayDark,
+  fontFamily: font.family.label,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.bold,
+  color: color.text.secondary,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  padding: '4px 8px 8px',
-};
-
-const personaBtnStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  padding: '8px',
-  borderRadius: '8px',
-  border: 'none',
-  backgroundColor: 'transparent',
-  cursor: 'pointer',
-  textAlign: 'left',
-  width: '100%',
-  fontFamily: BDS.fontFamily,
-  transition: 'background-color 0.1s ease',
+  padding: `${space.xs} ${space.sm} ${space.sm}`,
 };
 
 const avatarStyle: CSSProperties = {
   width: '28px',
   height: '28px',
   borderRadius: '50%',
-  backgroundColor: BDS.tanLightest,
+  backgroundColor: color.surface.secondary,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '11px',
-  fontWeight: 700,
-  color: BDS.grayDarker,
+  fontFamily: font.family.label,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.bold,
+  color: color.text.secondary,
   flexShrink: 0,
 };
 
-const badgeStyle = (bgColor: string): CSSProperties => ({
-  fontSize: '9px',
-  fontWeight: 700,
-  color: BDS.white,
-  backgroundColor: bgColor,
-  padding: '2px 6px',
-  borderRadius: '4px',
-  lineHeight: 1,
-  letterSpacing: '0.04em',
-  flexShrink: 0,
-  marginLeft: 'auto',
-});
-
 const loadingStyle: CSSProperties = {
-  ...personaBtnStyle,
+  display: 'flex',
   justifyContent: 'center',
-  color: BDS.grayDark,
-  fontSize: '12px',
+  padding: space.sm,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  color: color.text.secondary,
 };
 
 const testerTabStyle = (active: boolean): CSSProperties => ({
   background: 'none',
   border: 'none',
-  borderBottom: `2px solid ${active ? BDS.poppy : 'transparent'}`,
-  padding: '6px 12px',
-  fontSize: '12px',
-  fontWeight: active ? 700 : 500,
-  color: active ? BDS.grayDarkest : BDS.grayDark,
+  borderBottom: `${border.width.md} solid ${active ? color.brand.primary : 'transparent'}`,
+  padding: `${space.xs} ${space.sm}`,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: active ? font.weight.bold : font.weight.medium,
+  color: active ? color.text.primary : color.text.secondary,
   cursor: 'pointer',
-  fontFamily: BDS.fontFamily,
   transition: 'color 0.1s, border-color 0.1s',
 });
 
 const testerTabRowStyle: CSSProperties = {
   display: 'flex',
   gap: gap.xs,
-  borderBottom: `1px solid ${BDS.grayLighter}`,
-  marginBottom: '4px',
+  borderBottom: `${border.width.sm} solid ${color.border.primary}`,
+  marginBottom: gap.xs,
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -287,7 +256,11 @@ export function DevPersonaSwitcher() {
             leading={<span style={avatarStyle}>{initials}</span>}
             title={p.label}
             subtitle={p.sublabel}
-            trailing={<span style={badgeStyle(p.badgeColor)}>{p.badge}</span>}
+            trailing={
+              <Badge size="sm" status={p.badgeStatus} appearance={p.badgeAppearance}>
+                {p.badge}
+              </Badge>
+            }
             onClick={() => handleSwitch(p)}
             disabled={loading !== null}
           />
