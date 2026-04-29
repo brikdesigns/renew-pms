@@ -190,7 +190,30 @@ export function TemplatesTable() {
     taskCategories.find((c) => c.id === id)?.name ?? '—';
 
   const resolveRole = (id: string | null) =>
-    id ? (roles.find((r) => r.id === id)?.name ?? '—') : 'All Staff';
+    id ? (roles.find((r) => r.id === id)?.name ?? '—') : '—';
+
+  const resolveMemberName = (id: string | null) => {
+    if (!id) return '—';
+    const m = members.find((mem) => mem.id === id);
+    if (!m) return '—';
+    const name = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
+    return name || m.email || '—';
+  };
+
+  const resolveDepartment = (id: string | null) =>
+    id ? (departments.find((d) => d.id === id)?.name ?? '—') : '—';
+
+  // Mode-aware assignee label for the table column. Reads only the FK that
+  // matches assignment_mode — never the "wrong" FK left over from a prior edit.
+  const resolveAssignee = (template: TaskTemplate) => {
+    switch (template.assignment_mode) {
+      case 'individual': return resolveMemberName(template.assigned_member_id);
+      case 'role':       return resolveRole(template.assigned_role_id);
+      case 'department': return resolveDepartment(template.department_id);
+      case 'pool':
+      default:           return 'All Staff';
+    }
+  };
 
   const resolveFrequency = (f: string | null) =>
     f ? (FREQUENCY_LABELS[f] ?? f) : '—';
@@ -367,23 +390,18 @@ export function TemplatesTable() {
 
   // ─── Resolve view data ────────────────────────────────────────────────────
 
-  const resolveAssignedMember = (id: string | null) => {
-    if (!id) return '';
-    const m = members.find((mem) => mem.id === id);
-    if (!m) return '';
-    const name = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
-    return name || m.email || '';
-  };
-
+  // ViewTemplateSheet branches on assignment_mode and applies its own '—' fallback,
+  // so we only resolve the FK that matches the template's mode and leave the
+  // others empty. Avoids carrying stale lookups from a prior assignment.
   const buildViewTemplate = (t: TaskTemplate) => ({
     id: t.id,
     name: t.name,
     type: t.type,
     category: resolveCategory(t.task_category_id),
     frequency: resolveFrequency(t.frequency),
-    assigned_user: resolveAssignedMember(t.assigned_member_id),
-    assigned_role: resolveRole(t.assigned_role_id),
-    department: departments.find((d) => d.id === t.department_id)?.name ?? '—',
+    assigned_user: t.assignment_mode === 'individual' ? resolveMemberName(t.assigned_member_id) : '',
+    assigned_role:  t.assignment_mode === 'role'       ? resolveRole(t.assigned_role_id)        : '',
+    department:     t.assignment_mode === 'department' ? resolveDepartment(t.department_id)     : '',
     assignment_mode: t.assignment_mode ?? 'pool',
     display_mode: t.display_mode ?? 'nested',
     priority: t.priority,
@@ -450,7 +468,7 @@ export function TemplatesTable() {
               <TableHead>Type</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Assigned Role</TableHead>
+              <TableHead>Assignee</TableHead>
               <TableHead>Status</TableHead>
               <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
@@ -480,7 +498,7 @@ export function TemplatesTable() {
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
-                      {resolveRole(template.assigned_role_id)}
+                      {resolveAssignee(template)}
                     </span>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
