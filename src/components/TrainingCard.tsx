@@ -87,6 +87,7 @@ export function TrainingCard({ member, onViewDetails }: TrainingCardProps) {
 
   return (
     <InteractiveListItem
+      style={{ backgroundColor: color.surface.primary }}
       leading={
         <UserAvatar
           name={member.name}
