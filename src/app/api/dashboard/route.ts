@@ -22,9 +22,11 @@ interface RawOverdueTask {
   title: string;
   priority: string;
   assigned_to: string | null;
+  assigned_role_id: string | null;
   assigned_department: string | null;
   departments: DepartmentJoin | DepartmentJoin[] | null;
   practice_members: MemberJoin | MemberJoin[] | null;
+  assigned_role: RoleJoin | RoleJoin[] | null;
 }
 
 function first<T>(v: T | T[] | null): T | null {
@@ -48,16 +50,20 @@ export async function GET() {
   const visibilityOr = buildVisibilityOr(scope);
 
   // ── 1. Overdue tasks (6 most recent by due_date) ───────────────────────────
+  // Includes assigned_role_id + the role FK join so role-assigned overdue
+  // tasks render with the role name (and the role's department) instead of
+  // silently collapsing to "Unassigned" with no department.
   let overdueQuery = admin
     .from('tasks')
     .select(`
-      id, title, priority, due_date, assigned_to, assigned_department,
-      departments(name, color),
+      id, title, priority, due_date, assigned_to, assigned_role_id, assigned_department,
+      departments!tasks_assigned_department_fkey(name, color),
       practice_members(
         id,
         profiles(first_name, last_name),
         practice_role_types(name, departments(name, color))
-      )
+      ),
+      assigned_role:practice_role_types!tasks_assigned_role_id_fkey(name, departments(name, color))
     `)
     .eq('practice_id', practiceId)
     .eq('status', 'overdue');
@@ -71,25 +77,50 @@ export async function GET() {
   const overdueTasks = (rawOverdue ?? []).map((t: RawOverdueTask) => {
     const member = first(t.practice_members);
     const profile = member ? first(member.profiles) : null;
-    const role = member ? first(member.practice_role_types) : null;
-    const roleDept = role ? first(role.departments) : null;
+    const memberRole = member ? first(member.practice_role_types) : null;
+    const memberRoleDept = memberRole ? first(memberRole.departments) : null;
+    const assignedRole = first(t.assigned_role);
+    const assignedRoleDept = assignedRole ? first(assignedRole.departments) : null;
     const taskDept = first(t.departments);
-    const dept = taskDept ?? roleDept;
+
+    // Assignee label: discriminate by which FK is set on the task. Role and
+    // department assignments aren't "Unassigned" — they're assigned to a group.
+    let assignee: string;
+    if (profile) {
+      assignee = `${profile.first_name} ${profile.last_name}`;
+    } else if (assignedRole) {
+      assignee = assignedRole.name;
+    } else if (taskDept && t.assigned_department) {
+      assignee = taskDept.name;
+    } else {
+      assignee = 'Pool';
+    }
+    // Department for the chip: prefer the task's explicit department, then the
+    // assigned role's department, then the assignee member's role department.
+    const dept = taskDept ?? assignedRoleDept ?? memberRoleDept;
 
     return {
       id: t.id,
       title: t.title,
       priority: t.priority,
-      assignee: profile ? `${profile.first_name} ${profile.last_name}` : 'Unassigned',
+      assignee,
       dept: dept?.name ?? '',
       deptColor: dept?.color ?? '',
     };
   });
 
   // ── 2. Today's progress (all tasks due today or overdue) ──────────────────
+  // Selects assigned_role_id + the role FK join so role-assigned tasks resolve
+  // to the role's department and count toward the right "Today's Progress"
+  // bucket. Without this, role-only tasks silently drop out of the aggregation.
   let todayQuery = admin
     .from('tasks')
-    .select('id, status, assigned_department, departments(name, color), practice_members(practice_role_types(departments(name, color)))')
+    .select(`
+      id, status, assigned_department, assigned_role_id,
+      departments!tasks_assigned_department_fkey(name, color),
+      practice_members(practice_role_types(departments(name, color))),
+      assigned_role:practice_role_types!tasks_assigned_role_id_fkey(departments(name, color))
+    `)
     .eq('practice_id', practiceId)
     .or(`due_date.eq.${today},status.eq.overdue,and(frequency.in.(daily,per_shift),due_date.lte.${today},status.neq.completed,status.neq.skipped)`);
   if (visibilityOr !== null) todayQuery = todayQuery.or(visibilityOr);
@@ -109,16 +140,21 @@ export async function GET() {
   const todayTotal = uniqueToday.length;
   const deptCounts: Record<string, { completed: number; total: number; color: string }> = {};
 
+  type AssignedRoleJoin = { departments: DepartmentJoin | DepartmentJoin[] | null };
+
   for (const t of uniqueToday) {
     const isCompleted = t.status === 'completed' || t.status === 'skipped';
     if (isCompleted) todayCompleted++;
 
-    // Resolve department
+    // Resolve department: prefer the task's explicit department, then the
+    // assigned role's department, then the assignee member's role department.
     const taskDept = first(t.departments as DepartmentJoin | DepartmentJoin[] | null);
     const member = first(t.practice_members as MemberJoin | MemberJoin[] | null);
-    const role = member ? first(member.practice_role_types as RoleJoin | RoleJoin[] | null) : null;
-    const roleDept = role ? first(role.departments as DepartmentJoin | DepartmentJoin[] | null) : null;
-    const dept = taskDept ?? roleDept;
+    const memberRole = member ? first(member.practice_role_types as RoleJoin | RoleJoin[] | null) : null;
+    const memberRoleDept = memberRole ? first(memberRole.departments as DepartmentJoin | DepartmentJoin[] | null) : null;
+    const assignedRole = first(t.assigned_role as AssignedRoleJoin | AssignedRoleJoin[] | null);
+    const assignedRoleDept = assignedRole ? first(assignedRole.departments) : null;
+    const dept = taskDept ?? assignedRoleDept ?? memberRoleDept;
 
     if (dept?.name) {
       if (!deptCounts[dept.name]) deptCounts[dept.name] = { completed: 0, total: 0, color: dept.color };

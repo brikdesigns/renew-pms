@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { normalizeAssignmentFKs } from './_helpers';
+import { normalizeAssignmentFKs, spawnTodayForTemplate } from './_helpers';
 
 /**
  * GET /api/templates
@@ -110,6 +110,11 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-spawn today's task instance if the new template is active+recurring
+  // and its mode FK is set. Idempotent at the SQL layer, so callers don't need
+  // to dedupe. We don't await-on-failure: the template row is already saved.
+  await spawnTodayForTemplate(admin, practiceId, data);
 
   return NextResponse.json({ ...data, checklist_items: [] }, { status: 201 });
 }

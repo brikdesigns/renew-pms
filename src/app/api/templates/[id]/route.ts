@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { normalizeAssignmentFKs } from '../_helpers';
+import { normalizeAssignmentFKs, spawnTodayForTemplate } from '../_helpers';
 
 /**
  * GET /api/templates/[id]
@@ -130,12 +130,19 @@ export async function PUT(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
 
+  // Spawn today's instance if this update flipped the template into a state
+  // that should be running (e.g. draft → active, or assignment FK filled in).
+  // Idempotent at the SQL layer.
+  await spawnTodayForTemplate(admin, practiceId, data);
+
   return NextResponse.json(data);
 }
 
 /**
  * DELETE /api/templates/[id]
- * Deletes a template. Default (is_default=true) templates cannot be deleted.
+ * Deletes a template. Defaults (is_default=true) are deletable too — the flag
+ * remains as a "this row was seeded" signal but no longer gates removal, so
+ * admins can fully customize their template library.
  */
 export async function DELETE(
   _request: Request,
@@ -152,32 +159,20 @@ export async function DELETE(
 
   const admin = createAdminClient();
 
-  // Precondition: confirm the template exists in this practice and isn't a default.
-  // A `.eq('is_default', false)` filter on .delete() silently no-ops with 204
-  // when the row IS default — the UI then thinks the delete succeeded.
-  const { data: existing, error: existingErr } = await admin
-    .from('task_templates')
-    .select('is_default')
-    .eq('id', id)
-    .eq('practice_id', practiceId)
-    .maybeSingle();
-
-  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
-  if (!existing) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
-  if (existing.is_default) {
-    return NextResponse.json(
-      { error: 'Default templates cannot be deleted.' },
-      { status: 403 },
-    );
-  }
-
-  const { error } = await admin
+  // .select() on a delete returns the deleted rows so we can disambiguate
+  // "deleted nothing" (404) from "delete succeeded" (204) without a separate
+  // precondition query.
+  const { data: deleted, error } = await admin
     .from('task_templates')
     .delete()
     .eq('id', id)
-    .eq('practice_id', practiceId);
+    .eq('practice_id', practiceId)
+    .select('id');
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!deleted || deleted.length === 0) {
+    return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+  }
 
   return new NextResponse(null, { status: 204 });
 }

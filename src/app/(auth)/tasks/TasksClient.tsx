@@ -34,7 +34,7 @@ interface MockTask {
   template: string;
   overdue: boolean;
   status: string;
-  assignmentType: 'role' | 'department';
+  assignmentType: 'individual' | 'role' | 'department' | 'pool';
   assignmentValue: string;
   room?: string;
   equipment?: string;
@@ -359,6 +359,25 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   function toMockTask(t: typeof assignedTasks[number]): MockTask {
     const isOverdue = t.status === 'overdue';
+    // Derive assignment shape from which FK is set on the task. Tasks have no
+    // assignment_mode column, so the discriminator IS the FK presence.
+    // Order matters: an individual task can also have member_role joined via
+    // practice_members, but it's still an individual assignment.
+    let assignmentType: MockTask['assignmentType'];
+    let assignmentValue: string;
+    if (t.assigned_to) {
+      assignmentType = 'individual';
+      assignmentValue = `${t.member_first_name} ${t.member_last_name}`.trim();
+    } else if (t.assigned_role_id) {
+      assignmentType = 'role';
+      assignmentValue = t.member_role;
+    } else if (t.assigned_department) {
+      assignmentType = 'department';
+      assignmentValue = t.member_department;
+    } else {
+      assignmentType = 'pool';
+      assignmentValue = '';
+    }
     return {
       id: t.id,
       title: t.title,
@@ -370,8 +389,8 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       template: t.type_name ?? 'Task',
       overdue: isOverdue,
       status: t.status,
-      assignmentType: t.assigned_role_id ? 'role' : 'department',
-      assignmentValue: t.member_role,
+      assignmentType,
+      assignmentValue,
       room: t.room_name ?? undefined,
       equipment: t.equipment_name ?? undefined,
       checklistTotal: t.checklist_total ?? 0,
