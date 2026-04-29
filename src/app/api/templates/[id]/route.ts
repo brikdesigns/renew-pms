@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { normalizeAssignmentFKs, spawnTodayForTemplate } from '../_helpers';
+import { normalizeAssignmentFKs, spawnTodayForTemplate, propagateAssignmentToTodaysTasks } from '../_helpers';
 
 /**
  * GET /api/templates/[id]
@@ -129,6 +129,19 @@ export async function PUT(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+
+  // Mirror the new assignment onto today's existing un-completed task
+  // instances. The daily generator is idempotent on (template_id, today),
+  // so once today's task exists a re-spawn won't pick up the new assignee.
+  // Only runs if this PATCH actually touched an assignment field.
+  const assignmentTouched =
+    body.assignment_mode !== undefined ||
+    body.assigned_member_id !== undefined ||
+    body.assigned_role_id !== undefined ||
+    body.department_id !== undefined;
+  if (assignmentTouched) {
+    await propagateAssignmentToTodaysTasks(admin, practiceId, id, data);
+  }
 
   // Spawn today's instance if this update flipped the template into a state
   // that should be running (e.g. draft → active, or assignment FK filled in).
