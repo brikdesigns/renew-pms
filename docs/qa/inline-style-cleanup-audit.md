@@ -19,11 +19,11 @@ tracking-issue: https://github.com/brikdesigns/renew-pms/issues/101
 | 1a | `task/bds-cleanup-inline-styles-sheets-1a` — ViewUserSheet, ViewTaskSheet | ✅ merged (#115) |
 | 1b | `task/bds-cleanup-inline-styles-sheets-1b` — EditUserSheet, EditProfileSheet, ViewInventorySheet, ViewContactSheet | ✅ merged (#116) |
 | 3 | `task/bds-cleanup-inline-styles-dashboard` — DashboardClient, ProfileCard, CardSkeleton (chrome only) | ✅ merged (#117) |
-| 2 | `task/bds-cleanup-inline-styles-settings-tables` — 7 settings tables, slot-class CSS | 🟡 PR open |
+| 2 | `task/bds-cleanup-inline-styles-settings-tables` — 7 settings tables, slot-class CSS | ✅ merged (#119) |
 
-**Counts:** 619 (original) → **~528** with PR 2. ~91 markers resolved across 4 PRs.
+**Counts:** 619 (original) → **~528**. ~91 markers resolved across 4 PRs.
 
-**Next:** Pre-launch cleanup is essentially done. Remaining items are post-launch (PRs 4-7) or deferred BDS-promotion follow-ups (see "Deferred items").
+**Next:** Pre-launch cleanup is done. Remaining items are post-launch (PRs 4-7) or deferred BDS-promotion follow-ups (see "Deferred items").
 
 ## Deferred items
 
