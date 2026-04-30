@@ -31,6 +31,7 @@ import { useComplianceTypes } from '@/hooks/useComplianceTypes';
 import type { TaskTemplate } from '@/hooks/useTemplates';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Type display mapping ────────────────────────────────────────────────────
 
@@ -481,7 +482,7 @@ export function TemplatesTable() {
                 {filteredTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--strong">
                       {template.name}
                     </span>
                   </TableCell>
@@ -489,7 +490,7 @@ export function TemplatesTable() {
                     <TypeChip type={template.type} />
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {resolveCategory(template.task_category_id)}
                     </span>
                   </TableCell>
@@ -497,7 +498,7 @@ export function TemplatesTable() {
                     <FrequencyTag value={template.frequency} />
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {resolveAssignee(template)}
                     </span>
                   </TableCell>

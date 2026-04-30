@@ -17,6 +17,7 @@ import type { Role } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -133,16 +134,16 @@ export function RolesTable() {
             ) : roles.filter((r) => r.name !== 'Everyone').map((r) => (
               <TableRow key={r.id}>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{r.name}</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--strong">{r.name}</span>
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.department}</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">{r.department}</span>
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{r.member_count}</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">{r.member_count}</span>
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">
                     {r.is_default ? 'Default' : 'Custom'}
                   </span>
                 </TableCell>
