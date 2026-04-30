@@ -4,13 +4,8 @@ import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
-import { Sheet, Button, TextInput, Select } from '@brikdesigns/bds';
+import { Sheet, Button, TextInput, Select, SheetSection } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import {
-  sheetBodyStyle,
-  sheetSectionTitle,
-  sheetFormGroup,
-} from '@/app/(auth)/settings/_sheetStyles';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -167,145 +162,136 @@ export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdm
       </>}
     >
       <form id="edit-profile-form" onSubmit={handleSave}>
-        <div style={sheetBodyStyle}>
-          {/* Contact Information — always editable */}
-          <h3 style={sheetSectionTitle}>Contact Information</h3>
-          <div style={sheetFormGroup}>
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <TextInput
-                  label="First Name"
-                  size="sm"
-                  value={form.first_name}
-                  onChange={updateText('first_name')}
-                  placeholder="Enter first name"
-                  fullWidth
-                />
-              </div>
-              <div style={formRowHalf}>
-                <TextInput
-                  label="Last Name"
-                  size="sm"
-                  value={form.last_name}
-                  onChange={updateText('last_name')}
-                  placeholder="Enter last name"
-                  fullWidth
-                />
-              </div>
+        <SheetSection heading="Contact Information">
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <TextInput
+                label="First Name"
+                size="sm"
+                value={form.first_name}
+                onChange={updateText('first_name')}
+                placeholder="Enter first name"
+                fullWidth
+              />
             </div>
-            <TextInput
-              label="Email"
-              size="sm"
-              type="email"
-              value={form.email}
-              onChange={updateText('email')}
-              placeholder="Enter email address"
-              fullWidth
-              helperText="Changing your email will require re-verification"
-            />
-            <TextInput
-              label="Phone"
-              size="sm"
-              type="tel"
-              value={form.phone}
-              onChange={updateText('phone')}
-              placeholder="Enter phone number"
-              fullWidth
-            />
-          </div>
-
-          {/* User Information — read-only for non-admins */}
-          <h3 style={sheetSectionTitle}>User Information</h3>
-          <div style={sheetFormGroup}>
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <Select
-                  label="System Role"
-                  size="sm"
-                  options={SYSTEM_ROLE_OPTIONS}
-                  value={form.system_role}
-                  onChange={updateSelect('system_role')}
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-              <div style={formRowHalf}>
-                <Select
-                  label="Practice Role"
-                  size="sm"
-                  options={practiceRoleOptions}
-                  value={form.practice_role_id}
-                  onChange={updateSelect('practice_role_id')}
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-            </div>
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <Select
-                  label="Department"
-                  size="sm"
-                  options={departmentOptions}
-                  value={form.department}
-                  onChange={updateSelect('department')}
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-              <div style={formRowHalf}>
-                <Select
-                  label="Team"
-                  size="sm"
-                  options={[{ label: 'Select team', value: '' }]}
-                  value={form.team}
-                  onChange={updateSelect('team')}
-                  fullWidth
-                  disabled
-                />
-              </div>
-            </div>
-            <TextInput
-              label="Start Date"
-              size="sm"
-              type="date"
-              value={form.start_date}
-              onChange={updateText('start_date')}
-              fullWidth
-              disabled={!isAdmin}
-            />
-          </div>
-
-          {/* Status — read-only for non-admins */}
-          <h3 style={sheetSectionTitle}>Status</h3>
-          <div style={sheetFormGroup}>
-            <div style={formRowStyle}>
-              <div style={formRowHalf}>
-                <Select
-                  label="Employee Type"
-                  size="sm"
-                  options={EMPLOYEE_TYPE_OPTIONS}
-                  value={form.employee_type}
-                  onChange={updateSelect('employee_type')}
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
-              <div style={formRowHalf}>
-                <Select
-                  label="Shift"
-                  size="sm"
-                  options={SHIFT_OPTIONS}
-                  value={form.shift}
-                  onChange={updateSelect('shift')}
-                  fullWidth
-                  disabled={!isAdmin}
-                />
-              </div>
+            <div style={formRowHalf}>
+              <TextInput
+                label="Last Name"
+                size="sm"
+                value={form.last_name}
+                onChange={updateText('last_name')}
+                placeholder="Enter last name"
+                fullWidth
+              />
             </div>
           </div>
-        </div>
+          <TextInput
+            label="Email"
+            size="sm"
+            type="email"
+            value={form.email}
+            onChange={updateText('email')}
+            placeholder="Enter email address"
+            fullWidth
+            helperText="Changing your email will require re-verification"
+          />
+          <TextInput
+            label="Phone"
+            size="sm"
+            type="tel"
+            value={form.phone}
+            onChange={updateText('phone')}
+            placeholder="Enter phone number"
+            fullWidth
+          />
+        </SheetSection>
 
+        <SheetSection heading="User Information">
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <Select
+                label="System Role"
+                size="sm"
+                options={SYSTEM_ROLE_OPTIONS}
+                value={form.system_role}
+                onChange={updateSelect('system_role')}
+                fullWidth
+                disabled={!isAdmin}
+              />
+            </div>
+            <div style={formRowHalf}>
+              <Select
+                label="Practice Role"
+                size="sm"
+                options={practiceRoleOptions}
+                value={form.practice_role_id}
+                onChange={updateSelect('practice_role_id')}
+                fullWidth
+                disabled={!isAdmin}
+              />
+            </div>
+          </div>
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <Select
+                label="Department"
+                size="sm"
+                options={departmentOptions}
+                value={form.department}
+                onChange={updateSelect('department')}
+                fullWidth
+                disabled={!isAdmin}
+              />
+            </div>
+            <div style={formRowHalf}>
+              <Select
+                label="Team"
+                size="sm"
+                options={[{ label: 'Select team', value: '' }]}
+                value={form.team}
+                onChange={updateSelect('team')}
+                fullWidth
+                disabled
+              />
+            </div>
+          </div>
+          <TextInput
+            label="Start Date"
+            size="sm"
+            type="date"
+            value={form.start_date}
+            onChange={updateText('start_date')}
+            fullWidth
+            disabled={!isAdmin}
+          />
+        </SheetSection>
+
+        <SheetSection heading="Status">
+          <div style={formRowStyle}>
+            <div style={formRowHalf}>
+              <Select
+                label="Employee Type"
+                size="sm"
+                options={EMPLOYEE_TYPE_OPTIONS}
+                value={form.employee_type}
+                onChange={updateSelect('employee_type')}
+                fullWidth
+                disabled={!isAdmin}
+              />
+            </div>
+            <div style={formRowHalf}>
+              <Select
+                label="Shift"
+                size="sm"
+                options={SHIFT_OPTIONS}
+                value={form.shift}
+                onChange={updateSelect('shift')}
+                fullWidth
+                disabled={!isAdmin}
+              />
+            </div>
+          </div>
+        </SheetSection>
       </form>
     </Sheet>
   );

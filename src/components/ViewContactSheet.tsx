@@ -1,18 +1,14 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Button, Badge, InteractiveListItem, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
+import { Button, Badge, InteractiveListItem, useConfigureSheet, Field, FieldGrid, SheetSection, EmptyState } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import {
-  sheetBodyStyle,
-  sheetSectionTitle,
-} from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, gap, space, border } from '@/lib/tokens';
+import { font, color, gap, border } from '@/lib/tokens';
 import type { SheetType } from '@/lib/sheet-registry';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -56,45 +52,6 @@ interface ViewContactSheetProps {
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
-
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.lg,
-  paddingBottom: space.lg,
-};
-
-const headerTextStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.tiny,
-  minWidth: 0,
-  flex: 1,
-};
-
-const headerNameStyle: CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.small,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-  lineHeight: 1.2,
-  margin: 0,
-};
-
-const headerRoleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.regular,
-  color: color.text.secondary,
-};
-
-const emptyState: CSSProperties = {
-  padding: `${space.lg} 0`,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  color: color.text.secondary,
-  textAlign: 'center',
-};
 
 const activityIconWrap: CSSProperties = {
   width: '36px',
@@ -198,63 +155,59 @@ export function ViewContactSheet({ onClose, id, onNavigate }: ViewContactSheetPr
 
     // ── Details tab ──
     const detailsContent = (
-      <div style={sheetBodyStyle}>
-        {/* Header with avatar */}
-        <div style={headerStyle}>
-          <UserAvatar name={contact.name} size="lg" />
-          <div style={headerTextStyle}>
-            <h2 style={headerNameStyle}>{contact.name}</h2>
-            {contact.role && <span style={headerRoleStyle}>{contact.role}</span>}
+      <>
+        <SheetSection>
+          <div style={{ display: 'flex', alignItems: 'center', gap: gap.lg }}>
+            <UserAvatar name={contact.name} size="lg" />
+            {contact.is_primary && (
+              <Badge status="positive" size="sm">Primary</Badge>
+            )}
           </div>
-          {contact.is_primary && (
-            <Badge status="positive" size="sm" style={{ flexShrink: 0 }}>Primary</Badge>
-          )}
-        </div>
+        </SheetSection>
 
-        {/* Contact details */}
-        <h3 style={sheetSectionTitle}>Contact Details</h3>
-        <FieldGrid columns={2} gap="lg">
-          <Field label="Phone" empty="—">{contact.phone}</Field>
-          <Field label="Email" empty="—">{contact.email?.toLowerCase() ?? null}</Field>
-        </FieldGrid>
+        <SheetSection heading="Contact Details">
+          <FieldGrid columns={2} gap="lg">
+            <Field label="Phone" empty="—">{contact.phone}</Field>
+            <Field label="Email" empty="—">{contact.email?.toLowerCase() ?? null}</Field>
+          </FieldGrid>
+        </SheetSection>
 
-        {/* Company details */}
-        <h3 style={sheetSectionTitle}>Company</h3>
-        <Field label="Company" empty="—">
-          {contact.vendor_name && onNavigate ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('vendor', { id: contact.vendor_id }, { title: contact.vendor_name ?? 'Company' })}
-            >
-              {contact.vendor_name}
-            </Button>
-          ) : (
-            contact.vendor_name
+        <SheetSection heading="Company">
+          <Field label="Company" empty="—">
+            {contact.vendor_name && onNavigate ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate('vendor', { id: contact.vendor_id }, { title: contact.vendor_name ?? 'Company' })}
+              >
+                {contact.vendor_name}
+              </Button>
+            ) : (
+              contact.vendor_name
+            )}
+          </Field>
+          <FieldGrid columns={2} gap="lg">
+            <Field label="Company Phone" empty="—">{contact.vendor_phone}</Field>
+            <Field label="Company Email" empty="—">{contact.vendor_email?.toLowerCase() ?? null}</Field>
+          </FieldGrid>
+          {contact.vendor_website_url && (
+            <Field label="Website" empty="—">{contact.vendor_website_url}</Field>
           )}
-        </Field>
-        <FieldGrid columns={2} gap="lg">
-          <Field label="Company Phone" empty="—">{contact.vendor_phone}</Field>
-          <Field label="Company Email" empty="—">{contact.vendor_email?.toLowerCase() ?? null}</Field>
-        </FieldGrid>
-        {contact.vendor_website_url && (
-          <Field label="Website" empty="—">{contact.vendor_website_url}</Field>
-        )}
-        {contact.vendor_address && (
-          <Field label="Address" empty="—">{contact.vendor_address}</Field>
-        )}
-      </div>
+          {contact.vendor_address && (
+            <Field label="Address" empty="—">{contact.vendor_address}</Field>
+          )}
+        </SheetSection>
+      </>
     );
 
     // ── Activity tab ──
     const activityContent = (
-      <div style={sheetBodyStyle}>
-        <h3 style={sheetSectionTitle}>Assigned Requests</h3>
+      <SheetSection heading="Assigned Requests">
         {activityLoading ? (
           <SheetSkeleton />
         ) : activity.length === 0 ? (
-          <p style={emptyState}>No requests have been assigned to this contact yet.</p>
+          <EmptyState title="No assigned requests" description="No requests have been assigned to this contact yet." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
             {activity.map(req => (
@@ -266,7 +219,7 @@ export function ViewContactSheet({ onClose, id, onNavigate }: ViewContactSheetPr
             ))}
           </div>
         )}
-      </div>
+      </SheetSection>
     );
 
     const sheetTabs: SheetTab[] = [
@@ -276,14 +229,11 @@ export function ViewContactSheet({ onClose, id, onNavigate }: ViewContactSheetPr
 
     configureSheet({
       title: contact.name,
+      description: contact.role ?? undefined,
       tabs: sheetTabs,
       activeTab,
       onTabChange: setActiveTab,
-      footer: (
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" size="md" onClick={onClose}>Close</Button>
-        </div>
-      ),
+      footer: <Button variant="ghost" size="md" onClick={onClose}>Close</Button>,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configureSheet, loading, contact?.id, contact?.name, activeTab, activity.length, activityLoading, onClose, onNavigate]);

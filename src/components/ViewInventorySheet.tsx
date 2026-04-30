@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Tag, Button, InteractiveListItem, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
+import { Tag, Button, InteractiveListItem, useConfigureSheet, Field, FieldGrid, SheetSection, EmptyState } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
-import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
+import { color, font, gap, border, departmentColor } from '@/lib/tokens';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -64,14 +63,6 @@ const requestIconStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-};
-
-const emptyActivityStyle: CSSProperties = {
-  padding: `${space.xl} 0`,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  color: color.text.secondary,
-  textAlign: 'center',
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -142,8 +133,7 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
 
     // ── Details tab ──
     const detailsContent = (
-      <div style={sheetBodyStyle}>
-        <h3 style={sheetSectionTitle}>Item Details</h3>
+      <SheetSection heading="Item Details">
         <FieldGrid columns={2} gap="lg">
           <Field label="Name" empty="—">{item.name}</Field>
           <Field label="Type" empty="—">{item.type}</Field>
@@ -166,17 +156,16 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
           <Field label="Team" empty="—">{item.team}</Field>
         </FieldGrid>
         <Field label="Room" empty="—">{item.room}</Field>
-      </div>
+      </SheetSection>
     );
 
     // ── Activity tab ──
     const activityContent = (
-      <div style={sheetBodyStyle}>
-        <h3 style={sheetSectionTitle}>Request History</h3>
+      <SheetSection heading="Request History">
         {requestsLoading ? (
-          <div style={emptyActivityStyle}>Loading requests...</div>
+          <SheetSkeleton />
         ) : requests.length === 0 ? (
-          <div style={emptyActivityStyle}>No requests have been filed for this equipment.</div>
+          <EmptyState title="No requests" description="No requests have been filed for this equipment." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {requests.map(req => {
@@ -220,7 +209,7 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
             })}
           </div>
         )}
-      </div>
+      </SheetSection>
     );
 
     const sheetTabs: SheetTab[] = [

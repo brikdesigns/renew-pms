@@ -4,15 +4,11 @@ import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from
 import {
   Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+  SheetSection, EmptyState, SheetFieldLabel,
 } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import {
-  sheetBodyStyle,
-  sheetSectionTitle,
-  sheetFormGroup,
-} from '@/app/(auth)/settings/_sheetStyles';
-import { font, color, space, gap } from '@/lib/tokens';
+import { font, color, gap } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
@@ -88,23 +84,7 @@ const EMPTY_FORM: UserFormData = {
 const formRowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const formRowHalf: CSSProperties = { flex: 1, minWidth: 0 };
 
-const fieldLabelStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.primary,
-};
-
-const fieldGroupStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: gap.sm };
-
-
-const emptyState: CSSProperties = {
-  padding: `${space.lg} 0`,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.sm,
-  color: color.text.secondary,
-  textAlign: 'center',
-};
+const dayPickerGroupStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: gap.sm };
 
 // TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
 // (.bds-table-cell { background-color: var(--background-primary) }) once the
@@ -191,81 +171,72 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
 
   const detailsContent = (
     <form id="edit-user-form" onSubmit={handleSave}>
-      <div style={sheetBodyStyle}>
-        {/* Personal Info */}
-        <h3 style={sheetSectionTitle}>Personal Information</h3>
-        <div style={sheetFormGroup}>
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <TextInput label="First Name" size="sm" value={form.first_name} onChange={updateText('first_name')} placeholder="First name" fullWidth required />
-            </div>
-            <div style={formRowHalf}>
-              <TextInput label="Last Name" size="sm" value={form.last_name} onChange={updateText('last_name')} placeholder="Last name" fullWidth />
-            </div>
+      <SheetSection heading="Personal Information">
+        <div style={formRowStyle}>
+          <div style={formRowHalf}>
+            <TextInput label="First Name" size="sm" value={form.first_name} onChange={updateText('first_name')} placeholder="First name" fullWidth required />
           </div>
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <TextInput label="Email" size="sm" type="email" value={form.email} onChange={updateText('email')} placeholder="user@practice.com" fullWidth required disabled={isEdit} />
-            </div>
-            <div style={formRowHalf}>
-              <TextInput label="Phone" size="sm" type="tel" value={form.phone} onChange={updateText('phone')} placeholder="(XXX) XXX-XXXX" fullWidth />
-            </div>
+          <div style={formRowHalf}>
+            <TextInput label="Last Name" size="sm" value={form.last_name} onChange={updateText('last_name')} placeholder="Last name" fullWidth />
           </div>
         </div>
+        <div style={formRowStyle}>
+          <div style={formRowHalf}>
+            <TextInput label="Email" size="sm" type="email" value={form.email} onChange={updateText('email')} placeholder="user@practice.com" fullWidth required disabled={isEdit} />
+          </div>
+          <div style={formRowHalf}>
+            <TextInput label="Phone" size="sm" type="tel" value={form.phone} onChange={updateText('phone')} placeholder="(XXX) XXX-XXXX" fullWidth />
+          </div>
+        </div>
+      </SheetSection>
 
-        {/* Role & Assignment */}
-        <h3 style={sheetSectionTitle}>Role & Assignment</h3>
-        <div style={sheetFormGroup}>
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <Select label="System Role" size="sm" options={SYSTEM_ROLE_OPTIONS} value={form.system_role} onChange={updateSelect('system_role')} fullWidth />
-            </div>
-            <div style={formRowHalf}>
-              <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role_id ?? ''} onChange={(e) => {
-                const roleId = e.target.value || null;
-                const role = roles.find((r) => r.id === roleId);
-                setForm((prev) => ({ ...prev, practice_role_id: roleId, department: role?.department ?? '' }));
-              }} fullWidth />
-            </div>
+      <SheetSection heading="Role & Assignment">
+        <div style={formRowStyle}>
+          <div style={formRowHalf}>
+            <Select label="System Role" size="sm" options={SYSTEM_ROLE_OPTIONS} value={form.system_role} onChange={updateSelect('system_role')} fullWidth />
           </div>
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <Select label="Department" size="sm" options={departmentOptions} value={selectedRoleDepartment} disabled fullWidth />
-            </div>
-            <div style={formRowHalf}>
-              <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
-            </div>
-          </div>
-          <div style={fieldGroupStyle}>
-            <span style={fieldLabelStyle}>Days in Office</span>
-            <DaysOfWeekPicker
-              value={form.office_days}
-              onChange={(days) => setForm((prev) => ({ ...prev, office_days: days }))}
-            />
+          <div style={formRowHalf}>
+            <Select label="Practice Role" size="sm" options={practiceRoleOptions} value={form.practice_role_id ?? ''} onChange={(e) => {
+              const roleId = e.target.value || null;
+              const role = roles.find((r) => r.id === roleId);
+              setForm((prev) => ({ ...prev, practice_role_id: roleId, department: role?.department ?? '' }));
+            }} fullWidth />
           </div>
         </div>
+        <div style={formRowStyle}>
+          <div style={formRowHalf}>
+            <Select label="Department" size="sm" options={departmentOptions} value={selectedRoleDepartment} disabled fullWidth />
+          </div>
+          <div style={formRowHalf}>
+            <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
+          </div>
+        </div>
+        <div style={dayPickerGroupStyle}>
+          <SheetFieldLabel>Days in Office</SheetFieldLabel>
+          <DaysOfWeekPicker
+            value={form.office_days}
+            onChange={(days) => setForm((prev) => ({ ...prev, office_days: days }))}
+          />
+        </div>
+      </SheetSection>
 
-        {/* Status */}
-        <h3 style={sheetSectionTitle}>Status</h3>
-        <div style={sheetFormGroup}>
-          <div style={formRowStyle}>
-            <div style={formRowHalf}>
-              <Select label="Employee Type" size="sm" options={EMPLOYEE_TYPE_OPTIONS} value={form.employee_type} onChange={updateSelect('employee_type')} fullWidth />
-            </div>
-            <div style={formRowHalf}>
-              <Select label="Account Status" size="sm" options={STATUS_OPTIONS} value={String(form.is_active)} onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))} fullWidth />
-            </div>
+      <SheetSection heading="Status">
+        <div style={formRowStyle}>
+          <div style={formRowHalf}>
+            <Select label="Employee Type" size="sm" options={EMPLOYEE_TYPE_OPTIONS} value={form.employee_type} onChange={updateSelect('employee_type')} fullWidth />
+          </div>
+          <div style={formRowHalf}>
+            <Select label="Account Status" size="sm" options={STATUS_OPTIONS} value={String(form.is_active)} onChange={(e) => setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))} fullWidth />
           </div>
         </div>
-      </div>
+      </SheetSection>
     </form>
   );
 
   const rolesContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Roles</h3>
+    <SheetSection heading="Roles">
       {!assocRole ? (
-        <p style={emptyState}>No role assigned to this user.</p>
+        <EmptyState title="No role" description="No role assigned to this user." />
       ) : (
         <Table size="default">
           <TableHeader>
@@ -289,14 +260,13 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
 
       {/* Hidden form so the save button still works from this tab */}
       <form id="edit-user-form" onSubmit={handleSave} style={{ display: 'none' }} />
-    </div>
+    </SheetSection>
   );
 
   const departmentsContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Departments</h3>
+    <SheetSection heading="Departments">
       {!assocDept ? (
-        <p style={emptyState}>No department assigned to this user.</p>
+        <EmptyState title="No department" description="No department assigned to this user." />
       ) : (
         <Table size="default">
           <TableHeader>
@@ -316,7 +286,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
 
       {/* Hidden form so the save button still works from this tab */}
       <form id="edit-user-form" onSubmit={handleSave} style={{ display: 'none' }} />
-    </div>
+    </SheetSection>
   );
 
   // ─── Build tabs (only in edit mode) ──────────────────────────────────────
