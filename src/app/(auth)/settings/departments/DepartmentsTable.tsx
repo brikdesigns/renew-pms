@@ -18,6 +18,7 @@ import { useRoles } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -136,16 +137,16 @@ export function DepartmentsTable() {
             ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--strong">{d.name}</span>
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
                   {d.color
                     ? <span style={{ ...colorDot, backgroundColor: departmentColor(d.color).base }} />
-                    : <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
+                    : <span className="settings-table-cell-text settings-table-cell-text--secondary">—</span>
                   }
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{d.member_count}</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">{d.member_count}</span>
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
                   <StatusBadge status={d.is_active} />

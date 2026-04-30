@@ -1,7 +1,7 @@
 ---
 status: in-progress
 owner: nick
-last-updated: 2026-04-29
+last-updated: 2026-04-30
 canonical-naming-rules: https://design.brikdesigns.com/docs/primitives/naming-conventions
 workflow: ./cleanup-workflow.md
 related: ./component-cleanup-audit.md
@@ -10,38 +10,32 @@ tracking-issue: https://github.com/brikdesigns/renew-pms/issues/101
 
 # Inline-style cleanup audit
 
-## Status (2026-04-29)
+## Status (2026-04-30)
 
-**Pre-launch must-fix subset:**
+**Pre-launch must-fix subset — ✅ COMPLETE:**
 
 | # | Branch / scope | State |
 | --- | --- | --- |
 | 1a | `task/bds-cleanup-inline-styles-sheets-1a` — ViewUserSheet, ViewTaskSheet | ✅ merged (#115) |
 | 1b | `task/bds-cleanup-inline-styles-sheets-1b` — EditUserSheet, EditProfileSheet, ViewInventorySheet, ViewContactSheet | ✅ merged (#116) |
 | 3 | `task/bds-cleanup-inline-styles-dashboard` — DashboardClient, ProfileCard, CardSkeleton (chrome only) | ✅ merged (#117) |
-| 2 | `task/bds-cleanup-inline-styles-settings-tables` — `_shared.ts` + 7 settings tables | 🚧 **GATED** on BDS decision — see "Deferred items" below |
+| 2 | `task/bds-cleanup-inline-styles-settings-tables` — 7 settings tables, slot-class CSS | 🟡 PR open |
 
-**Counts:** 619 (original) → **558** as of `6d9d4d3`. 61 markers resolved across 3 PRs.
+**Counts:** 619 (original) → **~528** with PR 2. ~91 markers resolved across 4 PRs.
 
-**To resume:** the next session picks up at PR 2. Read the "Deferred items" section first — PR 2 cannot start without resolving the BDS-side `TableCellText` question.
+**Next:** Pre-launch cleanup is essentially done. Remaining items are post-launch (PRs 4-7) or deferred BDS-promotion follow-ups (see "Deferred items").
 
 ## Deferred items
 
 These were flagged out-of-scope in the merged PRs and need their own session. Listed in priority order.
 
-### 1. PR 2 BDS gate — `TableCellText` promotion decision
+### 1. PR 2 chosen path — Option B applied (local slot classes)
 
-**Status:** blocking PR 2.
+**Status:** RESOLVED via slot-class CSS approach.
 
-The 7 settings tables (ContactsTable, UsersTable, TemplatesTable, TeamsTable, DepartmentsTable, RolesTable, OfficeRoomsTab) share `~50 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: ... }}>` cell-text elements. The audit's pattern table calls this a **promotion candidate** for a BDS `TableCellText` (or per-cell `Label` variant).
+Audit decision: BDS Storybook MCP unavailable in the session, but local BDS package check confirmed no `TableCellText` primitive exists. BDS Table's default cell typography is `body-md` (data-table density); the renew-pms settings tables deliberately use a more compact `label-sm` typography. Cataloged 4 distinct cell-text shapes across the 7 tables (primary/strong, secondary, muted, conditional). All 4 were absorbed into a small `src/app/(auth)/settings/_settingsTableStyles.css` file with 5 BEM-style classes (`.settings-table-cell-text` + 3 modifiers + `.settings-table-empty-row`).
 
-Before starting PR 2, decide:
-
-- **Option A:** open a BDS PR adding `TableCellText` (or extend `Label` with table-cell variant). Publish new BDS version. Bump in renew-pms. Then PR 2 swaps. Sequence: 3 PRs, 2-3 sessions.
-- **Option B:** add slot classes via a shared `_settingsTableStyles.css` in renew-pms (precedent: schedule/calendar.css, ProfileCard.css from #117). Single-session PR. Promotes to BDS later.
-- **Option C:** check current BDS Storybook MCP for existing primitives that already cover the use (see Storybook MCP section in CLAUDE.md). May be Option A with no new code.
-
-Query Storybook MCP first to confirm coverage state before picking the path.
+When BDS adds a `TableCellText` primitive (or compact-table variant), the renew-pms swap is mechanical: className → component import. The CSS file documents this in its header.
 
 ### 2. `_sheetStyles.ts` final-pass deletion
 
@@ -113,11 +107,12 @@ Scan run 2026-04-29 against `staging` (`ce249a5`).
 
 > **One fix often resolves multiple categories.** Replacing `<div style={cardStyle}><span style={titleStyle}>X</span></div>` with `<Card><Card.Title>X</Card.Title></Card>` resolves both Cat 1 (the wrapping div) and Cat 2 (the inner span) in one swap. Cross-references called out where they apply.
 
-### Category 1 — Unclassed `<div>` containers (423 / originally 463)
+### Category 1 — Unclassed `<div>` containers (421 / originally 463)
 
 `<div style={…}>` with no class name. Splits into two by source-style:
+
 - **1a. Inline literal styles** (114 / originally 119): `<div style={{ display: 'flex', gap: gap.md }}>` — entirely unnamed.
-- **1b. Imported style consts** (309 / originally 344): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
+- **1b. Imported style consts** (307 / originally 344): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
 
 Both shapes share the same fix surface: replace the wrapping element with a BDS component (which renders with the proper `bds-*` slot class) when one applies, or attach a named slot class when no BDS primitive is right.
 
@@ -163,7 +158,7 @@ These are scattered across every file in 1a plus most of the settings tables and
 
 The fix shape is identical: where the wrapping intent matches a BDS container (`Card`, `DataSection`, `SheetSection`, `PageHeader`), replace the element. Where it's pure layout (`Stack`, `Cluster`, `Inline`), use the BDS layout primitive if one exists, else keep the const but attach a slot class.
 
-### Category 2 — Unclassed `<span>` text elements (100 / originally 114)
+### Category 2 — Unclassed `<span>` text elements (74 / originally 114)
 
 `<span style={…}>` carrying typography styles. These are labels, metadata, captions, inline values — exactly the surface the BDS naming-conventions doc calls out (`field-label`, `chip__label`, `button-label`, `tab-label`).
 
@@ -172,12 +167,12 @@ Top files:
 | File | Count |
 |---|---|
 | `src/components/AddTaskSheet.tsx` | 12 |
-| `src/app/(auth)/settings/contacts/ContactsTable.tsx` | 9 |
+| ~~`src/app/(auth)/settings/contacts/ContactsTable.tsx`~~ | ~~9~~ → 0 (2) |
 | ~~`src/components/ProfileCard.tsx`~~ | ~~6~~ → 0 (3) |
-| `src/app/(auth)/settings/users/UsersTable.tsx` | 6 |
+| ~~`src/app/(auth)/settings/users/UsersTable.tsx`~~ | ~~6~~ → 2 (2) |
 | `src/components/InventoryTable.tsx` | 5 |
-| `src/app/(auth)/settings/roles/RolesTable.tsx` | 5 |
-| `src/app/(auth)/settings/departments/DepartmentsTable.tsx` | 5 |
+| ~~`src/app/(auth)/settings/roles/RolesTable.tsx`~~ | ~~5~~ → 0 (2) |
+| ~~`src/app/(auth)/settings/departments/DepartmentsTable.tsx`~~ | ~~5~~ → 0 (2) |
 | `src/app/(auth)/dashboard/DashboardClient.tsx` | 5 |
 | `src/components/EditUserSheet.tsx` | 4 |
 | `src/components/ViewTaskSheet.tsx` | 4 |
@@ -212,7 +207,7 @@ Top files:
 
 These collapse into the same fix surface as Cat 2 — a BDS text primitive (`Body`, `Description`, etc.) once the right one is identified.
 
-### Category 4 — Inline `fontSize:` in JSX style props (90 / originally 92)
+### Category 4 — Inline `fontSize:` in JSX style props (59 / originally 92)
 
 Counts elements where `fontSize:` appears literally inside a JSX `style={{…}}` prop (vs. inside a named const in `_shared.ts`). Examples:
 

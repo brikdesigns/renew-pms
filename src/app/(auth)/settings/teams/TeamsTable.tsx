@@ -14,6 +14,7 @@ import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -174,7 +175,7 @@ export function TeamsTable() {
               <TableSkeleton columns={5} />
             ) : teams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <TableCell colSpan={5} className="settings-table-empty-row" style={bodyCellStyle}>
                   No teams yet. Click &quot;Add Team&quot; to create one.
                 </TableCell>
               </TableRow>
@@ -183,7 +184,7 @@ export function TeamsTable() {
               return (
                 <TableRow key={t.id}>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{t.name}</span>
+                    <span className="settings-table-cell-text settings-table-cell-text--strong">{t.name}</span>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     {t.department_name ? (
@@ -191,11 +192,11 @@ export function TeamsTable() {
                         {t.department_name}
                       </Tag>
                     ) : (
-                      <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
+                      <span className="settings-table-cell-text settings-table-cell-text--secondary">—</span>
                     )}
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{t.member_count}</span>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">{t.member_count}</span>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     <Badge status={t.is_active ? 'positive' : 'error'} size="sm">

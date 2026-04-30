@@ -15,6 +15,7 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
 import { AddContactSheet, type ContactEditData } from '@/components/AddContactSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
+import '../_settingsTableStyles.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -137,7 +138,7 @@ function CompaniesView({
           <TableSkeleton columns={7} />
         ) : vendors.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} className="settings-table-empty-row" style={bodyCellStyle}>
               No companies found.
             </TableCell>
           </TableRow>
@@ -146,7 +147,7 @@ function CompaniesView({
           return (
             <TableRow key={v.id}>
               <TableCell style={bodyCellStyle}>
-                <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+                <div className="settings-table-cell-text settings-table-cell-text--strong">
                   {v.name}
                 </div>
                 {v.address && (
@@ -161,17 +162,20 @@ function CompaniesView({
                 </Tag>
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.phone ? color.text.primary : color.text.muted }}>
+                <span className={v.phone ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {v.phone ?? '—'}
                 </span>
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
+                <span
+                  className={v.email ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}
+                  style={{ overflowWrap: 'break-word' }}
+                >
                   {v.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                <span className="settings-table-cell-text settings-table-cell-text--secondary">
                   {v.contact_count}
                 </span>
               </TableCell>
@@ -222,7 +226,7 @@ function ContactsView({
           <TableSkeleton columns={7} />
         ) : contacts.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ ...bodyCellStyle, textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} className="settings-table-empty-row" style={bodyCellStyle}>
               No contacts found.
             </TableCell>
           </TableRow>
@@ -231,7 +235,7 @@ function ContactsView({
           return (
             <TableRow key={c.id}>
               <TableCell style={bodyCellStyle}>
-                <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+                <div className="settings-table-cell-text settings-table-cell-text--strong">
                   {c.name}
                 </div>
                 {c.is_primary && (
@@ -241,7 +245,7 @@ function ContactsView({
                 )}
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.vendor_name ? color.text.primary : color.text.muted }}>
+                <span className={c.vendor_name ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.vendor_name ?? '—'}
                 </span>
               </TableCell>
@@ -251,21 +255,24 @@ function ContactsView({
                     {TYPE_LABELS[c.vendor_type] ?? c.vendor_type}
                   </Tag>
                 ) : (
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted }}>—</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--muted">—</span>
                 )}
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.role ? color.text.primary : color.text.muted }}>
+                <span className={c.role ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.role ?? '—'}
                 </span>
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.phone ? color.text.primary : color.text.muted }}>
+                <span className={c.phone ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.phone ?? '—'}
                 </span>
               </TableCell>
               <TableCell style={bodyCellStyle}>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.email ? color.text.primary : color.text.muted, overflowWrap: 'break-word' }}>
+                <span
+                  className={c.email ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}
+                  style={{ overflowWrap: 'break-word' }}
+                >
                   {c.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>

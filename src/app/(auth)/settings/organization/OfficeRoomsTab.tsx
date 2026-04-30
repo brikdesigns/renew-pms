@@ -17,6 +17,7 @@ import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Room type display mapping ───────────────────────────────────────────────
 
@@ -243,7 +244,7 @@ export function OfficeRoomsTab() {
             {rooms.map((room) => (
               <TableRow key={room.id}>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+                  <span className="settings-table-cell-text settings-table-cell-text--strong">
                     {room.name}
                   </span>
                 </TableCell>
@@ -251,7 +252,7 @@ export function OfficeRoomsTab() {
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>

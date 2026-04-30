@@ -1,0 +1,50 @@
+/**
+ * Settings tables — slot classes for cell text typography.
+ *
+ * The 7 settings tables (Contacts, Users, Templates, Teams, Departments,
+ * Roles, OfficeRoomsTab) all use a compact label-family/label-sm
+ * typography for cell content — distinct from BDS Table's default
+ * body-md typography. The audit's Cat 2 follow-up flagged this as a
+ * BDS promotion candidate (`TableCellText`); until that lands, these
+ * slot classes resolve the inline-style violations in-place.
+ *
+ * See docs/qa/inline-style-cleanup-audit.md "Deferred items" §1.
+ *
+ * Usage:
+ *   <span className="settings-table-cell-text">{value}</span>
+ *   <span className="settings-table-cell-text settings-table-cell-text--strong">{name}</span>
+ *   <span className="settings-table-cell-text settings-table-cell-text--secondary">{count}</span>
+ *   <span className="settings-table-cell-text settings-table-cell-text--muted">—</span>
+ *
+ * Modifiers compose: `--strong` adds medium weight; color modifiers
+ * (`--secondary`, `--muted`) override the default `text-primary`.
+ */
+
+.settings-table-cell-text {
+  font-family: var(--font-family-label);
+  font-size: var(--label-sm);
+  color: var(--text-primary);
+}
+
+.settings-table-cell-text--strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.settings-table-cell-text--secondary {
+  color: var(--text-secondary);
+}
+
+.settings-table-cell-text--muted {
+  color: var(--text-muted);
+}
+
+/**
+ * Empty-state row — used inside `<TableCell colSpan={N}>` when a table
+ * has no data yet ("No contacts yet", "No teams yet", etc.).
+ */
+.settings-table-empty-row {
+  text-align: center;
+  font-family: var(--font-family-label);
+  font-size: var(--label-sm);
+  color: var(--text-muted);
+}

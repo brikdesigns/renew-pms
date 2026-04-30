@@ -23,6 +23,7 @@ import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 const TEXT_SECONDARY = color.text.secondary;
 
 import { EMPLOYEE_TYPE_TAG, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
+import '../_settingsTableStyles.css';
 
 const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 'maturing', 'Proficient': 'proficient' };
 
@@ -322,17 +323,17 @@ export function UsersTable() {
                     </div>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {m.practice_role || '—'}
                     </span>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {m.department || '—'}
                     </span>
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {SYSTEM_ROLE_LABELS[m.system_role] ?? m.system_role}
                     </span>
                   </TableCell>
