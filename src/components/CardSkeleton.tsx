@@ -1,20 +1,10 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { Skeleton } from '@brikdesigns/bds';
-import { color, gap, space, border, shadow } from '@/lib/tokens';
+import { Card, Skeleton } from '@brikdesigns/bds';
+import { color, gap, space, border } from '@/lib/tokens';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
-
-const cardStyle: CSSProperties = {
-  backgroundColor: color.background.primary,
-  borderRadius: border.radius.lg,
-  boxShadow: shadow.sm,
-  padding: space.lg,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.lg,
-};
 
 const headerStyle: CSSProperties = {
   display: 'flex',
@@ -42,7 +32,7 @@ const rowStyle: CSSProperties = {
 /** Skeleton for a list card (overdue tasks, recent requests, onboarding) */
 function ListCardSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <div style={cardStyle}>
+    <Card variant="elevated" padding="lg">
       <div style={headerStyle}>
         <Skeleton variant="text" width="180px" height={18} />
         <Skeleton variant="text" width="60px" height={14} />
@@ -59,14 +49,14 @@ function ListCardSkeleton({ rows = 4 }: { rows?: number }) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
 /** Skeleton for the progress/stats card */
 function StatsCardSkeleton() {
   return (
-    <div style={cardStyle}>
+    <Card variant="elevated" padding="lg">
       <div style={headerStyle}>
         <Skeleton variant="text" width="160px" height={18} />
       </div>
@@ -91,7 +81,7 @@ function StatsCardSkeleton() {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
