@@ -10,6 +10,71 @@ tracking-issue: https://github.com/brikdesigns/renew-pms/issues/101
 
 # Inline-style cleanup audit
 
+## Status (2026-04-29)
+
+**Pre-launch must-fix subset:**
+
+| # | Branch / scope | State |
+| --- | --- | --- |
+| 1a | `task/bds-cleanup-inline-styles-sheets-1a` — ViewUserSheet, ViewTaskSheet | ✅ merged (#115) |
+| 1b | `task/bds-cleanup-inline-styles-sheets-1b` — EditUserSheet, EditProfileSheet, ViewInventorySheet, ViewContactSheet | ✅ merged (#116) |
+| 3 | `task/bds-cleanup-inline-styles-dashboard` — DashboardClient, ProfileCard, CardSkeleton (chrome only) | ✅ merged (#117) |
+| 2 | `task/bds-cleanup-inline-styles-settings-tables` — `_shared.ts` + 7 settings tables | 🚧 **GATED** on BDS decision — see "Deferred items" below |
+
+**Counts:** 619 (original) → **558** as of `6d9d4d3`. 61 markers resolved across 3 PRs.
+
+**To resume:** the next session picks up at PR 2. Read the "Deferred items" section first — PR 2 cannot start without resolving the BDS-side `TableCellText` question.
+
+## Deferred items
+
+These were flagged out-of-scope in the merged PRs and need their own session. Listed in priority order.
+
+### 1. PR 2 BDS gate — `TableCellText` promotion decision
+
+**Status:** blocking PR 2.
+
+The 7 settings tables (ContactsTable, UsersTable, TemplatesTable, TeamsTable, DepartmentsTable, RolesTable, OfficeRoomsTab) share `~50 <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: ... }}>` cell-text elements. The audit's pattern table calls this a **promotion candidate** for a BDS `TableCellText` (or per-cell `Label` variant).
+
+Before starting PR 2, decide:
+
+- **Option A:** open a BDS PR adding `TableCellText` (or extend `Label` with table-cell variant). Publish new BDS version. Bump in renew-pms. Then PR 2 swaps. Sequence: 3 PRs, 2-3 sessions.
+- **Option B:** add slot classes via a shared `_settingsTableStyles.css` in renew-pms (precedent: schedule/calendar.css, ProfileCard.css from #117). Single-session PR. Promotes to BDS later.
+- **Option C:** check current BDS Storybook MCP for existing primitives that already cover the use (see Storybook MCP section in CLAUDE.md). May be Option A with no new code.
+
+Query Storybook MCP first to confirm coverage state before picking the path.
+
+### 2. `_sheetStyles.ts` final-pass deletion
+
+**Status:** waiting on more sheet conversions.
+
+After 1a + 1b, `_sheetStyles.ts` still has ~20 consumers (TeamsTable, AddEventSheet, VendorResponseClient, EditDepartmentSheet, VendorMessagesTab, AddContactSheet, ViewVendorSheet, EditInventorySheet, SubmitRequestSheet, ViewRoleSheet, EditRoomSheet, EditRoleSheet, EditOrganizationSheet, ViewDepartmentSheet, EditTemplateSheet, EditVendorSheet, ViewRequestSheet, ViewTemplateSheet, AddTaskSheet, ViewRoomSheet). These are spread across post-launch PRs 4–6. Once all are converted, a final-pass PR deletes `_sheetStyles.ts`.
+
+### 3. DashboardClient internal typography (Cat 2 follow-up to #117)
+
+**Status:** flagged in #117, not started.
+
+`#117` swapped only the dashboard card chrome. Internal text typography stayed:
+
+- `cardTitleStyle` — h2 inside the 4 dashboard cards
+- `listItemTitleStyle` / `listItemSubStyle` — list items inside Overdue Tasks + Recent Requests
+- `DeptBar` — typography spans + bar visual elements
+- `ProgressRing` — SVG `<text>` element styling
+- Stat blocks (Today's Progress numbers + labels)
+
+Promotion candidates: BDS chart primitives (ProgressRing, DeptBar bar chart), `Stack`/`Cluster` for layout flex wrappers, slot-class CSS for the dashboard text typography. Likely a multi-PR sequence with a BDS chart-primitive PR first.
+
+### 4. ProfileCard interactive button (BDS promotion)
+
+**Status:** flagged in #117, not started.
+
+ProfileCard's outer `<button>` (in user/role/dept/team variants) bypasses BDS Button — it's a custom hover-state composition with avatar + tag + endContent. A future BDS `InteractiveProfileCard` or composable `ListItem` primitive would absorb this. Until then the inner spans use slot classes (#117) but the button itself is still a one-off.
+
+### 5. Post-launch PRs 4–7
+
+Per the original triage table below — vendor-public, page-chrome, small-surfaces, raw-element-lint. Not pre-launch must-fix.
+
+---
+
 Systematic inventory of inline-styled `<div>` / `<span>` / `<p>` elements (and embedded `fontSize:` / `var(--)` markers) in renew-pms `src/`. The previous [component cleanup audit](./component-cleanup-audit.md) closed 2026-04-28 against raw `<button>` / `<a>` and naming drift — this one is about the next layer down: **structural containers and text elements that carry no link back to BDS**. Hovering an element in DevTools today shows `<div style="…">` with no `bds-*` class, no slot name, no semantic role.
 
 > **Methodology:** this audit follows [`cleanup-workflow.md`](./cleanup-workflow.md). Counts and call sites here feed batched cleanup PRs (one branch = one batch of fixes that share the same shape). The goal is not "delete every inline style" — it is **every interactive surface routes through a BDS component, every text role names its slot, every container picks the right family.**
