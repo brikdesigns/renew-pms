@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { font, color, space, gap, border, state, motion } from '@/lib/tokens';
+import { color, space, gap, border, state, motion } from '@/lib/tokens';
 import { UserAvatar } from '@/components/UserAvatar';
+import './ProfileCard.css';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -68,60 +69,7 @@ function cardStyle(clickable: boolean, hovered: boolean): CSSProperties {
 
 // Avatar rendering moved to shared UserAvatar component
 
-const dotStyle: CSSProperties = {
-  width: '40px',
-  height: '40px',
-  borderRadius: border.radius.pill,
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-};
-
-const textWrap: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.tiny,
-  minWidth: 0,
-  flex: 1,
-};
-
-const nameStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-  lineHeight: 1,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const subtitleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.regular,
-  color: color.text.secondary,
-  lineHeight: 1.3,
-  overflowWrap: 'break-word',
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
-
-const deptTagStyle: CSSProperties = {
-  fontFamily: font.family.subtitle,
-  fontSize: font.size.subtitle.md,
-  fontWeight: font.weight.semibold,
-  lineHeight: 1,
-  padding: `${gap.xs} ${gap.md}`,
-  borderRadius: border.radius.sm,
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
 
 export function ProfileCard(props: ProfileCardProps) {
   const { variant, name, subtitle, onClick, endContent, avatarSize = 'md' } = props;
@@ -133,7 +81,11 @@ export function ProfileCard(props: ProfileCardProps) {
 
   if (variant === 'department') {
     const initial = name.charAt(0).toUpperCase();
-    visual = <span style={{ ...dotStyle, backgroundColor: props.dotColor }}>{initial}</span>;
+    visual = (
+      <span className="profile-card__dot" style={{ backgroundColor: props.dotColor }}>
+        {initial}
+      </span>
+    );
   } else {
     const url = props.avatarUrl;
     // Role + user cards: resolve department from user variant's department prop,
@@ -175,16 +127,18 @@ export function ProfileCard(props: ProfileCardProps) {
         onMouseLeave={() => setHovered(false)}
       >
         {visual}
-        <div style={textWrap}>
-          <span style={nameStyle}>{name}</span>
-          {composedSubtitle && <span style={subtitleStyle}>{composedSubtitle}</span>}
+        <div className="profile-card__text-wrap">
+          <span className="profile-card__name">{name}</span>
+          {composedSubtitle && <span className="profile-card__subtitle">{composedSubtitle}</span>}
         </div>
         {endContent ?? (hasDeptTag && (
-          <span style={{
-            ...deptTagStyle,
-            backgroundColor: props.departmentBg,
-            color: props.departmentText ?? color.text.primary,
-          }}>
+          <span
+            className="profile-card__dept-tag"
+            style={{
+              backgroundColor: props.departmentBg,
+              color: props.departmentText ?? color.text.primary,
+            }}
+          >
             {props.department}
           </span>
         ))}
@@ -201,9 +155,9 @@ export function ProfileCard(props: ProfileCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {visual}
-      <div style={textWrap}>
-        <span style={nameStyle}>{name}</span>
-        {subtitle && <span style={subtitleStyle}>{subtitle}</span>}
+      <div className="profile-card__text-wrap">
+        <span className="profile-card__name">{name}</span>
+        {subtitle && <span className="profile-card__subtitle">{subtitle}</span>}
       </div>
     </Tag>
   );

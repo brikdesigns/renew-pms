@@ -42,17 +42,17 @@ Cited verbatim from the [BDS naming conventions doc](https://design.brikdesigns.
 
 In renew-pms terms: when DevTools shows `<div>` with inline styles, that's an unclassed wrapper. Either it should be a BDS primitive (Card, DataSection, SheetSection, Stack, Text, Label) or its container should be — and the inner element should carry a `__slot` BEM class.
 
-## Findings — 575 / originally 619 unclassed inline-styled elements across 4 categories
+## Findings — 558 / originally 619 unclassed inline-styled elements across 4 categories
 
 Scan run 2026-04-29 against `staging` (`ce249a5`).
 
 > **One fix often resolves multiple categories.** Replacing `<div style={cardStyle}><span style={titleStyle}>X</span></div>` with `<Card><Card.Title>X</Card.Title></Card>` resolves both Cat 1 (the wrapping div) and Cat 2 (the inner span) in one swap. Cross-references called out where they apply.
 
-### Category 1 — Unclassed `<div>` containers (431 / originally 463)
+### Category 1 — Unclassed `<div>` containers (423 / originally 463)
 
 `<div style={…}>` with no class name. Splits into two by source-style:
 - **1a. Inline literal styles** (114 / originally 119): `<div style={{ display: 'flex', gap: gap.md }}>` — entirely unnamed.
-- **1b. Imported style consts** (317 / originally 344): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
+- **1b. Imported style consts** (309 / originally 344): `<div style={cardStyle}>` / `<div style={pageStyle}>` — the const has a name in source, but the rendered DOM still shows an unclassed `<div>`.
 
 Both shapes share the same fix surface: replace the wrapping element with a BDS component (which renders with the proper `bds-*` slot class) when one applies, or attach a named slot class when no BDS primitive is right.
 
@@ -70,7 +70,7 @@ Both shapes share the same fix surface: replace the wrapping element with a BDS 
 | `src/components/EditVendorSheet.tsx` | 12 |
 | `src/app/(auth)/settings/contacts/ContactsTable.tsx` | 12 |
 | `src/components/SheetSkeleton.tsx` | 11 |
-| `src/components/CardSkeleton.tsx` | 10 |
+| ~~`src/components/CardSkeleton.tsx`~~ | ~~10~~ → 8 (3) |
 | ~~`src/components/EditUserSheet.tsx`~~ | ~~22~~ → 5 (1b) |
 | ~~`src/components/EditProfileSheet.tsx`~~ | ~~16~~ → 4 (1b) |
 | ~~`src/components/ViewUserSheet.tsx`~~ | ~~10~~ → 3 (1a) |
@@ -98,7 +98,7 @@ These are scattered across every file in 1a plus most of the settings tables and
 
 The fix shape is identical: where the wrapping intent matches a BDS container (`Card`, `DataSection`, `SheetSection`, `PageHeader`), replace the element. Where it's pure layout (`Stack`, `Cluster`, `Inline`), use the BDS layout primitive if one exists, else keep the const but attach a slot class.
 
-### Category 2 — Unclassed `<span>` text elements (106 / originally 114)
+### Category 2 — Unclassed `<span>` text elements (100 / originally 114)
 
 `<span style={…}>` carrying typography styles. These are labels, metadata, captions, inline values — exactly the surface the BDS naming-conventions doc calls out (`field-label`, `chip__label`, `button-label`, `tab-label`).
 
@@ -108,7 +108,7 @@ Top files:
 |---|---|
 | `src/components/AddTaskSheet.tsx` | 12 |
 | `src/app/(auth)/settings/contacts/ContactsTable.tsx` | 9 |
-| `src/components/ProfileCard.tsx` | 6 |
+| ~~`src/components/ProfileCard.tsx`~~ | ~~6~~ → 0 (3) |
 | `src/app/(auth)/settings/users/UsersTable.tsx` | 6 |
 | `src/components/InventoryTable.tsx` | 5 |
 | `src/app/(auth)/settings/roles/RolesTable.tsx` | 5 |
@@ -193,7 +193,7 @@ Aligned with [issue #101](https://github.com/brikdesigns/renew-pms/issues/101)'s
 |---|---|---|---|---|
 | 1 | `task/bds-cleanup-inline-styles-sheets` (split into 1a + 1b) | S-tier sheets — ✅ 1a: `ViewUserSheet`, `ViewTaskSheet` (#115). ✅ 1b: `EditUserSheet`, `EditProfileSheet`, `ViewInventorySheet`, `ViewContactSheet`. | Cat 1a/1b/2/3/4 across these 6 files. Defines the "sheet skeleton" pattern for the rest. | 12–16 hr |
 | 2 | `task/bds-cleanup-inline-styles-settings-tables` | Settings tables — `_shared.ts` + `ContactsTable`, `UsersTable`, `TemplatesTable`, `TeamsTable`, `DepartmentsTable`, `RolesTable`, `OfficeRoomsTab` | Cat 1b/2/4 across 7 tables sharing `_shared.ts`. Surfaces the table-cell-text promotion candidate. | 6–8 hr |
-| 3 | `task/bds-cleanup-inline-styles-dashboard` | `DashboardClient`, `ProfileCard`, `CardSkeleton` | Cat 1a (39 in DashboardClient), Cat 2 (`ProfileCard`), Cat 1a in skeleton. First-impression surface. | 6–8 hr |
+| 3 | ✅ `task/bds-cleanup-inline-styles-dashboard` | `DashboardClient`, `ProfileCard`, `CardSkeleton` — chrome only (4 dashboard cards + CardSkeleton → BDS `Card`; ProfileCard inner spans → slot classes via new `ProfileCard.css`). DashboardClient internal text typography (cardTitleStyle, listItemTitleStyle, DeptBar spans, ProgressRing SVG text, stat blocks) deferred to a Cat 2 follow-up since no BDS coverage. | Cat 1b (8 sites), Cat 2 (6 ProfileCard spans). First-impression surface. | 6–8 hr |
 | 4 | `task/bds-cleanup-inline-styles-vendor-public` | Vendor public — `VendorResponseClient`, `VendorSidebar`, `vendor/[token]/page` | Cat 1a/2/3/4. Pair with a11y review per the compliance profile. | 4–6 hr |
 | 5 | `task/bds-cleanup-inline-styles-page-chrome` | `TasksClient`, `RequestsClient`, `MyRequestsList`, `InventoryTable`, `TaskFilterBar` | Cat 1a/2/4 — page header / filter bar chrome. Extracts shared header pattern. | 4–6 hr |
 | 6 | `task/bds-cleanup-inline-styles-small-surfaces` | Schedule, Training trio, Organization, Account, `VendorSidebar`, `NotificationBell` | Cat 1a/2 across remaining surfaces. | 3–4 hr |

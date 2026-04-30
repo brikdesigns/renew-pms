@@ -4,12 +4,12 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
 import { CardSkeleton } from '@/components/CardSkeleton';
-import { color, font, gap, space, border, shadow, state, motion, departmentColor } from '@/lib/tokens';
+import { color, font, gap, space, border, state, motion, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
 import { useDashboard } from '@/hooks/useDashboard';
@@ -65,16 +65,7 @@ const gridStyle: CSSProperties = {
 
 const CARD_MIN_HEIGHT = '340px';
 
-const cardStyle: CSSProperties = {
-  backgroundColor: color.background.primary,
-  borderRadius: border.radius.lg,
-  boxShadow: shadow.sm,
-  padding: space.lg,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.lg,
-  minHeight: CARD_MIN_HEIGHT,
-};
+const cardMinHeightStyle: CSSProperties = { minHeight: CARD_MIN_HEIGHT };
 
 const cardHeaderStyle: CSSProperties = {
   display: 'flex',
@@ -325,7 +316,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
         {dashLoading ? (
           <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
         ) : (
-        <div style={cardStyle}>
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
@@ -364,14 +355,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               );
             })}
           </ul>
-        </div>
+        </Card>
         )}
 
         {/* ── Card 2: Today's Progress ── */}
         {dashLoading ? (
           <CardSkeleton variant="stats" minHeight={CARD_MIN_HEIGHT} />
         ) : (
-        <div style={cardStyle}>
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
@@ -414,12 +405,12 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               }
             </div>
           )}
-        </div>
+        </Card>
         )}
 
         {/* ── Card 3: Onboarding Status (hidden for proficient staff) ── */}
         {showOnboarding && (
-          <div style={cardStyle}>
+          <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
             <div style={cardHeaderStyle}>
               <h2 style={cardTitleStyle}>
                 {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
@@ -455,14 +446,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                 );
               })}
             </ul>
-          </div>
+          </Card>
         )}
 
         {/* ── Card 4: Recent Requests ── */}
         {dashLoading ? (
           <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
         ) : (
-        <div style={cardStyle}>
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
@@ -499,7 +490,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               );
             })}
           </ul>
-        </div>
+        </Card>
         )}
       </div>
     </div>
