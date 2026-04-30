@@ -6,28 +6,14 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
-## STOP — Worktree Rules (Non-Negotiable)
+## Worktree (renew-pms specifics)
 
-**The primary worktree at `/Documents/GitHub/product/renew-pms` stays on `staging` (the pre-launch base branch; `main` after launch).** Task work always lives in `../renew-pms-worktrees/{slug}`. Never `git switch` the primary worktree to a `task/*` branch — it cross-contaminates work between concurrent agents. See the 2026-04-21 BDS Phase B incident for the class of bug this prevents.
+- **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
+- **Worktree path:** `../renew-pms-worktrees/{slug}`
+- **Spawn:** `./scripts/new-task.sh {slug}` from the primary
+- **Hook:** `.claude/hooks/worktree-check.sh` warns on session start + first edit; also detects cross-worktree drift
 
-**How to start a task:**
-
-```bash
-# From the primary worktree (on staging), create an isolated worktree:
-./scripts/new-task.sh {scope}-{name}
-# e.g. ./scripts/new-task.sh renew-task-templates
-```
-
-The `new-task.sh` script refuses to run from anywhere but the primary on a base branch, so this rule is enforced automatically.
-
-**If you discover the primary is on a task branch:**
-
-1. `cd /Users/nickstanerson/Documents/GitHub/product/renew-pms`
-2. `git status` — inspect any uncommitted work
-3. If the work belongs to a real task, move it: `git worktree add ../renew-pms-worktrees/<slug> -b <existing-branch>` and stash/apply
-4. `git switch staging`
-
-A SessionStart + PreToolUse hook (`.claude/hooks/worktree-check.sh`) warns on every session and edit when this rule is violated. Set `BDS_WORKTREE_GUARD=strict` in your environment to make it blocking.
+Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAUDE.md (`~/Documents/GitHub/CLAUDE.md`) § Agent scope discipline. The shared rule is the source of truth — this section only carries the renew-specific path + base-branch.
 
 ---
 
@@ -38,7 +24,7 @@ A SessionStart + PreToolUse hook (`.claude/hooks/worktree-check.sh`) warns on ev
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+| --- | --- |
 | Framework | Next.js 16 (App Router, TypeScript) |
 | React | React 19 |
 | Auth | Supabase Auth (`@supabase/ssr`) — session refresh via `src/proxy.ts` |
@@ -53,13 +39,11 @@ A SessionStart + PreToolUse hook (`.claude/hooks/worktree-check.sh`) warns on ev
 | Docs | Fumadocs (fumadocs-ui, fumadocs-mdx, fumadocs-core) — `/docs` and `/guide` routes |
 | Hosting | Netlify |
 
-## LLM stack (when any future feature calls Claude)
+## LLM stack (renew-pms specifics)
 
-Renew-pms has no Claude calls today. When it adds any — treatment-plan drafting, training-module generation, vendor-communication drafts, scheduling-rationale summaries, anything — route through `@brikdesigns/claude-client` (or its Python twin `brik_claude_client`), not raw `@anthropic-ai/sdk`. Every call is Helicone-traced + `workflow_type`-tagged that way, and outputs land in the same dashboard as every other Brik Claude call.
+Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `@brikdesigns/claude-client` requirement live in cross-repo § "How to add Claude to any Brik app."
 
-HIPAA implication: any Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md) — currently deferred, to be activated when a concrete ingestion surface defines what gets redacted. Do not ship PHI-in-prompt flows before that lands.
-
-Cross-repo rules: `~/Documents/GitHub/CLAUDE.md`. Canonical reasoning in [ADR-001](../../brik/brik-llm/software/docs/adr/ADR-001-llm-enrichment-architecture.md); module boundaries in [ADR-002](../../brik/brik-llm/software/docs/adr/ADR-002-module-boundaries.md) — note that `@brikdesigns/claude-client` is a platform dependency, not a module, so it's consumed, not extended.
+**Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
 
 ## Business Context
 
@@ -75,7 +59,7 @@ Renew PMS is a **dental practice management system and staff training platform**
 ### Applicable regimes (all YES for this repo)
 
 | Regime | Applies | Reason |
-|--------|---------|--------|
+| --- | --- | --- |
 | **HIPAA** | Yes | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
 | **ACA §1557** | Yes | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
 | **Rehab Act §504** | Yes | Covered when the practice or platform receives federal funding |
@@ -128,7 +112,7 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 ## Supabase
 
 | Environment | Project Ref | Purpose |
-|-------------|-------------|---------|
+| --- | --- | --- |
 | Development | `zneuygoeorhkuhktmuld` | Local dev + staging (`.env.local`) |
 | Production | **NOT YET PROVISIONED** | Required before soft launch |
 
@@ -241,24 +225,9 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 ### Storybook MCP — query before writing UI
 
-The BDS component library is exposed as a Storybook MCP server. **Always query it for component props, examples, and guidance before writing any JSX in this app.** Do not read source files in `brik/brik-bds/` to guess.
+Always query the Storybook MCP for BDS component props before writing JSX. Endpoint, tool list, and unreachable-fallback are documented in the BDS CLAUDE.md (which is `@-imported` above) § Storybook MCP addon. Per-build Chromatic URLs are forbidden — use the `main--69b8918...chromatic.com/mcp` stable endpoint.
 
-**Endpoint (stable, hosted by Chromatic):**
-`https://main--69b8918cac3056b39424d5d3.chromatic.com/mcp`
-
-This URL tracks the latest build on BDS `main` and never goes stale. When BDS Storybook is running locally (`cd ~/Documents/GitHub/brik/brik-bds && npm run storybook`), `http://localhost:6006/mcp` is also available and reflects in-flight changes.
-
-⚠ Never use a per-build Chromatic URL (`<appid>-<random>.chromatic.com`) — those freeze on the build that produced them.
-
-**Tools:**
-- `list-all-documentation` — discover all components
-- `get-documentation` — full props + JSX examples for a component
-- `get-documentation-for-story` — a specific story variant
-- `preview-stories` — live preview URLs
-
-**Filter by surface.** Every BDS story carries one of `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app, so when listing components filter to `surface-product` + `surface-shared`. **Do not use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — those belong on marketing surfaces and will misfit a clinical PMS UI.
-
-**MCP unreachable?** Read the cached fallback at [`../brik/brik-bds/docs/STORYBOOK-WRITING-GUIDE.md`](../brik/brik-bds/docs/STORYBOOK-WRITING-GUIDE.md).
+**Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
 
 ## Component Rules
 
@@ -283,7 +252,7 @@ This URL tracks the latest build on BDS `main` and never goes stale. When BDS St
 
 ## Branch Workflow
 
-> **Pre-launch mode (as of 2026-04-18):** renew-pms is not live yet. `staging` is the **primary** branch — all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
+> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
 
 **All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
 
@@ -309,38 +278,7 @@ This URL tracks the latest build on BDS `main` and never goes stale. When BDS St
 
 ## Session Discipline
 
-Every Claude Code session follows a predictable lifecycle. These rules prevent the two most common failure modes: forgotten commits and scope drift.
-
-> **Cross-cutting changes & scope discipline:** See Global CLAUDE.md > Agent Scope Discipline. The rules there are mandatory and override any temptation to "fix it while I'm here."
-
-### Session start (enforced by `scripts/session-guard.sh` PreToolUse hook)
-
-1. **The hook runs automatically** on your first Edit/Write of the session. If there are uncommitted changes from a prior session, it prints a warning with `git status --short` output.
-2. **Resolve before proceeding.** Commit, stash, or discard prior changes. Do not start new work on top of orphaned changes — that's how mixed commits happen.
-3. **Declare scope.** State what this session will accomplish in one sentence before writing code. Apply the one-sentence test: if you can't describe it without "and," split it into separate branches.
-4. **Check active worktrees.** Run `git worktree list` to see what other agents are working on. If another worktree touches the same files as your scope, coordinate — don't proceed blindly.
-
-### During the session
-
-1. **One concern at a time.** Don't mix feature work, debugging, and docs in the same uncommitted state. If you need to context-switch (e.g., fix a bug discovered while building a feature), commit the feature WIP first.
-2. **Commit at each stable checkpoint.** After completing a logical unit (new component, migration, route wiring), commit immediately. Don't accumulate changes for a single big commit.
-3. **No scope drift without a commit.** If the task expands (e.g., "this also needs a new API route"), commit everything completed so far before starting the expansion.
-4. **Flag, don't fix, cross-cutting issues.** If you notice a widespread pattern problem (wrong button sizes, raw hex values, missing tokens) while working on a feature, log it in the PR description or memory. Do NOT fix it on this branch — it will conflict with every other branch. When a flag matures into a real cleanup pass (≥3 occurrences, or a new BDS rule landed), follow [`docs/qa/cleanup-workflow.md`](docs/qa/cleanup-workflow.md) — audit-first, batched-PR, with explicit BDS-promotion handoff.
-
-### Session end
-
-1. **Nothing uncommitted.** Before ending a session, all changes must be committed. Zero tolerance — the working tree must be clean.
-2. **Verify with `git status`.** Explicitly check. Don't assume.
-3. **Don't push unless asked.** Commits are free; pushes trigger builds and cost deploy credits.
-
-### Guardrails in place
-
-| Guard | Type | What it does |
-| ----- | ---- | ------------ |
-| `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty |
-| `.git/hooks/pre-push` | Git pre-push hook | Blocks push if `typecheck` or `build` fails |
-| `.git/hooks/pre-commit` | Git pre-commit hook | Runs `git-secrets` to prevent credential leaks |
-| `scripts/token-audit.sh` | Manual (run before PRs) | Catches 14 categories of token/component violations |
+Lifecycle rules (start / during / end) + guardrails table live in [`docs/process/session-discipline.md`](docs/process/session-discipline.md). Cross-repo agent scope discipline lives in `~/Documents/GitHub/CLAUDE.md` § Agent scope discipline. Both are mandatory.
 
 ## Commands
 
