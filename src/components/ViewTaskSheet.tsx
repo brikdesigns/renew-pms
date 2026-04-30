@@ -1,15 +1,11 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { Sheet, SheetSection, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
-import {
-  sheetBodyStyle,
-  sheetSectionTitle,
-} from '@/app/(auth)/settings/_sheetStyles';
-import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
+import { gap, departmentColor } from '@/lib/tokens';
 import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -79,26 +75,6 @@ const TASK_TYPE_DISPLAY: Record<string, string> = {
   skill_training: 'Skill Training',
   onboarding: 'Onboarding',
   request: 'Request',
-};
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
-
-const tagRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
-
-const progressBarOuter: CSSProperties = {
-  width: '100%',
-  height: 6,
-  backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.pill,
-  overflow: 'hidden',
-};
-
-const progressTextStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.body.xs,
-  fontWeight: font.weight.medium,
-  color: color.text.secondary,
-  textAlign: 'right',
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -220,9 +196,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   // ── Tab content builders ──
 
   const buildDetailsContent = (t: TaskViewData) => (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Task Details</h3>
-
+    <SheetSection heading="Task Details">
       {/* Assignment */}
       <FieldGrid columns={2} gap="lg">
         <Field label="Assigned To" empty="—">{t.assignee}</Field>
@@ -248,9 +222,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
         <Field label="Task Type" empty="—">{TASK_TYPE_DISPLAY[t.taskType] ?? t.taskType}</Field>
         <Field label="Department" empty="—">
           {t.dept ? (
-            <div style={tagRowStyle}>
-              <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>
-            </div>
+            <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>
           ) : null}
         </Field>
       </FieldGrid>
@@ -274,36 +246,22 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
           </Badge>
         </Field>
       </FieldGrid>
-    </div>
+    </SheetSection>
   );
 
   const buildChecklistContent = () => (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Checklist Items</h3>
-
+    <SheetSection heading="Checklist Items">
       {items.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
-          <div style={progressBarOuter}>
-            <div style={{
-              width: `${progressPct}%`,
-              height: '100%',
-              backgroundColor: allDone ? color.surface.positive : color.background.brandPrimary,
-              borderRadius: border.radius.pill,
-              transition: 'width 0.3s ease',
-            }} />
-          </div>
-          <span style={progressTextStyle}>{completedCount} of {items.length} completed</span>
-        </div>
+        <>
+          <ProgressBar value={progressPct} label="Checklist progress" />
+          <SheetHelperText>{completedCount} of {items.length} completed</SheetHelperText>
+        </>
       )}
 
       {loadingItems ? (
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted, textAlign: 'center', padding: space.lg }}>
-          Loading checklist…
-        </span>
+        <SheetHelperText>Loading checklist…</SheetHelperText>
       ) : items.length === 0 ? (
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted, textAlign: 'center', padding: space.lg }}>
-          No checklist items for this task.
-        </span>
+        <EmptyState title="No checklist items" description="This task has no checklist items." />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
           {items.map(item => (
@@ -317,7 +275,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
           ))}
         </div>
       )}
-    </div>
+    </SheetSection>
   );
 
   // ── Sheet config ──
@@ -335,20 +293,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     }
     return tabs;
   };
-
-  const sheetTitle = task ? (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>
-      <span>{task.title}</span>
-      <span style={{
-        fontFamily: font.family.label,
-        fontSize: font.size.label.sm,
-        fontWeight: font.weight.regular,
-        color: color.text.secondary,
-      }}>
-        {task.templateName}
-      </span>
-    </div>
-  ) : undefined;
 
   const footer = (
     <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
@@ -374,6 +318,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     }
     configureSheet({
       title: task.title,
+      description: task.templateName,
       tabs: buildTabs(task),
       activeTab,
       onTabChange: setActiveTab,
@@ -399,7 +344,8 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       variant="floating"
       isOpen={isOpen}
       onClose={onClose}
-      title={sheetTitle}
+      title={task.title}
+      description={task.templateName}
       width="600px"
       side="right"
       tabs={buildTabs(task)}

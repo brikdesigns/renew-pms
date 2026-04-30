@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Skeleton, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { Sheet, SheetSection, Button, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import { Tag } from '@brikdesigns/bds';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
-import { sheetBodyStyle, sheetSectionTitle } from '@/app/(auth)/settings/_sheetStyles';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 import { EMPLOYEE_TYPE_TAG, SHIFT_LABELS, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
@@ -49,37 +48,7 @@ interface ViewUserSheetProps {
 
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
-import { font, color, gap, space, border, departmentColor } from '@/lib/tokens';
-
-const TEXT_PRIMARY = color.text.primary;
-const TEXT_SECONDARY = color.text.secondary;
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
-
-const emptyState: CSSProperties = {
-  padding: `${space.lg} 0`,
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  color: TEXT_SECONDARY,
-  textAlign: 'center',
-};
-
-const progressTrackStyle: CSSProperties = {
-  width: '100%',
-  height: '6px',
-  borderRadius: border.radius.xs,
-  backgroundColor: color.background.muted,
-  overflow: 'hidden',
-  position: 'relative',
-};
-
-const progressLabelStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.semibold,
-  color: TEXT_SECONDARY,
-};
-
+import { gap, departmentColor } from '@/lib/tokens';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -123,8 +92,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
   // ── Tab content ───────────────────────────────────────────────────────────
 
   const detailsContent = user ? (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>User Details</h3>
+    <SheetSection heading="User Details">
       <FieldGrid columns={2} gap="lg">
         <Field label="First Name" empty="—">{user.first_name}</Field>
         <Field label="Last Name" empty="—">{user.last_name}</Field>
@@ -161,14 +129,13 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
       {user.joined_at && (
         <Field label="Joined" empty="—">{new Date(user.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</Field>
       )}
-    </div>
+    </SheetSection>
   ) : null;
 
   const rolesContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Roles</h3>
+    <SheetSection heading="Roles">
       {roles.length === 0 ? (
-        <p style={emptyState}>No roles assigned to this user.</p>
+        <EmptyState title="No roles" description="No roles assigned to this user." />
       ) : (
         <div style={profileCardGrid}>
           {roles.map((r) => (
@@ -184,14 +151,13 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
           ))}
         </div>
       )}
-    </div>
+    </SheetSection>
   );
 
   const departmentsContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Departments</h3>
+    <SheetSection heading="Departments">
       {departments.length === 0 ? (
-        <p style={emptyState}>No departments assigned to this user.</p>
+        <EmptyState title="No departments" description="No departments assigned to this user." />
       ) : (
         <div style={profileCardGrid}>
           {departments.map((d) => (
@@ -205,45 +171,34 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
           ))}
         </div>
       )}
-    </div>
+    </SheetSection>
   );
 
   const trainingContent = user ? (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Employee Status</h3>
-      <FieldGrid columns={2} gap="lg">
-        <Field label="Employee Type" empty="—">
-          <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
-            {empType.label}
-          </Tag>
-        </Field>
-        <Field label="Department" empty="—">{user.department || null}</Field>
-      </FieldGrid>
+    <>
+      <SheetSection heading="Employee Status">
+        <FieldGrid columns={2} gap="lg">
+          <Field label="Employee Type" empty="—">
+            <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>
+              {empType.label}
+            </Tag>
+          </Field>
+          <Field label="Department" empty="—">{user.department || null}</Field>
+        </FieldGrid>
+      </SheetSection>
 
-      <h3 style={sheetSectionTitle}>Training Progress</h3>
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: gap.md }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={progressLabelStyle}>
-            {completedModules} of {totalModules} modules completed
-          </span>
-          <span style={progressLabelStyle}>{progress}%</span>
-        </div>
-        <div style={progressTrackStyle}>
-          <div
-            style={{
-              position: 'absolute', top: 0, left: 0, height: '100%',
-              width: `${progress}%`, borderRadius: border.radius.xs,
-              backgroundColor: color.background.brandPrimary,
-            }}
-          />
-        </div>
-      </div>
+      <SheetSection heading="Training Progress">
+        <ProgressBar value={progress} label="Training modules completed" />
+        <SheetHelperText>{completedModules} of {totalModules} modules completed ({progress}%)</SheetHelperText>
+      </SheetSection>
 
-      <h3 style={sheetSectionTitle}>Assigned Modules</h3>
-      <p style={emptyState}>
-        Training module cards will appear here once training templates are assigned to this team member.
-      </p>
-    </div>
+      <SheetSection heading="Assigned Modules">
+        <EmptyState
+          title="No modules assigned"
+          description="Training module cards will appear here once training templates are assigned to this team member."
+        />
+      </SheetSection>
+    </>
   ) : null;
 
   const sheetTabs: SheetTab[] = [
