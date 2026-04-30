@@ -19,9 +19,6 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
 import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
-
-const TEXT_SECONDARY = color.text.secondary;
-
 import { EMPLOYEE_TYPE_TAG, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
 import '../_settingsTableStyles.css';
 
