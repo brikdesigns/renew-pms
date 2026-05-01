@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
@@ -68,8 +69,13 @@ export interface AuthUser {
 /**
  * Get the authenticated user and their profile.
  * Returns null if not authenticated or profile not found.
+ *
+ * Wrapped in React.cache() to dedupe within a single render pass — multiple
+ * calls (layout + nested layouts + page) hit one execution per request. The
+ * dedup key is the optional `supabase` arg; callers that pass nothing share
+ * a key (the common case) and benefit fully.
  */
-export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser | null> {
+export const getAuthUser = cache(async (supabase?: SupabaseClient): Promise<AuthUser | null> => {
   const client = supabase ?? await createClient();
   const { data: { user }, error: userError } = await client.auth.getUser();
 
@@ -128,7 +134,7 @@ export async function getAuthUser(supabase?: SupabaseClient): Promise<AuthUser |
         }
       : null,
   };
-}
+});
 
 /**
  * Require authentication. Returns AuthUser or a 401 response.
