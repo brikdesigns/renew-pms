@@ -1,7 +1,7 @@
 ---
 status: in-progress
 owner: nick
-last-updated: 2026-04-30
+last-updated: 2026-05-01
 canonical-naming-rules: https://design.brikdesigns.com/docs/primitives/naming-conventions
 workflow: ./cleanup-workflow.md
 related: ./component-cleanup-audit.md
@@ -45,17 +45,52 @@ After 1a + 1b, `_sheetStyles.ts` still has ~20 consumers (TeamsTable, AddEventSh
 
 ### 3. DashboardClient internal typography (Cat 2 follow-up to #117)
 
-**Status:** flagged in #117, not started.
+**Status:** flagged in #117, not started. Promotion threshold checked 2026-05-01 — see below.
 
 `#117` swapped only the dashboard card chrome. Internal text typography stayed:
 
 - `cardTitleStyle` — h2 inside the 4 dashboard cards
 - `listItemTitleStyle` / `listItemSubStyle` — list items inside Overdue Tasks + Recent Requests
-- `DeptBar` — typography spans + bar visual elements
-- `ProgressRing` — SVG `<text>` element styling
-- Stat blocks (Today's Progress numbers + labels)
+- `DeptBar` — typography spans + bar visual elements ([DashboardClient.tsx:194-213](../../src/app/(auth)/dashboard/DashboardClient.tsx#L194-L213))
+- `ProgressRing` — SVG `<text>` element styling ([DashboardClient.tsx:175-191](../../src/app/(auth)/dashboard/DashboardClient.tsx#L175-L191))
+- Stat blocks (Today's Progress numbers + labels) ([DashboardClient.tsx:372-393](../../src/app/(auth)/dashboard/DashboardClient.tsx#L372-L393))
+- Card header pattern (`cardHeaderStyle` + `cardTitleStyle` + `cardLinkStyle`) — repeats 4× across dashboard cards
 
-Promotion candidates: BDS chart primitives (ProgressRing, DeptBar bar chart), `Stack`/`Cluster` for layout flex wrappers, slot-class CSS for the dashboard text typography. Likely a multi-PR sequence with a BDS chart-primitive PR first.
+#### Promotion-threshold check (2026-05-01)
+
+Per CLAUDE.md "no speculative abstractions" / ≥3 sites rule. Cross-repo grep run against `brik-client-portal`, `freedom-client-portal`, and `web/brikdesigns/`:
+
+| Pattern | renew-pms | brik-client-portal | freedom-client-portal | brikdesigns.com | Decision |
+|---|---|---|---|---|---|
+| `Stat` / `StatRow` (number + label, often 3-up) | 1 | 0 | 0 | 0 | **Hold** — single-consumer in the Brik ecosystem, premature to promote |
+| `ProgressRing` (SVG donut with % center) | 1 | 0 | 0 | 0 | **Hold** — single-consumer |
+| `Card.Header` slot (title + action) | 4+ | 0 (`heading.large` hits are page-level h1 titles, not card headers) | 0 | 0 | **Hold** — only multi-site in renew |
+| `DeptBar` (labeled progress bar with arbitrary fill color) | 1 | 0 | 0 | 0 | **Proceed via BDS Meter extension** — second consumer is the sheet progress bars from [PR #115](https://github.com/brikdesigns/renew-pms/pull/115) which bailed on Meter for the same reason |
+
+**Recommendation:** keep `Stat`, `ProgressRing`, and the `Card.Header` shape hand-rolled in renew until a second product app independently rolls the same shape. brik-client-portal and freedom will almost certainly grow dashboard/admin surfaces that need these — promote then, with two real consumers informing the API.
+
+Grep recipes (re-run when a second consumer is suspected):
+
+```bash
+# ProgressRing / SVG donut shape
+rg -n 'strokeDasharray|strokeDashoffset|ProgressRing' ../brik-client-portal/src ../freedom-client-portal/src
+
+# Stat-block (large heading text + small label, 3-up clusters)
+rg -n 'font\.size\.heading\.large' ../brik-client-portal/src ../freedom-client-portal/src
+
+# Card header pattern
+rg -n 'cardHeaderStyle|cardTitleStyle|cardLinkStyle' ../brik-client-portal/src ../freedom-client-portal/src
+```
+
+#### Dependency: BDS Meter extension
+
+`DeptBar` swap waits on [brikdesigns/brik-bds#375](https://github.com/brikdesigns/brik-bds/issues/375) — Meter needs `valueSuffix?: string` and `fillColor?: string` (mirroring ProgressBar's escape hatch). Once #375 ships in a BDS minor:
+
+1. Bump `@brikdesigns/bds` in renew-pms (separate tiny PR per `cleanup-workflow.md` cross-repo rule).
+2. Open `task/bds-cleanup-deptbar-meter` swapping [DashboardClient.tsx:194-213](../../src/app/(auth)/dashboard/DashboardClient.tsx#L194-L213) to `<Meter valueSuffix="" fillColor={departmentColor(key).base} ... />`.
+3. Visually verify the "By Department" card — typography may shift (label position, value placement). Document any tradeoff per `cleanup-workflow.md` "BDS spec produces a different look" rule.
+
+The other items above (`cardTitleStyle`, `listItemTitleStyle`/`Sub`, `Stat` blocks, `ProgressRing`, `Card.Header`) remain on hold pending second-consumer evidence — independent of #375.
 
 ### 4. ProfileCard interactive button (BDS promotion)
 
@@ -85,7 +120,7 @@ Systematic inventory of inline-styled `<div>` / `<span>` / `<p>` elements (and e
 >
 > **26 markers resolved this batch.** Total: 463 → 449 div, 114 → 108 span, 42 → 39 p, 92 → 90 inline fontSize.
 >
-> **BDS issue surfaced (not blocking):** Meter's hardcoded ` Score` suffix should be configurable (`valueSuffix?: string` or `showSuffix?: boolean`). Worth opening a brik-bds issue.
+> **BDS issue surfaced (not blocking):** Meter's hardcoded ` Score` suffix should be configurable (`valueSuffix?: string` or `showSuffix?: boolean`). Worth opening a brik-bds issue. *(Filed 2026-05-01 as [brikdesigns/brik-bds#375](https://github.com/brikdesigns/brik-bds/issues/375), now also covering arbitrary `fillColor`. Unblocks the `DeptBar` adoption tracked in Deferred Item #3.)*
 
 ## Guiding rules (from BDS naming conventions)
 
