@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { RootProvider } from 'fumadocs-ui/provider/next';
+import { WebVitalsReporter } from '@/components/WebVitalsReporter';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased theme-renew" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <WebVitalsReporter />
         <RootProvider theme={{ enabled: false }}>
           {children}
         </RootProvider>
