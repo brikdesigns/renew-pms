@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser, isAdmin } from '@/lib/auth';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@brikdesigns/bds';
 import { InventoryTable } from '@/components/InventoryTable';
 
 export default async function InventorySettingsPage() {

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser, isAdmin } from '@/lib/auth';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@brikdesigns/bds';
 import { TemplatesTable } from './TemplatesTable';
 
 export default async function TemplatesSettingsPage() {
@@ -12,7 +12,7 @@ export default async function TemplatesSettingsPage() {
     <>
       <PageHeader
         title="Templates"
-        description="Create and manage task templates for checklists, procedures, compliance, and more."
+        subtitle="Create and manage task templates for checklists, procedures, compliance, and more."
       />
       <TemplatesTable />
     </>

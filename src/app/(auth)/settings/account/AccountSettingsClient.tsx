@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
-import { Button, Field, FieldGrid } from '@brikdesigns/bds';
+import { Button, Field, FieldGrid, PageHeader } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,
