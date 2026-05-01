@@ -334,8 +334,12 @@ for p in json.load(sys.stdin):
 " 2>/dev/null)
 
 MISSING_PROFILE_LIST=""
+# Bash substring match instead of `echo "$IDS" | grep -q` — `set -o pipefail`
+# combined with grep -q's early exit causes echo to SIGPIPE, making the
+# pipeline return non-zero and falsely flagging FOUND users as missing.
+# Newline-padding both sides prevents UUID-substring false matches.
 while IFS='|' read -r uid email; do
-  if ! echo "$ALL_PROFILE_IDS" | grep -q "$uid"; then
+  if [[ $'\n'"$ALL_PROFILE_IDS"$'\n' != *$'\n'"$uid"$'\n'* ]]; then
     MISSING_PROFILE_LIST="${MISSING_PROFILE_LIST}${email} (${uid})\n"
   fi
 done <<< "$MISSING_PROFILES"
@@ -372,8 +376,9 @@ for p in json.load(sys.stdin):
 " 2>/dev/null)
 
 ORPHANED_PROFILES=""
+# Same pipefail+SIGPIPE bug as section 4 — see comment there.
 while IFS='|' read -r pid pemail; do
-  if ! echo "$ALL_AUTH_IDS" | grep -q "$pid"; then
+  if [[ $'\n'"$ALL_AUTH_IDS"$'\n' != *$'\n'"$pid"$'\n'* ]]; then
     ORPHANED_PROFILES="${ORPHANED_PROFILES}${pemail} (${pid})\n"
   fi
 done <<< "$ALL_PROFILES"
