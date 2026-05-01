@@ -71,7 +71,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Skip middleware for fumadocs routes (/docs, /guide) — purely informational,
+  // no auth state needed. Cuts proxy.ts work for every doc page navigation.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|images|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images|docs(?:/|$)|guide(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

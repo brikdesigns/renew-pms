@@ -1,7 +1,11 @@
+import { cache } from 'react';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createClient() {
+// Wrapped in React.cache() so multiple Server Components in one request share
+// one client instance instead of reconstructing on every call. Pairs with the
+// getAuthUser() cache wrapper in @/lib/auth.
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -24,4 +28,4 @@ export async function createClient() {
       },
     }
   );
-}
+});
