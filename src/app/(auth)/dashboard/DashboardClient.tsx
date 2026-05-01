@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Card, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, Meter, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -194,7 +194,6 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
 // ─── Bar chart ───────────────────────────────────────────────────────────────
 
 function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey: string; completed: number; total: number }) {
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const deptColors = departmentColor(colorKey);
 
   return (
@@ -202,9 +201,15 @@ function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey:
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
-      <div style={{ flex: 1, height: '14px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
-      </div>
+      <Meter
+        value={completed}
+        max={total}
+        fillColor={deptColors.base}
+        showValue={false}
+        size="lg"
+        style={{ flex: 1 }}
+        aria-label={`${dept}: ${completed} of ${total} complete`}
+      />
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
         {completed}/{total}
       </span>
