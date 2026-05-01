@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseIntegration } from '@supabase/sentry-js-integration';
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -27,6 +29,13 @@ export async function register() {
       tracesSampleRate: 0.1,
       sendDefaultPii: false,
       beforeSend: beforeSendServer,
+      integrations: [
+        supabaseIntegration(SupabaseClient, Sentry, {
+          tracing: true,
+          breadcrumbs: true,
+          errors: true,
+        }),
+      ],
     });
   }
 
@@ -38,6 +47,13 @@ export async function register() {
       tracesSampleRate: 0.1,
       sendDefaultPii: false,
       beforeSend: beforeSendServer,
+      integrations: [
+        supabaseIntegration(SupabaseClient, Sentry, {
+          tracing: true,
+          breadcrumbs: true,
+          errors: true,
+        }),
+      ],
     });
   }
 }

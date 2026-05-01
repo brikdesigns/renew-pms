@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseIntegration } from '@supabase/sentry-js-integration';
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
@@ -37,6 +39,11 @@ Sentry.init({
   beforeSend: beforeSendClient,
 
   integrations: [
+    supabaseIntegration(SupabaseClient, Sentry, {
+      tracing: true,
+      breadcrumbs: true,
+      errors: true,
+    }),
     Sentry.feedbackIntegration({
       colorScheme: 'system',
       autoInject: false,
