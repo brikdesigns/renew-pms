@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@bds/components';
+import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
@@ -11,7 +11,7 @@ import {
   sheetSectionTitle,
   sheetFormGroup,
 } from '@/app/(auth)/settings/_sheetStyles';
-import { gap, color, font, space, border } from '@/lib/tokens';
+import { gap, color } from '@/lib/tokens';
 import type { Vendor } from '@/app/(auth)/settings/contacts/ContactsTable';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -77,10 +77,23 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
         address: initialData.address ?? '',
         notes: initialData.notes ?? '',
         is_active: initialData.is_active,
-        equipment_ids: [],
+        equipment_ids: equipment
+          .filter(e => e.vendor_id === initialData.id)
+          .map(e => e.id),
       } : EMPTY_FORM);
     }
   }, [isOpen, initialData]);
+
+  // Sync equipment_ids when equipment loads after the sheet is already open
+  useEffect(() => {
+    if (isOpen && initialData && equipment.length > 0) {
+      setForm(prev => {
+        if (prev.equipment_ids.length > 0) return prev; // already populated or user-edited
+        const linked = equipment.filter(e => e.vendor_id === initialData.id).map(e => e.id);
+        return linked.length > 0 ? { ...prev, equipment_ids: linked } : prev;
+      });
+    }
+  }, [isOpen, initialData, equipment]);
 
   const isEdit = !!initialData;
   const canSave = !!form.name.trim() && !!form.type;

@@ -3,11 +3,13 @@
 import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Button, IconButton } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Button, IconButton, useSheetStack } from '@brikdesigns/bds';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewDepartmentSheet';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -16,14 +18,15 @@ import { useRoles } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
 };
 
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
@@ -33,15 +36,21 @@ const countBadge: CSSProperties = {
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
 const colorDot: CSSProperties = { width: '12px', height: '12px', borderRadius: border.radius.circle, display: 'inline-block', flexShrink: 0 };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DepartmentsTable() {
+  const { pushSheet } = useSheetStack();
   const { departments, setDepartments, loading } = useDepartments();
   const { roles } = useRoles();
   const { members } = useMembers();
@@ -119,40 +128,34 @@ export function DepartmentsTable() {
               <TableHead>Color</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading departments…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : visibleDepts.map((d) => (
               <TableRow key={d.id}>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{d.name}</span>
+                <TableCell style={bodyCellStyle}>
+                  <span className="settings-table-cell-text settings-table-cell-text--strong">{d.name}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   {d.color
                     ? <span style={{ ...colorDot, backgroundColor: departmentColor(d.color).base }} />
-                    : <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
+                    : <span className="settings-table-cell-text settings-table-cell-text--secondary">—</span>
                   }
                 </TableCell>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{d.member_count}</span>
+                <TableCell style={bodyCellStyle}>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">{d.member_count}</span>
                 </TableCell>
-                <TableCell>
-                  <Badge status={d.is_active ? 'positive' : 'error'} size="sm">
-                    {d.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                <TableCell style={bodyCellStyle}>
+                  <StatusBadge status={d.is_active} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${d.name}`} onClick={() => setDeleteTarget({ id: d.id, name: d.name })} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${d.name}`} onClick={() => handleView(d)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${d.name}`} onClick={() => handleEdit(d)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${d.name}`} onClick={() => setDeleteTarget({ id: d.id, name: d.name })} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -182,6 +185,7 @@ export function DepartmentsTable() {
         onEdit={handleViewEdit}
         roles={roles}
         members={members}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

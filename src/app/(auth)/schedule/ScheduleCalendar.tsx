@@ -8,8 +8,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import type { DatesSetArg, DateSelectArg, EventInput } from '@fullcalendar/core';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, Chip, IconButton, Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+import { Button, Chip, IconButton, Menu } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useMembers, type Member } from '@/hooks/useMembers';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -88,7 +88,7 @@ function ChipFilter({ options, selected, onChange }: {
       <Chip
         label={selected}
         variant={isFiltered ? 'primary' : 'secondary'}
-        appearance={isFiltered ? 'solid' : 'light'}
+        appearance={isFiltered ? 'solid' : 'outline'}
         showDropdown
         onChipClick={() => setOpen(prev => !prev)}
       />
@@ -244,7 +244,7 @@ export function ScheduleCalendar() {
           <span style={dateRangeStyle}>{dateTitle}</span>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous" onClick={() => navigate('prev')} />
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next" onClick={() => navigate('next')} />
-          <Chip label="Today" variant="secondary" appearance="light" onChipClick={() => navigate('today')} />
+          <Chip label="Today" variant="secondary" appearance="outline" onChipClick={() => navigate('today')} />
         </div>
 
         <div style={toolbarRightStyle}>
@@ -254,21 +254,21 @@ export function ScheduleCalendar() {
           <div style={viewToggleBarStyle} role="radiogroup" aria-label="Calendar view">
             <IconButton
               variant={currentView === 'dayGridMonth' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:squares-four-fill" />}
               label="Month view"
               onClick={() => changeView('dayGridMonth')}
             />
             <IconButton
               variant={currentView === 'timeGridWeek' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:list-fill" />}
               label="Week view"
               onClick={() => changeView('timeGridWeek')}
             />
             <IconButton
               variant={currentView === 'timeGridDay' ? 'primary' : 'ghost'}
-              size="tiny"
+              size="sm"
               icon={<Icon icon="ph:calendar-dots-fill" />}
               label="Day view"
               onClick={() => changeView('timeGridDay')}

@@ -46,6 +46,7 @@ export const icon = {
   arrowRight:   'ph:arrow-right-fill',
   chevronLeft:  'ph:caret-left-fill',
   chevronRight: 'ph:caret-right-fill',
+  paperPlane:   'ph:paper-plane-tilt-fill',
 
   // UI chrome
   bell:         'ph:bell-fill',
@@ -92,6 +93,8 @@ export const icon = {
 
   // Vendor / external
   wrench:             'ph:wrench-fill',
+  copy:               'ph:copy-fill',
+  link:               'ph:link-fill',
 } as const;
 
 export type IconName = typeof icon[keyof typeof icon];

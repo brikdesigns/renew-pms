@@ -13,6 +13,7 @@ import type { ComponentType } from 'react';
 export const sheetComponents: Record<SheetType, React.LazyExoticComponent<ComponentType<any>>> = {
   request:    lazy(() => import('@/components/ViewRequestSheet').then(m => ({ default: m.ViewRequestSheet }))),
   vendor:     lazy(() => import('@/components/ViewVendorSheet').then(m => ({ default: m.ViewVendorSheet }))),
+  contact:    lazy(() => import('@/components/ViewContactSheet').then(m => ({ default: m.ViewContactSheet }))),
   task:       lazy(() => import('@/components/ViewTaskSheet').then(m => ({ default: m.ViewTaskSheet }))),
   room:       lazy(() => import('@/components/ViewRoomSheet').then(m => ({ default: m.ViewRoomSheet }))),
   inventory:  lazy(() => import('@/components/ViewInventorySheet').then(m => ({ default: m.ViewInventorySheet }))),

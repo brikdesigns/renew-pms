@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+
+# ── Conventional Commits validation ──
+# Enforces: type(scope): description
+# Types: feat, fix, refactor, chore, docs, style, test, perf, ci, build
+# Scopes: renew, auth, tasks, training, vendor, bds, docs, infra, deps
+# Breaking changes: feat!(scope): or fix!: are valid
+
+MSG_FILE="$1"
+MSG=$(head -1 "$MSG_FILE")
+
+# Allow merge commits and revert commits through
+if echo "$MSG" | grep -qE "^(Merge|Revert) "; then
+  exit 0
+fi
+
+# Conventional Commits pattern:
+# type(scope): description  OR  type: description  OR  type!(scope): description
+PATTERN="^(feat|fix|refactor|chore|docs|style|test|perf|ci|build)(\(.+\))?!?: .{1,72}$"
+
+if ! echo "$MSG" | grep -qE "$PATTERN"; then
+  echo ""
+  echo "ERROR: Commit message does not follow Conventional Commits format."
+  echo ""
+  echo "  Expected: type(scope): short description"
+  echo "  Got:      $MSG"
+  echo ""
+  echo "  Valid types: feat, fix, refactor, chore, docs, style, test, perf, ci, build"
+  echo "  Valid scopes: renew, auth, tasks, training, vendor, bds, docs, infra, deps"
+  echo "  Breaking: feat!(scope): description"
+  echo ""
+  echo "  Examples:"
+  echo "    feat(tasks): add recurring task templates"
+  echo "    fix(auth): prevent session expiry on idle tabs"
+  echo "    chore(deps): bump next to 16.1.2"
+  echo ""
+  exit 1
+fi
+
+# Check subject length (first line)
+SUBJECT_LEN=$(echo "$MSG" | wc -c | tr -d ' ')
+if [ "$SUBJECT_LEN" -gt 73 ]; then
+  echo ""
+  echo "ERROR: Commit subject is $SUBJECT_LEN chars (max 72)."
+  echo "  $MSG"
+  echo ""
+  exit 1
+fi

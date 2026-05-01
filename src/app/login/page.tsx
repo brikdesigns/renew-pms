@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@bds/components';
-import { TextInput } from '@bds/components';
+import { Button, PasswordInput, TextInput } from '@brikdesigns/bds';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
 import type { CSSProperties } from 'react';
 
@@ -69,6 +69,14 @@ const errorStyle: CSSProperties = {
   lineHeight: font.lineHeight.normal,
 };
 
+const forgotLinkStyle: CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.body.sm,
+  color: color.system.link,
+  textAlign: 'center',
+  textDecoration: 'none',
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
@@ -111,18 +119,19 @@ export default function LoginPage() {
           <TextInput
             label="Email address"
             type="email"
+            name="email"
             placeholder="you@yourpractice.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             size="md"
             fullWidth
             required
-            autoComplete="email"
+            autoComplete="username"
           />
 
-          <TextInput
+          <PasswordInput
             label="Password"
-            type="password"
+            name="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -141,6 +150,10 @@ export default function LoginPage() {
           >
             Sign in
           </Button>
+
+          <Link href="/forgot-password" style={forgotLinkStyle}>
+            Forgot your password?
+          </Link>
         </form>
       </div>
     </div>

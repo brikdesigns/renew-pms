@@ -1,67 +1,38 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Tag, Badge, Tooltip } from '@bds/components';
-import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, gap, space, border, shadow, departmentColor } from '@/lib/tokens';
+import { Card, Meter, Tag, useSheetStack } from '@brikdesigns/bds';
+import { PriorityBadge } from '@/components/PriorityBadge';
+import { StatusBadge } from '@/components/StatusBadge';
+import { ProfileCard } from '@/components/ProfileCard';
+import { CardSkeleton } from '@/components/CardSkeleton';
+import { color, font, gap, space, border, state, motion, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
+import { useDashboard } from '@/hooks/useDashboard';
 import { label as labelStyle } from '@/lib/styles';
+import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
 
-// ─── Mock data (aggregated from tasks + training pages) ──────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-// TODO: Replace with real overdue task query from DB
-const OVERDUE_TASKS = [
-  { id: 't1', title: 'Review daily patient schedule', assignee: 'Sarah Mitchell', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't4', title: 'Conduct daily team huddle', assignee: 'Jessica Torres', dept: '(BA) Business Administration', priority: 'critical' as const },
-  { id: 't7', title: 'Sterilize instruments — morning batch', assignee: 'Amanda Chen', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't17', title: 'Run autoclave cycle — morning', assignee: 'Tyler Nguyen', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't14', title: 'Chairside setup for morning procedures', assignee: 'Emily Rivera', dept: '(C) Clinical', priority: 'critical' as const },
-  { id: 't21', title: 'Confirm next-day appointments', assignee: 'Rachel Foster', dept: '(BA) Business Administration', priority: 'critical' as const },
-  { id: 't2', title: 'Verify operatory setup and readiness', assignee: 'Sarah Mitchell', dept: '(C) Clinical', priority: 'warning' as const },
-];
+function formatTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
-// ONBOARDING_MEMBERS sourced from useMembers() — filtered by employee_type !== 'proficient'
-
-// TODO: Replace with real aggregated task query from DB
-const MOCK_DEPT_COMPLETION: Record<string, { completed: number; total: number }> = {
-  '(C) Clinical':                { completed: 14, total: 22 },
-  '(BA) Business Administration': { completed: 4,  total: 6  },
-  '(M) Management':              { completed: 2,  total: 5  },
-  '(L) Leadership':              { completed: 3,  total: 3  },
-  'Facilities':                  { completed: 1,  total: 3  },
-};
-
-const COMPLIANCE_ITEMS = [
-  { name: 'OSHA Safety Training', assignedTo: 'All Staff', due: 'Q2 2026', status: 'upcoming' as const },
-  { name: 'HIPAA Privacy Training', assignedTo: 'All Staff', due: 'Q2 2026', status: 'upcoming' as const },
-  { name: 'Infection Control Refresher', assignedTo: 'Clinical', due: 'Apr 15, 2026', status: 'due_soon' as const },
-  { name: 'Radiation Safety Review', assignedTo: 'Clinical', due: 'Completed Mar 1', status: 'completed' as const },
-];
-
-const TODAY_TOTAL = 32;
-const TODAY_COMPLETED = 12;
-const TODAY_PCT = Math.round((TODAY_COMPLETED / TODAY_TOTAL) * 100);
-
-// ─── Employee type tags (shared) ─────────────────────────────────────────────
-
-const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:      { bg: color.department.blue.base, color: color.text.inverse, label: 'New Hire' },
-  maturing: { bg: color.department.gold.base, color: color.text.inverse, label: 'Maturing' },
-};
-
-// ─── Priority mapping ────────────────────────────────────────────────────────
-
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  info:     { status: 'info',    label: 'Low',       icon: icon.priorityInfo },
-};
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -92,15 +63,9 @@ const gridStyle: CSSProperties = {
   gap: gap.xl,
 };
 
-const cardStyle: CSSProperties = {
-  backgroundColor: color.background.primary,
-  borderRadius: border.radius.lg,
-  boxShadow: shadow.sm,
-  padding: space.lg,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.lg,
-};
+const CARD_MIN_HEIGHT = '340px';
+
+const cardMinHeightStyle: CSSProperties = { minHeight: CARD_MIN_HEIGHT };
 
 const cardHeaderStyle: CSSProperties = {
   display: 'flex',
@@ -136,13 +101,44 @@ const listStyle: CSSProperties = {
   listStyle: 'none',
 };
 
-const listItemStyle: CSSProperties = {
+function listItemBg(hovered: boolean): string {
+  return hovered ? state.hover.secondary : color.surface.secondary;
+}
+
+const listItemBase: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: `${space.xs} ${space.sm}`,
   borderRadius: border.radius.md,
+  cursor: 'pointer',
+  transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
+  border: 'none',
+  width: '100%',
+  textAlign: 'left',
+};
+
+/** Interactive list item with hover state — matches ProfileCard interaction pattern */
+function HoverLi({ onClick, style, children }: { onClick: () => void; style?: CSSProperties; children: ReactNode }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <li
+      style={{ ...listItemBase, backgroundColor: listItemBg(hovered), ...style }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children}
+    </li>
+  );
+}
+
+/** Static list item (no click) for empty states */
+const listItemStaticStyle: CSSProperties = {
+  ...listItemBase,
+  cursor: 'default',
   backgroundColor: color.surface.secondary,
+  justifyContent: 'center',
 };
 
 const listItemLeftStyle: CSSProperties = {
@@ -198,7 +194,6 @@ function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
 // ─── Bar chart ───────────────────────────────────────────────────────────────
 
 function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey: string; completed: number; total: number }) {
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const deptColors = departmentColor(colorKey);
 
   return (
@@ -206,9 +201,15 @@ function DeptBar({ dept, colorKey, completed, total }: { dept: string; colorKey:
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '100px', textAlign: 'right', flexShrink: 0 }}>
         {dept}
       </span>
-      <div style={{ flex: 1, height: '14px', borderRadius: border.radius.sm, backgroundColor: color.surface.secondary, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${pct}%`, borderRadius: border.radius.sm, backgroundColor: deptColors.base, transition: 'width 0.3s ease' }} />
-      </div>
+      <Meter
+        value={completed}
+        max={total}
+        fillColor={deptColors.base}
+        showValue={false}
+        size="lg"
+        style={{ flex: 1 }}
+        aria-label={`${dept}: ${completed} of ${total} complete`}
+      />
       <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.secondary, width: '48px', flexShrink: 0 }}>
         {completed}/{total}
       </span>
@@ -230,6 +231,8 @@ interface DashboardClientProps {
 export default function DashboardClient({ userName, systemRole, employeeType, userDepartment }: DashboardClientProps) {
   const { departments } = useDepartments();
   const { members } = useMembers();
+  const { data: dashboard, loading: dashLoading } = useDashboard();
+  const { openSheet } = useSheetStack();
 
   const isAdminUser = systemRole === 'brik_admin' || systemRole === 'admin';
   const isManager = systemRole === 'manager';
@@ -241,61 +244,57 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
     [departments]
   );
 
-  // Scope overdue tasks by role
+  // Scope overdue tasks by role (API returns all practice tasks; filter client-side by role)
   const scopedOverdueTasks = useMemo(() => {
-    if (isAdminUser) return OVERDUE_TASKS;
-    if (isManager && userDepartment) return OVERDUE_TASKS.filter((t) => t.dept === userDepartment);
-    // Staff: show only tasks assigned to the current user (mock: show first 2 as personal tasks)
-    return OVERDUE_TASKS.slice(0, 2);
-  }, [isAdminUser, isManager, userDepartment]);
+    const all = dashboard?.overdueTasks ?? [];
+    if (isAdminUser) return all;
+    if (isManager && userDepartment) return all.filter((t) => t.dept === userDepartment);
+    // Staff: only tasks assigned to the current user
+    return all.filter((t) => t.assignee.includes(userName));
+  }, [dashboard, isAdminUser, isManager, userDepartment, userName]);
 
   // Scope department completion by role
   const scopedDeptCompletion = useMemo(() => {
-    if (isAdminUser) return MOCK_DEPT_COMPLETION;
+    const all = dashboard?.departmentCompletion ?? {};
+    if (isAdminUser) return all;
     if (isManager && userDepartment) {
-      const entry = MOCK_DEPT_COMPLETION[userDepartment];
+      const entry = all[userDepartment];
       return entry ? { [userDepartment]: entry } : {};
     }
     return {};
-  }, [isAdminUser, isManager, userDepartment]);
+  }, [dashboard, isAdminUser, isManager, userDepartment]);
 
-  // Scope compliance items by role
-  const scopedComplianceItems = useMemo(() => {
-    if (isAdminUser) return COMPLIANCE_ITEMS;
-    if (isManager && userDepartment) {
-      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
-    }
-    // Staff: only items assigned to all staff or their department
-    if (userDepartment) {
-      return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff' || item.assignedTo === userDepartment.replace(/^\([^)]+\)\s*/, ''));
-    }
-    return COMPLIANCE_ITEMS.filter((item) => item.assignedTo === 'All Staff');
-  }, [isAdminUser, isManager, userDepartment]);
+  // Scope recent requests by role
+  const scopedRequests = useMemo(() => {
+    const all = dashboard?.recentRequests ?? [];
+    if (isAdminUser) return all;
+    if (isManager && userDepartment) return all.filter((r) => r.dept === userDepartment);
+    return all.filter((r) => r.submitter.includes(userName));
+  }, [dashboard, isAdminUser, isManager, userDepartment, userName]);
 
-  // Onboarding members: scope by role
-  // Staff: hide entirely if proficient (handled in render). If not proficient, show only self.
-  // Manager: filter to their department. Admin: show all.
+  // Onboarding members: scope by role, cap at 6
   const onboardingMembers = useMemo(() => {
     const onboarding = members.filter((m) => m.employee_type !== 'proficient' && m.is_active);
-    if (isAdminUser) return onboarding;
-    if (isManager && userDepartment) return onboarding.filter((m) => m.department === userDepartment);
-    // Staff: show only themselves if they're onboarding
-    return onboarding.filter((m) => m.first_name === userName);
+    let scoped: typeof onboarding;
+    if (isAdminUser) scoped = onboarding;
+    else if (isManager && userDepartment) scoped = onboarding.filter((m) => m.department === userDepartment);
+    else scoped = onboarding.filter((m) => m.first_name === userName);
+    return scoped.slice(0, 6);
   }, [members, isAdminUser, isManager, userDepartment, userName]);
 
-  // Whether to show onboarding card at all
   const showOnboarding = isAdminUser || isManager || employeeType !== 'proficient';
 
-  // Progress stats — scope for staff (personal) vs manager (department)
+  // Progress stats from real data
   const progressStats = useMemo(() => {
-    if (isAdminUser) return { completed: TODAY_COMPLETED, total: TODAY_TOTAL };
+    if (!dashboard) return { completed: 0, total: 0 };
+    if (isAdminUser) return dashboard.todayProgress;
     if (isManager && userDepartment) {
-      const entry = MOCK_DEPT_COMPLETION[userDepartment];
-      return entry ?? { completed: 0, total: 0 };
+      const entry = dashboard.departmentCompletion[userDepartment];
+      return entry ? { completed: entry.completed, total: entry.total } : { completed: 0, total: 0 };
     }
-    // Staff: personal task counts (mock subset)
-    return { completed: 3, total: 8 };
-  }, [isAdminUser, isManager, userDepartment]);
+    // Staff: use overall progress (API already scopes by practice)
+    return dashboard.todayProgress;
+  }, [dashboard, isAdminUser, isManager, userDepartment]);
 
   const progressPct = progressStats.total > 0 ? Math.round((progressStats.completed / progressStats.total) * 100) : 0;
 
@@ -319,7 +318,10 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
 
       <div style={gridStyle}>
         {/* ── Card 1: Overdue Tasks ── */}
-        <div style={cardStyle}>
+        {dashLoading ? (
+          <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
+        ) : (
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
@@ -335,11 +337,15 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </Link>
           </div>
           <ul style={listStyle}>
-            {scopedOverdueTasks.map((task) => {
-              const pri = PRIORITY_BADGE[task.priority] ?? PRIORITY_BADGE.info;
-              const deptColors = getDeptColors(task.dept);
+            {scopedOverdueTasks.length === 0 ? (
+              <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                No overdue tasks
+              </li>
+            ) : scopedOverdueTasks.map((task) => {
+              const deptColors = task.deptColor ? departmentColor(task.deptColor) : getDeptColors(task.dept);
               return (
-                <li key={task.id} style={{ ...listItemStyle, borderLeft: `3px solid ${deptColors.light}` }}>
+                <HoverLi key={task.id} style={{ borderLeft: `3px solid ${deptColors.light}` }}
+                  onClick={() => openSheet('task', { id: task.id }, { title: task.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
                       <div style={listItemTitleStyle}>{task.title}</div>
@@ -347,19 +353,21 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
-                    <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-                    <Tooltip content={pri.label} placement="top">
-                      <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} style={{ flexShrink: 0 }} />
-                    </Tooltip>
+                    {task.dept && <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
+                    <PriorityBadge priority={task.priority} size="xs" />
                   </div>
-                </li>
+                </HoverLi>
               );
             })}
           </ul>
-        </div>
+        </Card>
+        )}
 
         {/* ── Card 2: Today's Progress ── */}
-        <div style={cardStyle}>
+        {dashLoading ? (
+          <CardSkeleton variant="stats" minHeight={CARD_MIN_HEIGHT} />
+        ) : (
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
@@ -394,19 +402,20 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
               <span style={{ ...labelStyle.subtitle, color: color.text.muted }}>
                 {isManager ? 'Department Breakdown' : 'By Department'}
               </span>
-              {departments.filter((d) => d.is_active && d.name !== 'All Departments' && (isAdminUser || d.name === userDepartment)).map((d) => {
-                const counts = scopedDeptCompletion[d.name] ?? { completed: 0, total: 0 };
-                return (
-                  <DeptBar key={d.id} dept={d.name} colorKey={d.color} completed={counts.completed} total={counts.total} />
-                );
-              })}
+              {Object.entries(scopedDeptCompletion)
+                .filter(([name]) => name !== '(G) All Departments')
+                .map(([name, counts]) => (
+                  <DeptBar key={name} dept={name} colorKey={counts.color} completed={counts.completed} total={counts.total} />
+                ))
+              }
             </div>
           )}
-        </div>
+        </Card>
+        )}
 
         {/* ── Card 3: Onboarding Status (hidden for proficient staff) ── */}
         {showOnboarding && (
-          <div style={cardStyle}>
+          <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
             <div style={cardHeaderStyle}>
               <h2 style={cardTitleStyle}>
                 {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
@@ -417,61 +426,77 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
             </div>
             <ul style={listStyle}>
               {onboardingMembers.length === 0 && (
-                <li style={{ ...listItemStyle, justifyContent: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <li style={{ ...listItemStaticStyle, color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
                   {isManager ? 'No department members currently onboarding.' : 'No members currently onboarding.'}
                 </li>
               )}
               {onboardingMembers.map((m) => {
-                const typeTag = TYPE_TAG[m.employee_type] ?? TYPE_TAG.new;
+                const typeTag = EMPLOYEE_TYPE_TAG[m.employee_type] ?? EMPLOYEE_TYPE_TAG.new;
                 const fullName = `${m.first_name} ${m.last_name}`;
+                const deptColors = departmentColor(m.department_color);
                 return (
-                  <li key={m.id} style={listItemStyle}>
-                    <div style={listItemLeftStyle}>
-                      <UserAvatar name={fullName} departmentColorKey={m.department} size="sm" />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={listItemTitleStyle}>{fullName}</div>
-                        <div style={listItemSubStyle}>{m.practice_role || m.department}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, flexShrink: 0 }}>
-                      <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>
-                    </div>
+                  <li key={m.id}>
+                    <ProfileCard
+                      variant="user"
+                      avatarSize="sm"
+                      name={fullName}
+                      role={m.practice_role || m.department}
+                      department={m.department}
+                      departmentBg={deptColors.light}
+                      departmentText={deptColors.text}
+                      endContent={<Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>{typeTag.label}</Tag>}
+                      onClick={() => openSheet('user', { id: m.id }, { title: fullName, variant: 'floating' })}
+                    />
                   </li>
                 );
               })}
             </ul>
-          </div>
+          </Card>
         )}
 
-        {/* ── Card 4: Compliance Due ── */}
-        <div style={cardStyle}>
+        {/* ── Card 4: Recent Requests ── */}
+        {dashLoading ? (
+          <CardSkeleton variant="list" rows={4} minHeight={CARD_MIN_HEIGHT} />
+        ) : (
+        <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
           <div style={cardHeaderStyle}>
-            <h2 style={cardTitleStyle}>
-              {isStaff ? 'Your Compliance & Training' : isManager ? 'Department Compliance' : 'Compliance & Training Due'}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
+              <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
+              <h2 style={cardTitleStyle}>
+                {isStaff ? 'Your Requests' : isManager ? 'Department Requests' : 'Recent Requests'}
+              </h2>
+              <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
+                {scopedRequests.length}
+              </span>
+            </div>
+            <Link href="/requests" style={cardLinkStyle}>
+              View All
+            </Link>
           </div>
           <ul style={listStyle}>
-            {scopedComplianceItems.map((item) => {
-              const statusMap = {
-                completed: { status: 'positive' as const, label: 'Completed' },
-                due_soon: { status: 'warning' as const, label: 'Due Soon' },
-                upcoming: { status: 'info' as const, label: 'Upcoming' },
-              };
-              const badge = statusMap[item.status];
+            {scopedRequests.length === 0 ? (
+              <li style={{ ...listItemStaticStyle, color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                No open requests
+              </li>
+            ) : scopedRequests.map((req) => {
+              const deptColors = req.deptColor ? departmentColor(req.deptColor) : getDeptColors(req.dept);
+              const timeAgo = formatTimeAgo(req.updatedAt);
               return (
-                <li key={item.name} style={listItemStyle}>
+                <HoverLi key={req.id} style={{ borderLeft: `3px solid ${deptColors.light}` }}
+                  onClick={() => openSheet('request', { id: req.id }, { title: req.title, variant: 'floating' })}>
                   <div style={listItemLeftStyle}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={listItemTitleStyle}>{item.name}</div>
-                      <div style={listItemSubStyle}>{item.assignedTo} · {item.due}</div>
+                      <div style={listItemTitleStyle}>{req.title}</div>
+                      <div style={listItemSubStyle}>{req.submitter} · {timeAgo}</div>
                     </div>
                   </div>
-                  <Badge status={badge.status} size="sm">{badge.label}</Badge>
-                </li>
+                  <StatusBadge status={req.status} />
+                </HoverLi>
               );
             })}
           </ul>
-        </div>
+        </Card>
+        )}
       </div>
     </div>
   );

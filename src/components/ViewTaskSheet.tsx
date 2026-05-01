@@ -1,18 +1,12 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Sheet, Button, Badge, Tag } from '@bds/components';
-import type { SheetTab } from '@bds/components';
-import { Icon } from '@iconify/react';
-import { icon } from '@/lib/icons';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { Sheet, SheetSection, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
-import {
-  sheetBodyStyle,
-  sheetSectionTitle,
-} from '@/app/(auth)/settings/_sheetStyles';
-import { color, font, gap, space, border, departmentColor } from '@/lib/tokens';
-import { frequencyLabel } from '@/lib/frequency-labels';
+import { gap, departmentColor } from '@/lib/tokens';
+import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -30,8 +24,9 @@ export interface TaskViewData {
   assignee: string;
   assigneeRole: string;
   checked: boolean;
-  // Assignment model
-  assignmentType: 'role' | 'department';
+  // Assignment model — discriminator for which FK is set on the underlying
+  // task. 'individual' tasks have a member assignee; 'pool' tasks have none.
+  assignmentType: 'individual' | 'role' | 'department' | 'pool';
   assignmentValue: string;
   // Context relations
   room?: string;
@@ -60,6 +55,8 @@ interface ViewTaskSheetProps {
   onTaskCompleted?: () => void;
   /** Navigate to a related entity (global sheet stack) */
   onNavigate?: (type: string, props: Record<string, unknown>, opts?: { title?: string }) => void;
+  /** When true, uses useConfigureSheet instead of rendering own Sheet (set by AppSheetProvider) */
+  headless?: boolean;
 }
 
 // ─── Priority display ────────────────────────────────────────────────────────
@@ -80,63 +77,10 @@ const TASK_TYPE_DISPLAY: Record<string, string> = {
   request: 'Request',
 };
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
-
-const rowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
-const halfStyle: CSSProperties = { flex: 1, minWidth: 0 };
-const tagRowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
-
-const checklistItemStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-  padding: `${space.sm} ${space.md}`,
-  borderRadius: border.radius.sm,
-  cursor: 'pointer',
-  transition: 'background-color 0.15s ease',
-};
-
-const checkboxStyle = (checked: boolean): CSSProperties => ({
-  width: 20,
-  height: 20,
-  borderRadius: border.radius.xs,
-  border: checked ? 'none' : `2px solid ${color.border.primary}`,
-  backgroundColor: checked ? color.background.brandPrimary : 'transparent',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  transition: 'all 0.15s ease',
-});
-
-const checklistLabelStyle = (checked: boolean): CSSProperties => ({
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: checked ? color.text.muted : color.text.primary,
-  textDecoration: checked ? 'line-through' : 'none',
-  flex: 1,
-});
-
-const progressBarOuter: CSSProperties = {
-  width: '100%',
-  height: 6,
-  backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.pill,
-  overflow: 'hidden',
-};
-
-const progressTextStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.body.xs,
-  fontWeight: font.weight.medium,
-  color: color.text.secondary,
-  textAlign: 'right',
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate }: ViewTaskSheetProps) {
+export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate, headless = false }: ViewTaskSheetProps) {
+  const configureSheet = useConfigureSheet();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -145,53 +89,50 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   const [fetched, setFetched] = useState<TaskViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  // Global mode: fetch by ID when no data prop is given
+  // Global mode: fetch task + checklist in parallel when no data prop given
   const resolvedId = id ?? taskProp?.id;
   useEffect(() => {
     if (taskProp || !resolvedId) return;
     setFetchLoading(true);
-    fetch(`/api/tasks/${resolvedId}`)
+    setLoadingItems(true);
+
+    const taskFetch = fetch(`/api/tasks/${resolvedId}`)
       .then(r => r.json())
-      .then(data => { if (data && !data.error) setFetched(data); })
-      .catch(err => console.error('[ViewTaskSheet] fetch failed:', err))
-      .finally(() => setFetchLoading(false));
+      .then(data => { if (data && !data.error) setFetched(data); return data; });
+
+    const checklistFetch = fetch(`/api/tasks/${resolvedId}/checklist`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setItems(data); });
+
+    Promise.allSettled([taskFetch, checklistFetch])
+      .finally(() => { setFetchLoading(false); setLoadingItems(false); });
   }, [resolvedId, taskProp]);
 
   const task = taskProp ?? fetched;
 
-  // Fetch checklist items when sheet opens
+  // Page-level mode: fetch checklist when sheet opens with task prop
   useEffect(() => {
-    if (!isOpen || !task) { setItems([]); return; }
-    if (task.checklistTotal === 0) return;
+    if (!taskProp || !isOpen) return;
+    if (taskProp.checklistTotal === 0) return;
 
     setLoadingItems(true);
-    fetch(`/api/tasks/${task.id}/checklist`)
+    fetch(`/api/tasks/${taskProp.id}/checklist`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setItems(data); })
       .catch(err => console.error('[ViewTaskSheet] failed to load checklist:', err))
       .finally(() => setLoadingItems(false));
-  }, [isOpen, task?.id]);
+  }, [isOpen, taskProp?.id]);
 
   // Reset tab when task changes
   useEffect(() => {
     if (task) setActiveTab('details');
   }, [task?.id]);
 
-  if (fetchLoading) {
-    return (
-      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title="Loading..." width="600px" side="right">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '200px', fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.muted }}>
-          Loading...
-        </div>
-      </Sheet>
-    );
-  }
+  // ── Derived ──
 
-  if (!task) return null;
-
-  const pri = PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info;
-  const deptColors = departmentColor(task.deptColor);
-  const hasChecklist = task.checklistTotal > 0;
+  const pri = task ? (PRIORITY_DISPLAY[task.priority] ?? PRIORITY_DISPLAY.info) : PRIORITY_DISPLAY.info;
+  const deptColors = task ? departmentColor(task.deptColor) : departmentColor('blue');
+  const hasChecklist = task ? task.checklistTotal > 0 : false;
   const completedCount = items.filter(i => i.is_completed).length;
   const allDone = hasChecklist && items.length > 0 && completedCount === items.length;
   const progressPct = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
@@ -199,6 +140,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   // ── Toggle single item ──
 
   const toggleItem = async (itemId: string, currentState: boolean) => {
+    if (!task) return;
     setToggling(prev => new Set(prev).add(itemId));
 
     // Optimistic update
@@ -215,7 +157,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       if (Array.isArray(updated)) setItems(updated);
     } catch (err) {
       console.error('[ViewTaskSheet] toggle failed:', err);
-      // Revert optimistic update
       setItems(prev => prev.map(i => i.id === itemId ? { ...i, is_completed: currentState } : i));
       showToast({ title: 'Error', description: 'Failed to update checklist item', variant: 'error' });
     } finally {
@@ -226,10 +167,10 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
   // ── Complete all remaining items ──
 
   const completeAll = async () => {
+    if (!task) return;
     const remaining = items.filter(i => !i.is_completed);
     if (remaining.length === 0) return;
 
-    // Optimistic
     setItems(prev => prev.map(i => ({ ...i, is_completed: true })));
 
     try {
@@ -245,7 +186,6 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       onTaskCompleted?.();
     } catch (err) {
       console.error('[ViewTaskSheet] completeAll failed:', err);
-      // Refetch to get true state
       const res = await fetch(`/api/tasks/${task.id}/checklist`);
       const data = await res.json();
       if (Array.isArray(data)) setItems(data);
@@ -253,207 +193,165 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     }
   };
 
-  // ── Sheet title ──
+  // ── Tab content builders ──
 
-  const sheetTitle = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: gap.tiny }}>
-      <span>{task.title}</span>
-      <span style={{
-        fontFamily: font.family.label,
-        fontSize: font.size.label.sm,
-        fontWeight: font.weight.regular,
-        color: color.text.secondary,
-      }}>
-        {task.templateName}
-      </span>
-    </div>
-  );
-
-  // ── Details tab ──
-
-  const detailsContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Task Details</h3>
-
+  const buildDetailsContent = (t: TaskViewData) => (
+    <SheetSection heading="Task Details">
       {/* Assignment */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Assigned To" value={task.assignee} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField
-            label={task.assignmentType === 'role' ? 'Assigned Role' : 'Assigned Department'}
-            value={task.assignmentValue}
-          />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Assigned To" empty="—">{t.assignee}</Field>
+        {(() => {
+          switch (t.assignmentType) {
+            case 'role':       return <Field label="Assigned Role"       empty="—">{t.assignmentValue}</Field>;
+            case 'department': return <Field label="Assigned Department" empty="—">{t.assignmentValue}</Field>;
+            case 'individual': return <Field label="Assignment Type"     empty="—">Individual</Field>;
+            case 'pool':
+            default:           return <Field label="Assignment Type"     empty="—">Pool (All Staff)</Field>;
+          }
+        })()}
+      </FieldGrid>
 
       {/* Schedule */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Due" value={task.due} />
-        </div>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Frequency" value={frequencyLabel(task.freq)} />
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Due" empty="—">{t.due}</Field>
+        <Field label="Frequency" empty="—"><FrequencyTag value={t.freq} /></Field>
+      </FieldGrid>
 
       {/* Classification */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <ReadOnlyField label="Task Type" value={TASK_TYPE_DISPLAY[task.taskType] ?? task.taskType} />
-        </div>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Department
-            </span>
-            <div style={tagRowStyle}>
-              <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{task.dept}</Tag>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Task Type" empty="—">{TASK_TYPE_DISPLAY[t.taskType] ?? t.taskType}</Field>
+        <Field label="Department" empty="—">
+          {t.dept ? (
+            <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>{t.dept}</Tag>
+          ) : null}
+        </Field>
+      </FieldGrid>
 
       {/* Context: Room & Equipment */}
-      {(task.room || task.equipment) && (
-        <div style={rowStyle}>
-          {task.room && (
-            <div style={halfStyle}>
-              <ReadOnlyField label="Room" value={task.room} />
-            </div>
-          )}
-          {task.equipment && (
-            <div style={halfStyle}>
-              <ReadOnlyField label="Equipment" value={task.equipment} />
-            </div>
-          )}
-        </div>
+      {(t.room || t.equipment) && (
+        <FieldGrid columns={2} gap="lg">
+          {t.room && <Field label="Room" empty="—">{t.room}</Field>}
+          {t.equipment && <Field label="Equipment" empty="—">{t.equipment}</Field>}
+        </FieldGrid>
       )}
 
       {/* Status & Priority */}
-      <div style={rowStyle}>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Priority
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={pri.status} size="sm">{pri.label}</Badge>
-            </div>
-          </div>
-        </div>
-        <div style={halfStyle}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: gap.md }}>
-            <span style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.medium, color: color.text.primary }}>
-              Status
-            </span>
-            <div style={{ display: 'inline-flex' }}>
-              <Badge status={allDone || task.checked ? 'positive' : 'warning'} size="sm">
-                {allDone || task.checked ? 'Completed' : 'In Progress'}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <FieldGrid columns={2} gap="lg">
+        <Field label="Priority" empty="—">
+          <Badge status={pri.status} size="sm">{pri.label}</Badge>
+        </Field>
+        <Field label="Status" empty="—">
+          <Badge status={allDone || t.checked ? 'positive' : 'warning'} size="sm">
+            {allDone || t.checked ? 'Completed' : 'In Progress'}
+          </Badge>
+        </Field>
+      </FieldGrid>
+    </SheetSection>
   );
 
-  // ── Checklist tab ──
-
-  const checklistContent = (
-    <div style={sheetBodyStyle}>
-      <h3 style={sheetSectionTitle}>Checklist Items</h3>
-
-      {/* Progress bar */}
+  const buildChecklistContent = () => (
+    <SheetSection heading="Checklist Items">
       {items.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
-          <div style={progressBarOuter}>
-            <div style={{
-              width: `${progressPct}%`,
-              height: '100%',
-              backgroundColor: allDone ? color.surface.positive : color.background.brandPrimary,
-              borderRadius: border.radius.pill,
-              transition: 'width 0.3s ease',
-            }} />
-          </div>
-          <span style={progressTextStyle}>{completedCount} of {items.length} completed</span>
-        </div>
+        <>
+          <ProgressBar value={progressPct} label="Checklist progress" />
+          <SheetHelperText>{completedCount} of {items.length} completed</SheetHelperText>
+        </>
       )}
 
-      {/* Items */}
       {loadingItems ? (
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted, textAlign: 'center', padding: space.lg }}>
-          Loading checklist…
-        </span>
+        <SheetHelperText>Loading checklist…</SheetHelperText>
       ) : items.length === 0 ? (
-        <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted, textAlign: 'center', padding: space.lg }}>
-          No checklist items for this task.
-        </span>
+        <EmptyState title="No checklist items" description="This task has no checklist items." />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
           {items.map(item => (
-            <div
+            <ChecklistItem
               key={item.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => !toggling.has(item.id) && toggleItem(item.id, item.is_completed)}
-              onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleItem(item.id, item.is_completed); } }}
-              style={{
-                ...checklistItemStyle,
-                opacity: toggling.has(item.id) ? 0.6 : 1,
-                backgroundColor: item.is_completed ? color.surface.secondary : 'transparent',
-              }}
-            >
-              <div style={checkboxStyle(item.is_completed)}>
-                {item.is_completed && (
-                  <Icon icon={icon.check} style={{ color: color.text.onColorDark, fontSize: font.size.body.sm } as CSSProperties & Record<string, string>} />
-                )}
-              </div>
-              <span style={checklistLabelStyle(item.is_completed)}>{item.label}</span>
-            </div>
+              label={item.label}
+              checked={item.is_completed}
+              disabled={toggling.has(item.id)}
+              onCheckedChange={() => toggleItem(item.id, item.is_completed)}
+            />
           ))}
         </div>
       )}
-    </div>
+    </SheetSection>
   );
 
-  // ── Tabs ──
+  // ── Sheet config ──
 
-  const sheetTabs: SheetTab[] = hasChecklist
-    ? [
-        { id: 'details', label: 'Details', content: detailsContent },
-        { id: 'checklist', label: `Checklist (${completedCount}/${items.length || task.checklistTotal})`, content: checklistContent },
-      ]
-    : [
-        { id: 'details', label: 'Details', content: detailsContent },
-      ];
+  const buildTabs = (t: TaskViewData): SheetTab[] => {
+    const tabs: SheetTab[] = [
+      { id: 'details', label: 'Details', content: buildDetailsContent(t) },
+    ];
+    if (hasChecklist) {
+      tabs.push({
+        id: 'checklist',
+        label: `Checklist (${completedCount}/${items.length || t.checklistTotal})`,
+        content: buildChecklistContent(),
+      });
+    }
+    return tabs;
+  };
 
-  // ── Footer ──
-
-  const footerContent = (
-    <>
+  const footer = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, justifyContent: 'flex-end' }}>
       <Button variant="ghost" size="md" type="button" onClick={onClose}>Close</Button>
       {hasChecklist && !allDone && (
         <Button variant="primary" size="md" type="button" onClick={completeAll}>
           Complete All
         </Button>
       )}
-    </>
+    </div>
   );
+
+  // ── Headless mode: configure the stack's Sheet ────────────────────────────
+
+  useLayoutEffect(() => {
+    if (!headless) return;
+    if (fetchLoading || !task) {
+      configureSheet({
+        body: <SheetSkeleton />,
+        footer: <Button variant="ghost" size="md" onClick={onClose}>Close</Button>,
+      });
+      return;
+    }
+    configureSheet({
+      title: task.title,
+      description: task.templateName,
+      tabs: buildTabs(task),
+      activeTab,
+      onTabChange: setActiveTab,
+      footer,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headless, configureSheet, fetchLoading, task?.id, task?.title, activeTab, items.length, completedCount, loadingItems, onClose, onTaskCompleted]);
+
+  if (headless) return null;
+
+  // ── Page-level mode: render own Sheet ─────────────────────────────────────
+
+  if (fetchLoading || !task) {
+    return (
+      <Sheet variant="floating" isOpen={isOpen} onClose={onClose} title={<Skeleton variant="text" width="160px" height={20} />} width="600px" side="right">
+        <SheetSkeleton />
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet
       variant="floating"
       isOpen={isOpen}
       onClose={onClose}
-      title={sheetTitle}
+      title={task.title}
+      description={task.templateName}
       width="600px"
       side="right"
-      tabs={sheetTabs}
+      tabs={buildTabs(task)}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      footer={footerContent}
+      footer={footer}
     />
   );
 }

@@ -14,6 +14,7 @@ export interface RequestRow {
   room_name: string | null;
   equipment_id: string | null;
   equipment_name: string | null;
+  equipment_request_count: number | null;
   vendor_id: string | null;
   vendor_name: string | null;
   vendor_type: string | null;

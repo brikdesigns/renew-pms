@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface Member {
   id: string;
@@ -18,16 +18,33 @@ export interface Member {
   department_color: string;
   employee_type: string;
   shift: string;
+  office_days: string[];
   is_active: boolean;
   joined_at: string;
+  /** True iff the user has logged in at least once (auth.users.last_sign_in_at != null).
+   *  Optional because endpoints that mutate a single member (PATCH, invite response) don't
+   *  re-query auth state. Treat undefined as "unknown — don't render auth-specific UI". */
+  has_signed_in?: boolean;
 }
 
-export function useMembers() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UseMembersOptions {
+  /** Server-loaded initial data. When provided, the first useEffect fetch
+   *  is skipped. Setters and subsequent renders work as usual. */
+  initialData?: Member[];
+}
+
+export function useMembers(options?: UseMembersOptions) {
+  const hasInitial = options?.initialData !== undefined;
+  const [members, setMembers] = useState<Member[]>(options?.initialData ?? []);
+  const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState<string | null>(null);
+  const skipNextFetch = useRef(hasInitial);
 
   useEffect(() => {
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     fetch('/api/members')

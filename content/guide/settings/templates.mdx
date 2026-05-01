@@ -7,10 +7,44 @@ description: Task and workflow templates for repeatable processes.
 
 Templates let you create reusable task definitions — standard checklists, procedures, and compliance workflows that you use repeatedly. Instead of creating the same task from scratch each time, start from a template.
 
-## Using templates
+## Tasks vs Training
 
-Templates are available when creating new tasks. Select a template to pre-fill the task title, description, type, category, and assignment.
+The Templates page is split into two segments using the toggle at the top:
 
-## Managing templates
+- **Tasks** — Checklist, Procedure, Compliance, and Request templates that show up on the daily Tasks board.
+- **Training** — Onboarding and Skill Training templates that drive the Training surface and the employee lifecycle.
 
-Practice admins can create and edit templates from **Settings > Templates**.
+Switching segments filters both the table and the **Add Template** menu.
+
+## Template types
+
+| Type | Used for |
+|------|----------|
+| **Checklist** | Recurring to-do lists — opening/closing duties, daily prep |
+| **Procedure** | Step-by-step workflows that need to be followed in order |
+| **Compliance** | Regulatory and safety tasks (sterilization logs, PPE checks) |
+| **Request** | Predefined request flows your team can submit |
+| **Onboarding** | New-hire orientation modules |
+| **Skill Training** | Continuing-education and skills development |
+
+## Adding a template
+
+1. Click **Add Template** and pick a type from the menu.
+2. The Edit sheet opens with two tabs:
+   - **Details** — name, description, category, assignment (role / department / pool / individual), frequency, priority, status.
+   - **Tasks** (or **Steps** for Procedure templates) — add the individual checklist items. Each item can optionally link to a Room, an Equipment item, or a Supply Category for context-aware fulfillment.
+3. Save Changes when you're done.
+
+## Editing and deleting
+
+Practice admins can edit any template from the row's **Edit** action. Deleting follows a confirm dialog.
+
+**Default templates** (the ones seeded with the practice — Patient Procedure Checklist, Stock Operatories, Daily Maintenance Checklist, etc.) are protected: you can edit them freely, but the Delete action is blocked with an error toast. Defaults exist so a brand-new practice has a working baseline on day one.
+
+## Status
+
+Each template has a `status` field shown as a badge in the table:
+
+- **Active** — visible to staff and used to generate scheduled tasks.
+- **Draft** — saved but not yet generating tasks. Use this while you're authoring.
+- **Archived** — kept for reference but no longer in use.

@@ -12,15 +12,10 @@ export async function getPracticeId(
   supabase: Awaited<ReturnType<typeof createClient>>,
   authUser: AuthUser,
 ): Promise<string | null> {
-  // Try membership first (works for all roles)
-  const { data: member } = await supabase
-    .from('practice_members')
-    .select('practice_id')
-    .eq('user_id', authUser.profile.id)
-    .limit(1)
-    .single();
-
-  if (member?.practice_id) return member.practice_id;
+  // getAuthUser already loaded the active membership — reuse it instead of
+  // round-tripping to the DB on every API call. This is the common path for
+  // every non-brik_admin user.
+  if (authUser.membership?.practiceId) return authUser.membership.practiceId;
 
   // Platform admin fallback — pick the first practice
   if (authUser.profile.system_role === 'brik_admin') {

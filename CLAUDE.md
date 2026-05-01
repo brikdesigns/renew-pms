@@ -6,6 +6,17 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
+## Worktree (renew-pms specifics)
+
+- **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
+- **Worktree path:** `../renew-pms-worktrees/{slug}`
+- **Spawn:** `./scripts/new-task.sh {slug}` from the primary
+- **Hook:** `.claude/hooks/worktree-check.sh` warns on session start + first edit; also detects cross-worktree drift
+
+Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAUDE.md (`~/Documents/GitHub/CLAUDE.md`) § Agent scope discipline. The shared rule is the source of truth — this section only carries the renew-specific path + base-branch.
+
+---
+
 @../../brik/brik-bds/CLAUDE.md
 
 ---
@@ -13,12 +24,12 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+| --- | --- |
 | Framework | Next.js 16 (App Router, TypeScript) |
 | React | React 19 |
 | Auth | Supabase Auth (`@supabase/ssr`) — session refresh via `src/proxy.ts` |
 | Database | Supabase PostgreSQL (RLS) |
-| UI | BDS submodule + Tailwind CSS 4 + Radix UI |
+| UI | BDS npm package (`@brikdesigns/bds`) + Tailwind CSS 4 + Radix UI |
 | Styling | Tailwind CSS 4 (CSS-first config — no `tailwind.config.ts`; uses `@theme {}` in `globals.css`) |
 | Email | Resend |
 | Icons | FontAwesome 7 |
@@ -28,12 +39,44 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 | Docs | Fumadocs (fumadocs-ui, fumadocs-mdx, fumadocs-core) — `/docs` and `/guide` routes |
 | Hosting | Netlify |
 
+## LLM stack (renew-pms specifics)
+
+Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `@brikdesigns/claude-client` requirement live in cross-repo § "How to add Claude to any Brik app."
+
+**Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
+
 ## Business Context
 
 - Single dental practice client initially; validated before going to market
 - Client pays via brik-client-portal — no in-app billing (Stripe deferred)
 - Staff-only back office tool — no patient-facing features in V1
 - Brik provisions practices; practice admins invite staff (no self-serve signup)
+
+## Compliance Profile
+
+Renew PMS is a **dental practice management system and staff training platform** — a healthcare-regulated product by default. Every feature that handles patient data, practice workflows, or public-facing interfaces must be built with compliance in mind from the start.
+
+### Applicable regimes (all YES for this repo)
+
+| Regime | Applies | Reason |
+| --- | --- | --- |
+| **HIPAA** | Yes | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
+| **ACA §1557** | Yes | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
+| **Rehab Act §504** | Yes | Covered when the practice or platform receives federal funding |
+| **ADA Title III** | Yes | Public-facing web app used by patients (appointment booking, patient portal surfaces) |
+
+### Canonical reference
+
+Specific WCAG targets, implementation requirements, and standards details live in the BDS healthcare ADA doc:
+[`../brik/brik-bds/content-system/compliance/healthcare-ada.md`](../brik/brik-bds/content-system/compliance/healthcare-ada.md)
+
+This is the single source of truth maintained alongside BDS. When requirements are unclear, read that file — do not derive requirements from memory.
+
+### How to apply
+
+Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI handling, accessibility (WCAG 2.1 AA minimum), and language access as **default-on** for every feature — not optional add-ons. New features do not ship without verifying they don't introduce PHI exposure, accessibility regressions, or language access gaps.
+
+---
 
 ## Architecture
 
@@ -69,7 +112,7 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 ## Supabase
 
 | Environment | Project Ref | Purpose |
-|-------------|-------------|---------|
+| --- | --- | --- |
 | Development | `zneuygoeorhkuhktmuld` | Local dev + staging (`.env.local`) |
 | Production | **NOT YET PROVISIONED** | Required before soft launch |
 
@@ -155,11 +198,11 @@ import { font, color, space, gap, border, shadow } from '@/lib/tokens';
 import { text, heading, detail } from '@/lib/styles';
 ```
 
-Path aliases: `@/*` → `./src/*` · `@bds/components` → `./brik-bds/components` · `@bds/tokens` → `./brik-bds/tokens`
+Path alias: `@/*` → `./src/*`. BDS components: `import { ... } from '@brikdesigns/bds'`
 
 **Never use raw `var(--...)` strings in CSSProperties.** Always import from `@/lib/tokens` — this is enforced by the pre-commit hook and `./scripts/token-audit.sh`. If a token is missing from the typed exports, add it to `src/lib/tokens.ts` first.
 
-**Department colors:** Read `department.color` from the DB row and call `departmentColor(colorKey)` from `@/lib/tokens`. `getDepartmentColors(name)` in `@/lib/department-colors` is `@deprecated` — do not add new calls to it.
+**Department colors:** Read `department.color` from the DB row and call `departmentColor(colorKey)` from `@/lib/tokens`.
 
 ### Font family rules
 
@@ -180,25 +223,20 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 `src/styles/theme-renew.css` overrides BDS semantic tokens with Renew Dental's palette. Values come from Figma file `kwNyWG6H3ifjZmytZnNJXd`. **Never edit this file without pulling the latest Figma export.** Never guess token values.
 
-### Storybook MCP (use when building UI)
+### Storybook MCP — query before writing UI
 
-When Storybook is running (`npm run storybook` in `brik/brik-bds/`), Claude can query BDS components directly via MCP at `http://localhost:6006/mcp`. Start Storybook before building portal UI — do not read source files to guess props when the MCP is available.
+Always query the Storybook MCP for BDS component props before writing JSX. Endpoint, tool list, and unreachable-fallback are documented in the BDS CLAUDE.md (which is `@-imported` above) § Storybook MCP addon. Per-build Chromatic URLs are forbidden — use the `main--69b8918...chromatic.com/mcp` stable endpoint.
 
-- `list-all-documentation` — discover all components
-- `get-documentation` — full props + JSX examples
-- `preview-stories` — live preview URLs
-
-Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/)
+**Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
 
 ## Component Rules
 
 ### BDS first
 
-- Check BDS before building custom. Query via Storybook MCP (`http://localhost:6006/mcp`) when running, or browse [BDS Chromatic](https://69b8918cac3056b39424d5d3-jtcwcnhshz.chromatic.com/). Read component props and examples before writing JSX.
-- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@bds/components`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
+- Check BDS before building custom. Query via Storybook MCP (see "Storybook MCP" section above) — read component props and examples before writing JSX.
+- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@brikdesigns/bds`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
 - **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
 - Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
-- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules > Submodule Discipline.
 
 ### Server vs client components
 
@@ -212,56 +250,35 @@ Visual reference (no Storybook required): [BDS Chromatic](https://69b8918cac3056
 - React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
 - No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
 
-## Branching Model
+## Branch Workflow
 
-Pre-launch, single developer — keep it simple.
+> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
 
-```text
-main (production — protected, deploys to production)
-  └── staging (daily working branch — all work happens here)
+**All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
+
+```bash
+# Start a new task (always use this — never manual git checkout -b)
+./scripts/new-task.sh {scope}-{name}
+
+# Examples:
+./scripts/new-task.sh renew-task-templates
+./scripts/new-task.sh auth-session-refresh
+./scripts/new-task.sh vendor-portal-v1
 ```
 
-### Rules
+**Rules:**
 
-1. **Work directly on `staging`.** No feature branches until there are multiple contributors or a live production environment to protect.
-2. **`main` is locked.** Only receives merges from `staging` via PR when ready to ship to production.
-3. **Commit often, push deliberately.** Pushes trigger builds.
-4. **Never leave changes floating in the working tree across sessions.** Commit before ending a session.
+1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
+2. **Branch from `staging` (pre-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=main ./scripts/new-task.sh ...` for the rare infra PR that needs to land on `main` directly.
+3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
+4. **Never touch `main` or `staging` directly.** Only Nick merges.
+5. **Delete branches after merge.** GitHub auto-deletes on merge by default; closed-without-merge branches (like superseded version bumps) get deleted manually.
 
-### When to revisit
-
-Add feature branches when: (a) a second developer joins, (b) production is live with real users, or (c) a feature genuinely needs isolated testing. Until then, branches add overhead and risk losing work.
+**Merge flow (pre-launch):** `task/` branch → PR to `staging` → squash merge → periodic `staging → main` promotion when the infra warrants it. **Post-launch flow** (future): `task/` → PR to `main` → squash merge → `main → staging` → production.
 
 ## Session Discipline
 
-Every Claude Code session follows a predictable lifecycle. These rules prevent the two most common failure modes: forgotten commits and scope drift.
-
-### Session start (enforced by `scripts/session-guard.sh` PreToolUse hook)
-
-1. **The hook runs automatically** on your first Edit/Write of the session. If there are uncommitted changes from a prior session, it prints a warning with `git status --short` output.
-2. **Resolve before proceeding.** Commit, stash, or discard prior changes. Do not start new work on top of orphaned changes — that's how mixed commits happen.
-3. **Declare scope.** State what this session will accomplish in one sentence before writing code. If the scope changes mid-session, commit current work first.
-
-### During the session
-
-1. **One concern at a time.** Don't mix feature work, debugging, and docs in the same uncommitted state. If you need to context-switch (e.g., fix a bug discovered while building a feature), commit the feature WIP first.
-2. **Commit at each stable checkpoint.** After completing a logical unit (new component, migration, route wiring), commit immediately. Don't accumulate changes for a single big commit.
-3. **No scope drift without a commit.** If the task expands (e.g., "this also needs a new API route"), commit everything completed so far before starting the expansion.
-
-### Session end
-
-1. **Nothing uncommitted.** Before ending a session, all changes must be committed. Zero tolerance — the working tree must be clean.
-2. **Verify with `git status`.** Explicitly check. Don't assume.
-3. **Don't push unless asked.** Commits are free; pushes trigger builds and cost deploy credits.
-
-### Guardrails in place
-
-| Guard | Type | What it does |
-| ----- | ---- | ------------ |
-| `scripts/session-guard.sh` | Claude Code PreToolUse hook | Warns on first edit if working tree is dirty or BDS submodule is out of sync |
-| `.git/hooks/pre-push` | Git pre-push hook | Blocks push if `typecheck` or `build` fails |
-| `.git/hooks/pre-commit` | Git pre-commit hook | Runs `git-secrets` to prevent credential leaks |
-| `scripts/token-audit.sh` | Manual (run before PRs) | Catches 12 categories of token/component violations |
+Lifecycle rules (start / during / end) + guardrails table live in [`docs/process/session-discipline.md`](docs/process/session-discipline.md). Cross-repo agent scope discipline lives in `~/Documents/GitHub/CLAUDE.md` § Agent scope discipline. Both are mandatory.
 
 ## Commands
 
@@ -280,7 +297,6 @@ npm run db:seed-test-users  # Seed test user accounts
 ./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
 ./scripts/agent-preflight.sh # Pre-task environment validation
 ./scripts/token-audit.sh     # Full token + component compliance scan
-./scripts/bds-sync.sh        # Safe BDS submodule pull + rebuild
 ./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
 ./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
 ./scripts/session-guard.sh   # PreToolUse hook — dirty tree warning (runs automatically)
@@ -308,7 +324,7 @@ npm run typecheck          # TypeScript
 npm run build              # Full build — catches what lint misses
 ```
 
-The audit catches 12 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius, and hardcoded gap/padding values. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
+The audit catches 14 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius/gap/padding values, and `headingStyle` variable name drift. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
 
 ## Rules
 
@@ -316,4 +332,3 @@ The audit catches 12 violation categories including native `<button>` elements, 
 - Always build locally before pushing
 - Stage specific files, never `git add -A`
 - Never push without user confirmation
-- BDS submodule discipline: see Global CLAUDE.md > BDS Ecosystem Rules

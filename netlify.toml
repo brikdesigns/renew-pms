@@ -1,14 +1,22 @@
 [build]
-  command = "npm run build"
+  # Remove stale brik-bds submodule dir (cached from pre-npm-migration builds)
+  command = "rm -rf brik-bds && npm run build"
   publish = ".next"
-  ignore = "if [ -z \"$CACHED_COMMIT\" ]; then exit 1; fi; git diff --quiet $CACHED_COMMIT HEAD -- src/ public/ next.config.mjs package.json package-lock.json netlify.toml brik-bds/"
+  ignore = "if [ -z \"$CACHED_COMMIT\" ]; then exit 1; fi; git diff --quiet $CACHED_COMMIT HEAD -- src/ public/ next.config.mjs package.json package-lock.json netlify.toml"
 
 [build.environment]
   NODE_VERSION = "20"
-  GIT_SUBMODULES = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Standalone Netlify functions live alongside the Next.js app — used for
+# scheduled (cron) work that runs without a user session. The Next.js app
+# is published from `.next` per the [build] block above; this directory is
+# discovered separately by Netlify.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 # ── Staging (branch deploys) ────────────────────────────────────────
 # main     → renew-pms.netlify.app  (production, custom domain TBD)
@@ -16,10 +24,12 @@
 # PR #N    → deploy-preview-N--renew-pms.netlify.app
 
 [context.staging]
-  command = "npm run build"
+  # Remove stale brik-bds submodule dir (cached from pre-npm-migration builds)
+  command = "rm -rf brik-bds && npm run build"
 
 [context.staging.environment]
   NEXT_PUBLIC_SITE_URL = "https://staging--renew-pms.netlify.app"
 
 [context.deploy-preview]
-  command = "npm run build"
+  # Remove stale brik-bds submodule dir (cached from pre-npm-migration builds)
+  command = "rm -rf brik-bds && npm run build"

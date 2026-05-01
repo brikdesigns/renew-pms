@@ -1,35 +1,22 @@
 'use client';
 
-import { useState, useMemo, useEffect, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Tag, Button } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Tag, Button, Menu, useSheetStack } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PriorityBadge } from '@/components/PriorityBadge';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
-import { SubmitRequestSheet } from '@/components/SubmitRequestSheet';
-import { ViewRequestSheet } from '@/components/ViewRequestSheet';
+import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Display maps ──────────────────────────────────────────────────────────
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  high:     { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  medium:   { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  low:      { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
-
-const STATUS_BADGE: Record<string, { status: 'info' | 'warning' | 'positive' | 'error'; label: string }> = {
-  submitted:         { status: 'info',    label: 'Submitted' },
-  in_review:         { status: 'info',    label: 'In Review' },
-  in_progress:       { status: 'warning', label: 'In Progress' },
-  waiting_on_vendor: { status: 'warning', label: 'Waiting on Vendor' },
-  resolved:          { status: 'positive', label: 'Resolved' },
-  closed:            { status: 'positive', label: 'Closed' },
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue:          'Device',
@@ -45,7 +32,7 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingRight: space.xl };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -63,7 +50,23 @@ const countBadge: CSSProperties = {
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+// Surface shell that wraps the table. Mirrors the dashboard card pattern
+// (background.primary + shadow.sm + space.lg padding + border.radius.lg) so
+// the table reads as a contained display layer instead of floating flat
+// against the page. Header / "New Request" button stay outside this shell.
+const tableShellStyle: CSSProperties = {
+  flex: 1,
+  overflowX: 'auto',
+  backgroundColor: color.background.primary,
+  borderRadius: border.radius.lg,
+  boxShadow: shadow.sm,
+  padding: space.lg,
+};
+
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session on the other machine is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
 const nameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
 const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
@@ -106,37 +109,18 @@ function AddRequestButton({ onSelect }: { onSelect: (categoryId: string) => void
       <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setOpen(p => !p)}>
         New Request
       </Button>
-      {open && (
-        <div style={{
-          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-          backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-          border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
-          minWidth: 280, overflow: 'hidden',
-        }}>
-          {ADD_MENU_CATEGORIES.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => { onSelect(c.id); setOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: gap.md,
-                width: '100%', padding: `${space.sm} ${space.md}`,
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: font.family.label, fontSize: font.size.label.sm,
-                color: color.text.primary, textAlign: 'left',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
-              <Icon icon={c.icon} style={{ width: 16, color: color.text.brand }} />
-              <div>
-                <div style={{ fontWeight: font.weight.semibold }}>{c.label}</div>
-                <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{c.desc}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      <Menu
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        items={ADD_MENU_CATEGORIES.map(c => ({
+          id: c.id,
+          label: c.label,
+          description: c.desc,
+          icon: <Icon icon={c.icon} />,
+          onClick: () => { onSelect(c.id); setOpen(false); },
+        }))}
+        style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+      />
     </div>
   );
 }
@@ -149,11 +133,20 @@ interface MyRequestsListProps {
 
 export function MyRequestsList({ memberId }: MyRequestsListProps) {
   const { requests, loading, refetch } = useRequests({ mine: memberId });
+  const { openSheet, closeAll } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
-  const [viewing, setViewing] = useState<RequestRow | null>(null);
+  const [editing, setEditing] = useState<RequestEditData | null>(null);
+
+  // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
+  const openRequest = useCallback((req: RequestRow) => {
+    openSheet('request', {
+      id: req.id,
+      onUpdated: refetch,
+    }, { title: req.title, variant: 'floating' });
+  }, [openSheet, refetch]);
 
   // Auto-open request sheet from ?open=<id> or submit from ?submit=true
   useEffect(() => {
@@ -161,7 +154,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
     if (openId && requests.length > 0) {
       const match = requests.find(r => r.id === openId);
       if (match) {
-        setViewing(match);
+        openRequest(match);
         router.replace('/requests', { scroll: false });
       }
     }
@@ -169,7 +162,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       setSubmitOpen(true);
       router.replace('/requests', { scroll: false });
     }
-  }, [searchParams, requests, router]);
+  }, [searchParams, requests, router, openRequest]);
 
   const sorted = useMemo(() =>
     [...requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -201,10 +194,11 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         </div>
 
         <SubmitRequestSheet
-          isOpen={submitOpen}
-          onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+          isOpen={submitOpen || editing !== null}
+          onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
           onSaved={refetch}
           defaultCategory={submitCategory}
+          initialData={editing}
         />
       </div>
     );
@@ -222,7 +216,7 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
         <AddRequestButton onSelect={handleAddSelect} />
       </div>
 
-      <div style={tableWrap}>
+      <div style={tableShellStyle}>
         <Table size="default" flush>
           <TableHeader>
             <TableRow>
@@ -235,35 +229,25 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading requests…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : sorted.map(r => {
-              const priority = PRIORITY_BADGE[r.urgency] ?? PRIORITY_BADGE.medium;
-              const status = STATUS_BADGE[r.status] ?? STATUS_BADGE.submitted;
               return (
-                <TableRow key={r.id} onClick={() => setViewing(r)} style={{ cursor: 'pointer' }}>
-                  <TableCell>
+                <TableRow key={r.id} onClick={() => openRequest(r)} style={{ cursor: 'pointer' }}>
+                  <TableCell style={bodyCellStyle}>
                     <span style={nameCellStyle}>{r.title}</span>
                   </TableCell>
-                  <TableCell>
-                    <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary }}>
+                  <TableCell style={bodyCellStyle}>
+                    <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary }}>
                       {CATEGORY_LABELS[r.category] ?? r.category}
                     </Tag>
                   </TableCell>
-                  <TableCell>
-                    <Badge status={priority.status} size="sm" variant="dark" icon={<Icon icon={priority.icon} />}>
-                      {priority.label}
-                    </Badge>
+                  <TableCell style={bodyCellStyle}>
+                    <PriorityBadge priority={r.urgency} />
                   </TableCell>
-                  <TableCell>
-                    <Badge status={status.status} size="sm">
-                      {status.label}
-                    </Badge>
+                  <TableCell style={bodyCellStyle}>
+                    <StatusBadge status={r.status} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={secondaryCellStyle}>{timeAgo(r.created_at)}</span>
                   </TableCell>
                 </TableRow>
@@ -274,17 +258,11 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       </div>
 
       <SubmitRequestSheet
-        isOpen={submitOpen}
-        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+        isOpen={submitOpen || editing !== null}
+        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
         onSaved={refetch}
         defaultCategory={submitCategory}
-      />
-      <ViewRequestSheet
-        isOpen={viewing !== null}
-        onClose={() => setViewing(null)}
-        request={viewing}
-        isAdmin={false}
-        onUpdated={refetch}
+        initialData={editing}
       />
     </div>
   );

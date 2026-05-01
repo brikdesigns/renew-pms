@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 
-export type NotificationType = 'request_new' | 'request_status_change' | 'request_assigned' | 'task_assigned';
+export type NotificationType = 'request_new' | 'request_status_change' | 'request_assigned' | 'task_assigned' | 'vendor_message';
 
 interface CreateNotificationOptions {
   practiceId: string;

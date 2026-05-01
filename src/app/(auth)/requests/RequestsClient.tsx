@@ -3,16 +3,16 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Board, BoardColumn, BoardCard } from '@bds/components';
-import { Tag, Badge, Chip, Button, Tooltip } from '@bds/components';
-import { Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
+import { Tag, Chip, Button, IconButton, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { PriorityBadge } from '@/components/PriorityBadge';
+import { Menu, MenuItem } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useRequests, type RequestRow } from '@/hooks/useRequests';
 import { useMembers, type Member } from '@/hooks/useMembers';
-import { SubmitRequestSheet } from '@/components/SubmitRequestSheet';
-import { ViewRequestSheet } from '@/components/ViewRequestSheet';
+import { SubmitRequestSheet, type RequestEditData } from '@/components/SubmitRequestSheet';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -28,12 +28,6 @@ const STATUS_PIPELINE = [
   { key: 'closed',            label: 'Closed' },
 ] as const;
 
-const PRIORITY_BADGE: Record<string, { status: 'error' | 'warning' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  high:     { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  medium:   { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  low:      { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   device_issue:          'Device',
@@ -77,7 +71,7 @@ function ChipFilter({ options, selected, onChange }: {
   const isFiltered = selected !== options[0];
   return (
     <div style={{ position: 'relative' }}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'light'} showDropdown onChipClick={() => setOpen(p => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen(p => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 }} />
     </div>
   );
@@ -160,6 +154,37 @@ const columnDropTargetStyle: CSSProperties = {
   boxShadow: shadow.md,
 };
 
+// ─── Loading skeleton ──────────────────────────────────────────────────────
+
+// Stagger card counts so the loading state looks like a real board, not a grid.
+const SKELETON_CARDS_PER_COLUMN = [3, 2, 2, 1, 0, 0];
+
+function BoardCardSkeleton() {
+  return (
+    <div
+      style={{
+        backgroundColor: color.surface.overlay,
+        boxShadow: shadow.sm,
+        borderRadius: border.radius.md,
+        padding: space.md,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: gap.sm,
+      }}
+    >
+      <Skeleton variant="text" width="70%" height={16} />
+      <Skeleton variant="text" width="45%" height={12} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: gap.xs }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs }}>
+          <Skeleton variant="rectangular" width={56} height={20} style={{ borderRadius: border.radius.sm }} />
+          <Skeleton variant="rectangular" width={20} height={20} style={{ borderRadius: border.radius.sm }} />
+        </div>
+        <Skeleton variant="rectangular" width={28} height={28} style={{ borderRadius: border.radius.pill }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Assignee menu constants ────────────────────────────────────────────────
 
 const ASSIGN_MENU_WIDTH = 220;
@@ -185,7 +210,7 @@ function AssigneeAvatar({
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-  const avatarRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
@@ -249,7 +274,7 @@ function AssigneeAvatar({
     return () => document.removeEventListener('keydown', handler);
   }, [open, close]);
 
-  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (open) { close(); } else { openMenu(); }
@@ -282,25 +307,25 @@ function AssigneeAvatar({
 
   return (
     <>
-      <div
-        ref={avatarRef}
-        title={assigneeName ?? 'Unassigned'}
-        style={{ cursor: 'pointer' }}
-        onClick={handleToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
-      >
-        {assigneeName ? (
-          <UserAvatar name={assigneeName} size="sm" />
-        ) : (
-          <div style={unassignedAvatarStyle}>
-            <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
-          </div>
-        )}
-      </div>
+      <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
+        <IconButton
+          ref={avatarRef}
+          variant="ghost"
+          size="sm"
+          label={assigneeName ?? 'Assign to'}
+          onClick={handleToggle}
+          icon={
+            assigneeName ? (
+              <UserAvatar name={assigneeName} size="sm" />
+            ) : (
+              <div style={unassignedAvatarStyle}>
+                <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
+              </div>
+            )
+          }
+        />
+      </Tooltip>
       {open && pos && createPortal(
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}
@@ -320,25 +345,33 @@ function AssigneeAvatar({
             padding: `${gap.xs} 0`,
           }}
         >
-          <AssignMenuItem
-            active={!assigneeId}
-            onClick={() => handleAssign(null, null)}
-            avatar={
-              <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
-                <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
-              </div>
-            }
-            label="Unassigned"
+          <MenuItem
+            item={{
+              id: 'unassigned',
+              label: 'Unassigned',
+              icon: (
+                <div style={{ ...unassignedAvatarStyle, width: 24, height: 24 }}>
+                  <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
+                </div>
+              ),
+            }}
+            onClick={(e) => { e.stopPropagation(); handleAssign(null, null); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            isActive={!assigneeId}
           />
           {activeMembers.map(m => {
             const name = `${m.first_name} ${m.last_name}`.trim();
             return (
-              <AssignMenuItem
+              <MenuItem
                 key={m.id}
-                active={m.id === assigneeId}
-                onClick={() => handleAssign(m.id, name)}
-                avatar={<UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />}
-                label={name}
+                item={{
+                  id: m.id,
+                  label: name,
+                  icon: <UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />,
+                }}
+                onClick={(e) => { e.stopPropagation(); handleAssign(m.id, name); }}
+                onMouseDown={(e) => e.stopPropagation()}
+                isActive={m.id === assigneeId}
               />
             );
           })}
@@ -346,38 +379,6 @@ function AssigneeAvatar({
         document.body
       )}
     </>
-  );
-}
-
-/** Single menu item — stops React synthetic event propagation so portal clicks don't reach BoardCard */
-function AssignMenuItem({ active, onClick, avatar, label }: {
-  active: boolean;
-  onClick: () => void;
-  avatar: React.ReactNode;
-  label: string;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const highlighted = active || hovered;
-  return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: gap.md,
-        width: '100%', padding: `${space.xs} ${space.md}`,
-        backgroundColor: highlighted ? color.surface.accent : 'transparent',
-        border: 'none', cursor: 'pointer',
-        fontFamily: font.family.label, fontSize: font.size.label.sm,
-        fontWeight: active ? font.weight.semibold : font.weight.medium,
-        color: color.text.primary, textAlign: 'left',
-      }}
-    >
-      {avatar}
-      {label}
-    </button>
   );
 }
 
@@ -389,13 +390,14 @@ interface RequestsClientProps {
 }
 
 export default function RequestsClient({ isAdmin }: RequestsClientProps) {
-  const { requests, refetch, updateOptimistic } = useRequests();
+  const { requests, loading, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
+  const { openSheet, closeAll } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitCategory, setSubmitCategory] = useState('');
-  const [viewing, setViewing] = useState<RequestRow | null>(null);
+  const [editing, setEditing] = useState<RequestEditData | null>(null);
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterPriority, setFilterPriority] = useState('All Priorities');
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -407,6 +409,14 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const [settling, setSettling] = useState(false);
   const isDragging = useRef(false);
 
+  // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
+  const openRequest = useCallback((req: RequestRow) => {
+    openSheet('request', {
+      id: req.id,
+      onUpdated: refetch,
+    }, { title: req.title, variant: 'floating' });
+  }, [openSheet, refetch]);
+
   // Auto-open request sheet from ?open=<id> (e.g., notification click)
   // Auto-open submit form from ?submit=true (e.g., plus button in utility bar)
   useEffect(() => {
@@ -414,7 +424,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     if (openId && requests.length > 0) {
       const match = requests.find(r => r.id === openId);
       if (match) {
-        setViewing(match);
+        openRequest(match);
         router.replace('/requests', { scroll: false });
       }
     }
@@ -422,7 +432,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       setSubmitOpen(true);
       router.replace('/requests', { scroll: false });
     }
-  }, [searchParams, requests, router]);
+  }, [searchParams, requests, router, openRequest]);
 
   const filtered = useMemo(() => {
     return requests.filter(r => {
@@ -490,6 +500,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     const requestId = e.dataTransfer.getData('text/plain');
     setDraggingId(null);
     setDropTargetKey(null);
+    // Reset drag flag here — the optimistic update below unmounts the card from its
+    // old column, so React detaches the onDragEnd handler before dragend fires,
+    // leaving isDragging.current stuck at true and blocking all future clicks.
+    setTimeout(() => { isDragging.current = false; }, 0);
 
     if (!requestId) return;
 
@@ -537,45 +551,27 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
             <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
               Add Request
             </Button>
-            {addMenuOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-                border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
-                minWidth: 280, overflow: 'hidden',
-              }}>
-                {ADD_MENU_CATEGORIES.map(c => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: gap.md,
-                      width: '100%', padding: `${space.sm} ${space.md}`,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: font.family.label, fontSize: font.size.label.sm,
-                      color: color.text.primary, textAlign: 'left',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <Icon icon={c.icon} style={{ width: 16, color: color.text.brand }} />
-                    <div>
-                      <div style={{ fontWeight: font.weight.semibold }}>{c.label}</div>
-                      <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{c.desc}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            <Menu
+              isOpen={addMenuOpen}
+              onClose={() => setAddMenuOpen(false)}
+              items={ADD_MENU_CATEGORIES.map(c => ({
+                id: c.id,
+                label: c.label,
+                description: c.desc,
+                icon: <Icon icon={c.icon} />,
+                onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
+              }))}
+              style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+            />
           </div>
         </div>
       </div>
 
       <Board style={{ flex: 1, minHeight: 0 }}>
-        {columns.map(col => {
+        {columns.map((col, colIdx) => {
           const isDropTarget = dropTargetKey === col.key;
           const isDragMode = draggingId !== null;
+          const skeletonCount = loading && col.requests.length === 0 ? SKELETON_CARDS_PER_COLUMN[colIdx] ?? 0 : 0;
           const colStyle = isDropTarget
             ? columnDropTargetStyle
             : isDragMode
@@ -598,7 +594,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                 <span style={countBadgeStyle}>{col.requests.length}</span>
               </div>
               {col.requests.map(req => {
-                const priority = PRIORITY_BADGE[req.urgency] ?? PRIORITY_BADGE.medium;
                 const catLabel = CATEGORY_LABELS[req.category] ?? req.category;
                 const isBeingDragged = draggingId === req.id;
                 return (
@@ -606,7 +601,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                     key={req.id}
                     title={req.title}
                     subtitle={req.submitter_name ? `${req.submitter_name} \u00b7 ${timeAgo(req.created_at)}` : timeAgo(req.created_at)}
-                    onClick={() => { if (!isDragging.current) setViewing(req); }}
+                    onClick={() => { if (!isDragging.current) openRequest(req); }}
                     draggable
                     onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, req.id)}
                     onDragEnd={handleDragEnd}
@@ -619,13 +614,11 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                     }}
                     tags={
                       <>
-                        <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
-                        <Badge status={priority.status} size="xs" variant="dark" icon={<Icon icon={priority.icon} />} style={{ flexShrink: 0 }}>
-                          {priority.label}
-                        </Badge>
+                        <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary, flexShrink: 0 }}>{catLabel}</Tag>
+                        <PriorityBadge priority={req.urgency} iconOnly />
                         {req.vendor_name && (
                           <Tooltip content="Has Vendor">
-                            <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
+                            <span style={{ width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: border.radius.sm, backgroundColor: color.surface.brandPrimary, color: color.text.onColorDark, flexShrink: 0 }}>
                               <Icon icon={icon.wrench} width={14} height={14} />
                             </span>
                           </Tooltip>
@@ -644,7 +637,10 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
                   />
                 );
               })}
-              {col.requests.length === 0 && !isDragMode && (
+              {skeletonCount > 0 && Array.from({ length: skeletonCount }).map((_, i) => (
+                <BoardCardSkeleton key={`skeleton-${col.key}-${i}`} />
+              ))}
+              {!loading && col.requests.length === 0 && !isDragMode && (
                 <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
                   No requests
                 </div>
@@ -671,17 +667,11 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       </Board>
 
       <SubmitRequestSheet
-        isOpen={submitOpen}
-        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); }}
+        isOpen={submitOpen || editing !== null}
+        onClose={() => { setSubmitOpen(false); setSubmitCategory(''); setEditing(null); }}
         onSaved={refetch}
         defaultCategory={submitCategory}
-      />
-      <ViewRequestSheet
-        isOpen={viewing !== null}
-        onClose={() => setViewing(null)}
-        request={viewing}
-        isAdmin={isAdmin}
-        onUpdated={refetch}
+        initialData={editing}
       />
     </div>
   );

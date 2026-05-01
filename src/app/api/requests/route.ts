@@ -152,6 +152,9 @@ export async function GET(request: Request) {
   if (category) query = query.eq('category', category);
   if (urgency) query = query.eq('urgency', urgency);
 
+  const equipmentId = searchParams.get('equipment_id');
+  if (equipmentId) query = query.eq('equipment_id', equipmentId);
+
   // Staff filter: only requests submitted by or assigned to this member
   if (mine) {
     query = query.or(`submitted_by.eq.${mine},assigned_to.eq.${mine}`);

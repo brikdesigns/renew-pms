@@ -1,9 +1,39 @@
-/* token-audit-ignore — global error boundary renders outside React tree; hardcoded values required */
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
+import { Button } from '@brikdesigns/bds';
 import './globals.css';
+import { color, font, gap, space } from '@/lib/tokens';
+
+const bodyStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: '100dvh',
+  fontFamily: font.family.body,
+};
+
+const cardStyle: CSSProperties = {
+  textAlign: 'center',
+  maxWidth: '400px',
+  padding: space.xl,
+};
+
+const titleStyle: CSSProperties = {
+  fontFamily: font.family.heading,
+  fontSize: font.size.heading.small,
+  fontWeight: font.weight.bold,
+  color: color.text.primary,
+  marginBottom: gap.md,
+};
+
+const paragraphStyle: CSSProperties = {
+  fontFamily: font.family.body,
+  fontSize: font.size.body.sm,
+  color: color.text.secondary,
+  marginBottom: gap.xl,
+};
 
 export default function GlobalError({
   error,
@@ -18,18 +48,13 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body className="theme-renew" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', fontFamily: 'sans-serif' }}>
-        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '32px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Something went wrong</h1>
-          <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
+      <body className="theme-renew" style={bodyStyle}>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>Something went wrong</h1>
+          <p style={paragraphStyle}>
             An unexpected error occurred. Our team has been notified.
           </p>
-          <button
-            onClick={reset}
-            style={{ padding: '8px 20px', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', border: '1px solid #ccc' }}
-          >
-            Try again
-          </button>
+          <Button variant="secondary" size="sm" onClick={reset}>Try again</Button>
         </div>
       </body>
     </html>

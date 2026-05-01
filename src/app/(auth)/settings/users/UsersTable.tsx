@@ -3,12 +3,13 @@
 import { useState, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -18,29 +19,17 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
 import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
-
-const TEXT_SECONDARY = color.text.secondary;
-
-const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  brik_admin: 'Platform Admin',
-  admin: 'Practice Admin',
-  staff: 'Staff',
-};
+import { EMPLOYEE_TYPE_TAG, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
+import '../_settingsTableStyles.css';
 
 const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 'maturing', 'Proficient': 'proficient' };
 
-const EMPLOYEE_TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
-  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
-  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
-};
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`,
+  padding: `${space.md} ${space.xl}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const subHeaderTitleStyle: CSSProperties = {
@@ -50,12 +39,17 @@ const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
+
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
@@ -67,7 +61,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
   const isFiltered = selected !== options[0];
   return (
     <div style={chipWrapperStyle}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'light'} showDropdown onChipClick={() => setOpen((p) => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen((p) => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={menuStyle} />
     </div>
   );
@@ -76,6 +70,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function UsersTable() {
+  const { pushSheet } = useSheetStack();
   const { members, setMembers, loading } = useMembers();
   const { departments } = useDepartments();
   const { roles } = useRoles();
@@ -163,6 +158,20 @@ export function UsersTable() {
   const handleViewClose = () => { setViewOpen(false); setViewing(null); };
   const handleViewEdit = () => { if (viewing) { handleViewClose(); handleEdit(viewing); } };
 
+  const handleResendInvite = async (m: Member) => {
+    const res = await fetch(`/api/members/${m.id}/resend-invite`, { method: 'POST' });
+    if (res.ok) {
+      showToast({
+        title: 'Invite resent',
+        description: `A new invite link is on its way to ${m.email.toLowerCase()}.`,
+        variant: 'success',
+      });
+    } else {
+      const err = await res.json().catch(() => ({ error: 'Failed to resend invite' }));
+      showToast({ title: 'Could not resend invite', description: err.error, variant: 'error' });
+    }
+  };
+
   const handleSave = async (data: UserFormData) => {
     if (editing) {
       const res = await fetch(`/api/members/${editing.id}`, {
@@ -176,6 +185,7 @@ export function UsersTable() {
           practice_role_id: data.practice_role_id,
           employee_type: data.employee_type,
           shift: data.shift || null,
+          office_days: data.office_days,
           is_active: data.is_active,
         }),
       });
@@ -203,8 +213,15 @@ export function UsersTable() {
         }),
       });
       if (res.ok) {
-        const newMember: Member = await res.json();
+        const newMember: Member & { email_status?: 'sent' | 'failed' } = await res.json();
         setMembers((prev) => [...prev, newMember]);
+        if (newMember.email_status === 'failed') {
+          showToast({
+            title: 'Member created — invite email failed',
+            description: `${newMember.first_name} was added but didn't receive the invite email. Try the Resend invite action on their row.`,
+            variant: 'error',
+          });
+        }
       } else {
         const err = await res.json().catch(() => ({ error: 'Failed to invite user' }));
         showToast({ title: 'Error', description: err.error, variant: 'error' });
@@ -225,6 +242,7 @@ export function UsersTable() {
         department: editing.department,
         employee_type: editing.employee_type,
         shift: editing.shift,
+        office_days: editing.office_days,
         is_active: editing.is_active,
       }
     : null;
@@ -238,10 +256,13 @@ export function UsersTable() {
         phone: viewing.phone,
         system_role: viewing.system_role,
         practice_role: viewing.practice_role,
+        practice_role_id: viewing.practice_role_id,
         department: viewing.department,
+        department_id: viewing.department_id,
         department_color: viewing.department_color,
         employee_type: viewing.employee_type,
         shift: viewing.shift,
+        office_days: viewing.office_days,
         is_active: viewing.is_active,
         joined_at: viewing.joined_at,
       }
@@ -273,23 +294,19 @@ export function UsersTable() {
               <TableHead>Permission</TableHead>
               <TableHead>Employee Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
-              <TableRow>
-                <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.secondary, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading members…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={7} />
             )}
             {!loading && filteredMembers.map((m) => {
               const empType = EMPLOYEE_TYPE_TAG[m.employee_type] ?? EMPLOYEE_TYPE_TAG.new;
               const fullName = `${m.first_name} ${m.last_name}`;
               return (
                 <TableRow key={m.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={nameWrap}>
                       <UserAvatar name={fullName} departmentColorKey={m.department_color} size="button" />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -297,39 +314,42 @@ export function UsersTable() {
                           {m.first_name} {m.last_name}
                         </span>
                         <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary, lineHeight: font.lineHeight.snug }}>
-                          {m.email}
+                          {m.email.toLowerCase()}
                         </span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                  <TableCell style={bodyCellStyle}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {m.practice_role || '—'}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                  <TableCell style={bodyCellStyle}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {m.department || '—'}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>
+                  <TableCell style={bodyCellStyle}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">
                       {SYSTEM_ROLE_LABELS[m.system_role] ?? m.system_role}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Tag size="sm" style={{ backgroundColor: empType.bg, color: empType.color }}>{empType.label}</Tag>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Badge status={m.is_active ? 'positive' : 'error'} size="sm">
                       {m.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
+                      {m.has_signed_in === false && (
+                        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.paperPlane} />} label={`Resend invite to ${m.first_name}`} onClick={() => handleResendInvite(m)} />
+                      )}
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -340,7 +360,7 @@ export function UsersTable() {
       </div>
 
       <EditUserSheet isOpen={sheetOpen} onClose={handleClose} initialData={sheetData} onSave={handleSave} />
-      <ViewUserSheet isOpen={viewOpen} onClose={handleViewClose} user={viewData} onEdit={handleViewEdit} />
+      <ViewUserSheet isOpen={viewOpen} onClose={handleViewClose} user={viewData} onEdit={handleViewEdit} onNavigate={(type, props, opts) => pushSheet(type, props, opts)} />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

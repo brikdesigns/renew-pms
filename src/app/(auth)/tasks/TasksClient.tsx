@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
-import { Board, BoardColumn, BoardCard } from '@bds/components';
+import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Badge, Dot, AnimatedIcon, Tooltip, IconButton } from '@bds/components';
+import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button } from '@bds/components';
+import { Button, Menu } from '@brikdesigns/bds';
 import { TaskFilterBar } from '@/components/TaskFilterBar';
 import { ViewTaskSheet, type TaskViewData } from '@/components/ViewTaskSheet';
 import { AddTaskSheet } from '@/components/AddTaskSheet';
@@ -18,7 +18,8 @@ import { usePoolTasks } from '@/hooks/usePoolTasks';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { TaskAssigneeAvatar } from '@/components/TaskAssigneeAvatar';
-import { frequencyLabel } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
+import { PriorityBadge } from '@/components/PriorityBadge';
 
 // ─── Task shape for the board ────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ interface MockTask {
   template: string;
   overdue: boolean;
   status: string;
-  assignmentType: 'role' | 'department';
+  assignmentType: 'individual' | 'role' | 'department' | 'pool';
   assignmentValue: string;
   room?: string;
   equipment?: string;
@@ -43,12 +44,6 @@ interface MockTask {
 
 // ─── Priority map ─────────────────────────────────────────────────────────────
 
-const PRIORITY_MAP: Record<string, { status: 'positive' | 'warning' | 'error' | 'info'; label: string; icon: string }> = {
-  critical: { status: 'error',   label: 'Critical', icon: icon.priorityCritical },
-  error:    { status: 'error',   label: 'High',     icon: icon.priorityHigh },
-  warning:  { status: 'warning', label: 'Medium',   icon: icon.priorityWarning },
-  info:     { status: 'info',    label: 'Low',      icon: icon.priorityInfo },
-};
 
 const PRIORITY_FILTER_MAP: Record<string, string> = {
   'Critical': 'critical',
@@ -116,26 +111,11 @@ const poolColumnDropTarget: CSSProperties = {
   boxShadow: shadow.md,
 };
 
-// ─── Segmented control styles (matches Contacts page) ───────────────────────
-
-const segmentBarStyle: CSSProperties = {
-  display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: space.tiny,
-};
-
-const segmentBtnStyle = (active: boolean): CSSProperties => ({
-  padding: `${space.xs} ${space.md}`,
-  borderRadius: border.radius.xs,
-  border: 'none',
-  cursor: 'pointer',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: active ? font.weight.semibold : font.weight.medium,
-  color: active ? color.text.primary : color.text.secondary,
-  backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? shadow.sm : 'none',
-  transition: 'all 0.15s ease',
-});
+const TASK_VIEW_SEGMENTS = [
+  { label: 'All Tasks', value: 'all' },
+  { label: 'My Tasks', value: 'mine' },
+  { label: 'Open Tasks', value: 'open' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -182,8 +162,7 @@ function ChecklistProgress({ completed, total }: { completed: number; total: num
   if (total === 0) return null;
   return (
     <Tooltip content={`${completed} of ${total} items done`} placement="top">
-      <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-        <Icon icon={icon.typeChecklist} style={{ fontSize: font.size.body.xs } as React.CSSProperties & Record<string, string>} />
+      <Tag size="sm" icon={<Icon icon={icon.typeChecklist} />} style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
         {completed}/{total}
       </Tag>
     </Tooltip>
@@ -192,9 +171,14 @@ function ChecklistProgress({ completed, total }: { completed: number; total: num
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+import type { TasksPageInitialData } from './loaders';
+
 interface TasksClientProps {
   canAddTask: boolean;
   currentMemberId: string | null;
+  /** Server-rendered initial data — passed straight into the per-resource hooks
+   *  so they skip their first useEffect fetch. Hooks still own refetches. */
+  initialData: TasksPageInitialData;
 }
 
 const ADD_TASK_TYPES = [
@@ -205,8 +189,24 @@ const ADD_TASK_TYPES = [
   { id: 'skill_training', label: 'Training',   desc: 'Continuing education',     icon: icon.typeSkillTraining },
 ] as const;
 
-export default function TasksClient({ canAddTask, currentMemberId }: TasksClientProps) {
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+// Source-of-truth statuses that mean "the work is done" for board purposes.
+const RESOLVED_STATUSES = new Set(['completed', 'skipped']);
+
+function isResolvedStatus(status: string): boolean {
+  return RESOLVED_STATUSES.has(status);
+}
+
+export default function TasksClient({ canAddTask, currentMemberId, initialData }: TasksClientProps) {
+  const { pushSheet } = useSheetStack();
+  // `checked` mirrors `tasks.status` from the server, with optimistic flips
+  // applied immediately on click. Refetch reseeds it from the DB so a failed
+  // PATCH is corrected on the next render cycle.
+  const [checked, setChecked] = useState<Record<string, boolean>>(() => {
+    const seed: Record<string, boolean> = {};
+    for (const t of initialData.tasks) if (isResolvedStatus(t.status)) seed[t.id] = true;
+    for (const t of initialData.poolTasks) if (isResolvedStatus(t.status)) seed[t.id] = true;
+    return seed;
+  });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
   const [filtersVisible, setFiltersVisible] = useState(false);
@@ -220,30 +220,47 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addTaskType, setAddTaskType] = useState('');
-  const addBtnRef = useRef<HTMLDivElement>(null);
 
   // ── Drag-and-drop state (Open Tasks board) ────────────────────────────────
   const [poolDraggingId, setPoolDraggingId] = useState<string | null>(null);
   const [poolDropTarget, setPoolDropTarget] = useState<string | null>(null);
   const poolIsDragging = useRef(false);
 
-  // Close add menu on outside click
-  useEffect(() => {
-    if (!addMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (addBtnRef.current && !addBtnRef.current.contains(e.target as Node)) setAddMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [addMenuOpen]);
+  const { departments } = useDepartments({ initialData: initialData.departments });
+  const { members } = useMembers({ initialData: initialData.members });
+  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate, {
+    initialData: initialData.tasks,
+    includeResolved: showResolved,
+  });
+  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate, {
+    initialData: initialData.poolTasks,
+    includeResolved: showResolved,
+  });
 
-  const { departments } = useDepartments();
-  const { members } = useMembers();
-  const { tasks: assignedTasks, refetch: refetchAssigned } = useTasks(selectedDate);
-  const { tasks: poolTasks, refetch: refetchPool } = usePoolTasks(selectedDate);
-
-  const refetchAll = () => { refetchAssigned(); refetchPool(); };
+  const refetchAll = useCallback(() => { refetchAssigned(); refetchPool(); }, [refetchAssigned, refetchPool]);
   const { showToast } = useToast();
+
+  // IDs with an in-flight toggle PATCH. The resync effect skips these so the
+  // optimistic flip isn't clobbered by a stale refetch landing mid-PATCH (or
+  // by the user toggling Show Resolved — which itself triggers a refetch — at
+  // exactly the wrong moment).
+  const pendingToggleIds = useRef<Set<string>>(new Set());
+
+  // Resync `checked` whenever the server task lists update. We rebuild the
+  // map from the server response — any task no longer returned (e.g. moved
+  // off today's view) drops out, preventing stale flags from accumulating —
+  // but preserve optimistic flips for IDs whose PATCH is still in flight.
+  useEffect(() => {
+    setChecked((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const t of assignedTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+      for (const t of poolTasks) if (isResolvedStatus(t.status)) next[t.id] = true;
+      for (const id of pendingToggleIds.current) {
+        if (id in prev) next[id] = prev[id];
+      }
+      return next;
+    });
+  }, [assignedTasks, poolTasks]);
 
   const deptColorMap = useMemo(
     () => new Map(departments.map((d) => [d.name, d.color])),
@@ -318,8 +335,48 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
     }
   }, [poolTasks, refetchPool, showToast]);
 
-  const toggle = (id: string) =>
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Persist completion to the DB. Optimistic flip first so the animation runs
+  // immediately; on failure we rollback and toast. On success we refetch so
+  // the list re-sorts (e.g. completed task leaves the overdue lane).
+  const toggle = useCallback(async (id: string) => {
+    const wasChecked = !!checked[id];
+    const nextChecked = !wasChecked;
+    const nextStatus = nextChecked ? 'completed' : 'not_started';
+
+    setChecked((prev) => ({ ...prev, [id]: nextChecked }));
+    pendingToggleIds.current.add(id);
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // Prefer the API's error message; otherwise expose the HTTP status so
+        // the toast carries diagnostic info instead of a generic fallback.
+        const reason = typeof data?.error === 'string' && data.error.length > 0
+          ? data.error
+          : `${res.status} ${res.statusText || 'request failed'}`;
+        throw new Error(reason);
+      }
+      refetchAll();
+    } catch (err) {
+      setChecked((prev) => ({ ...prev, [id]: wasChecked }));
+      const description = err instanceof Error && err.message
+        ? err.message
+        : 'Failed to update status';
+      console.error('[TasksClient.toggle] PATCH failed:', description);
+      showToast({
+        title: 'Could not update task',
+        description,
+        variant: 'error',
+      });
+    } finally {
+      pendingToggleIds.current.delete(id);
+    }
+  }, [checked, refetchAll, showToast]);
 
   const hasActiveFilters = selectedDepartment !== 'All Departments'
     || selectedFrequency !== 'All Frequencies'
@@ -332,6 +389,25 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
 
   function toMockTask(t: typeof assignedTasks[number]): MockTask {
     const isOverdue = t.status === 'overdue';
+    // Derive assignment shape from which FK is set on the task. Tasks have no
+    // assignment_mode column, so the discriminator IS the FK presence.
+    // Order matters: an individual task can also have member_role joined via
+    // practice_members, but it's still an individual assignment.
+    let assignmentType: MockTask['assignmentType'];
+    let assignmentValue: string;
+    if (t.assigned_to) {
+      assignmentType = 'individual';
+      assignmentValue = `${t.member_first_name} ${t.member_last_name}`.trim();
+    } else if (t.assigned_role_id) {
+      assignmentType = 'role';
+      assignmentValue = t.member_role;
+    } else if (t.assigned_department) {
+      assignmentType = 'department';
+      assignmentValue = t.member_department;
+    } else {
+      assignmentType = 'pool';
+      assignmentValue = '';
+    }
     return {
       id: t.id,
       title: t.title,
@@ -343,8 +419,8 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       template: t.type_name ?? 'Task',
       overdue: isOverdue,
       status: t.status,
-      assignmentType: t.assigned_role_id ? 'role' : 'department',
-      assignmentValue: t.member_role,
+      assignmentType,
+      assignmentValue,
       room: t.room_name ?? undefined,
       equipment: t.equipment_name ?? undefined,
       checklistTotal: t.checklist_total ?? 0,
@@ -384,11 +460,19 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
     });
   }, [poolTasks]);
 
+  // ── Overdue presence (drives the single indicator next to the filter icon) ─
+
+  const hasOverdueInView = (taskView === 'open' ? poolBoard : assignedBoard)
+    .some((col) => col.tasks.some((t) => t.overdue && !checked[t.id]));
+
   // ── Apply filters (shared logic) ──────────────────────────────────────────
 
   function applyFilters(tasks: MockTask[]): MockTask[] {
     return tasks.filter((t) => {
-      if (!showResolved && checked[t.id]) return false;
+      // Hide resolved (completed/skipped) tasks by default. Status from the
+      // server is the authoritative signal; the optimistic `checked` flag
+      // covers the brief window before the next refetch lands.
+      if (!showResolved && (checked[t.id] || isResolvedStatus(t.status))) return false;
       if (selectedDepartment !== 'All Departments' && t.dept !== selectedDepartment) return false;
       if (selectedFrequency !== 'All Frequencies' && t.freq !== selectedFrequency) return false;
       if (selectedPriority !== 'All Priorities' && t.priority !== PRIORITY_FILTER_MAP[selectedPriority]) return false;
@@ -460,9 +544,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   // ── Render a task card (shared between both views) ─────────────────────────
 
   function renderTaskCard(task: MockTask, accentColor: string, assignee?: string, assigneeRole?: string, pool = false) {
-    const pri = PRIORITY_MAP[task.priority];
     const taskDeptColors = getDeptColors(task.dept);
-    const isOverdue = task.overdue && !checked[task.id];
 
     return (
       <BoardCard
@@ -473,29 +555,14 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         checked={!!checked[task.id]}
         onCheckedChange={() => toggle(task.id)}
         onClick={() => setViewingTask(buildTaskViewData(task, assignee, assigneeRole))}
-        style={isOverdue
-          ? { backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)', boxShadow: shadow.sm, cursor: 'pointer' } as React.CSSProperties // token-audit-ignore — CSS custom property override
-          : { backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }
-        }
+        style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
         tags={pool ? (
-          <>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
-              </Tooltip>
-            )}
-          </>
+          <FrequencyTag value={task.freq} />
         ) : (
           <>
-            <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
+            {task.dept && <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
+            <FrequencyTag value={task.freq} />
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
-              </Tooltip>
-            )}
           </>
         )}
         trailingTag={pool ? (
@@ -508,13 +575,15 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
               label="Completed"
             />
           ) : (
-            <div style={{
-              width: 28, height: 28, borderRadius: border.radius.pill,
-              backgroundColor: color.surface.secondary,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon icon={icon.profile} style={{ fontSize: font.size.body.sm, color: color.text.muted } as React.CSSProperties & Record<string, string>} />
-            </div>
+            <Tooltip content="Unassigned" placement="top">
+              <div style={{
+                width: 28, height: 28, borderRadius: border.radius.pill,
+                backgroundColor: color.surface.secondary,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon icon={icon.profile} style={{ fontSize: font.size.body.sm, color: color.text.muted } as React.CSSProperties & Record<string, string>} />
+              </div>
+            </Tooltip>
           )
         ) : (
           checked[task.id] ? (
@@ -526,9 +595,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
               label="Completed"
             />
           ) : (
-            <Tooltip content={pri.label} placement="top">
-              <Badge status={pri.status} size="xs" variant="dark" icon={<Icon icon={pri.icon} />} style={{ flexShrink: 0 }} />
-            </Tooltip>
+            <PriorityBadge priority={task.priority} iconOnly />
           )
         )}
       />
@@ -538,7 +605,6 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
   // ── Render a draggable pool task card ─────────────────────────────────────
 
   function renderPoolDragCard(task: MockTask, isBeingDragged: boolean, isDragMode: boolean) {
-    const isOverdue = task.overdue && !checked[task.id];
     const rawTask = poolTasks.find(t => t.id === task.id);
     const assigneeName = rawTask?.member_first_name
       ? `${rawTask.member_first_name} ${rawTask.member_last_name}`.trim()
@@ -556,25 +622,13 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
         onDragStart={(e: React.DragEvent<HTMLDivElement>) => handlePoolDragStart(e, task.id)}
         onDragEnd={handlePoolDragEnd}
         style={{
-          ...(isOverdue
-            ? { backgroundColor: color.surface.warning, '--text-primary': 'var(--color-pure-black)' } as React.CSSProperties // token-audit-ignore — CSS custom property override
-            : { backgroundColor: color.surface.overlay }
-          ),
+          backgroundColor: color.surface.overlay,
           boxShadow: isBeingDragged ? 'none' : shadow.sm,
           cursor: isDragMode ? 'grabbing' : 'grab',
           ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
           transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
         }}
-        tags={
-          <>
-            <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>{frequencyLabel(task.freq)}</Tag>
-            {isOverdue && (
-              <Tooltip content="Overdue" placement="top">
-                <Badge status="warning" size="xs" variant="dark" icon={<Icon icon={icon.overdue} />} style={{ flexShrink: 0 }} />
-              </Tooltip>
-            )}
-          </>
-        }
+        tags={<FrequencyTag value={task.freq} />}
         trailingTag={
           checked[task.id] ? (
             <AnimatedIcon
@@ -603,11 +657,12 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       {/* ── Unified toolbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: space.xl, padding: `${space.sm} ${space.xl} ${space.sm} 0` }}>
         {/* Left: view toggle */}
-        <div style={segmentBarStyle}>
-          <button type="button" style={segmentBtnStyle(taskView === 'all')} onClick={() => setTaskView('all')}>All Tasks</button>
-          <button type="button" style={segmentBtnStyle(taskView === 'mine')} onClick={() => setTaskView('mine')}>My Tasks</button>
-          <button type="button" style={segmentBtnStyle(taskView === 'open')} onClick={() => setTaskView('open')}>Open Tasks</button>
-        </div>
+        <SegmentedControl
+          items={TASK_VIEW_SEGMENTS}
+          value={taskView}
+          onChange={(v) => setTaskView(v as TaskView)}
+          size="sm"
+        />
 
         {/* Center: date picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
@@ -626,50 +681,38 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
 
         {/* Right: filter toggle + add task */}
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
-          <IconButton
-            variant="secondary"
-            size="sm"
-            icon={<Icon icon={icon.filter} />}
-            label="Toggle filters"
-            onClick={() => setFiltersVisible((p) => !p)}
-            style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
+            {hasOverdueInView && (
+              <Tooltip content="Overdue tasks present" placement="top">
+                <Dot status="warning" size="sm" pulse />
+              </Tooltip>
+            )}
+            <IconButton
+              variant="secondary"
+              size="sm"
+              icon={<Icon icon={icon.filter} />}
+              label="Toggle filters"
+              onClick={() => setFiltersVisible((p) => !p)}
+              style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
+            />
+          </div>
           {canAddTask && (
-            <div ref={addBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
                 Add Task
               </Button>
-              {addMenuOpen && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 100,
-                  backgroundColor: color.surface.primary, borderRadius: border.radius.md,
-                  border: `1px solid ${color.border.muted}`, boxShadow: shadow.md,
-                  minWidth: 260, overflow: 'hidden',
-                }}>
-                  {ADD_TASK_TYPES.map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: gap.md,
-                        width: '100%', padding: `${space.sm} ${space.md}`,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontFamily: font.family.label, fontSize: font.size.label.sm,
-                        color: color.text.primary, textAlign: 'left',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = color.surface.accent; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <Icon icon={t.icon} style={{ width: 16, color: color.text.brand }} />
-                      <div>
-                        <div style={{ fontWeight: font.weight.semibold }}>{t.label}</div>
-                        <div style={{ fontSize: font.size.body.xs, color: color.text.secondary }}>{t.desc}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <Menu
+                isOpen={addMenuOpen}
+                onClose={() => setAddMenuOpen(false)}
+                items={ADD_TASK_TYPES.map(t => ({
+                  id: t.id,
+                  label: t.label,
+                  description: t.desc,
+                  icon: <Icon icon={t.icon} />,
+                  onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
+                }))}
+                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
+              />
             </div>
           )}
         </div>
@@ -679,6 +722,7 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       {filtersVisible && (
         <div style={{ paddingRight: space.xl, paddingBottom: space.sm }}>
           <TaskFilterBar
+            departments={departments}
             selectedDepartment={selectedDepartment}
             onDepartmentChange={setSelectedDepartment}
             selectedFrequency={selectedFrequency}
@@ -696,45 +740,50 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
       )}
 
       {/* ── Board ── */}
-      {taskView === 'mine' && filteredMyBoard.length === 0 ? (
-        /* My Tasks — empty state */
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: gap.lg, minHeight: '40vh' }}>
-          <h2 style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, color: color.text.primary, margin: 0 }}>
-            No Tasks Assigned
-          </h2>
-          <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, textAlign: 'center', maxWidth: '400px', lineHeight: font.lineHeight.normal, margin: 0 }}>
-            You don&apos;t have any tasks assigned for this date. Check back later or switch to All Tasks to see what&apos;s happening across the team.
-          </p>
-        </div>
-      ) : (taskView === 'all' || taskView === 'mine') ? (
+      {(() => {
+        const isMineEmpty = taskView === 'mine' && filteredMyBoard.length === 0;
+        const isAllEmpty = taskView === 'all' && filteredAssignedBoard.length === 0;
+        const isOpenEmpty = taskView === 'open' && filteredPoolBoard.every((c) => c.tasks.length === 0);
+        if (!isMineEmpty && !isAllEmpty && !isOpenEmpty) return null;
+        const heading = isMineEmpty
+          ? 'No Tasks Assigned'
+          : isOpenEmpty
+            ? hasActiveFilters ? 'No Open Tasks Match' : 'No Open Tasks'
+            : hasActiveFilters ? 'No Tasks Match' : 'No Tasks Today';
+        const body = isMineEmpty
+          ? "You don't have any tasks assigned for this date. Check back later or switch to All Tasks to see what's happening across the team."
+          : isOpenEmpty
+            ? hasActiveFilters
+              ? 'No open tasks match the current filters. Try adjusting or clearing them.'
+              : 'No unassigned tasks for this date. Open tasks appear here when they need to be picked up.'
+            : hasActiveFilters
+              ? 'No tasks match the current filters. Try adjusting or clearing them.'
+              : 'Nothing is scheduled for the team on this date. Try a different day or check back later.';
+        return (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: gap.lg, minHeight: '40vh' }}>
+            <h2 style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, color: color.text.primary, margin: 0 }}>
+              {heading}
+            </h2>
+            <p style={{ fontFamily: font.family.body, fontSize: font.size.body.md, color: color.text.secondary, textAlign: 'center', maxWidth: '400px', lineHeight: font.lineHeight.normal, margin: 0 }}>
+              {body}
+            </p>
+          </div>
+        );
+      })() || ((taskView === 'all' || taskView === 'mine') ? (
         /* All Tasks / My Tasks — person-based columns */
         <Board style={{ flex: 1, minHeight: 0 }}>
-          {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => {
-            const overdueTasks = col.tasks.filter((t) => t.overdue && !checked[t.id]);
-            const normalTasks = col.tasks.filter((t) => !t.overdue || checked[t.id]);
-
-            return (
-              <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
-                  <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
-                  <div>
-                    <div style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, lineHeight: 'normal', color: color.text.primary }}>{col.person.name}</div>
-                    <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.regular, lineHeight: 'normal', color: color.text.primary }}>{col.person.subtitle}</div>
-                  </div>
+          {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => (
+            <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
+                <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
+                <div>
+                  <div style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.bold, lineHeight: 'normal', color: color.text.primary }}>{col.person.name}</div>
+                  <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.regular, lineHeight: 'normal', color: color.text.primary }}>{col.person.subtitle}</div>
                 </div>
-                {overdueTasks.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: gap.sm }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: gap.xs, paddingInline: space.sm }}>
-                      <Dot status="warning" size="sm" pulse />
-                      <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.negative }}>Overdue</span>
-                    </div>
-                    {overdueTasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
-                  </div>
-                )}
-                {normalTasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
-              </BoardColumn>
-            );
-          })}
+              </div>
+              {col.tasks.map((task) => renderTaskCard(task, col.deptColors.light, col.person.name, col.person.subtitle))}
+            </BoardColumn>
+          ))}
         </Board>
       ) : (
         /* Open Tasks — status-based columns for pool tasks (drag-and-drop enabled) */
@@ -811,18 +860,21 @@ export default function TasksClient({ canAddTask, currentMemberId }: TasksClient
             );
           })}
         </Board>
-      )}
+      ))}
 
       <ViewTaskSheet
         isOpen={viewingTask !== null}
         onClose={() => setViewingTask(null)}
         task={viewingTask}
         onTaskCompleted={() => { refetchAll(); setViewingTask(null); }}
+        onNavigate={(type, props, opts) => pushSheet(type, props, opts)}
       />
       <AddTaskSheet
         isOpen={addSheetOpen}
         onClose={() => { setAddSheetOpen(false); setAddTaskType(''); }}
         onSaved={refetchAll}
+        members={members}
+        departments={departments}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog } from '@bds/components';
+import { Dialog } from '@brikdesigns/bds';
 
 interface ConfirmDeleteDialogProps {
   isOpen: boolean;

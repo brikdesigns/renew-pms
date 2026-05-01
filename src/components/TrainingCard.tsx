@@ -1,10 +1,10 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import Link from 'next/link';
-import { Tag, Dot } from '@bds/components';
+import { type CSSProperties } from 'react';
+import { Tag, Dot, InteractiveListItem } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, space, border, shadow, gap, departmentColor } from '@/lib/tokens';
+import { color, font, border, gap } from '@/lib/tokens';
+import { EMPLOYEE_TYPE_TAG } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,70 +26,9 @@ export interface TrainingMember {
   hasTrainingDue: boolean;
 }
 
-// ─── Employee type tag colors ────────────────────────────────────────────────
-
-const TYPE_TAG: Record<string, { bg: string; color: string; label: string }> = {
-  new:        { bg: color.department.blue.base,  color: color.text.inverse, label: 'New Hire' },
-  maturing:   { bg: color.department.gold.base,  color: color.text.inverse, label: 'Maturing' },
-  proficient: { bg: color.department.green.base, color: color.text.inverse, label: 'Proficient' },
-};
-
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-function cardStyle(borderColor: string): CSSProperties {
-  return {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: gap.lg,
-    paddingBlock: space.md,
-    paddingInline: space.lg,
-    backgroundColor: color.surface.primary,
-    borderLeft: `8px solid ${borderColor}`,
-    borderRadius: border.radius.md,
-    boxShadow: shadow.sm,
-    overflow: 'hidden',
-    width: '100%',
-    boxSizing: 'border-box',
-  };
-}
-
-const topRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-};
-
-const personStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-};
-
-const nameStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.bold,
-  lineHeight: 'normal',
-  color: color.text.primary,
-};
-
-const roleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.regular,
-  lineHeight: 'normal',
-  color: color.text.primary,
-};
-
-const bottomRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-};
-
-const tagGroupStyle: CSSProperties = {
+const trailingWrap: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: gap.md,
@@ -98,11 +37,11 @@ const tagGroupStyle: CSSProperties = {
 const progressWrapStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: gap.md,
+  gap: gap.sm,
 };
 
 const progressTrackStyle: CSSProperties = {
-  width: '166px',
+  width: '80px',
   height: '6px',
   borderRadius: border.radius.xs,
   backgroundColor: color.background.muted,
@@ -130,72 +69,58 @@ const progressLabelStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const viewBtnStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '32px',
-  paddingInline: space.md,
-  borderRadius: border.radius.sm,
-  backgroundColor: color.background.brandPrimary,
-  color: color.text.onColorDark,
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.bold,
-  border: 'none',
-  cursor: 'pointer',
-  textDecoration: 'none',
-  whiteSpace: 'nowrap',
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function TrainingCard({ member }: { member: TrainingMember }) {
-  const deptColors = departmentColor(member.departmentColor);
-  const typeTag = TYPE_TAG[member.employeeType] ?? TYPE_TAG.proficient;
+interface TrainingCardProps {
+  member: TrainingMember;
+  onViewDetails: (memberId: string) => void;
+}
+
+export function TrainingCard({ member, onViewDetails }: TrainingCardProps) {
+  const typeTag = EMPLOYEE_TYPE_TAG[member.employeeType] ?? EMPLOYEE_TYPE_TAG.proficient;
+
+  // Build subtitle: role • department
+  const subtitleParts: string[] = [];
+  if (member.role) subtitleParts.push(member.role);
+  if (member.department) subtitleParts.push(member.department);
+  const subtitle = subtitleParts.join(' \u2022 ');
 
   return (
-    <div style={cardStyle(deptColors.light)}>
-      {/* Top row: avatar + name | View Details button */}
-      <div style={topRowStyle}>
-        <div style={personStyle}>
-          <UserAvatar name={member.name} departmentColorKey={member.departmentColor} size="lg" />
-          <div>
-            <div style={nameStyle}>{member.name}</div>
-            <div style={roleStyle}>{member.role}</div>
-          </div>
-        </div>
-        <Link href={`/training/${member.id}`} style={viewBtnStyle}>
-          View Details
-        </Link>
-      </div>
-
-      {/* Bottom row: type + dept tags | progress bar */}
-      <div style={bottomRowStyle}>
-        <div style={tagGroupStyle}>
-          <Tag size="sm" style={{ backgroundColor: deptColors.light, color: deptColors.text }}>
-            {member.department}
-          </Tag>
+    <InteractiveListItem
+      className="renew-list-item-primary"
+      style={{ backgroundColor: color.surface.primary }}
+      leading={
+        <UserAvatar
+          name={member.name}
+          departmentColorKey={member.departmentColor}
+          size="md"
+        />
+      }
+      title={member.name}
+      subtitle={subtitle || undefined}
+      trailing={
+        <div style={trailingWrap}>
           <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
             {typeTag.label}
           </Tag>
-        </div>
-        {member.hasTrainingDue ? (
-          <div style={progressWrapStyle}>
-            <Dot status="warning" size="sm" pulse />
-            <span style={progressLabelStyle}>
-              {member.completedModules}/{member.totalModules}
-            </span>
-            <div style={progressTrackStyle}>
-              <div className="progress-fill" style={progressBarStyle(member.progress)} />
+          {member.hasTrainingDue ? (
+            <div style={progressWrapStyle}>
+              <Dot status="warning" size="sm" pulse />
+              <span style={progressLabelStyle}>
+                {member.completedModules}/{member.totalModules}
+              </span>
+              <div style={progressTrackStyle}>
+                <div className="progress-fill" style={progressBarStyle(member.progress)} />
+              </div>
             </div>
-          </div>
-        ) : (
-          <span style={{ ...progressLabelStyle, color: color.text.muted }}>
-            No training due
-          </span>
-        )}
-      </div>
-    </div>
+          ) : (
+            <span style={{ ...progressLabelStyle, color: color.text.muted }}>
+              No training due
+            </span>
+          )}
+        </div>
+      }
+      onClick={() => onViewDetails(member.id)}
+    />
   );
 }

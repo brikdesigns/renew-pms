@@ -67,22 +67,53 @@ else
 fi
 
 # ── 3. Native <button> instead of BDS Button / IconButton ──────────
-section "Native <button> (use Button or IconButton from @bds/components)"
+section "Native <button> (use Button or IconButton from @brikdesigns/bds)"
 
-# Allowlist:
-#   - role="tab"  → PageHeader tabs (legitimate tablist semantics — convert to BDS TabBar when available)
-#   - DevPersonaSwitcher → dev-only tool, not production UI
-#   - TemplatesTable dropdown menu items → menu affordance (not a primary action button)
-BUTTON_HITS=$(grep -rn --include="*.tsx" \
-  -E "<button[ >]" "$SRC" \
-  | grep -v 'role="tab"' \
+# Allowlist (file-wide unless noted):
+#   - DevPersonaSwitcher → dev-only tool, not production UI (Cat 2d #25)
+#   - VendorSidebar → nav icon button deferred to BDS NavItem promotion (Cat 2c #15)
+#   - bds-sheet__nav-link → BDS-sanctioned class shipped in @brikdesigns/bds/dist/styles.css
+#
+# Detection: scan each .tsx file for <button> tag openings, including those
+# split across multiple lines. The opening tag accumulates from `<button`
+# through the first `>` so attributes on subsequent lines (className, style,
+# onClick) are captured in a single emitted record. Multi-line content is
+# joined with " <<< " so downstream `grep -v` filters still see every attr.
+BUTTON_HITS=$(find "$SRC" -type f -name "*.tsx" | while read -r f; do
+  awk '
+    function tag_closed(line,    t) {
+      t = line
+      gsub(/=>/, "==", t)
+      return index(t, ">") > 0
+    }
+    {
+      if (capturing) {
+        accumulated = accumulated " <<< " $0
+        if (tag_closed($0)) {
+          print FILENAME ":" start_line ":" accumulated
+          capturing = 0
+          accumulated = ""
+        }
+        next
+      }
+      if (match($0, /<button([[:space:]>]|$)/)) {
+        rest = substr($0, RSTART)
+        if (tag_closed(rest)) {
+          print FILENAME ":" NR ":" $0
+        } else {
+          capturing = 1
+          start_line = NR
+          accumulated = $0
+        }
+      }
+    }
+  ' "$f"
+done \
   | grep -v "DevPersonaSwitcher" \
-  | grep -v "TemplatesTable.*menu\|addMenuOpen\|handleAddClick" \
+  | grep -v "VendorSidebar" \
+  | grep -v 'bds-sheet__nav-link' \
   | grep -v "// " \
   || true)
-
-# Filter TemplatesTable dropdown buttons by checking for the menu context
-BUTTON_HITS=$(echo "$BUTTON_HITS" | grep -v "TemplatesTable" || true)
 
 BUTTON_COUNT=$(count_matches "$BUTTON_HITS")
 if [ "$BUTTON_COUNT" -gt 0 ]; then
@@ -235,10 +266,10 @@ else
 fi
 
 # ── 11. Direct BDS component path imports ───────────────────────────
-section "Direct BDS component imports (use '@bds/components' barrel)"
+section "Direct BDS component imports (use '@brikdesigns/bds' barrel)"
 
 DIRECT_HITS=$(grep -rn --include="*.tsx" --include="*.ts" \
-  "from '@bds/components/ui/" "$SRC" \
+  -E "from '@bds/components|from '@brikdesigns/bds/" "$SRC" \
   || true)
 
 DIRECT_COUNT=$(count_matches "$DIRECT_HITS")
@@ -306,6 +337,77 @@ else
   VIOLATIONS=$((VIOLATIONS + THEME_VIOLATIONS))
 fi
 
+# ── 14. headingStyle variable naming drift ──────────────────────────
+# Per BDS naming-conventions: BEM slot for a heading-role text element is
+# __title; the typography token is named `heading`. Variables holding the
+# CSSProperties for a title-role text element should be `titleStyle`, not
+# `headingStyle`. Same role, different layer.
+# See docs/qa/component-cleanup-audit.md (Cat 6) and cleanup-workflow.md.
+section "headingStyle variable name (use titleStyle per BDS BEM convention)"
+
+HEADING_VAR_HITS=$(grep -rn --include="*.tsx" --include="*.ts" \
+  -E "const\s+\w*[Hh]eadingStyle\b" "$SRC" \
+  | grep -v "src/lib/styles\.ts" \
+  | grep -v "// " \
+  || true)
+
+HEADING_VAR_COUNT=$(count_matches "$HEADING_VAR_HITS")
+if [ "$HEADING_VAR_COUNT" -gt 0 ]; then
+  echo -e "  ${YELLOW}${HEADING_VAR_COUNT} headingStyle variable(s) — rename to titleStyle${NC}"
+  echo -e "  ${DIM}BDS naming: BEM slot is __title; typography token is heading. Variable holding title styles → titleStyle.${NC}"
+  echo "$HEADING_VAR_HITS" | head -10
+  VIOLATIONS=$((VIOLATIONS + HEADING_VAR_COUNT))
+else
+  echo -e "  ${GREEN}Clean${NC}"
+fi
+
+# ── 15. headerStyle variable holding text styles ────────────────────
+# A `\w*headerStyle` variable that holds font-related CSS properties is
+# really a *label* (or *title*) style, not chrome. Per the BDS naming
+# convention, variables holding text-element styles belong to the
+# `-label` or `-title` family — not `-header`. Chrome `headerStyle`
+# (flex containers, padding, alignment only) are fine and not flagged.
+# Detection: scan each `const \w*headerStyle: CSSProperties = { ... }`
+# block for fontSize, fontFamily, fontWeight, letterSpacing, lineHeight,
+# textTransform, or textDecoration. Block boundary is the closing `};`.
+# See docs/qa/component-cleanup-audit.md (Cat 6) and Triage Batch 3b.
+section "headerStyle variable holding text styles (use *labelStyle / *titleStyle)"
+
+HEADER_TEXT_HITS=$(find "$SRC" -type f \( -name "*.tsx" -o -name "*.ts" \) \
+  | grep -v "src/lib/styles\.ts" \
+  | while read -r f; do
+      awk -v file="$f" '
+        /const[[:space:]]+[A-Za-z_]*[Hh]eaderStyle[[:space:]]*:/ {
+          decl_line = NR
+          decl_text = $0
+          capturing = 1
+          has_text_prop = 0
+          next
+        }
+        capturing {
+          if (/(fontSize|fontFamily|fontWeight|letterSpacing|lineHeight|textTransform|textDecoration):/) {
+            has_text_prop = 1
+          }
+          if ($0 ~ /^};?$/) {
+            if (has_text_prop) {
+              print file ":" decl_line ":" decl_text
+            }
+            capturing = 0
+          }
+        }
+      ' "$f"
+    done)
+
+HEADER_TEXT_COUNT=$(count_matches "$HEADER_TEXT_HITS")
+if [ "$HEADER_TEXT_COUNT" -gt 0 ]; then
+  echo -e "  ${YELLOW}${HEADER_TEXT_COUNT} headerStyle variable(s) holding text styles — rename to *labelStyle (or *titleStyle for title-role text)${NC}"
+  echo -e "  ${DIM}BDS naming: variables holding text-element styles belong to the -label or -title family, not -header.${NC}"
+  echo "$HEADER_TEXT_HITS" | head -10
+  VIOLATIONS=$((VIOLATIONS + HEADER_TEXT_COUNT))
+else
+  echo -e "  ${GREEN}Clean${NC}"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────
 echo ""
 echo "========================================="
@@ -322,7 +424,8 @@ else
   echo "  5. Hardcoded fontFamily/fontSize — invisible until client theme"
   echo "  6. Hardcoded borderRadius/gap — breaks spacing scale"
   echo "  7. Badge missing size — admin UI standard"
-  echo "  8. Hardcoded px padding/margin — fix file-by-file"
+  echo "  8. headingStyle variable name — BEM slot drift, future debt"
+  echo "  9. Hardcoded px padding/margin — fix file-by-file"
 fi
 echo "========================================="
 echo ""

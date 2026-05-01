@@ -162,6 +162,15 @@ export const color = {
     input: 'var(--background-input)',
     onColorDark: 'var(--background-on-color-dark)',
     muted: 'var(--background-muted)',
+    positive: 'var(--background-positive)',
+    status: {
+      success:       'var(--background-status-success)',
+      successSubtle: 'var(--background-status-success-subtle)',
+      error:         'var(--background-status-error)',
+      errorSubtle:   'var(--background-status-error-subtle)',
+      warning:       'var(--background-status-warning)',
+      warningSubtle: 'var(--background-status-warning-subtle)',
+    },
   },
   border: {
     primary: 'var(--border-primary)',

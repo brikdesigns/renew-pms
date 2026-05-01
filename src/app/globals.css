@@ -14,10 +14,9 @@
 @layer theme, base, components, utilities;
 @layer bds-tokens, bds-components, client-theme, client-overrides;
 
-/* BDS token layer */
-@import '../../brik-bds/tokens/fonts.css'        layer(bds-tokens);
-@import '../../brik-bds/tokens/figma-tokens.css'  layer(bds-tokens);
-@import '../../brik-bds/tokens/gap-fills.css'     layer(bds-tokens);
+/* BDS token + component layers (npm package) */
+@import '@brikdesigns/bds/tokens.css' layer(bds-tokens);
+@import '@brikdesigns/bds/styles.css' layer(bds-components);
 /* Renew Dental brand override */
 @import '../styles/theme-renew.css' layer(client-theme);
 
@@ -199,11 +198,47 @@ body {
     font-weight: var(--font-weight-semi-bold);
   }
 
+  /*
+   * Indicator height: 28px = 7 × 4px grid.
+   * BDS Badge/Tag sm natural height varies by content (26px text-only,
+   * 30px with icon). This locks both to 28px so any side-by-side
+   * pairing is always aligned. Upstream BDS fix pending.
+   */
+  .bds-tag--sm,
+  .bds-badge--sm {
+    height: 28px;
+  }
+
+  /* Tags: tighter horizontal padding (xs instead of sm) */
+  .bds-tag--sm {
+    padding-inline: var(--padding-xs);
+  }
+
+  .bds-tag--md,
+  .bds-tag--lg {
+    padding-inline: var(--padding-sm);
+  }
+
   /* Board subtitles: token-driven casing + fix BDS Board.css body→label font */
   .bds-board-header__subtitle,
   .bds-board-card__subtitle {
     text-transform: var(--text-transform-label);
     font-family: var(--font-family-label);
+  }
+
+  /*
+   * InteractiveListItem hover override for rows whose idle bg is surface-primary.
+   * BDS default hover paints surface-secondary (a different tier), which reads as
+   * a tier-jump rather than a state-shift when the consumer has set idle to
+   * surface-primary.
+   *
+   * TODO(bds-token): swap to var(--surface-primary-hover) once
+   * brikdesigns/brik-bds#320 lands the missing surface-primary-hover and
+   * surface-primary-pressed tokens. background-primary-hover is the same
+   * chromatic step BDS will pick when the proper token ships.
+   */
+  .renew-list-item-primary.bds-interactive-list-item:hover:not(:disabled) {
+    background-color: var(--background-primary-hover);
   }
 
   /* Board overrides (neutral column backgrounds) */
@@ -311,16 +346,21 @@ body {
   .bds-toast__close {
     padding-right: 0;
   }
-}
 
-/* ── Unlayered BDS overrides ─────────────────────────────────────────────────
-   BDS component CSS is unlayered (imported by React components at runtime),
-   so layered rules can't beat them. These overrides must also be unlayered.
-   ────────────────────────────────────────────────────────────────────────── */
+  /* Sheet: tighten footer vertical padding */
+  .bds-sheet__footer {
+    padding: var(--padding-md) var(--padding-lg);
+  }
 
-/* Sheet: tighten footer vertical padding */
-.bds-sheet__footer {
-  padding: var(--padding-md) var(--padding-lg);
+  /*
+   * PageHeader: align horizontal padding to renew body content (32px = --padding-xl)
+   * vs. BDS's 80px Figma spec, and add a bottom border for header/body separation.
+   * Keeps title left-aligned with table/field content below.
+   */
+  .bds-page-header {
+    padding-inline: var(--padding-xl);
+    border-bottom: var(--border-width-md) solid var(--border-secondary);
+  }
 }
 
 /* ── Settings sub-nav entrance animation ── */

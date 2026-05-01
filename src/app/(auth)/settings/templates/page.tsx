@@ -1,31 +1,20 @@
-'use client';
-
-import { useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { redirect } from 'next/navigation';
+import { getAuthUser, isAdmin } from '@/lib/auth';
+import { PageHeader } from '@brikdesigns/bds';
 import { TemplatesTable } from './TemplatesTable';
 
-const TABS = [
-  { key: 'tasks', label: 'Tasks' },
-  { key: 'training', label: 'Training' },
-];
-
-const TASK_TYPES = ['checklist', 'procedure', 'compliance', 'request'];
-const TRAINING_TYPES = ['onboarding', 'skill_training'];
-
-export default function TemplatesSettingsPage() {
-  const [activeTab, setActiveTab] = useState('tasks');
+export default async function TemplatesSettingsPage() {
+  const authUser = await getAuthUser();
+  if (!authUser) redirect('/login');
+  if (!isAdmin(authUser.profile.system_role)) redirect('/settings/account');
 
   return (
     <>
       <PageHeader
         title="Templates"
-        description="Create and manage task templates for checklists, procedures, compliance, and more."
-        tabs={TABS}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        subtitle="Create and manage task templates for checklists, procedures, compliance, and more."
       />
-      {activeTab === 'tasks' && <TemplatesTable typeFilter={TASK_TYPES} />}
-      {activeTab === 'training' && <TemplatesTable typeFilter={TRAINING_TYPES} />}
+      <TemplatesTable />
     </>
   );
 }

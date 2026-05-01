@@ -6,10 +6,9 @@ import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import type { CSSProperties } from 'react';
 import { font, color, gap, space } from '@/lib/tokens';
-import { IconButton, Menu, Tooltip } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+import { IconButton, Menu, Tooltip } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { FeedbackButton } from '@/components/FeedbackButton';
 import { NotificationBell } from '@/components/NotificationBell';
 import { createClient } from '@/lib/supabase/client';
 
@@ -99,11 +98,10 @@ interface TopUtilityBarProps {
   userFullName?: string;
   userDepartment?: string | null;
   userAvatarUrl?: string | null;
-  userEmail?: string;
   practiceName?: string;
 }
 
-export function TopUtilityBar({ userName, userFullName, userDepartment, userAvatarUrl, userEmail, practiceName }: TopUtilityBarProps) {
+export function TopUtilityBar({ userName, userFullName, userDepartment, userAvatarUrl, practiceName }: TopUtilityBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const pageLabel = getPageLabel(pathname);
@@ -128,29 +126,27 @@ export function TopUtilityBar({ userName, userFullName, userDepartment, userAvat
         <span style={greetingStyle}>{pageLabel}</span>
       </div>
       <div style={rightStyle}>
-        <Tooltip content="Add Request" placement="bottom">
+        <Tooltip content="Add Request" placement="bottom" delay={600}>
           <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.plus} />} label="New Request" onClick={() => router.push('/requests?submit=true')} />
         </Tooltip>
-        <Tooltip content="Share Feedback" placement="bottom">
-          <FeedbackButton userEmail={userEmail} userName={userFullName ?? userName} />
-        </Tooltip>
-        <Tooltip content="Notifications" placement="bottom">
+        <Tooltip content="Notifications" placement="bottom" delay={600}>
           <NotificationBell />
         </Tooltip>
         <div style={avatarWrapStyle}>
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            size="md"
+            label="User menu"
             onClick={() => setMenuOpen(prev => !prev)}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-            aria-label="User menu"
-          >
-            <UserAvatar
-              name={userFullName ?? userName ?? '?'}
-              departmentColorKey={userDepartment}
-              avatarUrl={userAvatarUrl}
-              size="md"
-            />
-          </button>
+            icon={
+              <UserAvatar
+                name={userFullName ?? userName ?? '?'}
+                departmentColorKey={userDepartment}
+                avatarUrl={userAvatarUrl}
+                size="md"
+              />
+            }
+          />
           <Menu
             items={menuItems}
             isOpen={menuOpen}

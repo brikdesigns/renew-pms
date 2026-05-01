@@ -1,0 +1,65 @@
+/**
+ * ProfileCard — slot classes for the local component.
+ *
+ * Names the typography slots that previously sat as `<span style={...}>`
+ * inline. Per the inline-style cleanup audit (Cat 2 / "Profile/avatar
+ * metadata slots"): in-place fix only — no BDS swap. Promote to a BDS
+ * primitive once the pattern stabilises.
+ *
+ * The interactive card-chrome wrapper still bypasses BDS Button (custom
+ * hover-state composition with avatar + tag); flagged for a future BDS
+ * promotion pass that adds an interactive ListItem-style primitive.
+ */
+
+.profile-card__text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tiny);
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-card__name {
+  font-family: var(--font-family-label);
+  font-size: var(--label-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-card__subtitle {
+  font-family: var(--font-family-label);
+  font-size: var(--label-sm);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-secondary);
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+
+.profile-card__dot {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-pill);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-label);
+  font-size: var(--label-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.profile-card__dept-tag {
+  font-family: var(--font-family-subtitle);
+  font-size: var(--subtitle-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  padding: var(--gap-xs) var(--gap-md);
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, isAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
 import { createNotification } from '@/lib/notifications';
+import { sendEmail, getMemberEmail, requestStatusChangeEmail, requestAssignedEmail, requestRejectedEmail, vendorAssignedEmail } from '@/lib/email';
+import { generateVendorToken, revokeTokensForRequest, closeTokensForRequest } from '@/lib/vendor-tokens';
 
 // ─── Shared SELECT + flatten (mirrors list endpoint) ────────────────────────
 
@@ -99,7 +101,19 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
 
-  return NextResponse.json(flattenRequest(data));
+  // Count past requests for the same equipment (excludes current request)
+  let equipmentRequestCount: number | null = null;
+  if (data.equipment_id) {
+    const { count } = await admin
+      .from('requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('practice_id', practiceId)
+      .eq('equipment_id', data.equipment_id)
+      .neq('id', id);
+    equipmentRequestCount = count ?? 0;
+  }
+
+  return NextResponse.json({ ...flattenRequest(data), equipment_request_count: equipmentRequestCount });
 }
 
 const ALLOWED_FIELDS = [
@@ -107,6 +121,18 @@ const ALLOWED_FIELDS = [
   'location_description', 'room_id', 'equipment_id',
   'vendor_id', 'vendor_contact_id', 'assigned_to',
   'resolution_notes',
+] as const;
+
+// Fields a non-admin caller cannot change (launch-checklist 0.7).
+//   - `status`              → "cannot approve own requests" — staff cannot
+//                             move a request through the pipeline (e.g. to
+//                             `resolved` / `closed`); admin/manager triages.
+//   - `assigned_to`         → reassignment is admin-only (matches tasks).
+//   - `vendor_id`           → vendor coordination is admin-only.
+//   - `vendor_contact_id`   → same as above.
+//   - `resolution_notes`    → sign-off field; admin/manager only.
+const ADMIN_ONLY_FIELDS = [
+  'status', 'assigned_to', 'vendor_id', 'vendor_contact_id', 'resolution_notes',
 ] as const;
 
 /**
@@ -127,6 +153,20 @@ export async function PATCH(
   if (!practiceId) return NextResponse.json({ error: 'No practice found' }, { status: 404 });
 
   const body = await request.json();
+
+  // Admin-only fields (status / assignment / vendor / resolution). Non-admins
+  // can still revise their own submission (title, description, category, etc.)
+  // but cannot triage or sign off on requests.
+  if (!isAdmin(authUser.profile.system_role)) {
+    for (const key of ADMIN_ONLY_FIELDS) {
+      if (key in body) {
+        return NextResponse.json(
+          { error: 'Only admins can change this field on a request' },
+          { status: 403 },
+        );
+      }
+    }
+  }
 
   const updates: Record<string, unknown> = {};
   for (const key of ALLOWED_FIELDS) {
@@ -171,7 +211,7 @@ export async function PATCH(
     waiting_on_vendor: 'Waiting on Vendor', resolved: 'Resolved', closed: 'Closed',
   };
 
-  // Notify submitter on status change
+  // Notify submitter on status change (in-app + email)
   if (updates.status && current && updates.status !== current.status) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const submitterMember = Array.isArray(current.practice_members) ? current.practice_members[0] : current.practice_members as any;
@@ -185,12 +225,22 @@ export async function PATCH(
         body: `Status changed to ${statusLabels[updates.status as string] ?? updates.status}`,
         link: `/requests?open=${id}`,
       }).catch(err => console.error('[notification]', err));
+
+      // Email submitter
+      if (current.submitted_by) {
+        const emailTemplate = updates.status === 'closed'
+          ? requestRejectedEmail(current.title, id)
+          : requestStatusChangeEmail(current.title, updates.status as string, id);
+        getMemberEmail(current.submitted_by as string).then(email => {
+          if (!email) return;
+          return sendEmail({ to: [email], ...emailTemplate, practiceId, template: 'request_status_change' });
+        }).catch(err => console.error('[email]', err));
+      }
     }
   }
 
-  // Notify assignee when assigned
+  // Notify assignee when assigned (in-app + email)
   if (updates.assigned_to && current && updates.assigned_to !== current.assigned_to) {
-    // Look up the assignee's user_id from practice_members
     const { data: assigneeMember } = await admin
       .from('practice_members')
       .select('user_id')
@@ -206,7 +256,91 @@ export async function PATCH(
         body: 'You have been assigned to this request',
         link: `/requests?open=${id}`,
       }).catch(err => console.error('[notification]', err));
+
+      // Email assignee
+      const { subject, html } = requestAssignedEmail(current.title, id);
+      getMemberEmail(updates.assigned_to as string).then(email => {
+        if (!email) return;
+        return sendEmail({ to: [email], subject, html, practiceId, template: 'request_assigned' });
+      }).catch(err => console.error('[email]', err));
     }
+  }
+
+  // Notify vendor on assignment (token generation + email)
+  if (updates.vendor_id !== undefined && current) {
+    // Revoke any existing vendor tokens for this request
+    revokeTokensForRequest(id).catch(err => console.error('[vendor-token]', err));
+
+    if (updates.vendor_id) {
+      // Generate a new vendor portal token and email the vendor contact
+      generateVendorToken({
+        practiceId,
+        requestId: id,
+        vendorId: updates.vendor_id as string,
+        vendorContactId: (updates.vendor_contact_id as string) ?? null,
+      }).then(async (tokenRecord) => {
+        // Look up vendor contact email, fall back to vendor email
+        let vendorEmail: string | null = null;
+        let contactName = 'Vendor';
+
+        if (tokenRecord.vendor_contact_id) {
+          const { data: contact } = await admin
+            .from('vendor_contacts')
+            .select('name, email')
+            .eq('id', tokenRecord.vendor_contact_id)
+            .single();
+          if (contact) {
+            contactName = contact.name;
+            vendorEmail = contact.email;
+          }
+        }
+
+        if (!vendorEmail) {
+          const { data: vendor } = await admin
+            .from('vendors')
+            .select('name, email')
+            .eq('id', tokenRecord.vendor_id)
+            .single();
+          if (vendor) {
+            if (!contactName || contactName === 'Vendor') contactName = vendor.name;
+            vendorEmail = vendor.email;
+          }
+        }
+
+        if (!vendorEmail) {
+          console.warn('[vendor-token] No email found for vendor — token generated but no email sent. Practice can share the link manually.');
+          return;
+        }
+
+        // Look up practice name for the email
+        const { data: practice } = await admin
+          .from('practices')
+          .select('name')
+          .eq('id', practiceId)
+          .single();
+
+        const email = vendorAssignedEmail({
+          vendorContactName: contactName,
+          practiceName: practice?.name ?? 'Your dental practice',
+          requestTitle: current.title,
+          requestDescription: null, // Keep email concise — description is on the portal page
+          token: tokenRecord.token,
+        });
+
+        return sendEmail({
+          to: [vendorEmail],
+          subject: email.subject,
+          html: email.html,
+          practiceId,
+          template: 'vendor_assigned',
+        });
+      }).catch(err => console.error('[vendor-token] Token generation/email failed:', err));
+    }
+  }
+
+  // Close vendor tokens when request reaches terminal state
+  if (updates.status === 'resolved' || updates.status === 'closed') {
+    closeTokensForRequest(id).catch(err => console.error('[vendor-token]', err));
   }
 
   return NextResponse.json({ id: data.id });

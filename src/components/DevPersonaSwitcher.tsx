@@ -1,14 +1,20 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { gap } from '@/lib/tokens';
+import { border, color, font, gap, shadow, space } from '@/lib/tokens';
+import { Badge, InteractiveListItem, useDevBarSlot } from '@brikdesigns/bds';
 
-// ─── Only render in development ─────────────────────────────────────────────
+// ─── Gate ───────────────────────────────────────────────────────────────────
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const SHOW_WIDGET =
+  process.env.NODE_ENV === 'development' ||
+  process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
 
-// ─── Persona definitions (must match seed script) ───────────────────────────
+// ─── Persona definitions (must match seed-test-users.ts) ────────────────────
+
+type BadgeStatus = 'brand' | 'info';
+type BadgeAppearance = 'solid' | 'subtle';
 
 interface Persona {
   key: string;
@@ -16,7 +22,9 @@ interface Persona {
   sublabel: string;
   email: string;
   badge: string;
-  badgeColor: string;
+  badgeStatus: BadgeStatus;
+  badgeAppearance: BadgeAppearance;
+  redirectTo: string;
 }
 
 interface TesterGroup {
@@ -24,155 +32,138 @@ interface TesterGroup {
   personas: Persona[];
 }
 
-// Persona templates — same 6 roles for every tester
+// 7 personas matching seed-test-users.ts PERSONA_TEMPLATES.
+// Tier signal via BDS Badge: `brand` (poppy) for elevated roles, `info`
+// solid → subtle for staff levels.
 const PERSONA_DEFS: Omit<Persona, 'key' | 'email'>[] = [
-  { label: 'Brik Admin',       sublabel: 'brik_admin',                    badge: 'PLATFORM',   badgeColor: '#e74c3c' },
-  { label: 'Sarah Mitchell',   sublabel: 'admin · proficient',            badge: 'ADMIN',      badgeColor: '#f39c12' },
-  { label: 'Jessica Torres',   sublabel: 'manager · proficient · full_day', badge: 'MANAGER',  badgeColor: '#e67e22' },
-  { label: 'Emily Rivera',     sublabel: 'staff · new · opening',         badge: 'NEW',        badgeColor: '#3498db' },
-  { label: 'Tyler Nguyen',     sublabel: 'staff · maturing · closing',    badge: 'MATURING',   badgeColor: '#9b59b6' },
-  { label: 'Amanda Chen',      sublabel: 'staff · proficient · opening',  badge: 'PROFICIENT', badgeColor: '#27ae60' },
-  { label: 'Rachel Foster',    sublabel: 'staff · proficient · full_day', badge: 'PROFICIENT', badgeColor: '#27ae60' },
+  { label: 'Brik Admin',     sublabel: 'brik_admin',                     badge: 'PLATFORM',  badgeStatus: 'brand', badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Sarah Mitchell', sublabel: 'admin · proficient',             badge: 'ADMIN',     badgeStatus: 'brand', badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Jessica Torres', sublabel: 'manager · proficient',           badge: 'MANAGER',   badgeStatus: 'info',  badgeAppearance: 'solid',  redirectTo: '/dashboard' },
+  { label: 'Emily Rivera',   sublabel: 'staff · new · opening',          badge: 'NEW',       badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Tyler Nguyen',   sublabel: 'staff · maturing · closing',     badge: 'MATURING',  badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Amanda Chen',    sublabel: 'staff · proficient · hygienist', badge: 'STAFF',     badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
+  { label: 'Rachel Foster',  sublabel: 'staff · proficient · frontdesk', badge: 'STAFF',     badgeStatus: 'info',  badgeAppearance: 'subtle', redirectTo: '/dashboard' },
 ];
 
 const ALIASES = ['brikadmin', 'owner', 'manager', 'newhire', 'maturing', 'hygienist', 'frontdesk'];
 
-// Testers — add new team members here
-const TESTERS: TesterGroup[] = [
-  { name: 'Nick', personas: buildPersonas('nick@brikdesigns.com') },
-  { name: 'Abbey', personas: buildPersonas('abbey@brikdesigns.com') },
-];
-
-function buildPersonas(baseEmail: string): Persona[] {
-  const [local, domain] = baseEmail.split('@');
-  return PERSONA_DEFS.map((def, i) => ({
-    ...def,
-    key: `${local}_${ALIASES[i]}`,
-    email: `${local}+${ALIASES[i]}@${domain}`,
-  }));
+interface TesterDef {
+  name: string;
+  baseEmail: string;
+  /**
+   * Optional per-alias label override. Mirrors the `personaNames` map in
+   * `scripts/seed-test-users.ts` so each tester owns a distinct named set
+   * and the persona switcher reads the same labels the AssignmentPicker
+   * shows. Keys are PERSONA_DEFS aliases (e.g. 'owner', 'manager');
+   * unspecified keys fall through to the default label.
+   */
+  labelOverrides?: Record<string, string>;
 }
 
-const TEST_PASSWORD = 'TestUser123!';
+const TESTER_DEFS: TesterDef[] = [
+  { name: 'Nick',  baseEmail: 'nick@brikdesigns.com' },
+  {
+    name: 'Abbey',
+    baseEmail: 'abbey@brikdesigns.com',
+    labelOverrides: {
+      owner:     'Maya Ortiz',
+      manager:   'Priya Shah',
+      newhire:   'Lily Brooks',
+      maturing:  'Marcus Lee',
+      hygienist: 'Olivia Bennett',
+      frontdesk: 'Naomi Patel',
+    },
+  },
+];
+
+function buildPersonas(tester: TesterDef): Persona[] {
+  const [local, domain] = tester.baseEmail.split('@');
+  return PERSONA_DEFS.map((def, i) => {
+    const alias = ALIASES[i];
+    return {
+      ...def,
+      label: tester.labelOverrides?.[alias] ?? def.label,
+      key: `${local}_${alias}`,
+      email: `${local}+${alias}@${domain}`,
+    };
+  });
+}
+
+const TESTERS: TesterGroup[] = TESTER_DEFS.map((td) => ({
+  name: td.name,
+  personas: buildPersonas(td),
+}));
+
+const TEST_PASSWORD = process.env.NEXT_PUBLIC_TEST_PASSWORD ?? 'TestUser123!';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
+//
+// All values come from BDS canonical tokens via @/lib/tokens — the panel
+// adapts to the active theme (light / dark / brand) like every other product
+// surface. No hardcoded hex.
 
-const fabStyle: CSSProperties = {
-  position: 'fixed',
-  bottom: '16px',
-  left: '16px',
-  zIndex: 9999,
-  width: '40px',
-  height: '40px',
-  borderRadius: '50%',
-  backgroundColor: '#1a1a2e',
-  color: '#fff',
-  border: '2px solid #333',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '16px',
-  fontFamily: 'monospace',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-  transition: 'transform 0.15s ease',
-};
-
+// Panel anchored above the DevBar (bottom-center). z-index must exceed the
+// DevBar shell (2147483647) so the panel renders above it.
 const panelStyle: CSSProperties = {
   position: 'fixed',
-  bottom: '64px',
-  left: '16px',
-  zIndex: 9999,
+  bottom: '72px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 2147483647,
   width: '280px',
-  backgroundColor: '#1a1a2e',
-  borderRadius: '12px',
-  border: '1px solid #333',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-  padding: '12px',
+  backgroundColor: color.surface.overlay,
+  borderRadius: border.radius.md,
+  border: `${border.width.sm} solid ${color.border.primary}`,
+  boxShadow: shadow.lg,
+  padding: space.sm,
   display: 'flex',
   flexDirection: 'column',
   gap: gap.xs,
-  fontFamily: 'var(--font-family-body, system-ui)',
 };
 
-const headerStyle: CSSProperties = {
-  fontSize: '11px',
-  fontWeight: 700,
-  color: '#888',
+const categoryLabelStyle: CSSProperties = {
+  fontFamily: font.family.label,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.bold,
+  color: color.text.secondary,
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  padding: '4px 8px 8px',
-};
-
-const personaBtnStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  padding: '8px',
-  borderRadius: '8px',
-  border: 'none',
-  backgroundColor: 'transparent',
-  cursor: 'pointer',
-  textAlign: 'left',
-  width: '100%',
-  transition: 'background-color 0.1s ease',
+  letterSpacing: '0.08em',
+  padding: `${space.xs} ${space.sm} ${space.sm}`,
 };
 
 const avatarStyle: CSSProperties = {
   width: '28px',
   height: '28px',
   borderRadius: '50%',
-  backgroundColor: '#333',
+  backgroundColor: color.surface.secondary,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '11px',
-  fontWeight: 700,
-  color: '#ccc',
+  fontFamily: font.family.label,
+  fontSize: font.size.subtitle.md,
+  fontWeight: font.weight.bold,
+  color: color.text.secondary,
   flexShrink: 0,
 };
-
-const nameStyle: CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 600,
-  color: '#e0e0e0',
-  lineHeight: 1.2,
-};
-
-const subStyle: CSSProperties = {
-  fontSize: '11px',
-  color: '#888',
-  lineHeight: 1.2,
-};
-
-const badgeStyle = (color: string): CSSProperties => ({
-  fontSize: '9px',
-  fontWeight: 700,
-  color,
-  backgroundColor: `${color}20`,
-  padding: '2px 6px',
-  borderRadius: '4px',
-  lineHeight: 1,
-  flexShrink: 0,
-  marginLeft: 'auto',
-});
 
 const loadingStyle: CSSProperties = {
-  ...personaBtnStyle,
+  display: 'flex',
   justifyContent: 'center',
-  color: '#888',
-  fontSize: '12px',
+  padding: space.sm,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  color: color.text.secondary,
 };
-
-// ─── Component ──────────────────────────────────────────────────────────────
 
 const testerTabStyle = (active: boolean): CSSProperties => ({
   background: 'none',
   border: 'none',
-  borderBottom: `2px solid ${active ? '#888' : 'transparent'}`,
-  padding: '6px 12px',
-  fontSize: '12px',
-  fontWeight: active ? 700 : 500,
-  color: active ? '#e0e0e0' : '#666',
+  borderBottom: `${border.width.md} solid ${active ? color.brand.primary : 'transparent'}`,
+  padding: `${space.xs} ${space.sm}`,
+  fontFamily: font.family.label,
+  fontSize: font.size.label.sm,
+  fontWeight: active ? font.weight.bold : font.weight.medium,
+  color: active ? color.text.primary : color.text.secondary,
   cursor: 'pointer',
   transition: 'color 0.1s, border-color 0.1s',
 });
@@ -180,106 +171,134 @@ const testerTabStyle = (active: boolean): CSSProperties => ({
 const testerTabRowStyle: CSSProperties = {
   display: 'flex',
   gap: gap.xs,
-  borderBottom: '1px solid #333',
-  marginBottom: '4px',
+  borderBottom: `${border.width.sm} solid ${color.border.primary}`,
+  marginBottom: gap.xs,
 };
 
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export function DevPersonaSwitcher() {
+  // All hooks must run before early returns so hook order stays consistent.
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [activeTester, setActiveTester] = useState(0);
 
-  if (!IS_DEV) return null;
+  // Wait for brik-devbar.js to load before rendering anything.
+  // Prevents a flash of any UI during the window between React hydration and
+  // the DevBar shell becoming available on window.
+  const [barReady, setBarReady] = useState(false);
+  useEffect(() => {
+    if (!SHOW_WIDGET) return;
+    if (typeof window === 'undefined') return;
+    const iv = setInterval(() => {
+      if (window.BrikDevBar) {
+        setBarReady(true);
+        clearInterval(iv);
+      }
+    }, 100);
+    return () => clearInterval(iv);
+  }, []);
+
+  // Register the persona slot into the DevBar shell.
+  // Skip when gate is off so the bar doesn't show an inert icon.
+  const slotDef = useMemo(() => (
+    SHOW_WIDGET
+      ? {
+          id: 'persona',
+          label: 'Personas',
+          icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+          order: 30,
+          onActivate: () => setOpen(true),
+          onDeactivate: () => setOpen(false),
+        }
+      : null
+  ), []);
+  useDevBarSlot(slotDef);
+
+  // Keep DevBar slot active state in sync with panel open/close.
+  useEffect(() => {
+    window.BrikDevBar?.setActive?.('persona', open);
+  }, [open]);
+
+  if (!SHOW_WIDGET || !barReady) return null;
 
   const handleSwitch = async (persona: Persona) => {
     setLoading(persona.key);
     const supabase = createClient();
 
-    // Sign out current user first
     await supabase.auth.signOut();
 
-    // Sign in as the selected persona
     const { error } = await supabase.auth.signInWithPassword({
       email: persona.email,
       password: TEST_PASSWORD,
     });
 
     if (error) {
-      console.error(`Failed to switch to ${persona.key}:`, error.message);
+      console.error(`[DevPersonaSwitcher] Failed to switch to ${persona.key}:`, error.message);
       setLoading(null);
+      alert(
+        `Persona switch failed: ${error.message}\n\n` +
+        `Check NEXT_PUBLIC_TEST_PASSWORD is set and seed-test-users has run against this Supabase project.`
+      );
       return;
     }
 
-    // Hard reload to pick up new session in server components
-    window.location.href = '/dashboard';
+    // Hard reload so server components pick up the new session.
+    window.location.assign(persona.redirectTo);
   };
 
   const currentGroup = TESTERS[activeTester];
 
+  if (!open) return null;
+
   return (
-    <>
-      <button
-        type="button"
-        style={fabStyle}
-        onClick={() => setOpen(!open)}
-        aria-label="Toggle persona switcher"
-        title="Dev Persona Switcher"
-      >
-        👤
-      </button>
+    <div style={panelStyle}>
+      <div style={categoryLabelStyle}>Switch Persona</div>
 
-      {open && (
-        <div style={panelStyle}>
-          <div style={headerStyle}>Switch Persona</div>
+      {/* Tester tabs */}
+      <div style={testerTabRowStyle}>
+        {TESTERS.map((t, i) => (
+          <button
+            key={t.name}
+            type="button"
+            style={testerTabStyle(i === activeTester)}
+            onClick={() => setActiveTester(i)}
+          >
+            {t.name}
+          </button>
+        ))}
+      </div>
 
-          {/* Tester tabs */}
-          <div style={testerTabRowStyle}>
-            {TESTERS.map((t, i) => (
-              <button
-                key={t.name}
-                type="button"
-                style={testerTabStyle(i === activeTester)}
-                onClick={() => setActiveTester(i)}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
+      {/* Personas for active tester */}
+      {currentGroup.personas.map((p) => {
+        const initials = p.label.split(' ').map((w) => w[0]).join('').slice(0, 2);
+        const isLoading = loading === p.key;
 
-          {/* Personas for active tester */}
-          {currentGroup.personas.map((p) => {
-            const initials = p.label.split(' ').map((w) => w[0]).join('').slice(0, 2);
-            const isLoading = loading === p.key;
+        if (isLoading) {
+          return (
+            <div key={p.key} style={loadingStyle}>
+              Switching to {p.label}...
+            </div>
+          );
+        }
 
-            if (isLoading) {
-              return (
-                <div key={p.key} style={loadingStyle}>
-                  Switching to {p.label}...
-                </div>
-              );
+        return (
+          <InteractiveListItem
+            key={p.key}
+            size="sm"
+            leading={<span style={avatarStyle}>{initials}</span>}
+            title={p.label}
+            subtitle={p.sublabel}
+            trailing={
+              <Badge size="sm" status={p.badgeStatus} appearance={p.badgeAppearance}>
+                {p.badge}
+              </Badge>
             }
-
-            return (
-              <button
-                key={p.key}
-                type="button"
-                style={personaBtnStyle}
-                onClick={() => handleSwitch(p)}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2a2a3e'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                disabled={loading !== null}
-              >
-                <span style={avatarStyle}>{initials}</span>
-                <div>
-                  <div style={nameStyle}>{p.label}</div>
-                  <div style={subStyle}>{p.sublabel}</div>
-                </div>
-                <span style={badgeStyle(p.badgeColor)}>{p.badge}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </>
+            onClick={() => handleSwitch(p)}
+            disabled={loading !== null}
+          />
+        );
+      })}
+    </div>
   );
 }

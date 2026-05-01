@@ -9,7 +9,6 @@ const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'ut
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   distDir: process.env.NEXT_BUILD_OUTPUT_DIR || '.next',
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
@@ -27,20 +26,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  turbopack: {
-    resolveAlias: {
-      '@bds/components': './brik-bds/components',
-      '@bds/tokens': './brik-bds/tokens',
-    },
-  },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@bds/components': path.resolve(__dirname, 'brik-bds/components'),
-      '@bds/tokens': path.resolve(__dirname, 'brik-bds/tokens'),
-    };
-    return config;
   },
 };
 
