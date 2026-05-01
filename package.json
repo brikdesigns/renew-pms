@@ -30,7 +30,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@brikdesigns/bds": "^0.48.0",
+    "@brikdesigns/bds": "^0.52.0",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
