@@ -4,8 +4,8 @@ import { useState, useEffect, type FormEvent, type CSSProperties } from 'react';
 import {
   Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import type { SheetTab } from '@bds/components';
+} from '@brikdesigns/bds';
+import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import {
   sheetBodyStyle,
@@ -40,7 +40,7 @@ const STATUS_OPTIONS = [
 ];
 
 const COLOR_OPTIONS = [
-  { label: 'None', value: '' },
+  { label: 'Select color', value: '' },
   { label: 'Blue', value: 'blue' },
   { label: 'Green', value: 'green' },
   { label: 'Red', value: 'red' },
@@ -74,6 +74,11 @@ const emptyState: CSSProperties = {
   color: TEXT_SECONDARY,
   textAlign: 'center',
 };
+
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -166,10 +171,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
           <TableBody>
             {roles.map((r) => (
               <TableRow key={r.id}>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{r.name}</span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{r.description}</span>
                 </TableCell>
               </TableRow>
@@ -201,10 +206,10 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
               const fullName = `${u.first_name} ${u.last_name}`.trim();
               return (
                 <TableRow key={u.id}>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: TEXT_PRIMARY }}>{fullName}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: TEXT_SECONDARY }}>{u.practice_role}</span>
                   </TableCell>
                 </TableRow>

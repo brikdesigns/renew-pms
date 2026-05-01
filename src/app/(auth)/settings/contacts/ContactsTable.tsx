@@ -3,17 +3,19 @@
 import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Tag, Button, IconButton, Chip, Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { StatusBadge } from '@/components/StatusBadge';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
-import { ViewVendorSheet } from '@/components/ViewVendorSheet';
 import { AddContactSheet, type ContactEditData } from '@/components/AddContactSheet';
+import { TableSkeleton } from '@/components/TableSkeleton';
+import '../_settingsTableStyles.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -65,43 +67,31 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
 
-const recordTypeBarStyle: CSSProperties = {
-  display: 'flex', gap: gap.xs, backgroundColor: color.surface.secondary,
-  borderRadius: border.radius.sm, padding: '2px',
-};
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
-const recordTypeBtnStyle = (active: boolean): CSSProperties => ({
-  padding: `${space.xs} ${space.md}`,
-  borderRadius: border.radius.xs,
-  border: 'none',
-  cursor: 'pointer',
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: active ? font.weight.semibold : font.weight.medium,
-  color: active ? color.text.primary : color.text.secondary,
-  backgroundColor: active ? color.surface.primary : 'transparent',
-  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-  transition: 'all 0.15s ease',
-});
+const RECORD_SEGMENTS = [
+  { label: 'Companies', value: 'companies' },
+  { label: 'Contacts', value: 'contacts' },
+];
 
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
@@ -113,7 +103,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
   const isFiltered = selected !== options[0];
   return (
     <div style={chipWrapperStyle}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'light'} showDropdown onChipClick={() => setOpen((p) => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen((p) => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={menuStyle} />
     </div>
   );
@@ -140,19 +130,15 @@ function CompaniesView({
           <TableHead>Email</TableHead>
           <TableHead>Contacts</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+          <TableHead style={{ width: '120px' }}>{' '}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-              Loading companies…
-            </TableCell>
-          </TableRow>
+          <TableSkeleton columns={7} />
         ) : vendors.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} className="settings-table-empty-row" style={bodyCellStyle}>
               No companies found.
             </TableCell>
           </TableRow>
@@ -160,8 +146,8 @@ function CompaniesView({
           const typeTag = TYPE_TAG_COLORS[v.type] ?? TYPE_TAG_COLORS.service;
           return (
             <TableRow key={v.id}>
-              <TableCell>
-                <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+              <TableCell style={bodyCellStyle}>
+                <div className="settings-table-cell-text settings-table-cell-text--strong">
                   {v.name}
                 </div>
                 {v.address && (
@@ -170,36 +156,37 @@ function CompaniesView({
                   </div>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
                   {TYPE_LABELS[v.type] ?? v.type}
                 </Tag>
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.phone ? color.text.primary : color.text.muted }}>
+              <TableCell style={bodyCellStyle}>
+                <span className={v.phone ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {v.phone ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: v.email ? color.text.primary : color.text.muted }}>
-                  {v.email ?? '—'}
+              <TableCell style={bodyCellStyle}>
+                <span
+                  className={v.email ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}
+                  style={{ overflowWrap: 'break-word' }}
+                >
+                  {v.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+              <TableCell style={bodyCellStyle}>
+                <span className="settings-table-cell-text settings-table-cell-text--secondary">
                   {v.contact_count}
                 </span>
               </TableCell>
-              <TableCell>
-                <Badge status={v.is_active ? 'positive' : 'error'} size="sm">
-                  {v.is_active ? 'Active' : 'Inactive'}
-                </Badge>
+              <TableCell style={bodyCellStyle}>
+                <StatusBadge status={v.is_active} />
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
                 </div>
               </TableCell>
             </TableRow>
@@ -231,19 +218,15 @@ function ContactsView({
           <TableHead>Role</TableHead>
           <TableHead>Phone</TableHead>
           <TableHead>Email</TableHead>
-          <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+          <TableHead style={{ width: '120px' }}>{' '}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-              Loading contacts…
-            </TableCell>
-          </TableRow>
+          <TableSkeleton columns={7} />
         ) : contacts.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+            <TableCell colSpan={7} className="settings-table-empty-row" style={bodyCellStyle}>
               No contacts found.
             </TableCell>
           </TableRow>
@@ -251,8 +234,8 @@ function ContactsView({
           const typeTag = TYPE_TAG_COLORS[c.vendor_type ?? ''] ?? TYPE_TAG_COLORS.service;
           return (
             <TableRow key={c.id}>
-              <TableCell>
-                <div style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+              <TableCell style={bodyCellStyle}>
+                <div className="settings-table-cell-text settings-table-cell-text--strong">
                   {c.name}
                 </div>
                 {c.is_primary && (
@@ -261,40 +244,43 @@ function ContactsView({
                   </div>
                 )}
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.vendor_name ? color.text.primary : color.text.muted }}>
+              <TableCell style={bodyCellStyle}>
+                <span className={c.vendor_name ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.vendor_name ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 {c.vendor_type ? (
                   <Tag size="sm" style={{ backgroundColor: typeTag.bg, color: typeTag.color }}>
                     {TYPE_LABELS[c.vendor_type] ?? c.vendor_type}
                   </Tag>
                 ) : (
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.muted }}>—</span>
+                  <span className="settings-table-cell-text settings-table-cell-text--muted">—</span>
                 )}
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.role ? color.text.primary : color.text.muted }}>
+              <TableCell style={bodyCellStyle}>
+                <span className={c.role ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.role ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.phone ? color.text.primary : color.text.muted }}>
+              <TableCell style={bodyCellStyle}>
+                <span className={c.phone ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}>
                   {c.phone ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
-                <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: c.email ? color.text.primary : color.text.muted }}>
-                  {c.email ?? '—'}
+              <TableCell style={bodyCellStyle}>
+                <span
+                  className={c.email ? 'settings-table-cell-text' : 'settings-table-cell-text settings-table-cell-text--muted'}
+                  style={{ overflowWrap: 'break-word' }}
+                >
+                  {c.email?.toLowerCase() ?? '—'}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
-                  <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
+                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
                 </div>
               </TableCell>
             </TableRow>
@@ -308,6 +294,7 @@ function ContactsView({
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function ContactsTable() {
+  const { openSheet, closeAll } = useSheetStack();
   const { showToast } = useToast();
   const [recordType, setRecordType] = useState<RecordType>('companies');
 
@@ -316,7 +303,6 @@ export function ContactsTable() {
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Vendor | null>(null);
-  const [viewOpen, setViewOpen] = useState(false);
   const [viewing, setViewing] = useState<Vendor | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [filterType, setFilterType] = useState('All Types');
@@ -386,7 +372,14 @@ export function ContactsTable() {
 
   const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (v: Vendor) => { setEditing(v); setSheetOpen(true); };
-  const handleView = (v: Vendor) => { setViewing(v); setViewOpen(true); };
+  const handleView = (v: Vendor) => {
+    setViewing(v);
+    openSheet('vendor', {
+      id: v.id,
+      vendor: v,
+      onEdit: (vendor: Vendor) => { closeAll(); handleEdit(vendor); },
+    }, { title: v.name, variant: 'floating' });
+  };
 
   const handleSave = async (data: VendorFormData) => {
     if (editing) {
@@ -429,9 +422,7 @@ export function ContactsTable() {
   // ── Contact handlers ──
 
   const handleViewContact = (c: Contact) => {
-    // Open the parent vendor's view sheet (which shows contacts in the Contacts tab)
-    const v = vendors.find(v => v.id === c.vendor_id);
-    if (v) { setViewing(v); setViewOpen(true); }
+    openSheet('contact', { id: c.id }, { title: c.name, variant: 'floating' });
   };
 
   const handleEditContact = (c: Contact) => {
@@ -469,14 +460,12 @@ export function ContactsTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <div style={recordTypeBarStyle}>
-            <button type="button" style={recordTypeBtnStyle(isCompanies)} onClick={() => setRecordType('companies')}>
-              Companies
-            </button>
-            <button type="button" style={recordTypeBtnStyle(!isCompanies)} onClick={() => setRecordType('contacts')}>
-              Contacts
-            </button>
-          </div>
+          <SegmentedControl
+            items={RECORD_SEGMENTS}
+            value={recordType}
+            onChange={(v) => setRecordType(v as RecordType)}
+            size="sm"
+          />
           <span style={countBadge}>{loading ? '–' : count}</span>
         </div>
         <div style={filterBarStyle}>
@@ -521,12 +510,6 @@ export function ContactsTable() {
         onClose={() => { setSheetOpen(false); setEditing(null); }}
         initialData={editing}
         onSave={handleSave}
-      />
-      <ViewVendorSheet
-        isOpen={viewOpen}
-        onClose={() => { setViewOpen(false); setViewing(null); }}
-        vendor={viewing}
-        onEdit={(v) => { setViewOpen(false); setViewing(null); handleEdit(v); }}
       />
       <AddContactSheet
         isOpen={addContactOpen}

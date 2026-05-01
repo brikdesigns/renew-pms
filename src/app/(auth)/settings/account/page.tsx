@@ -28,6 +28,7 @@ export default async function AccountSettingsPage() {
         start_date: membership?.joined_at?.slice(0, 10) ?? '',
         employee_type: membership?.employee_type ?? '',
         shift: membership?.shift ?? '',
+        office_days: membership?.office_days ?? [],
       }}
       memberId={membership?.memberId ?? null}
       isAdmin={isAdmin}

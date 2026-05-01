@@ -1,12 +1,19 @@
-import type { CSSProperties, ReactNode } from 'react';
-import { font, color, space, gap, border } from '@/lib/tokens';
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { color, space, gap, border, state, motion } from '@/lib/tokens';
 import { UserAvatar } from '@/components/UserAvatar';
+import './ProfileCard.css';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ProfileCardBaseProps {
   name: string;
   subtitle?: string | null;
+  /** When provided, the card becomes a clickable link to the related record */
+  onClick?: () => void;
+  /** Custom trailing content — replaces the default department tag when provided */
+  endContent?: ReactNode;
+  /** Avatar size override (default: 'md') */
+  avatarSize?: 'sm' | 'md' | 'lg';
 }
 
 interface UserCardProps extends ProfileCardBaseProps {
@@ -44,75 +51,41 @@ export type ProfileCardProps =
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const cardStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
-  padding: space.md,
-  borderRadius: border.radius.md,
-  backgroundColor: color.surface.secondary,
-};
+function cardStyle(clickable: boolean, hovered: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: gap.md,
+    padding: space.md,
+    borderRadius: border.radius.md,
+    backgroundColor: hovered ? state.hover.secondary : color.surface.secondary,
+    cursor: clickable ? 'pointer' : undefined,
+    transition: `background-color ${motion.duration.fast} ${motion.ease.out}`,
+    border: 'none',
+    textAlign: 'left',
+    width: '100%',
+  };
+}
 
 // Avatar rendering moved to shared UserAvatar component
 
-const dotStyle: CSSProperties = {
-  width: '40px',
-  height: '40px',
-  borderRadius: border.radius.pill,
-  flexShrink: 0,
-};
-
-const textWrap: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: gap.tiny,
-  minWidth: 0,
-  flex: 1,
-};
-
-const nameStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-  lineHeight: 1,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const subtitleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.regular,
-  color: color.text.secondary,
-  lineHeight: 1,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  textTransform: font.transform.label,
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-const deptTagStyle: CSSProperties = {
-  fontFamily: font.family.subtitle,
-  fontSize: font.size.subtitle.md,
-  fontWeight: font.weight.semibold,
-  lineHeight: 1,
-  padding: `${gap.xs} ${gap.md}`,
-  borderRadius: border.radius.sm,
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
-
 export function ProfileCard(props: ProfileCardProps) {
-  const { variant, name, subtitle } = props;
+  const { variant, name, subtitle, onClick, endContent, avatarSize = 'md' } = props;
+  const [hovered, setHovered] = useState(false);
+  const clickable = !!onClick;
+  const Tag = clickable ? 'button' : 'div';
 
   let visual: ReactNode;
 
   if (variant === 'department') {
-    visual = <span style={{ ...dotStyle, backgroundColor: props.dotColor }} />;
+    const initial = name.charAt(0).toUpperCase();
+    visual = (
+      <span className="profile-card__dot" style={{ backgroundColor: props.dotColor }}>
+        {initial}
+      </span>
+    );
   } else {
     const url = props.avatarUrl;
     // Role + user cards: resolve department from user variant's department prop,
@@ -131,7 +104,7 @@ export function ProfileCard(props: ProfileCardProps) {
         name={name}
         departmentColorKey={deptName}
         avatarUrl={url}
-        size="md"
+        size={avatarSize}
         style={styleOverrides}
       />
     );
@@ -141,38 +114,52 @@ export function ProfileCard(props: ProfileCardProps) {
   if (variant === 'user') {
     const parts: string[] = [];
     if (props.role) parts.push(props.role);
-    if (subtitle) parts.push(subtitle);
+    if (subtitle) parts.push(subtitle.toLowerCase());
     const composedSubtitle = parts.length > 0 ? parts.join(' \u2022 ') : null;
     const hasDeptTag = props.department && props.departmentBg;
 
     return (
-      <div style={cardStyle}>
+      <Tag
+        type={clickable ? 'button' : undefined}
+        style={cardStyle(clickable, hovered)}
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         {visual}
-        <div style={textWrap}>
-          <span style={nameStyle}>{name}</span>
-          {composedSubtitle && <span style={subtitleStyle}>{composedSubtitle}</span>}
+        <div className="profile-card__text-wrap">
+          <span className="profile-card__name">{name}</span>
+          {composedSubtitle && <span className="profile-card__subtitle">{composedSubtitle}</span>}
         </div>
-        {hasDeptTag && (
-          <span style={{
-            ...deptTagStyle,
-            backgroundColor: props.departmentBg,
-            color: props.departmentText ?? color.text.primary,
-          }}>
+        {endContent ?? (hasDeptTag && (
+          <span
+            className="profile-card__dept-tag"
+            style={{
+              backgroundColor: props.departmentBg,
+              color: props.departmentText ?? color.text.primary,
+            }}
+          >
             {props.department}
           </span>
-        )}
-      </div>
+        ))}
+      </Tag>
     );
   }
 
   return (
-    <div style={cardStyle}>
+    <Tag
+      type={clickable ? 'button' : undefined}
+      style={cardStyle(clickable, hovered)}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {visual}
-      <div style={textWrap}>
-        <span style={nameStyle}>{name}</span>
-        {subtitle && <span style={subtitleStyle}>{subtitle}</span>}
+      <div className="profile-card__text-wrap">
+        <span className="profile-card__name">{name}</span>
+        {subtitle && <span className="profile-card__subtitle">{subtitle}</span>}
       </div>
-    </div>
+    </Tag>
   );
 }
 

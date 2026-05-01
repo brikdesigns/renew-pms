@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo, type CSSProperties } from 'react';
-import { Chip } from '@bds/components';
-import { Menu } from '@bds/components';
-import type { MenuItemData } from '@bds/components';
-import { color, gap } from '@/lib/tokens';
-import { useDepartments } from '@/hooks/useDepartments';
+import { Chip } from '@brikdesigns/bds';
+import { Menu } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
+import { gap } from '@/lib/tokens';
+import type { Department } from '@/hooks/useDepartments';
 
 const FREQUENCIES = [
   'All Frequencies',
@@ -36,6 +36,9 @@ const TEMPLATE_TYPES = [
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TaskFilterBarProps {
+  /** Departments list — passed in by the parent so the bar shares the
+   *  parent's already-loaded data instead of triggering its own fetch. */
+  departments: Department[];
   selectedDepartment: string;
   onDepartmentChange: (dept: string) => void;
   selectedFrequency: string;
@@ -103,7 +106,7 @@ function ChipFilter({
       <Chip
         label={selected}
         variant={isFiltered ? 'primary' : 'secondary'}
-        appearance={isFiltered ? 'solid' : 'light'}
+        appearance={isFiltered ? 'solid' : 'outline'}
         showDropdown
         onChipClick={() => setOpen((prev) => !prev)}
       />
@@ -121,6 +124,7 @@ function ChipFilter({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function TaskFilterBar({
+  departments,
   selectedDepartment,
   onDepartmentChange,
   selectedFrequency,
@@ -134,7 +138,6 @@ export function TaskFilterBar({
   showOverdue,
   onShowOverdueChange,
 }: TaskFilterBarProps) {
-  const { departments } = useDepartments();
   const departmentOptions = useMemo(
     () => ['All Departments', ...departments.filter((d) => d.is_active && d.name !== 'All Departments').map((d) => d.name)],
     [departments]
@@ -169,13 +172,13 @@ export function TaskFilterBar({
       <Chip
         label="Show Overdue"
         variant={showOverdue ? 'primary' : 'secondary'}
-        appearance={showOverdue ? 'solid' : 'light'}
+        appearance={showOverdue ? 'solid' : 'outline'}
         onChipClick={() => onShowOverdueChange(!showOverdue)}
       />
       <Chip
         label="Show Resolved"
         variant={showResolved ? 'primary' : 'secondary'}
-        appearance={showResolved ? 'solid' : 'light'}
+        appearance={showResolved ? 'solid' : 'outline'}
         onChipClick={() => onShowResolvedChange(!showResolved)}
       />
     </div>

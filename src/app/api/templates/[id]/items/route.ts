@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -62,8 +63,10 @@ export async function PUT(
     return NextResponse.json({ error: 'Body must be an array of items' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Delete all existing items for this template
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await admin
     .from('checklist_items')
     .delete()
     .eq('template_id', id)
@@ -83,7 +86,7 @@ export async function PUT(
     supply_category_id: item.supply_category_id || null,
   }));
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('checklist_items')
     .insert(rows)
     .select('id, label, sort_order, room_id, equipment_id, supply_category_id');

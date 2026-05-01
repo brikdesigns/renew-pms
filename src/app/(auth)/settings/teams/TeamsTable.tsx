@@ -3,17 +3,18 @@
 import { useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@bds/components';
-import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput } from '@bds/components';
+} from '@brikdesigns/bds';
+import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput, Field } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { ReadOnlyField } from '@/components/ReadOnlyField';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
 import { useTeams, type Team } from '@/hooks/useTeams';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -22,11 +23,11 @@ import {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingInline: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
+  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
 };
 
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
@@ -36,9 +37,14 @@ const countBadge: CSSProperties = {
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
+
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
 // ─── Form data ──────────────────────────────────────────────────────────────
 
@@ -161,19 +167,15 @@ export function TeamsTable() {
               <TableHead>Department</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
-                  Loading teams...
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={5} />
             ) : teams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} style={{ textAlign: 'center', color: color.text.muted, fontFamily: font.family.label, fontSize: font.size.label.sm }}>
+                <TableCell colSpan={5} className="settings-table-empty-row" style={bodyCellStyle}>
                   No teams yet. Click &quot;Add Team&quot; to create one.
                 </TableCell>
               </TableRow>
@@ -181,31 +183,31 @@ export function TeamsTable() {
               const deptColors = t.department_color ? departmentColor(t.department_color) : null;
               return (
                 <TableRow key={t.id}>
-                  <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>{t.name}</span>
+                  <TableCell style={bodyCellStyle}>
+                    <span className="settings-table-cell-text settings-table-cell-text--strong">{t.name}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     {t.department_name ? (
                       <Tag size="sm" style={{ backgroundColor: deptColors?.light ?? color.surface.secondary, color: deptColors?.text ?? color.text.secondary }}>
                         {t.department_name}
                       </Tag>
                     ) : (
-                      <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>—</span>
+                      <span className="settings-table-cell-text settings-table-cell-text--secondary">—</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>{t.member_count}</span>
+                  <TableCell style={bodyCellStyle}>
+                    <span className="settings-table-cell-text settings-table-cell-text--secondary">{t.member_count}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <Badge status={t.is_active ? 'positive' : 'error'} size="sm">
                       {t.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
-                      <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
+                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -281,24 +283,23 @@ export function TeamsTable() {
         {viewing && (
           <div style={sheetBodyStyle}>
             <h3 style={sheetSectionTitle}>Details</h3>
-            <ReadOnlyField label="Name" value={viewing.name} />
-            <ReadOnlyField label="Department" value={
-              viewing.department_name ? (
+            <Field label="Name" empty="—">{viewing.name}</Field>
+            <Field label="Department" empty="—">
+              {viewing.department_name ? (
                 <Tag size="sm" style={{
                   backgroundColor: viewing.department_color ? departmentColor(viewing.department_color).light : color.surface.secondary,
                   color: viewing.department_color ? departmentColor(viewing.department_color).text : color.text.secondary,
-                  display: 'inline-flex',
                 }}>
                   {viewing.department_name}
                 </Tag>
-              ) : '—'
-            } />
-            <ReadOnlyField label="Status" value={
-              <Badge status={viewing.is_active ? 'positive' : 'error'} size="sm" style={{ display: 'inline-flex' }}>
+              ) : null}
+            </Field>
+            <Field label="Status" empty="—">
+              <Badge status={viewing.is_active ? 'positive' : 'error'} size="sm">
                 {viewing.is_active ? 'Active' : 'Inactive'}
               </Badge>
-            } />
-            <ReadOnlyField label="Members" value={String(viewing.member_count)} />
+            </Field>
+            <Field label="Members" empty="—">{String(viewing.member_count)}</Field>
           </div>
         )}
       </Sheet>

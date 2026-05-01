@@ -1,0 +1,49 @@
+{
+  "_comment": "Copy this file, fill in your recording session IDs, and run: ./scripts/record-demo.sh --config path/to/your-config.json",
+  "output": "/Users/nickstanerson/Documents/Brik/Clients/Renew/recordings/demo-feature-v1.mp4",
+  "narrated_output": "/Users/nickstanerson/Documents/Brik/Clients/Renew/recordings/demo-feature-v1-narrated.mp4",
+  "transition_duration": 0.5,
+  "fps": 24,
+  "crf": 22,
+  "segments": [
+    {
+      "_comment": "Title cards: specify 'duration' (seconds). Source is the .webm from Pagecast.",
+      "id": "title01",
+      "source": "recordings/recording-XXXXXXXX.webm",
+      "duration": 8
+    },
+    {
+      "_comment": "Clips: specify 'trim_start', 'trim_end' (seconds into source), and 'speed' multiplier.",
+      "id": "clip01",
+      "source": "recordings/recording-YYYYYYYY.webm",
+      "trim_start": 10,
+      "trim_end": 28,
+      "speed": 2.0
+    },
+    {
+      "id": "title02",
+      "source": "recordings/recording-XXXXXXXX.webm",
+      "duration": 8
+    },
+    {
+      "id": "clip02",
+      "source": "recordings/recording-ZZZZZZZZ.webm",
+      "trim_start": 5,
+      "trim_end": 22,
+      "speed": 1.5
+    }
+  ],
+  "narration": [
+    {
+      "_comment": "Narration files generated via ElevenLabs. segment_id matches a segment 'id' above.",
+      "segment_id": "title01",
+      "file": "/Users/nickstanerson/Documents/Brik/Clients/Renew/recordings/narration/card01.mp3",
+      "delay_offset": 0.5
+    },
+    {
+      "segment_id": "title02",
+      "file": "/Users/nickstanerson/Documents/Brik/Clients/Renew/recordings/narration/card02.mp3",
+      "delay_offset": 0.5
+    }
+  ]
+}

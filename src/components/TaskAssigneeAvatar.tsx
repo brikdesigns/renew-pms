@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
+import { IconButton, MenuItem, Tooltip } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useToast } from '@/components/ToastProvider';
-import { color, font, gap, border, shadow, space } from '@/lib/tokens';
+import { color, font, gap, border, shadow } from '@/lib/tokens';
 import type { Member } from '@/hooks/useMembers';
 
 const MENU_WIDTH = 220;
@@ -19,34 +20,6 @@ const unassignedStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-function MenuItem({ active, onClick, avatar, label }: {
-  active: boolean;
-  onClick: () => void;
-  avatar: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: gap.md,
-        width: '100%', padding: `${space.xs} ${space.md}`,
-        background: active ? color.surface.secondary : 'transparent',
-        border: 'none', cursor: 'pointer', textAlign: 'left',
-        fontFamily: font.family.label, fontSize: font.size.label.sm,
-        fontWeight: active ? font.weight.semibold : font.weight.regular,
-        color: color.text.primary,
-      }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = color.surface.secondary; }}
-      onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
-    >
-      {avatar}
-      {label}
-    </button>
-  );
-}
-
 interface TaskAssigneeAvatarProps {
   taskId: string;
   assigneeName: string | null;
@@ -58,7 +31,7 @@ interface TaskAssigneeAvatarProps {
 export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentColor, members, onAssigned }: TaskAssigneeAvatarProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-  const avatarRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
@@ -107,7 +80,7 @@ export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentCol
     return () => document.removeEventListener('keydown', handler);
   }, [open, close]);
 
-  const handleToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (open) close(); else openMenu();
@@ -140,25 +113,25 @@ export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentCol
 
   return (
     <>
-      <div
-        ref={avatarRef}
-        title={assigneeName ?? 'Unassigned'}
-        style={{ cursor: 'pointer' }}
-        onClick={handleToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleToggle(e); }}
-      >
-        {assigneeName ? (
-          <UserAvatar name={assigneeName} departmentColorKey={assigneeDepartmentColor} size="sm" />
-        ) : (
-          <div style={unassignedStyle}>
-            <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
-          </div>
-        )}
-      </div>
+      <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
+        <IconButton
+          ref={avatarRef}
+          variant="ghost"
+          size="sm"
+          label={assigneeName ?? 'Assign to'}
+          onClick={handleToggle}
+          icon={
+            assigneeName ? (
+              <UserAvatar name={assigneeName} departmentColorKey={assigneeDepartmentColor} size="sm" />
+            ) : (
+              <div style={unassignedStyle}>
+                <Icon icon={icon.profile} style={{ fontSize: font.size.label.sm, color: color.text.muted } as CSSProperties & Record<string, string>} />
+              </div>
+            )
+          }
+        />
+      </Tooltip>
       {open && pos && createPortal(
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
         <div
           ref={menuRef}
           onClick={(e) => e.stopPropagation()}
@@ -172,24 +145,30 @@ export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentCol
           }}
         >
           <MenuItem
-            active={!assigneeName}
-            onClick={() => handleAssign(null, null)}
-            avatar={
-              <div style={{ ...unassignedStyle, width: 24, height: 24 }}>
-                <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
-              </div>
-            }
-            label="Unassigned"
+            item={{
+              id: 'unassigned',
+              label: 'Unassigned',
+              icon: (
+                <div style={{ ...unassignedStyle, width: 24, height: 24 }}>
+                  <Icon icon={icon.profile} style={{ fontSize: font.size.body.xs, color: color.text.muted } as CSSProperties & Record<string, string>} />
+                </div>
+              ),
+              onClick: () => handleAssign(null, null),
+            }}
+            isActive={!assigneeName}
           />
           {activeMembers.map(m => {
             const name = `${m.first_name} ${m.last_name}`.trim();
             return (
               <MenuItem
                 key={m.id}
-                active={assigneeName === name}
-                onClick={() => handleAssign(m.id, name)}
-                avatar={<UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />}
-                label={name}
+                item={{
+                  id: m.id,
+                  label: name,
+                  icon: <UserAvatar name={name} departmentColorKey={m.department_color} size="sm" />,
+                  onClick: () => handleAssign(m.id, name),
+                }}
+                isActive={assigneeName === name}
               />
             );
           })}

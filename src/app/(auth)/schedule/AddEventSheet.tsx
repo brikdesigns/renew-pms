@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, Select } from '@bds/components';
+import { Sheet, Button, TextInput, Select, TimePicker } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
 import { useMembers } from '@/hooks/useMembers';
 import { gap } from '@/lib/tokens';
@@ -187,23 +187,21 @@ export function AddEventSheet({ isOpen, onClose, onSaved, prefill }: AddEventShe
               required
             />
             <div style={{ display: 'flex', gap: gap.lg }}>
-              <TextInput
+              <TimePicker
                 label="Start Time"
                 size="sm"
-                type="time"
                 value={form.startTime}
-                onChange={updateText('startTime')}
+                onChange={(v) => setForm(prev => ({ ...prev, startTime: v }))}
+                minuteStep={5}
                 fullWidth
-                required
               />
-              <TextInput
+              <TimePicker
                 label="End Time"
                 size="sm"
-                type="time"
                 value={form.endTime}
-                onChange={updateText('endTime')}
+                onChange={(v) => setForm(prev => ({ ...prev, endTime: v }))}
+                minuteStep={5}
                 fullWidth
-                required
               />
             </div>
           </div>

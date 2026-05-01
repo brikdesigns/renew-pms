@@ -20,7 +20,7 @@ const iconStyle: React.CSSProperties = {
   color: color.text.muted,
 };
 
-const headingStyle: React.CSSProperties = {
+const titleStyle: React.CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.medium,
   fontWeight: font.weight.bold,
@@ -41,7 +41,7 @@ export default function AnalyticsPage() {
   return (
     <div style={emptyStateStyle}>
       <Icon icon={icon.analytics} style={iconStyle as React.CSSProperties & Record<string, string>} />
-      <h1 style={headingStyle}>Analytics</h1>
+      <h1 style={titleStyle}>Analytics</h1>
       <p style={descStyle}>
         Reports and insights are coming soon. You&apos;ll be able to track task completion, team performance, and compliance metrics here.
       </p>

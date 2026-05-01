@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
@@ -57,9 +58,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'items array is required' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
   // Update each item
   for (const item of body.items) {
-    await supabase
+    await admin
       .from('task_checklist_items')
       .update({
         is_completed: item.is_completed,
@@ -72,15 +75,45 @@ export async function PATCH(
   }
 
   // Return fresh list
-  const { data } = await supabase
+  const { data } = await admin
     .from('task_checklist_items')
     .select('id, label, sort_order, is_completed, completed_at, room_id, equipment_id, supply_category_id')
     .eq('task_id', id)
     .eq('practice_id', practiceId)
     .order('sort_order');
 
-  // Also suppress the unused variable warning for the route param
-  void id;
+  // Roll up to parent task.status. If every checklist item is now complete,
+  // mark the parent task complete; if a previously-complete task now has any
+  // incomplete item, revert to in_progress. Without this, completing a task
+  // through the checklist UI leaves tasks.status stale and the task reappears
+  // on the board after refresh.
+  const items = data ?? [];
+  if (items.length > 0) {
+    const allComplete = items.every((i) => i.is_completed);
+    const { data: parent } = await admin
+      .from('tasks')
+      .select('status')
+      .eq('id', id)
+      .eq('practice_id', practiceId)
+      .maybeSingle();
 
-  return NextResponse.json(data ?? []);
+    if (parent) {
+      const parentStatus = parent.status as string;
+      if (allComplete && parentStatus !== 'completed' && parentStatus !== 'skipped') {
+        await admin
+          .from('tasks')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', id)
+          .eq('practice_id', practiceId);
+      } else if (!allComplete && parentStatus === 'completed') {
+        await admin
+          .from('tasks')
+          .update({ status: 'in_progress', completed_at: null })
+          .eq('id', id)
+          .eq('practice_id', practiceId);
+      }
+    }
+  }
+
+  return NextResponse.json(items);
 }

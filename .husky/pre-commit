@@ -47,6 +47,7 @@ STAGED_SRC=$(git diff --cached --name-only --diff-filter=ACM -- 'src/**/*.tsx' '
   | grep -v 'src/lib/styles\.ts' \
   | grep -v 'error\.tsx' \
   | grep -v 'global-error\.tsx' \
+  | grep -v 'DevPersonaSwitcher\.tsx' \
   || true)
 
 if [ -n "$STAGED_SRC" ]; then
@@ -138,6 +139,30 @@ if [ -n "$STAGED_THEMES" ]; then
     echo ""
     echo "   Every theme must explicitly define all 5 font-family tokens."
     echo "   Missing tokens silently fall through to BDS Poppins defaults."
+    echo "   To bypass (not recommended): git commit --no-verify"
+    exit 1
+  fi
+fi
+
+# ── Anti-slop CRITICAL check ──
+# Blocks commits that introduce silent bugs CLAUDE.md explicitly bans:
+#   - empty catch blocks (Fail Loud, Never Fake)
+#   - swallowed promise rejections
+#   - relative/@-aliased imports that don't resolve on disk
+#
+# HIGH findings (raw hex, Tailwind arbitrary values, raw rgba) are already
+# covered by the token compliance block above, so this gate only raises
+# threshold to CRITICAL.
+#
+# Scanner lives at ~/.claude/skills/anti-slop/ (global install). If it's
+# missing (fresh machine, CI), the helper gracefully skips — pre-commit
+# never breaks for infra reasons.
+ANTI_SLOP_CHECK="$HOME/.claude/skills/anti-slop/brik-rules/check-staged.sh"
+if [ -x "$ANTI_SLOP_CHECK" ]; then
+  echo "🔍 Running anti-slop CRITICAL scan on staged files..."
+  if ! "$ANTI_SLOP_CHECK" critical; then
+    echo "   Silent-failure + hallucinated-import findings block commits."
+    echo "   Fix the listed lines, or justify inline with a logger/throw."
     echo "   To bypass (not recommended): git commit --no-verify"
     exit 1
   fi

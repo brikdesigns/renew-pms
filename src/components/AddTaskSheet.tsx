@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from 'react';
-import { Sheet, Button, Select, TextInput } from '@bds/components';
+import { Sheet, Button, Select, TextInput } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
-import { useMembers } from '@/hooks/useMembers';
-import { useDepartments } from '@/hooks/useDepartments';
+import type { Member } from '@/hooks/useMembers';
+import type { Department } from '@/hooks/useDepartments';
 import { color, font, gap, space, border } from '@/lib/tokens';
-import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
+import { FrequencyTag } from '@/components/FrequencyTag';
 import {
   sheetBodyStyle,
   sheetSectionTitle,
@@ -43,6 +43,11 @@ interface AddTaskSheetProps {
   onSaved: () => void;
   /** Pre-filter templates by type (e.g., 'checklist', 'procedure') */
   defaultType?: string;
+  /** Members list — passed in by the parent so the sheet shares the
+   *  parent's already-loaded data instead of triggering its own fetch. */
+  members: Member[];
+  /** Departments list — same rationale as `members`. */
+  departments: Department[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -105,10 +110,8 @@ const emptyStateStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskSheetProps) {
+export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType, members, departments }: AddTaskSheetProps) {
   const { showToast } = useToast();
-  const { members } = useMembers();
-  const { departments } = useDepartments();
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -155,12 +158,12 @@ export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskS
   );
 
   const templateOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select template', value: '' },
     ...filteredTemplates.map(t => ({ label: t.name, value: t.id })),
   ], [filteredTemplates]);
 
   const staffOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select assignee', value: '' },
     ...members.filter(m => m.is_active).map(m => ({
       label: `${m.first_name} ${m.last_name}`,
       value: m.id,
@@ -168,7 +171,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskS
   ], [members]);
 
   const deptOptions = useMemo(() => [
-    { label: 'Select option', value: '' },
+    { label: 'Select department', value: '' },
     ...departments.filter(d => d.is_active).map(d => ({
       label: d.name,
       value: d.id,
@@ -267,7 +270,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType }: AddTaskS
                 </div>
                 <div style={previewRowStyle}>
                   <span style={previewLabelStyle}>Frequency</span>
-                  <span style={previewFieldStyle}>{selectedTemplate.frequency ? (FREQUENCY_LABELS[selectedTemplate.frequency] ?? selectedTemplate.frequency) : 'One-time'}</span>
+                  <span style={previewFieldStyle}><FrequencyTag value={selectedTemplate.frequency} /></span>
                 </div>
                 <div style={previewRowStyle}>
                   <span style={previewLabelStyle}>Assignment</span>

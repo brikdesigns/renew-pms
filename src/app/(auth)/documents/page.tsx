@@ -20,7 +20,7 @@ const iconStyle: React.CSSProperties = {
   color: color.text.muted,
 };
 
-const headingStyle: React.CSSProperties = {
+const titleStyle: React.CSSProperties = {
   fontFamily: font.family.heading,
   fontSize: font.size.heading.medium,
   fontWeight: font.weight.bold,
@@ -41,7 +41,7 @@ export default function DocumentsPage() {
   return (
     <div style={emptyStateStyle}>
       <Icon icon={icon.documents} style={iconStyle as React.CSSProperties & Record<string, string>} />
-      <h1 style={headingStyle}>Documents</h1>
+      <h1 style={titleStyle}>Documents</h1>
       <p style={descStyle}>
         Document management is coming soon. You&apos;ll be able to access SOPs, compliance forms, and practice resources here.
       </p>

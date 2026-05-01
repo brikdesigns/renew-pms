@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useSheetStack } from '@brikdesigns/bds';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
-import { TrainingFilterBar, type EmployeeTypeFilter } from '@/components/TrainingFilterBar';
+import { TrainingFilterBar, type EmployeeTypeFilter, type EmployeeTypeSegment } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';
 import type { SystemRole } from '@/lib/auth';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -12,23 +13,16 @@ import { color, font, space, gap, border } from '@/lib/tokens';
 const pageStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: gap.lg,
 };
 
-const headerStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${space.md} 0`,
-};
-
-const headerLeftStyle: React.CSSProperties = {
+const staffHeaderStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: space.sm,
+  padding: `${space.sm} 0`,
 };
 
-const titleStyle: React.CSSProperties = {
+const staffTitleStyle: React.CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.label.md,
   fontWeight: font.weight.semibold,
@@ -36,7 +30,7 @@ const titleStyle: React.CSSProperties = {
   margin: 0,
 };
 
-const countBadgeStyle: React.CSSProperties = {
+const staffCountStyle: React.CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.xs,
   fontWeight: font.weight.medium,
@@ -73,23 +67,12 @@ interface TrainingClientProps {
 
 export default function TrainingClient({ systemRole, currentMemberId, userDepartment }: TrainingClientProps) {
   const { members, loading } = useMembers();
+  const { openSheet } = useSheetStack();
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
-  const [activeTypes, setActiveTypes] = useState<Set<EmployeeTypeFilter>>(new Set());
+  const [activeSegment, setActiveSegment] = useState<EmployeeTypeSegment>('all');
 
   const isAdmin = systemRole === 'brik_admin' || systemRole === 'admin';
   const isManager = systemRole === 'manager';
-
-  const toggleType = useCallback((type: EmployeeTypeFilter) => {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
-    });
-  }, []);
 
   const trainingMembers = useMemo((): TrainingMember[] =>
     members
@@ -119,7 +102,7 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
 
   const filtered = scopedMembers
     .filter((m) => {
-      if (activeTypes.size > 0 && !activeTypes.has(m.employeeType)) return false;
+      if (activeSegment !== 'all' && m.employeeType !== activeSegment) return false;
       if (selectedDepartment !== 'All Departments' && m.department !== selectedDepartment) return false;
       return true;
     })
@@ -130,34 +113,33 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
       return a.name.localeCompare(b.name);
     });
 
-  const isEmpty = !loading && filtered.length === 0;
+  const handleViewDetails = useCallback((memberId: string) => {
+    const m = filtered.find((f) => f.id === memberId);
+    openSheet('user', { id: memberId }, { title: m?.name ?? 'User Profile' });
+  }, [filtered, openSheet]);
 
-  const heading = isAdmin
-    ? 'Team Members'
-    : isManager
-      ? 'Department Training'
-      : 'My Training';
+  const isEmpty = !loading && filtered.length === 0;
+  const showFilters = isAdmin || isManager;
 
   return (
     <div style={pageStyle}>
-      <div style={headerStyle}>
-        <div style={headerLeftStyle}>
-          <h3 style={titleStyle}>{heading}</h3>
-          <span style={countBadgeStyle}>{loading ? '–' : filtered.length}</span>
+      {showFilters ? (
+        <TrainingFilterBar
+          selectedDepartment={selectedDepartment}
+          onDepartmentChange={setSelectedDepartment}
+          activeSegment={activeSegment}
+          onSegmentChange={setActiveSegment}
+          count={loading ? '–' : filtered.length}
+        />
+      ) : (
+        <div style={staffHeaderStyle}>
+          <h3 style={staffTitleStyle}>My Training</h3>
+          <span style={staffCountStyle}>{loading ? '–' : filtered.length}</span>
         </div>
-        {/* Only show filters for admin/manager — staff sees a single card */}
-        {!(!isAdmin && !isManager) && (
-          <TrainingFilterBar
-            selectedDepartment={selectedDepartment}
-            onDepartmentChange={setSelectedDepartment}
-            activeTypes={activeTypes}
-            onToggleType={toggleType}
-          />
-        )}
-      </div>
+      )}
       <div style={listStyle}>
         {filtered.map((member) => (
-          <TrainingCard key={member.id} member={member} />
+          <TrainingCard key={member.id} member={member} onViewDetails={handleViewDetails} />
         ))}
         {isEmpty && (
           <div style={emptyStyle}>

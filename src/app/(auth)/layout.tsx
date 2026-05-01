@@ -4,7 +4,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { TopUtilityBar } from '@/components/TopUtilityBar';
 import { AuthLayoutInner } from '@/components/AuthLayoutInner';
 import { ToastProvider } from '@/components/ToastProvider';
-import { DevPersonaSwitcher } from '@/components/DevPersonaSwitcher';
+import { DevTools } from '@/components/dev-tools';
 import { AppSheetProvider } from '@/components/AppSheetProvider';
 import type { CSSProperties } from 'react';
 import { color, font } from '@/lib/tokens';
@@ -40,25 +40,27 @@ export default async function AuthLayout({
     redirect('/login');
   }
 
-  const { first_name, email, full_name } = authUser.profile;
-  const displayName = first_name ?? email?.split('@')[0] ?? 'there';
+  const { first_name, full_name } = authUser.profile;
+  const displayName = first_name ?? authUser.profile.email?.split('@')[0] ?? 'there';
   const userDepartment = authUser.membership?.department ?? null;
   const practiceName = authUser.membership?.organization ?? undefined;
+  const role = authUser.profile.system_role;
+  const isAdmin = role === 'brik_admin' || role === 'admin' || role === 'manager';
 
   return (
     <ToastProvider>
-      <AppSheetProvider>
+      <AppSheetProvider isAdmin={isAdmin} currentMemberId={authUser.membership?.memberId}>
         <div style={shellStyle}>
           <AppSidebar userRole={authUser.profile.system_role} />
           <div style={mainStyle}>
             <AuthLayoutInner
-              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} userEmail={email ?? undefined} practiceName={practiceName} />}
+              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} practiceName={practiceName} />}
             >
               {children}
             </AuthLayoutInner>
           </div>
         </div>
-        <DevPersonaSwitcher />
+        <DevTools />
       </AppSheetProvider>
     </ToastProvider>
   );

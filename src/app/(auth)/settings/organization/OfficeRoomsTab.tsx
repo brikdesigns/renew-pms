@@ -8,16 +8,16 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from '@bds/components';
+} from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton } from '@bds/components';
+import { Badge, Button, IconButton, useSheetStack } from '@brikdesigns/bds';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
-import { ViewRoomSheet } from '@/components/ViewRoomSheet';
 import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import '../_settingsTableStyles.css';
 
 // ─── Room type display mapping ───────────────────────────────────────────────
 
@@ -107,6 +107,11 @@ const typeChipStyle: CSSProperties = {
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
+// TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
+// (.bds-table-cell { background-color: var(--background-primary) }) once the
+// in-flight BDS session is reconciled, then remove this.
+const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -131,12 +136,12 @@ function StatusIndicator({ active }: { active: boolean }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function OfficeRoomsTab() {
+  const { openSheet } = useSheetStack();
   const { rooms: apiRooms, setRooms, loading: roomsLoading } = useRooms();
   const rooms: RoomRow[] = apiRooms.map((r) => ({ ...r, description: '', is_custom: false }));
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<RoomRow | null>(null);
-  const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewingRoom, setViewingRoom] = useState<RoomRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -152,12 +157,10 @@ export function OfficeRoomsTab() {
 
   const handleViewClick = (room: RoomRow) => {
     setViewingRoom(room);
-    setViewSheetOpen(true);
-  };
-
-  const handleViewClose = () => {
-    setViewSheetOpen(false);
-    setViewingRoom(null);
+    openSheet('room', {
+      id: room.id,
+      room: { id: room.id, name: room.name, room_type: room.room_type, description: room.description, is_custom: room.is_custom, is_active: room.is_active },
+    }, { title: room.name, variant: 'floating' });
   };
 
   const handleSheetClose = () => {
@@ -234,33 +237,33 @@ export function OfficeRoomsTab() {
               <TableHead>Type</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead style={{ width: '100px' }}>{' '}</TableHead>
+              <TableHead style={{ width: '120px' }}>{' '}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rooms.map((room) => (
               <TableRow key={room.id}>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary }}>
+                <TableCell style={bodyCellStyle}>
+                  <span className="settings-table-cell-text settings-table-cell-text--strong">
                     {room.name}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <RoomTypeChip roomType={room.room_type} />
                 </TableCell>
-                <TableCell>
-                  <span style={{ fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary }}>
+                <TableCell style={bodyCellStyle}>
+                  <span className="settings-table-cell-text settings-table-cell-text--secondary">
                     {room.is_custom ? 'Custom' : 'Default'}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <StatusIndicator active={room.is_active} />
                 </TableCell>
-                <TableCell>
+                <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
-                    <IconButton variant="secondary" size="tiny" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
+                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -274,18 +277,6 @@ export function OfficeRoomsTab() {
         onClose={handleSheetClose}
         initialData={sheetInitialData}
         onSave={handleSave}
-      />
-      <ViewRoomSheet
-        isOpen={viewSheetOpen}
-        onClose={handleViewClose}
-        room={viewingRoom ? {
-          id: viewingRoom.id,
-          name: viewingRoom.name,
-          room_type: viewingRoom.room_type,
-          description: viewingRoom.description,
-          is_custom: viewingRoom.is_custom,
-          is_active: viewingRoom.is_active,
-        } : null}
       />
       <ConfirmDeleteDialog
         isOpen={deleteTarget !== null}

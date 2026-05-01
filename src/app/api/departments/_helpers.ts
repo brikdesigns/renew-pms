@@ -3,6 +3,37 @@ import { SECONDARY_DEPTS } from '@/lib/secondary-departments';
 
 type DeptRow = { id: string; name: string };
 
+export interface DepartmentRow {
+  id: string;
+  name: string;
+  color: string;
+  is_active: boolean;
+  sort_order: number;
+  member_count: number;
+}
+
+/**
+ * Load all departments for a practice, with member counts attached.
+ * Same logic as GET /api/departments; extracted so the tasks-page server
+ * loader can run it in parallel with tasks/members instead of paying a
+ * separate API round-trip + auth prelude.
+ */
+export async function loadDepartments(
+  admin: SupabaseClient,
+  practiceId: string,
+): Promise<DepartmentRow[]> {
+  const { data, error } = await admin
+    .from('departments')
+    .select('id, name, color, is_active, sort_order')
+    .eq('practice_id', practiceId)
+    .order('sort_order');
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const counts = await getDeptMemberCounts(admin, practiceId, rows);
+  return rows.map((d) => ({ ...d, member_count: counts[d.id] ?? 0 }));
+}
+
 /**
  * Computes member counts per department, including secondary department
  * assignments for roles that span multiple departments.

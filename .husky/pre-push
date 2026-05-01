@@ -1,5 +1,35 @@
 #!/usr/bin/env sh
 
+# ── Branch hygiene checks ──
+# Enforces task/{scope}-{name} naming and warns if branch diverged from staging
+# instead of main. Catches the "branched from wrong base" problem early.
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "staging" ]; then
+  # Check branch naming convention
+  case "$CURRENT_BRANCH" in
+    task/*) ;; # valid
+    *)
+      echo ""
+      echo "WARNING: Branch '$CURRENT_BRANCH' doesn't follow task/{scope}-{name} convention."
+      echo "  Expected: task/renew-task-templates, task/auth-session-fix, etc."
+      echo "  Create branches with: ./scripts/new-task.sh {scope}-{name}"
+      echo ""
+      ;;
+  esac
+
+  # Check if branch is too far ahead of main (likely based on staging)
+  git fetch origin main --quiet 2>/dev/null || true
+  COMMITS_AHEAD=$(git log --oneline "origin/main..HEAD" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$COMMITS_AHEAD" -gt 20 ]; then
+    echo ""
+    echo "WARNING: Branch is ${COMMITS_AHEAD} commits ahead of main."
+    echo "  This may indicate the branch was based on staging instead of main."
+    echo "  If so, rebase onto main before merging: git rebase origin/main"
+    echo ""
+  fi
+fi
+
 # ── Dependency file check ──
 # Ensures package.json/lock file changes are committed before pushing.
 DIRTY_PKG=$(git diff --name-only -- package.json package-lock.json)

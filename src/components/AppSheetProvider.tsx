@@ -1,48 +1,36 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
-import { SheetStackProvider, SheetStackRenderer } from '@bds/components';
+import { Suspense, useMemo, type ReactNode } from 'react';
+import { SheetStackProvider, SheetStackRenderer } from '@brikdesigns/bds';
 import { sheetComponents } from '@/lib/sheet-components';
 import type { SheetType } from '@/lib/sheet-registry';
-import { color, font } from '@/lib/tokens';
-
-// ─── Loading fallback ───────────────────────────────────────────────────────
-
-function SheetSkeleton() {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-      minHeight: '200px',
-      fontFamily: font.family.body,
-      fontSize: font.size.body.md,
-      color: color.text.muted,
-    }}>
-      Loading...
-    </div>
-  );
-}
+import { SheetSkeleton } from '@/components/SheetSkeleton';
 
 // ─── Provider ───────────────────────────────────────────────────────────────
 
 interface AppSheetProviderProps {
   children: ReactNode;
+  /** User has admin/manager privileges — passed to all globally-rendered sheets */
+  isAdmin?: boolean;
+  /** Current user's practice_members.id — used for assignee checks in sheets */
+  currentMemberId?: string;
 }
 
 /**
  * AppSheetProvider — wires the BDS SheetStackProvider to the app's sheet registry.
  *
- * Place once in the auth layout. Renders the global sheet portal for the
- * navigation stack (view sheets opened from notifications, dashboard, etc.).
+ * Place once in the auth layout. SheetStackRenderer renders a single persistent
+ * Sheet panel. View components use `useConfigureSheet()` to declare their
+ * title, tabs, and footer — the Sheet never closes/reopens during navigation.
  */
-export function AppSheetProvider({ children }: AppSheetProviderProps) {
+export function AppSheetProvider({ children, isAdmin = false, currentMemberId }: AppSheetProviderProps) {
+  const globalFrameProps = useMemo(() => ({ isAdmin, currentMemberId }), [isAdmin, currentMemberId]);
+
   return (
     <SheetStackProvider>
       {children}
       <SheetStackRenderer
-        width="600px"
+        globalFrameProps={globalFrameProps}
         renderFrame={(frame, ctx) => {
           const Component = sheetComponents[frame.type as SheetType];
           if (!Component) {
@@ -52,12 +40,11 @@ export function AppSheetProvider({ children }: AppSheetProviderProps) {
           return (
             <Suspense fallback={<SheetSkeleton />}>
               <Component
+                {...ctx.globalFrameProps}
                 {...frame.props}
-                isOpen
+                headless
                 onClose={ctx.closeAll}
-                onNavigate={(type: string, props: Record<string, unknown>, opts?: { title?: string }) => {
-                  ctx.pushSheet(type, props, opts);
-                }}
+                onNavigate={ctx.pushSheet}
               />
             </Suspense>
           );

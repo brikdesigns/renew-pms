@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # session-guard.sh — PreToolUse hook for Edit/Write operations
 #
-# Three checks, each fires at most once per parent shell:
+# Two checks, each fires at most once per parent shell:
 #   1. Warns Claude when the working tree has uncommitted changes from a
 #      prior session.
-#   2. Warns if the BDS submodule has an uncommitted pointer change.
-#   3. Delegates Storybook autostart to the shared BDS helper
+#   2. Delegates Storybook autostart to the shared BDS helper
 #      (brik-bds/scripts/ensure-storybook.sh) so the behavior stays in
 #      one place across all BDS consumers.
 #
@@ -36,7 +35,7 @@ if [[ -x "$ENSURE_STORYBOOK" ]]; then
   echo "$INPUT" | "$ENSURE_STORYBOOK" || true
 fi
 
-# ── Dirty-tree + submodule warnings ───────────────────────────────────
+# ── Dirty-tree warning ────────────────────────────────────────────────
 if [[ ! -f "$DIRTY_MARKER" ]]; then
   touch "$DIRTY_MARKER"
 
@@ -56,16 +55,6 @@ if [[ ! -f "$DIRTY_MARKER" ]]; then
     echo ""
     echo "   → Commit, stash, or discard before starting new work."
     echo ""
-  fi
-
-  # BDS submodule pointer check
-  if [[ -f "$PROJECT_ROOT/brik-bds/.git" ]]; then
-    SUBMODULE_STATUS=$(cd "$PROJECT_ROOT" && git submodule status brik-bds 2>/dev/null || echo "")
-    if [[ "$SUBMODULE_STATUS" == +* ]]; then
-      echo "⚠️  SESSION GUARD: BDS submodule has uncommitted pointer change."
-      echo "   Run ./scripts/bds-sync.sh or commit the submodule update."
-      echo ""
-    fi
   fi
 fi
 

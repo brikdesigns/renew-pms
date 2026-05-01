@@ -1,50 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
+import { requireAuth, requirePracticeAdmin, isAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-
-type ProfileJoin = { id: string; system_role: string; first_name: string; last_name: string; email: string; phone: string | null; avatar_url: string | null };
-type DepartmentJoin = { id: string; name: string; color: string };
-type RoleJoin = { id: string; name: string; department_id: string | null; departments: DepartmentJoin | DepartmentJoin[] | null };
-
-function flattenMember(m: {
-  id: string;
-  user_id: string;
-  practice_role_id: string | null;
-  employee_type: string;
-  shift: string | null;
-  is_active: boolean;
-  joined_at: string;
-  profiles: ProfileJoin | ProfileJoin[] | null;
-  practice_role_types: RoleJoin | RoleJoin[] | null;
-}) {
-  const profile = Array.isArray(m.profiles) ? (m.profiles[0] ?? null) : m.profiles;
-  const role = Array.isArray(m.practice_role_types) ? (m.practice_role_types[0] ?? null) : m.practice_role_types;
-  const deptRaw = role?.departments ?? null;
-  const dept = Array.isArray(deptRaw) ? (deptRaw[0] ?? null) : deptRaw;
-
-  return {
-    id: m.id,
-    user_id: m.user_id,
-    first_name: profile?.first_name ?? '',
-    last_name: profile?.last_name ?? '',
-    email: profile?.email ?? '',
-    phone: profile?.phone ?? '',
-    avatar_url: profile?.avatar_url ?? null,
-    system_role: profile?.system_role ?? 'staff',
-    practice_role_id: m.practice_role_id,
-    practice_role: role?.name ?? '',
-    department_id: role?.department_id ?? null,
-    department: dept?.name ?? '',
-    department_color: dept?.color ?? '',
-    employee_type: m.employee_type,
-    shift: m.shift ?? '',
-    is_active: m.is_active,
-    joined_at: m.joined_at,
-  };
-}
+import { flattenMember } from '@/lib/flatten-member';
 
 /**
  * GET /api/members/[id]
@@ -67,7 +27,7 @@ export async function GET(
   const { data, error } = await admin
     .from('practice_members')
     .select(`
-      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      id, user_id, practice_role_id, employee_type, shift, office_days, is_active, joined_at,
       profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
       practice_role_types(id, name, department_id, departments(id, name, color))
     `)
@@ -84,11 +44,19 @@ export async function GET(
 /**
  * PATCH /api/members/[id]
  * Updates a member's practice-level fields and/or profile fields.
- * Requires admin or brik_admin.
  *
- * Accepted fields:
- *   practice_members: practice_role_id, employee_type, shift, is_active
- *   profiles:         first_name, last_name, phone, system_role
+ * Authorization:
+ *   - Practice admins can edit any member in their practice (all fields below).
+ *   - Any authenticated user can edit their OWN basic profile fields
+ *     (first_name, last_name, phone). Self-edits cannot change role or
+ *     practice metadata — those stay admin-only.
+ *
+ * Accepted fields (admin only):
+ *   practice_members: practice_role_id, employee_type, shift, office_days, is_active
+ *   profiles:         system_role
+ *
+ * Accepted fields (self or admin):
+ *   profiles:         first_name, last_name, phone
  */
 export async function PATCH(
   request: Request,
@@ -96,7 +64,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const authResult = await requirePracticeAdmin(supabase);
+  const authResult = await requireAuth(supabase);
   if (authResult instanceof NextResponse) return authResult;
   const authUser = authResult as AuthUser;
 
@@ -105,28 +73,10 @@ export async function PATCH(
 
   const body = await request.json();
 
-  // Split updates across two tables
-  const memberAllowed = ['practice_role_id', 'employee_type', 'shift', 'is_active'] as const;
-  const profileAllowed = ['first_name', 'last_name', 'phone', 'system_role'] as const;
+  const adminClient = createAdminClient();
 
-  const memberUpdates: Record<string, unknown> = {};
-  const profileUpdates: Record<string, unknown> = {};
-
-  for (const key of memberAllowed) {
-    if (key in body) memberUpdates[key] = body[key];
-  }
-  for (const key of profileAllowed) {
-    if (key in body) profileUpdates[key] = body[key];
-  }
-
-  if (Object.keys(memberUpdates).length === 0 && Object.keys(profileUpdates).length === 0) {
-    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
-  }
-
-  const admin = createAdminClient();
-
-  // Verify the member belongs to this practice
-  const { data: memberCheck } = await admin
+  // Verify the member belongs to this practice and resolve ownership.
+  const { data: memberCheck } = await adminClient
     .from('practice_members')
     .select('id, user_id')
     .eq('id', id)
@@ -135,9 +85,55 @@ export async function PATCH(
 
   if (!memberCheck) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
 
+  const isSelf = memberCheck.user_id === authUser.user.id;
+  const callerIsAdmin = isAdmin(authUser.profile.system_role);
+
+  if (!isSelf && !callerIsAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // Field allowlists — staff/manager self-edits cannot escalate role or
+  // change practice metadata.
+  const selfProfileFields = ['first_name', 'last_name', 'phone'] as const;
+  const adminMemberFields = ['practice_role_id', 'employee_type', 'shift', 'office_days', 'is_active'] as const;
+  const adminProfileFields = ['system_role'] as const;
+
+  const memberUpdates: Record<string, unknown> = {};
+  const profileUpdates: Record<string, unknown> = {};
+
+  for (const key of selfProfileFields) {
+    if (key in body) profileUpdates[key] = body[key];
+  }
+  if (callerIsAdmin) {
+    for (const key of adminMemberFields) {
+      if (key in body) memberUpdates[key] = body[key];
+    }
+    for (const key of adminProfileFields) {
+      if (key in body) profileUpdates[key] = body[key];
+    }
+  }
+
+  // Validate office_days input — must be an array of canonical day codes,
+  // deduplicated. Reject anything else loudly so the UI can show a clear error.
+  if ('office_days' in memberUpdates) {
+    const VALID_DAYS = new Set(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
+    const raw = memberUpdates.office_days;
+    if (!Array.isArray(raw) || !raw.every((d) => typeof d === 'string' && VALID_DAYS.has(d))) {
+      return NextResponse.json(
+        { error: 'office_days must be an array of: sun, mon, tue, wed, thu, fri, sat' },
+        { status: 400 },
+      );
+    }
+    memberUpdates.office_days = Array.from(new Set(raw as string[]));
+  }
+
+  if (Object.keys(memberUpdates).length === 0 && Object.keys(profileUpdates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+  }
+
   // Update practice_members if needed
   if (Object.keys(memberUpdates).length > 0) {
-    const { error: memberErr } = await admin
+    const { error: memberErr } = await adminClient
       .from('practice_members')
       .update(memberUpdates)
       .eq('id', id)
@@ -148,7 +144,7 @@ export async function PATCH(
 
   // Update profiles if needed
   if (Object.keys(profileUpdates).length > 0) {
-    const { error: profileErr } = await admin
+    const { error: profileErr } = await adminClient
       .from('profiles')
       .update(profileUpdates)
       .eq('id', memberCheck.user_id);
@@ -157,10 +153,10 @@ export async function PATCH(
   }
 
   // Return updated member with full joins
-  const { data, error } = await admin
+  const { data, error } = await adminClient
     .from('practice_members')
     .select(`
-      id, user_id, practice_role_id, employee_type, shift, is_active, joined_at,
+      id, user_id, practice_role_id, employee_type, shift, office_days, is_active, joined_at,
       profiles(id, system_role, first_name, last_name, email, phone, avatar_url),
       practice_role_types(id, name, department_id, departments(id, name, color))
     `)
