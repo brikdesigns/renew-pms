@@ -79,3 +79,40 @@ jobs:
             sleep 1
           done
           npx playwright test tests/e2e/auth
+
+  # ── Lighthouse CI (perf regression gate, PRs only) ──
+  # Warns on regressions today (assertions: warn). Tighten to error after
+  # ~2 weeks of baseline data. Tests /login only — public, on the critical
+  # entry path, no auth setup required. Add more URLs once we wire test auth.
+  lighthouse:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PACKAGES_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: npm run lhci
+
+      - name: Upload Lighthouse report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci-report
+          path: .lighthouseci/
+          retention-days: 14
