@@ -351,6 +351,16 @@ body {
   .bds-sheet__footer {
     padding: var(--padding-md) var(--padding-lg);
   }
+
+  /*
+   * PageHeader: align horizontal padding to renew body content (32px = --padding-xl)
+   * vs. BDS's 80px Figma spec, and add a bottom border for header/body separation.
+   * Keeps title left-aligned with table/field content below.
+   */
+  .bds-page-header {
+    padding-inline: var(--padding-xl);
+    border-bottom: var(--border-width-md) solid var(--border-secondary);
+  }
 }
 
 /* ── Settings sub-nav entrance animation ── */

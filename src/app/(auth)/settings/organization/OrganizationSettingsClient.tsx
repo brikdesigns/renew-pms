@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PageHeader } from '@/components/PageHeader';
-import type { TabItem } from '@/components/PageHeader';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Button, Field, FieldGrid } from '@brikdesigns/bds';
+import { Button, Field, FieldGrid, PageHeader, TabBar } from '@brikdesigns/bds';
 import {
   contentStyle,
   sectionTitleStyle,
@@ -16,7 +14,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
-const ORG_TABS: TabItem[] = [
+const ORG_TABS: { key: string; label: string }[] = [
   { key: 'details', label: 'Details' },
   { key: 'location', label: 'Locations' },
   { key: 'office', label: 'Office' },
@@ -166,9 +164,16 @@ export function OrganizationSettingsClient() {
         actions={
           <Button variant="primary" size="sm" onClick={() => setSheetOpen(true)}>Edit Organization</Button>
         }
-        tabs={ORG_TABS}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        tabs={
+          <TabBar
+            variant="text"
+            items={ORG_TABS.map((tab) => ({
+              label: tab.label,
+              active: activeTab === tab.key,
+              onClick: () => setActiveTab(tab.key),
+            }))}
+          />
+        }
       />
       {activeTab === 'details' && <DetailsTab practice={practiceData} />}
       {activeTab === 'location' && <LocationTab />}

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser, isAdmin } from '@/lib/auth';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@brikdesigns/bds';
 import { UsersTable } from './UsersTable';
 
 export default async function UsersSettingsPage() {

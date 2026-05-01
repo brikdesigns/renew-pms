@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser, isAdmin } from '@/lib/auth';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@brikdesigns/bds';
 import { TeamsTable } from './TeamsTable';
 
 export default async function TeamsSettingsPage() {
