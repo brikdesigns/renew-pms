@@ -410,13 +410,13 @@ No rollback needed for §5.D — individual user issues are handled per-user, no
 ### Steps
 
 - [ ] **§6.1** Open https://app.netlify.com/projects/renew-pms.
-- [ ] **§6.2** **Site settings → Build & deploy → Continuous deployment → Production branch.** Currently set to `staging`. Change to `main`. Save.
+- [ ] **§6.2** **Project Configuration → Build & deploy → Continuous deployment → Production branch.** Currently set to `staging`. Change to `main`. Save. *(Netlify recently renamed "Site settings" → "Project Configuration" — same screen.)*
 
   ⚠️ **Important:** This change does **not** redeploy automatically. The next push to `main` will trigger a production build. Until then, the most recent `staging` deploy continues to serve `renew-pms.netlify.app`. That gives us a safe gap to set up env vars before traffic hits the new context.
-- [ ] **§6.3** **Site settings → Build & deploy → Continuous deployment → Branches and deploy contexts.**
+- [ ] **§6.3** **Project Configuration → Build & deploy → Continuous deployment → Branches and deploy contexts.**
   - Production deploys: from `main` (now the production branch).
-  - Branch deploys: confirm `staging` is in the list — it should be auto-detected.
-- [ ] **§6.4** **Site settings → Environment variables.** Net effect we want:
+  - Branch deploys: select **"Let me add individual branches"** and add `staging` (the default after the production-branch flip is "None — Deploy only the production branch", which would stop staging deploys entirely). Task branches don't need their own deploys; PR previews cover them via the "Any pull request" Deploy Previews setting.
+- [ ] **§6.4** **Project Configuration → Environment variables.** Net effect we want:
 
   | Var | Production context (main) | Branch:staging context | Notes |
   |---|---|---|---|
@@ -438,11 +438,11 @@ No rollback needed for §5.D — individual user issues are handled per-user, no
 
   When generating the new cron secrets, save them to 1P **before** pasting into Netlify so the value is recorded for cron-job sender + recipient sides.
 
-- [ ] **§6.5** Configure the production custom domain (`renew.brikdesigns.com`). DNS for `brikdesigns.com` lives at Netlify, so this is one-click:
-  - Open the renew-pms site in Netlify → **Domain management → Add a domain alias**.
-  - Enter `renew.brikdesigns.com`. Netlify detects the matching DNS zone and offers to **add the CNAME automatically** — accept.
-  - Verify under **Site overview**: domain shows green checkmark within ~30 seconds.
-  - SSL: Netlify auto-provisions a Let's Encrypt cert. Status moves to **HTTPS enabled** within ~5 minutes. If it stalls past 10 min, click **Renew certificate** to retry.
+- [ ] **§6.5** Configure the production custom domain (`renew.brikdesigns.com`). **DNS for `brikdesigns.com` is on SiteGround**, not Netlify (apex NS is `ns1.siteground.net.`/`ns2.siteground.net.`), so the CNAME has to be added manually at SiteGround:
+  - **At SiteGround DNS panel:** add a CNAME record. Host: `renew`. Points to: `renew-pms.netlify.app`. TTL: default (3600). Same pattern as the existing `portal.brikdesigns.com` and `staging.portal.brikdesigns.com` entries.
+  - **In Netlify:** open the renew-pms site → **Project Configuration → Domain management → Add a domain alias** (Netlify renamed "Site settings" → "Project Configuration"). Enter `renew.brikdesigns.com`. Netlify won't auto-create the CNAME (it doesn't control the zone), so it'll show a "DNS not configured" warning that clears once the SiteGround record propagates (typically <5 min).
+  - Verify resolution: `dig +short renew.brikdesigns.com` returns `renew-pms.netlify.app.` plus Netlify A records.
+  - SSL: Netlify auto-provisions a Let's Encrypt cert once DNS is verified. Status moves to **HTTPS enabled** within ~5 minutes. If it stalls past 10 min, click **Renew certificate** to retry.
 - [ ] **§6.6** Update Supabase **Authentication → URL Configuration** for the prod project to add `https://renew.brikdesigns.com` as Site URL + as a Redirect URL (also keep the staging + deploy-preview wildcards from §3.5). Save.
 - [ ] **§6.7** Confirm Resend domain status (set up in §5.A) is still **Verified** in the Resend dashboard. No new work — sanity check only.
 
