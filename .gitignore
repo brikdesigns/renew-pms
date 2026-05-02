@@ -74,3 +74,6 @@ recordings/analysis/
 recordings/trimmed/
 recordings/narration/
 .playwright-mcp/
+
+# Performance tooling outputs (build-time / CI only, never tracked)
+.lighthouseci/
