@@ -269,6 +269,10 @@ This phase splits across three time windows:
 
 **Why this is the gatekeeper:** Supabase Auth uses Resend (via SMTP relay or HTTP API depending on integration) to send magic links + invite emails. Until the sending domain is verified at Resend AND the DNS records propagate, **every invite email goes to spam or bounces silently**. No verified domain → no admin invite → no launch.
 
+> **Beta strategy (decided 2026-05-02 for Renew Dental's beta).** Renew Dental's beta launch verified the **apex `brikdesigns.com`** rather than the `send.renew.brikdesigns.com` subdomain described below. This is deliberate: the long-term plan is for each public-launch practice to send from a domain *they* own (e.g. `noreply@renewdental.com`), not from a Brik subdomain. The intermediate Brik-subdomain hop adds DNS work without serving the multi-tenant target state. Tracked on [#165](https://github.com/brikdesigns/renew-pms/issues/165) (`p2-month`, revisit during beta soak T+30).
+>
+> The `§5.A.x` steps below remain the canonical reference shape — apply them to whichever domain the practice owns when going public. For Brik's beta tenants sharing the apex, the records are already in place; only `RESEND_FROM_ADDRESS` needs to be set per-tenant on Netlify production env.
+
 - [ ] **§5.A.1** Open https://resend.com/domains → **Add Domain**.
 - [ ] **§5.A.2** Enter the sending domain. Recommended: `send.renew.brikdesigns.com` (subdomain isolation — Resend's recommended pattern keeps email-reputation drift away from the app domain). Alternative: `renew.brikdesigns.com` directly. Final email "From:" address can still be `noreply@renew.brikdesigns.com` regardless.
 - [ ] **§5.A.3** Resend wizard generates 4–5 DNS records. Typically:
