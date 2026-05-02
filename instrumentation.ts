@@ -25,7 +25,7 @@ export async function register() {
     Sentry.init({
       dsn: SENTRY_DSN,
       enabled: process.env.NODE_ENV === 'production',
-      environment: process.env.NODE_ENV,
+      environment: process.env.NEXT_PUBLIC_DEPLOY_ENVIRONMENT ?? process.env.NODE_ENV,
       tracesSampleRate: 0.1,
       sendDefaultPii: false,
       beforeSend: beforeSendServer,
@@ -43,7 +43,7 @@ export async function register() {
     Sentry.init({
       dsn: SENTRY_DSN,
       enabled: process.env.NODE_ENV === 'production',
-      environment: process.env.NODE_ENV,
+      environment: process.env.NEXT_PUBLIC_DEPLOY_ENVIRONMENT ?? process.env.NODE_ENV,
       tracesSampleRate: 0.1,
       sendDefaultPii: false,
       beforeSend: beforeSendServer,
