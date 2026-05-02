@@ -52,10 +52,9 @@ const tasksStyle: CSSProperties = {
 
 interface AuthLayoutInnerProps {
   children: ReactNode;
-  topBar?: ReactNode;
 }
 
-export function AuthLayoutInner({ children, topBar }: AuthLayoutInnerProps) {
+export function AuthLayoutInner({ children }: AuthLayoutInnerProps) {
   const pathname = usePathname();
   const isSettings = pathname.startsWith('/settings');
   const isTrainingDetail = pathname.startsWith('/training/') && pathname !== '/training';
@@ -74,11 +73,8 @@ export function AuthLayoutInner({ children, topBar }: AuthLayoutInnerProps) {
       : pageStyle;
 
   return (
-    <>
-      {!isSettings && topBar}
-      <main style={mainStyle}>
-        {children}
-      </main>
-    </>
+    <main style={mainStyle}>
+      {children}
+    </main>
   );
 }

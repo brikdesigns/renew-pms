@@ -52,7 +52,7 @@ function getInitials(name: string): string {
  * 1. If `department` is provided → department light bg + department text color
  * 2. Fallback → brand primary bg + inverse text
  *
- * Used in: UsersTable, TopUtilityBar, ProfileCard, ViewUserSheet, etc.
+ * Used in: UsersTable, AppSidebar, ProfileCard, ViewUserSheet, etc.
  */
 export function UserAvatar({
   name,
