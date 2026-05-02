@@ -1,8 +1,72 @@
 # Renew PMS — Beta Launch Runbook
 
-**Target launch:** Monday (T-0)
+**Target launch:** Monday 2026-05-04 (T-0)
 **Audience:** Nick + assisting agent. Read top-to-bottom once before starting; execute phase-by-phase on the day.
-**Status:** Draft — answer the open questions in §1 before executing.
+**Status:** **In progress** — Phase 1-3 done as of 2026-05-02 evening. Phase 4 onward pending.
+
+## Progress as of 2026-05-02 evening
+
+| Phase | Status | Notes |
+|---|---|---|
+| §3 Phase 1 — Provision prod Supabase | ✅ Done | `bbuimkdpmuggrszwenmg` (`renew-pms-production`), us-east-1, Pro plan |
+| §4 Phase 2 — Migrate prod schema | ✅ Done | 47/47 applied (40 ran, 7 practice-specific seeds skipped via `migration repair`) |
+| §5.A Phase 3a — Resend domain verification | ⏳ Pending | Tracked as GitHub issue (see linked) |
+| §5.B Phase 3b — Provision practice + reference data | ⏳ Pending | Cutover-day work |
+| §5.C Phase 3c — Invite primary admin | ⏳ Pending | Monday morning launch signal |
+| §6 Phase 4 — Netlify env split + custom domain | ⏳ Pending | **Next session — needs Nick on Netlify dashboard** |
+| §7 Phase 5 — Cutover (staging → main promo) | ⏳ Pending | Monday morning |
+| §8 Phase 6 — Smoke tests | ⏳ Pending | Post-cutover |
+
+**Tracking issues** (the source of truth for what's next — runbook is the how, issues are the what/when):
+
+| # | Title | Phase | Priority |
+|---|---|---|---|
+| [#150](https://github.com/brikdesigns/renew-pms/issues/150) | Phase 4: Netlify env split + production-branch flip + add renew.brikdesigns.com | §6 | p0-now |
+| [#151](https://github.com/brikdesigns/renew-pms/issues/151) | Phase 5.A: Resend sending domain verification | §5.A | p0-now |
+| [#152](https://github.com/brikdesigns/renew-pms/issues/152) | Phase 5.B: Provision real practice + reference data on prod | §5.B | p0-now |
+| [#153](https://github.com/brikdesigns/renew-pms/issues/153) | Phase 5.C: Invite primary admin (the launch signal) | §5.C | p0-now |
+| [#154](https://github.com/brikdesigns/renew-pms/issues/154) | Phase 7: Cutover — promote staging → main, first prod deploy | §7 | p0-now |
+| [#155](https://github.com/brikdesigns/renew-pms/issues/155) | Phase 6: Smoke test prod after cutover (11-point checklist) | §8 | p0-now |
+| [#140](https://github.com/brikdesigns/renew-pms/issues/140) | Refactor practice-specific seeds out of migrations into seed.sql | post-launch | p2-month |
+| [#156](https://github.com/brikdesigns/renew-pms/issues/156) | Grant 1P service account write on Development vault | post-launch | p1-week |
+| [#157](https://github.com/brikdesigns/renew-pms/issues/157) | Drop release-please prerelease config after stable beta soak | post-launch | p2-month |
+| [#158](https://github.com/brikdesigns/renew-pms/issues/158) | Tighten Lighthouse CI assertions warn → error | post-launch | p2-month |
+| [#159](https://github.com/brikdesigns/renew-pms/issues/159) | Flip CLAUDE.md / new-task.sh / release-please.yml branch refs staging → main | post-launch | p1-week |
+
+To get the live list at any time: `gh issue list --state open --label "priority:p0-now"`.
+
+## Resuming on a fresh machine (e.g., switching from MacBook to Mac mini)
+
+The repo + this runbook sync via git, so most state travels with you. What doesn't:
+
+1. **Local credentials in `~/.secrets/renew-pms-prod.env`** — recreate by running this on the fresh machine:
+
+   ```bash
+   eval $(op signin)  # auth 1Password CLI
+   PROD_REF=$(op item get "Renew PMS — Production DB" --vault Development --fields project-ref --reveal)
+   PROD_URL=$(op item get "Renew PMS — Production DB" --vault Development --fields url --reveal)
+   ANON=$(op item get "Renew PMS — Production DB" --vault Development --fields anon-key --reveal)
+   SVC=$(op item get "Renew PMS — Production DB" --vault Development --fields service-role-key --reveal)
+
+   umask 077
+   {
+     echo "RENEW_PROD_PROJECT_REF=$PROD_REF"
+     echo "RENEW_PROD_SUPABASE_URL=$PROD_URL"
+     echo "RENEW_PROD_SUPABASE_ANON_KEY=$ANON"
+     echo "RENEW_PROD_SUPABASE_SERVICE_ROLE_KEY=$SVC"
+   } > ~/.secrets/renew-pms-prod.env
+   chmod 600 ~/.secrets/renew-pms-prod.env
+
+   unset PROD_REF PROD_URL ANON SVC
+   ```
+
+   Note: `--reveal` outputs to terminal — only run inside `$()` capture as shown.
+
+2. **Supabase CLI link** — defaults to staging via `scripts/project.env`. Run `supabase link --project-ref bbuimkdpmuggrszwenmg` only when you need prod, then re-link to staging (`zneuygoeorhkuhktmuld`) when done.
+
+3. **GitHub CLI auth (`gh`)** — already per-machine. Run `gh auth login` if not signed in.
+
+4. **NPM packages auth** — `~/.secrets/brik-packages.env` carries `PACKAGES_READ_TOKEN`. Same recreation pattern as above; the token is in 1P (search "GitHub PAT classic").
 
 This runbook coordinates three changes that **must happen together**:
 
@@ -86,9 +150,13 @@ Each can be done before the cutover day; doing them early de-risks the day-of.
 
 ---
 
-## §3. Phase 1 — Provision the production Supabase project
+## §3. Phase 1 — Provision the production Supabase project ✅ DONE 2026-05-02
 
-**Goal:** Empty Supabase project, on the same Brik Designs org, ready to receive migrations. Currently the only project is the combined dev/staging at `zneuygoeorhkuhktmuld`.
+**Goal:** Empty Supabase project, on the same Brik Designs org, ready to receive migrations.
+
+**Result:** Project `renew-pms-production` (`bbuimkdpmuggrszwenmg`) provisioned in `us-east-1`, on the Brik Designs Pro org. Existing project `renew-pms` was renamed to `renew-pms-staging` for clarity. Credentials captured to 1P item `Renew PMS — Production DB`. Local convenience copy at `~/.secrets/renew-pms-prod.env` (mode 600). PR #139 wired the new ref into `scripts/project.env` + CLAUDE.md.
+
+The original step list is preserved below for reproducibility / disaster recovery.
 
 **Time estimate:** 15 minutes.
 
@@ -123,9 +191,13 @@ Provisioning is reversible — Settings → General → Pause project, or delete
 
 ---
 
-## §4. Phase 2 — Migrate prod schema
+## §4. Phase 2 — Migrate prod schema ✅ DONE 2026-05-02
 
-**Goal:** Run the 47 migrations from `supabase/migrations/` against prod. Prod schema = dev schema, byte-for-byte (ignoring data).
+**Goal:** Run the 47 migrations from `supabase/migrations/` against prod.
+
+**Result:** 47/47 migrations marked applied on prod. **40 actually ran**; **7 practice-specific seeds were marked applied via `supabase migration repair --status applied`** to skip running on prod (they hardcode Renew Dental's test personas + the staging practice ID): `00012`, `00013`, `00016`, `00020`, `00021`, `00024`, `00028`. Issue [#140](https://github.com/brikdesigns/renew-pms/issues/140) tracks the long-term refactor (move to `supabase/seed.sql`). `./scripts/db-health.sh --prod` returns "all checks pass."
+
+The original step list is preserved below for reproducibility / disaster recovery.
 
 **Time estimate:** 10 minutes (the migrations are fast).
 
