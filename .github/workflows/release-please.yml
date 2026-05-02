@@ -1,0 +1,38 @@
+name: release-please
+
+# Automated versioning + changelog for renew-pms.
+#
+# How it works:
+#   1. Watches conventional-commit messages on the trunk branch (currently `staging`
+#      pre-launch — flip to `main` after launch, see CLAUDE.md § Branch Workflow).
+#   2. Opens a "release PR" that bumps `package.json`, `.release-please-manifest.json`,
+#      and writes/updates `CHANGELOG.md` based on the commit log since the last release.
+#   3. When the release PR is merged, release-please creates the matching git tag +
+#      GitHub Release with the changelog as the release notes.
+#
+# Manual control: edit `release-please-config.json` to change the prerelease label
+# (currently `beta`), tag prefix, or hidden commit types. The manifest tracks the
+# last released version per package.
+#
+# Token: uses the default GITHUB_TOKEN. Permissions are scoped below — no PAT needed.
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          target-branch: staging
+          token: ${{ secrets.GITHUB_TOKEN }}

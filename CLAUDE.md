@@ -252,7 +252,7 @@ Always query the Storybook MCP for BDS component props before writing JSX. Endpo
 
 ## Branch Workflow
 
-> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
+> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below, update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh), and update the `target-branch` in [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml)).
 
 **All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
 
