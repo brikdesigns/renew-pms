@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getAuthUser } from '@/lib/auth';
 import { AppSidebar } from '@/components/AppSidebar';
-import { TopUtilityBar } from '@/components/TopUtilityBar';
 import { AuthLayoutInner } from '@/components/AuthLayoutInner';
 import { ToastProvider } from '@/components/ToastProvider';
 import { DevTools } from '@/components/dev-tools';
@@ -51,13 +50,15 @@ export default async function AuthLayout({
     <ToastProvider>
       <AppSheetProvider isAdmin={isAdmin} currentMemberId={authUser.membership?.memberId}>
         <div style={shellStyle}>
-          <AppSidebar userRole={authUser.profile.system_role} />
+          <AppSidebar
+            userRole={authUser.profile.system_role}
+            userName={displayName}
+            userFullName={full_name ?? displayName}
+            userDepartment={userDepartment}
+            practiceName={practiceName}
+          />
           <div style={mainStyle}>
-            <AuthLayoutInner
-              topBar={<TopUtilityBar userName={displayName} userFullName={full_name ?? displayName} userDepartment={userDepartment} practiceName={practiceName} />}
-            >
-              {children}
-            </AuthLayoutInner>
+            <AuthLayoutInner>{children}</AuthLayoutInner>
           </div>
         </div>
         <DevTools />
