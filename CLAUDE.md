@@ -113,14 +113,26 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 
 | Environment | Project Ref | Purpose |
 | --- | --- | --- |
-| Development | `zneuygoeorhkuhktmuld` | Local dev + staging (`.env.local`) |
-| Production | **NOT YET PROVISIONED** | Required before soft launch |
+| Staging / Dev | `zneuygoeorhkuhktmuld` (`renew-pms-staging`) | Local dev + staging branch deploys (`.env.local`) — has test personas + plus-addressed emails |
+| Production | `bbuimkdpmuggrszwenmg` (`renew-pms-production`) | Real customer data — provisioned 2026-05-02, clean schema, no users |
 
-> **BEFORE SOFT LAUNCH:** Provision a dedicated production Supabase project (Pro plan). Dev project must NEVER serve production client data.
+- CLI default-linked to staging via `scripts/project.env`. To run commands against prod: `supabase link --project-ref bbuimkdpmuggrszwenmg`, then **always re-link to staging** (`supabase link --project-ref zneuygoeorhkuhktmuld`) before continuing day-to-day work.
+- Credentials: 1Password — `Renew PMS — Supabase Dev` (staging) / `Renew PMS — Production DB` (prod, contains `db-password`, `project-ref`, `url`, `anon-key`, `service-role-key`).
+- RLS: 17/17 tables enabled, 38 policies — applied to both projects. See `~/.claude/skills/supabase-workflow.md` for patterns.
 
-- CLI linked to dev project: `supabase/config.toml` → `project_id = "renew-pms"`
-- Credentials: 1Password — "Renew PMS — Supabase Dev" / "Renew PMS — Production DB"
-- RLS: 17/17 tables enabled, 38 policies. See `~/.claude/skills/supabase-workflow.md` for patterns.
+### Migration mismatch — practice-specific seeds skipped on prod
+
+Seven historical migrations contain Renew Dental practice-specific data (test personas with `test+*@brikdesigns.com` plus-addresses + the hardcoded practice ID `d9f05b47-…`). They were marked applied on prod via `supabase migration repair --status applied <ver>` to skip execution. Affected migrations:
+
+- `00012_seed_practice_members.sql` — staff with test+ emails
+- `00013_seed_tasks.sql` — depends on 00012's members
+- `00016_seed_schedule_events.sql` — depends on 00012's members
+- `00020_seed_opening_office_template.sql` — practice-id-bound
+- `00021_seed_closing_office_template.sql` — practice-id-bound
+- `00024_seed_vendors.sql` — practice-id-bound
+- `00028_seed_vendor_contacts.sql` — depends on 00024
+
+Long-term fix tracked as a follow-up issue: refactor practice-specific seed content out of `supabase/migrations/` and into `supabase/seed.sql` so it only runs on `supabase db reset` for staging, never on prod schema migrations.
 
 ## Integrations
 
