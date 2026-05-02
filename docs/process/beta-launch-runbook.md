@@ -16,63 +16,54 @@ If any phase fails, the rollback at the end of that phase puts you back to the p
 
 ## §0. Conventions used in this doc
 
-- **🟡 ASK NICK** — a decision that must be made before the step can run.
+- **🟡 Walk through with agent** — a step where Nick + agent execute together (typically credential-bearing or wizard-driven; the agent has visibility into the surrounding state but can't autonomously click through a third-party UI).
 - **✅ Verify** — a concrete check (command or dashboard observation) that the step succeeded.
 - **↩️ Rollback** — what to do if this step fails or you need to back out within the next ~24 hours.
 - **🔒 Secret** — a value lives in 1Password / Netlify env vars; never paste, never `cat`, never `netlify env:list`. Reference items by 1P title, fetch with `op read` piped into the consumer.
 
 ---
 
-## §1. Open questions (resolve before T-0)
+## §1. Decisions (locked in before T-0)
 
-These block Phase 1 or Phase 4. Answer them in this section before starting.
+All four originally-open questions are answered. The implications are folded into the relevant phases.
 
-### 1.1 Production custom domain
+### 1.1 Production custom domain — `renew.brikdesigns.com`
 
-🟡 **ASK NICK:** What domain should production live at?
+DNS for `brikdesigns.com` is managed at Netlify, so adding the subdomain alias is a one-click operation in the same Netlify project. SSL certificate provisions automatically via Let's Encrypt.
 
-Current `netlify.toml` comment says: `main → renew-pms.netlify.app (production, custom domain TBD)`. Three reasonable options:
+Reflected in: §6.5 (Netlify domain config), §6.6 (Supabase auth URL config), §8.7 (smoke-test domain checks).
 
-- `renew-pms.brikdesigns.com` — Brik subdomain, fastest to set up (DNS already managed).
-- `app.renewdental.com` (or whatever the practice's domain is) — feels like the practice's product, cleaner for end-users.
-- Keep `renew-pms.netlify.app` for the beta, decide on real domain after.
+### 1.2 Practice + staff data — clean prod, no users at launch
 
-**Recommendation:** Brik subdomain for the beta. Cheapest, reversible, doesn't lock in a name we may regret. Promote to a practice-owned domain post-beta.
+Real staff emails are not yet ready. Phase 3 is restructured so prod ships with **zero users at cutover** — only the practice row, office, and reference data. The primary admin is invited *after* smoke tests pass; the rest of the staff are invited asynchronously as real emails come in.
 
-**Decision (fill in):** _____________________________
+Net effect:
 
-### 1.2 Practice + staff data — what gets seeded?
+- **§5.A** (Resend domain verification) becomes a pre-flight task (§2.9) since email delivery is the prerequisite for any invite.
+- **§5.B** (provision practice + reference data) runs cutover day with no user creation.
+- **§5.C** (invite primary admin) runs after smoke tests as the launch signal.
+- **§5.D** (invite remaining staff) is a post-launch async loop.
 
-🟡 **ASK NICK:** What's the source of truth for the real practice and staff list?
+Test personas and `test+*@brikdesigns.com` plus-addressing stay on the dev/staging project only. Nothing migrates from dev to prod.
 
-The dev project (`zneuygoeorhkuhktmuld`) currently has:
-- 7 test personas (`test+*@brikdesigns.com`) created by `scripts/seed-test-users.ts`.
-- Real staff records from earlier Notion sync (per `project_beta_email_plan` memory: 4 incomplete records still need title/dept/start date in Notion before they can be provisioned).
+### 1.3 Cron secret strategy — separate per context, generated fresh at cutover
 
-We do **not** want to migrate the dev project's data wholesale. Test users + persona-switcher artifacts must not land in prod. Three sub-questions:
+Two values, generated with `openssl rand -hex 32`:
 
-- **a.** Is the practice provisioning script in the repo, or do we provision the practice manually via SQL? Today, only `seed_practice_defaults(practice_id, office_id)` exists — that seeds reference tables (departments, role types, etc.) but not the practice row itself.
-- **b.** Do we have real emails for **all** staff? If not, who gets the placeholder `test+...` treatment until they're collected?
-- **c.** Do any existing tasks / requests / training assignments need to come along to prod, or does the practice start with a clean slate?
+- One on the **production** Netlify context, stored in 1P item `Renew PMS — Production Cron Secret`.
+- One on the **branch:staging** Netlify context, stored in 1P item `Renew PMS — Staging Cron Secret` (rotate the existing value in §6.4).
 
-**Decision (fill in):** _____________________________
+Rationale: a leaked staging secret cannot trigger production cron jobs. Two values is a trivial management overhead — they're set once and then static.
 
-### 1.3 Cron secret + cron destination
+The Netlify scheduled function `cron-daily-tasks.mts` reads `process.env.CRON_SECRET` at runtime; Netlify per-context env vars give each environment its own value automatically.
 
-The `CRON_SECRET` env var gates `POST /api/cron/generate-daily-tasks`. Today it lives on Netlify production context. After Phase 4, production becomes `main`-deploys (a different deploy context). Need to:
+### 1.4 Sentry environment tagging — fixed in PR #136
 
-- Keep `CRON_SECRET` on the new production context.
-- Confirm the Netlify scheduled function `cron-daily-tasks.mts` runs against the new prod URL, not staging.
+The original SDK init tagged events with `process.env.NODE_ENV`, which returns `'production'` for both Netlify production builds AND staging branch deploys. Today every staging Sentry event is mis-tagged as production.
 
-**Decision (fill in):** _____________________________
+Fix shipped as **PR #136 (`fix(auth): tag Sentry events with deploy environment, not NODE_ENV`)** — adds `NEXT_PUBLIC_DEPLOY_ENVIRONMENT` set per Netlify context in `netlify.toml`, read by all three Sentry init paths (Node, Edge, Client).
 
-### 1.4 Sentry project — one or two?
-
-Currently a single Sentry project (`renew-pms`) receives errors from all environments. Sentry's `environment` tag (set via Sentry SDK config) distinguishes them, so a single project is fine — as long as the SDK initialization tags `production` vs `staging` correctly.
-
-**Verify (during Phase 4):** confirm `instrumentation-client.ts` and `instrumentation.ts` set `environment: process.env.NEXT_PUBLIC_NETLIFY_CONTEXT` or equivalent.
-
-If they don't, this becomes a blocker — open a small fix PR before launch.
+**Hard pre-flight blocker:** PR #136 must be merged before Phase 4. Reflected in §2.9.
 
 ---
 
@@ -90,6 +81,8 @@ Each can be done before the cutover day; doing them early de-risks the day-of.
 - [ ] **§2.6** PR #133 (feedback FAB gate split) merged to staging? `gh pr view 133 --json state -q .state` should return `MERGED`. If not, this is a blocker for Phase 4 — the FAB code path must exist in `staging` before that branch's bundle becomes the production deploy.
 - [ ] **§2.7** PR #134 (release-please) merged to staging? Same check, PR 134. Not strictly a blocker for launch but lands the versioning machinery so Monday's launch can be tagged `v0.1.1-beta.0`.
 - [ ] **§2.8** Save a fresh schema dump from dev as a baseline reference: `supabase db dump --linked --file ./pre-launch-schema-snapshot.sql` (don't commit). This is a safety net so we can compare prod schema against it after Phase 2.
+- [ ] **§2.9** **PR #136 (Sentry env tagging fix) merged to staging.** Hard blocker for Phase 4 per §1.4. `gh pr view 136 --json state -q .state` should return `MERGED`.
+- [ ] **§2.10** **Resend sending domain verified for `renew.brikdesigns.com`.** This is the gate that opens §5.C (admin invite). Walk through the steps in §5.A together — agent will guide on the exact records since they vary based on Resend's current domain wizard output. Roughly: open Resend dashboard → Domains → Add `renew.brikdesigns.com` (or recommended `send.renew.brikdesigns.com` subdomain) → Resend generates 4–5 DNS records (MX + TXT for SPF + TXT for DKIM + optional DMARC) → add each at Netlify Domains DNS panel for `brikdesigns.com` → wait for Resend to mark domain "Verified" (~5–60 minutes for DNS propagation).
 
 ---
 
@@ -114,7 +107,7 @@ Each can be done before the cutover day; doing them early de-risks the day-of.
   - **Anon key:** Settings → API → `anon` `public`. Save as `anon-key`.
   - **Service role key:** Settings → API → `service_role` `secret`. Save as `service-role-key`. **This is the dangerous one** — it bypasses RLS.
 - [ ] **§3.5** Configure auth settings to match dev:
-  - **Authentication → URL Configuration → Site URL:** the production URL from §1.1 (or `https://renew-pms.netlify.app` as a placeholder if domain isn't ready).
+  - **Authentication → URL Configuration → Site URL:** `https://renew.brikdesigns.com` (the locked-in domain from §1.1).
   - **Authentication → URL Configuration → Redirect URLs:** add the production URL + `https://staging--renew-pms.netlify.app` + `https://deploy-preview-*--renew-pms.netlify.app` (deploy preview wildcard).
   - **Authentication → Email Templates:** copy from dev (Settings → Auth → Email Templates on dev, paste into prod). Should match the welcome / reset / confirm flows.
 
@@ -187,52 +180,152 @@ If any migration fails:
 
 ---
 
-## §5. Phase 3 — Seed production with real practice + staff
+## §5. Phase 3 — Seed production (split across pre-flight, cutover day, and post-launch)
 
-**Goal:** Bootstrap prod with the real dental practice and real staff accounts. No test personas, no plus-addressed emails.
+**Goal:** Bootstrap prod with the real dental practice and (eventually) real staff accounts. No test personas, no plus-addressed emails. Per §1.2, **prod ships with zero users** — the primary admin is invited *after* smoke tests pass, and the rest of the staff are invited asynchronously as real emails come in.
 
-**Time estimate:** 30 minutes (depends on §1.2 answer).
+This phase splits across three time windows:
 
-### Sub-phases (depending on §1.2 answer)
+- **§5.A** — Resend domain verification (pre-flight, T-2 or earlier).
+- **§5.B** — Provision practice + reference data (cutover day, before §6).
+- **§5.C** — Invite primary admin (after smoke tests pass — the launch signal).
+- **§5.D** — Invite remaining staff (post-launch async loop).
 
-#### §5.A The practice already exists in dev with all reference data — just clone the schema-shape
+### §5.A Resend sending domain verification (pre-flight, T-2 or earlier)
 
-If the answer to §1.2 is "the dev project's practice and reference tables ARE the source of truth, just without test users":
+🟡 **Walk through with the agent** — the exact records depend on what Resend's wizard generates at execution time. The flow below is the shape; the agent will confirm each step against the live wizard output.
 
-- [ ] **§5.A.1** Adapt `scripts/seed-test-users.ts` into a new `scripts/seed-prod-practice.ts` that:
-  - Reads a minimal config (practice name, office address, primary admin email + name).
+**Why this is the gatekeeper:** Supabase Auth uses Resend (via SMTP relay or HTTP API depending on integration) to send magic links + invite emails. Until the sending domain is verified at Resend AND the DNS records propagate, **every invite email goes to spam or bounces silently**. No verified domain → no admin invite → no launch.
+
+- [ ] **§5.A.1** Open https://resend.com/domains → **Add Domain**.
+- [ ] **§5.A.2** Enter the sending domain. Recommended: `send.renew.brikdesigns.com` (subdomain isolation — Resend's recommended pattern keeps email-reputation drift away from the app domain). Alternative: `renew.brikdesigns.com` directly. Final email "From:" address can still be `noreply@renew.brikdesigns.com` regardless.
+- [ ] **§5.A.3** Resend wizard generates 4–5 DNS records. Typically:
+  - **MX** record on `send.renew.brikdesigns.com` → `feedback-smtp.us-east-1.amazonses.com` priority 10 (Resend uses AWS SES under the hood; region may differ — use what the wizard shows).
+  - **TXT** SPF record on `send.renew.brikdesigns.com` → value starts with `v=spf1 include:amazonses.com ~all`.
+  - **TXT** DKIM record at `resend._domainkey.send.renew.brikdesigns.com` → long base64 value, generated per-domain.
+  - **TXT** DMARC record at `_dmarc.renew.brikdesigns.com` → start with `v=DMARC1; p=none;` (monitor mode; tighten to quarantine/reject after 30 days of clean reports).
+- [ ] **§5.A.4** Add each record at Netlify Domains. Open https://app.netlify.com → Team Brik Designs → Domains → `brikdesigns.com` → DNS panel. For each Resend record, click **Add a record** with the type/name/value the wizard provided.
+- [ ] **§5.A.5** Click **Verify Domain** in the Resend dashboard. Status moves through "Pending" → "Verified" as DNS propagates. Typical wait: 5–60 minutes.
+
+#### ✅ Verify §5.A
+
+- [ ] Resend dashboard shows the domain as **Verified** with DKIM + SPF green.
+- [ ] `dig TXT send.renew.brikdesigns.com +short` returns the SPF record.
+- [ ] `dig TXT resend._domainkey.send.renew.brikdesigns.com +short` returns the DKIM key.
+- [ ] Send a Resend test email via dashboard "Send test" → arrives within 30 seconds, not in spam, with green DKIM/SPF in Gmail's "Show original" view.
+
+#### ↩️ Rollback §5.A
+
+Removing the records at Netlify DNS reverses verification. No customer impact since no users yet.
+
+### §5.B Provision practice + reference data (cutover day)
+
+Runs on cutover day after Phase 2 (migrations applied). Creates the practice row + office + reference tables. **No users yet.**
+
+Two paths — pick based on practice complexity:
+
+#### §5.B (script path) — for repeatability
+
+- [ ] **§5.B.1** Adapt `scripts/seed-test-users.ts` into a new `scripts/seed-prod-practice.ts` that:
+  - Reads a minimal config (practice name, office address — collected from the practice).
   - Creates the practice + office rows.
-  - Calls `seed_practice_defaults(practice_id, office_id)` to populate reference tables.
-  - Creates the primary admin user via Supabase Admin API (sends a Supabase magic link / invite).
-  - Does **not** create any other staff yet — they get invited via the in-app invite flow.
-- [ ] **§5.A.2** Build the script in a small PR against `staging`, merge, then run against prod:
+  - Calls `seed_practice_defaults(practice_id, office_id)` to populate reference tables (departments, role types, task categories, etc.).
+  - Stops there — no user creation.
+- [ ] **§5.B.2** Build the script in a small PR against `staging`, merge, then run against prod:
   ```bash
-  SUPABASE_URL=$(op item get "Renew PMS — Production DB" --vault Development --fields url --reveal) \
-  SUPABASE_SERVICE_ROLE_KEY=$(op item get "Renew PMS — Production DB" --vault Development --fields service-role-key --reveal) \
-  npx tsx scripts/seed-prod-practice.ts
+  PROD_URL=$(op item get "Renew PMS — Production DB" --vault Development --fields url --reveal)
+  PROD_SVC=$(op item get "Renew PMS — Production DB" --vault Development --fields service-role-key --reveal)
+  NEXT_PUBLIC_SUPABASE_URL="$PROD_URL" SUPABASE_SERVICE_ROLE_KEY="$PROD_SVC" \
+    npx tsx scripts/seed-prod-practice.ts
   ```
 
-#### §5.B Manual seed via SQL (if the script approach is overkill for one practice)
+#### §5.B (SQL path) — fastest for one-time provisioning
 
 - [ ] **§5.B.1** Open Supabase dashboard for prod → SQL Editor.
-- [ ] **§5.B.2** Paste a minimal seed: practice insert, office insert, then call `select seed_practice_defaults('<practice_id>', '<office_id>');`. Run.
-- [ ] **§5.B.3** Use the dashboard's Auth → Users → "Invite user" to send an email invite to the primary admin. Supabase sends the magic link.
-- [ ] **§5.B.4** Once the admin signs up, manually upsert their `profiles` row to set `system_role = 'admin'` and `practice_members` to link them to the practice. (This step exists in the script approach above; manual is fine for one user.)
+- [ ] **§5.B.2** Run a minimal seed:
+  ```sql
+  -- Replace the values below with the real practice details
+  with new_practice as (
+    insert into public.practices (name, slug)
+    values ('<Practice Name>', '<practice-slug>')
+    returning id
+  ),
+  new_office as (
+    insert into public.offices (practice_id, name, address_line1, city, state, postal_code)
+    select id, 'Main Office', '<address>', '<city>', '<state>', '<zip>' from new_practice
+    returning id, practice_id
+  )
+  select seed_practice_defaults(practice_id, id) from new_office;
+  ```
 
-### ✅ Verify
+#### ✅ Verify §5.B
 
-- [ ] Prod **Authentication → Users** shows 1 user (the primary admin).
+- [ ] Prod **Authentication → Users**: still 0 users.
 - [ ] Prod `practices` table: 1 row.
-- [ ] Prod `practice_members` table: 1 row, linked to the admin user.
-- [ ] Prod reference tables (`departments`, `practice_role_types`, etc.) populated by `seed_practice_defaults` — non-empty.
-- [ ] Admin can log in via the magic link.
+- [ ] Prod `offices` table: 1 row, linked to the practice.
+- [ ] Prod reference tables (`departments`, `practice_role_types`, `task_types`, `task_categories`, etc.) populated by `seed_practice_defaults` — non-empty.
 
-### ↩️ Rollback
+#### ↩️ Rollback §5.B
 
-If the seed is wrong:
+```sql
+-- In prod SQL Editor — RLS is bypassed via service role
+truncate practices, offices, departments, practice_role_types, task_types, task_categories cascade;
+```
+Then re-run §5.B with corrected values.
 
-1. Truncate the affected tables: `truncate practice_members, practices, profiles cascade;` (in prod SQL Editor). RLS prevents this from the API; service-role from the SQL editor can do it.
-2. Re-run §5.A or §5.B.
+### §5.C Invite primary admin (post-smoke, the launch signal)
+
+Runs **after** §8 smoke tests pass. This is the first real Resend email — if it lands cleanly, the email pipeline is verified end-to-end.
+
+- [ ] **§5.C.1** Confirm Resend domain still **Verified** (§5.A.5 may have been weeks ago).
+- [ ] **§5.C.2** Confirm Supabase Auth → Email Templates use the verified Resend domain in the "From:" address. Prod Supabase dashboard → Authentication → URL Configuration → SMTP / SMTP Custom (or Auth → Providers → Email if using HTTP API).
+- [ ] **§5.C.3** Invite the admin via Supabase dashboard:
+  - Prod project → **Authentication → Users → Invite user**.
+  - Enter the admin's real email + name.
+  - Supabase sends a magic link via Resend.
+- [ ] **§5.C.4** Admin opens the email, clicks the magic link, lands on the prod URL, signs in.
+- [ ] **§5.C.5** Once signed up (`auth.users` has 1 row), upsert their profile + practice membership:
+  ```sql
+  -- Run in prod SQL Editor
+  -- Replace email + practice_id below
+  update public.profiles
+    set system_role = 'admin', first_name = '<Admin First>', last_name = '<Admin Last>'
+    where email = '<admin@example.com>';
+
+  insert into public.practice_members (user_id, practice_id, practice_role_id, employee_type)
+  select p.id, '<practice_id>', (select id from public.practice_role_types where name = 'Owner' limit 1), 'proficient'
+  from public.profiles p where p.email = '<admin@example.com>';
+  ```
+- [ ] **§5.C.6** Admin signs out + signs back in to confirm the role takes effect (RLS now treats them as admin).
+
+#### ✅ Verify §5.C
+
+- [ ] Admin can log into the prod URL and reach `/dashboard` without errors.
+- [ ] Admin sees the practice's data (no "select a practice" prompt).
+- [ ] Admin can navigate to Settings → Users (admin-only route).
+
+#### ↩️ Rollback §5.C
+
+If the magic link doesn't arrive, **the issue is almost always Resend domain verification** — return to §5.A.
+
+If the admin's profile setup is wrong:
+```sql
+delete from public.practice_members where user_id = (select id from public.profiles where email = '<admin>');
+delete from public.profiles where email = '<admin>';
+delete from auth.users where email = '<admin>';  -- requires service role
+```
+Re-run §5.C from §5.C.3.
+
+### §5.D Invite remaining staff (post-launch async)
+
+Async work that happens over the days/weeks after launch as the practice provides real emails. Each staff member follows the same path as §5.C but invited from inside the app (admin → Settings → Users → Invite) rather than the Supabase dashboard.
+
+- [ ] **§5.D.1** Practice provides a real email + role for each staff member.
+- [ ] **§5.D.2** Admin invites them via the in-app invite flow.
+- [ ] **§5.D.3** Staff member clicks the email, signs in, lands in the app with their assigned `practice_role`.
+- [ ] **§5.D.4** Confirm: they see only what their role permits (e.g., a `staff` user can't reach Settings).
+
+No rollback needed for §5.D — individual user issues are handled per-user, not as a phase.
 
 ---
 
@@ -255,29 +348,31 @@ If the seed is wrong:
 
   | Var | Production context (main) | Branch:staging context | Notes |
   |---|---|---|---|
-  | `NEXT_PUBLIC_SUPABASE_URL` | NEW prod project URL | dev project URL (current) | from 1P |
-  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | NEW prod anon key | dev anon key (current) | from 1P |
-  | `SUPABASE_SERVICE_ROLE_KEY` | NEW prod service role | dev service role (current) | from 1P, server-only |
-  | `NEXT_PUBLIC_SITE_URL` | https://`<§1.1 domain>` | https://staging--renew-pms.netlify.app | already set on staging context per `netlify.toml` |
+  | `NEXT_PUBLIC_SUPABASE_URL` | NEW prod project URL | dev project URL (current) | from 1P `Renew PMS — Production DB` / `Renew PMS — Supabase Dev` |
+  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | NEW prod anon key | dev anon key (current) | from same 1P items |
+  | `SUPABASE_SERVICE_ROLE_KEY` | NEW prod service role | dev service role (current) | from same 1P items, server-only |
+  | `NEXT_PUBLIC_SITE_URL` | `https://renew.brikdesigns.com` | `https://staging--renew-pms.netlify.app` | staging value already set in `netlify.toml`; prod set here |
+  | `NEXT_PUBLIC_DEPLOY_ENVIRONMENT` | (auto from netlify.toml — `production`) | (auto from netlify.toml — `staging`) | added by PR #136 — verify after merge |
   | `NEXT_PUBLIC_ENABLE_DEV_TOOLS` | **UNSET** | `true` | persona switcher + DevBar |
   | `NEXT_PUBLIC_TEST_PASSWORD` | **UNSET** | `TestUser123!` | shared dev password |
-  | `NEXT_PUBLIC_ENABLE_FEEDBACK_FAB` | `true` | (any — slot mode wins) | beta feedback FAB on prod |
-  | `RESEND_API_KEY` | (same — same Resend account) | (same) | confirm with §6.7 |
-  | `CRON_SECRET` | NEW value (generate fresh) | (current) | `openssl rand -hex 32` |
+  | `NEXT_PUBLIC_ENABLE_FEEDBACK_FAB` | `true` | (any — slot mode wins anyway) | beta feedback FAB on prod, per PR #133 |
+  | `RESEND_API_KEY` | (same — same Resend account, verified per §5.A) | (same) | one Resend account, both contexts |
+  | `CRON_SECRET` | NEW value — `openssl rand -hex 32`, store in 1P `Renew PMS — Production Cron Secret` | NEW value — different from prod, store in 1P `Renew PMS — Staging Cron Secret`, replace existing | per §1.3 — separate-per-context isolation |
   | `NOTION_TOKEN` | (same) | (same) | for `/api/feedback` |
-  | `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT` | (same) | (same) | unless §1.4 changes the answer |
+  | `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT` | (same) | (same) | one Sentry project; environment tag set by `NEXT_PUBLIC_DEPLOY_ENVIRONMENT` |
   | `PACKAGES_READ_TOKEN` | (same) | (same) | for `npm ci` during build |
 
-  In Netlify, each var has a "Scopes" section. Use **Specific scopes** → check Production / Branch deploys / Deploy previews per the table above.
-- [ ] **§6.5** Configure the production custom domain (if §1.1 is non-default):
-  - **Site settings → Domain management → Add a domain.**
-  - Add the apex/sub from §1.1.
-  - DNS:
-    - CNAME `renew-pms.brikdesigns.com → renew-pms.netlify.app` (or the configured prod alias).
-    - Or apex (`renewdental.com`) → Netlify NS records.
-  - Wait for SSL provisioning (~5 minutes).
-- [ ] **§6.6** Update Supabase **Authentication → URL Configuration** for the prod project to add the new prod domain as Site URL + Redirect URL. (You did this in §3.5 with a placeholder; tighten now.)
-- [ ] **§6.7** Update Resend's "from" domain verification + SPF/DKIM if the prod domain is new. Resend dashboard → Domains. Skip if reusing `brikdesigns.com`.
+  In Netlify, each var has a "Scopes" section. Use **Specific scopes** → check Production / Branch deploys / Deploy previews per the table above. Use the dashboard UI; do **not** use `netlify env:list --plain` or `netlify env:list --json` to inspect (they dump values to stdout).
+
+  When generating the new cron secrets, save them to 1P **before** pasting into Netlify so the value is recorded for cron-job sender + recipient sides.
+
+- [ ] **§6.5** Configure the production custom domain (`renew.brikdesigns.com`). DNS for `brikdesigns.com` lives at Netlify, so this is one-click:
+  - Open the renew-pms site in Netlify → **Domain management → Add a domain alias**.
+  - Enter `renew.brikdesigns.com`. Netlify detects the matching DNS zone and offers to **add the CNAME automatically** — accept.
+  - Verify under **Site overview**: domain shows green checkmark within ~30 seconds.
+  - SSL: Netlify auto-provisions a Let's Encrypt cert. Status moves to **HTTPS enabled** within ~5 minutes. If it stalls past 10 min, click **Renew certificate** to retry.
+- [ ] **§6.6** Update Supabase **Authentication → URL Configuration** for the prod project to add `https://renew.brikdesigns.com` as Site URL + as a Redirect URL (also keep the staging + deploy-preview wildcards from §3.5). Save.
+- [ ] **§6.7** Confirm Resend domain status (set up in §5.A) is still **Verified** in the Resend dashboard. No new work — sanity check only.
 
 ### ✅ Verify (do not yet trigger a prod deploy)
 
@@ -375,11 +470,12 @@ Open these as GitHub issues at T+0 so they're tracked and not lost.
 - **Renew CLAUDE.md** § Supabase, § Branch Workflow.
 - **`netlify.toml`** — current build config, context-specific overrides.
 - **`supabase/migrations/`** — 47 migrations, ordered.
-- **`scripts/seed-test-users.ts`** — pattern for prod-seed script (§5.A.1).
+- **`scripts/seed-test-users.ts`** — pattern for prod-seed script (§5.B script path).
 - **`docs/process/session-discipline.md`** — session lifecycle rules.
-- **PR #133** — feedback FAB gate split (must be merged to staging before cutover).
-- **PR #134** — release-please scaffolding (preferred to be merged to staging before cutover so v0.1.1-beta.0 tags cleanly).
-- **1Password Development vault** — all live credentials, fetched via `op item get ... --reveal` inside `$()` only.
+- **PR #133** — feedback FAB gate split (merged; required for §6 customer-feedback path).
+- **PR #134** — release-please scaffolding (preferred to be merged before cutover so v0.1.1-beta.0 tags cleanly).
+- **PR #136** — Sentry env tagging fix (`NEXT_PUBLIC_DEPLOY_ENVIRONMENT`); **hard blocker for Phase 4** per §1.4.
+- **1Password Development vault** — all live credentials, fetched via `op item get ... --reveal` inside `$()` only. Items referenced: `Renew PMS — Supabase Dev`, `Renew PMS — Production DB`, `Renew PMS — Production Cron Secret`, `Renew PMS — Staging Cron Secret`.
 
 ---
 
