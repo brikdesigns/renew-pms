@@ -1,0 +1,12 @@
+# Allow blank issues for quick capture (single-maintainer workflow doesn't
+# benefit from forcing a template every time). Templates are still the easy
+# default via the "Get started" buttons on the new-issue page.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Repo conventions (CLAUDE.md)
+    url: https://github.com/brikdesigns/renew-pms/blob/staging/CLAUDE.md
+    about: Architecture, branch workflow, error handling, token rules. Read before opening larger issues.
+  - name: Cross-repo standards
+    url: https://github.com/brikdesigns/brik-llm/blob/main/CLAUDE-CROSS-REPO.md
+    about: Brik-wide rules — secrets, BDS tokens, model selection, agent scope.
