@@ -22,6 +22,14 @@
 # main     → renew-pms.netlify.app  (production, custom domain TBD)
 # staging  → staging--renew-pms.netlify.app
 # PR #N    → deploy-preview-N--renew-pms.netlify.app
+#
+# NEXT_PUBLIC_DEPLOY_ENVIRONMENT is read by Sentry instrumentation
+# (instrumentation.ts + instrumentation-client.ts) to tag events with
+# the correct environment. Mirrors Netlify's CONTEXT env var, but
+# NEXT_PUBLIC_-prefixed so it's inlined into the client bundle.
+
+[context.production.environment]
+  NEXT_PUBLIC_DEPLOY_ENVIRONMENT = "production"
 
 [context.staging]
   # Remove stale brik-bds submodule dir (cached from pre-npm-migration builds)
@@ -29,7 +37,11 @@
 
 [context.staging.environment]
   NEXT_PUBLIC_SITE_URL = "https://staging--renew-pms.netlify.app"
+  NEXT_PUBLIC_DEPLOY_ENVIRONMENT = "staging"
 
 [context.deploy-preview]
   # Remove stale brik-bds submodule dir (cached from pre-npm-migration builds)
   command = "rm -rf brik-bds && npm run build"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_DEPLOY_ENVIRONMENT = "preview"
