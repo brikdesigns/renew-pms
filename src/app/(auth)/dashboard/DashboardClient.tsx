@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Card, Meter, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, Meter, PageHeader, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -40,21 +40,6 @@ const pageStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: gap.xl,
-};
-
-const greetingStyle: CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.large,
-  fontWeight: font.weight.regular,
-  color: color.text.primary,
-  margin: 0,
-};
-
-const subtitleStyle: CSSProperties = {
-  fontFamily: font.family.body,
-  fontSize: font.size.body.md,
-  color: color.text.muted,
-  margin: 0,
 };
 
 const gridStyle: CSSProperties = {
@@ -303,18 +288,15 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  const subtitleText = isStaff
+    ? 'Here\u2019s your personal summary for today.'
+    : isManager
+      ? `Here\u2019s what\u2019s happening in ${userDepartment ?? 'your department'} today.`
+      : 'Here\u2019s what needs your attention today.';
+
   return (
     <div style={pageStyle}>
-      <div>
-        <h1 style={greetingStyle}>{greeting}, {userName}</h1>
-        <p style={subtitleStyle}>
-          {isStaff
-            ? 'Here\u2019s your personal summary for today.'
-            : isManager
-              ? `Here\u2019s what\u2019s happening in ${userDepartment ?? 'your department'} today.`
-              : 'Here\u2019s what needs your attention today.'}
-        </p>
-      </div>
+      <PageHeader title={`${greeting}, ${userName}`} subtitle={subtitleText} />
 
       <div style={gridStyle}>
         {/* ── Card 1: Overdue Tasks ── */}
