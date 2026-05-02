@@ -241,6 +241,23 @@ Always query the Storybook MCP for BDS component props before writing JSX. Endpo
 
 **Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
 
+## Naming conventions
+
+### "Page header" (renew language) ≠ `<PageHeader>` (BDS component)
+
+These are **two different concepts**. Don't conflate.
+
+| Concept | Renew code | BDS component | What it carries |
+|---|---|---|---|
+| **Global app shell bar** | [`TopUtilityBar.tsx`](src/components/TopUtilityBar.tsx) | none — BDS `<NavBar>` is `surface-web`, banned for product apps | Section context label (left) + global actions (right): notifications, avatar menu, add button |
+| **Per-route content header** | (was renew-local — deleted in [#127](https://github.com/brikdesigns/renew-pms/pull/127)) | `<PageHeader>` from `@brikdesigns/bds` | Page title + subtitle + breadcrumbs + page-level actions + tabs |
+
+When the user says "the page header" in conversation, they mean **the global app shell bar** — the topmost horizontal bar that survives across all routes within the auth shell. That's `TopUtilityBar.tsx`. Their mental model puts the per-route content header (with title/tabs) in the **body**, not the header.
+
+**How to apply.** Before any conversation about "page header" in renew, name the row explicitly: "the global top bar (TopUtilityBar.tsx)" vs. "the per-route content header (BDS PageHeader)." Don't assume they share a referent. When working in BDS source, `<PageHeader>` is canonical for the per-route content header. When discussing renew product surfaces with the user, "TopUtilityBar" is the canonical name for the global shell bar until/unless a BDS replacement ships under a clearer name.
+
+**Chrome architecture (Path B, decided 2026-05-01 — tracked on [#101](https://github.com/brikdesigns/renew-pms/issues/101)):** global shell elements (avatar, notifications, theme toggle, section context) migrate **into the sidebar** in a future session, not into a new top-bar component. `TopUtilityBar` will shrink or disappear once sidebar absorbs its content. Per-route content headers stay on BDS `<PageHeader>`. **Don't propose a new BDS top-bar variant** for renew.
+
 ## Component Rules
 
 ### BDS first
