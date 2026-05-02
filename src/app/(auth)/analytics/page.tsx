@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
+import { PageHeader } from '@brikdesigns/bds';
 import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 
@@ -20,14 +21,6 @@ const iconStyle: React.CSSProperties = {
   color: color.text.muted,
 };
 
-const titleStyle: React.CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.medium,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-  margin: 0,
-};
-
 const descStyle: React.CSSProperties = {
   fontFamily: font.family.body,
   fontSize: font.size.body.md,
@@ -39,12 +32,14 @@ const descStyle: React.CSSProperties = {
 
 export default function AnalyticsPage() {
   return (
-    <div style={emptyStateStyle}>
-      <Icon icon={icon.analytics} style={iconStyle as React.CSSProperties & Record<string, string>} />
-      <h1 style={titleStyle}>Analytics</h1>
-      <p style={descStyle}>
-        Reports and insights are coming soon. You&apos;ll be able to track task completion, team performance, and compliance metrics here.
-      </p>
-    </div>
+    <>
+      <PageHeader title="Analytics" />
+      <div style={emptyStateStyle}>
+        <Icon icon={icon.analytics} style={iconStyle as React.CSSProperties & Record<string, string>} />
+        <p style={descStyle}>
+          Reports and insights are coming soon. You&apos;ll be able to track task completion, team performance, and compliance metrics here.
+        </p>
+      </div>
+    </>
   );
 }

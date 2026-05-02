@@ -1,6 +1,7 @@
 'use client';
 
 import { Icon } from '@iconify/react';
+import { PageHeader } from '@brikdesigns/bds';
 import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 
@@ -20,14 +21,6 @@ const iconStyle: React.CSSProperties = {
   color: color.text.muted,
 };
 
-const titleStyle: React.CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.medium,
-  fontWeight: font.weight.bold,
-  color: color.text.primary,
-  margin: 0,
-};
-
 const descStyle: React.CSSProperties = {
   fontFamily: font.family.body,
   fontSize: font.size.body.md,
@@ -39,12 +32,14 @@ const descStyle: React.CSSProperties = {
 
 export default function DocumentsPage() {
   return (
-    <div style={emptyStateStyle}>
-      <Icon icon={icon.documents} style={iconStyle as React.CSSProperties & Record<string, string>} />
-      <h1 style={titleStyle}>Documents</h1>
-      <p style={descStyle}>
-        Document management is coming soon. You&apos;ll be able to access SOPs, compliance forms, and practice resources here.
-      </p>
-    </div>
+    <>
+      <PageHeader title="Documents" />
+      <div style={emptyStateStyle}>
+        <Icon icon={icon.documents} style={iconStyle as React.CSSProperties & Record<string, string>} />
+        <p style={descStyle}>
+          Document management is coming soon. You&apos;ll be able to access SOPs, compliance forms, and practice resources here.
+        </p>
+      </div>
+    </>
   );
 }

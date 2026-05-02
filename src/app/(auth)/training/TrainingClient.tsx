@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useSheetStack } from '@brikdesigns/bds';
+import { PageHeader, useSheetStack } from '@brikdesigns/bds';
 import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter, type EmployeeTypeSegment } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';
@@ -123,6 +123,7 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
 
   return (
     <div style={pageStyle}>
+      <PageHeader title="Training" />
       {showFilters ? (
         <TrainingFilterBar
           selectedDepartment={selectedDepartment}
