@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Card, Meter, PageHeader, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, CardTitle, Meter, PageHeader, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -296,9 +296,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <div style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Overdue Tasks' : isManager ? 'Department Overdue Tasks' : 'Overdue Tasks'}
-              </div>
+              </CardTitle>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedOverdueTasks.length}
               </span>
@@ -342,9 +342,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <div style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Progress' : isManager ? 'Department Progress' : 'Today\u2019s Progress'}
-              </div>
+              </CardTitle>
             </div>
           </div>
           {/* Top row: ring + stats spread across right */}
@@ -388,9 +388,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
         {showOnboarding && (
           <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
             <div style={cardHeaderStyle}>
-              <div style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
-              </div>
+              </CardTitle>
               <Link href="/training" className="bds-text-link">
                 View All
               </Link>
@@ -433,9 +433,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <div style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Requests' : isManager ? 'Department Requests' : 'Recent Requests'}
-              </div>
+              </CardTitle>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedRequests.length}
               </span>
