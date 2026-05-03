@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
-import { Tag, Chip, Button, IconButton, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Chip, Button, IconButton, PageHeader, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { Menu, MenuItem } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
@@ -91,28 +91,6 @@ function timeAgo(dateStr: string): string {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${space.md} 0`,
-  paddingRight: space.xl,
-};
-
-const headerLeftStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: space.sm,
-};
-
-const titleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold,
-  color: color.text.primary,
-  margin: 0,
-};
-
 const countBadgeStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.xs,
@@ -121,12 +99,6 @@ const countBadgeStyle: CSSProperties = {
   backgroundColor: color.surface.secondary,
   padding: `2px ${gap.md}`,
   borderRadius: border.radius.sm,
-};
-
-const filterBarStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
 };
 
 const columnBaseStyle: CSSProperties = {
@@ -539,32 +511,34 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
-      <div style={headerStyle}>
-        <div style={headerLeftStyle}>
-          <h3 style={titleStyle}>Requests</h3>
-          <span style={countBadgeStyle}>{filtered.length}</span>
-        </div>
-        <div style={filterBarStyle}>
-          <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
-          <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
-          <div style={{ position: 'relative' }}>
-            <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-              Add Request
-            </Button>
-            <Menu
-              isOpen={addMenuOpen}
-              onClose={() => setAddMenuOpen(false)}
-              items={ADD_MENU_CATEGORIES.map(c => ({
-                id: c.id,
-                label: c.label,
-                description: c.desc,
-                icon: <Icon icon={c.icon} />,
-                onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
-              }))}
-              style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
-            />
-          </div>
-        </div>
+      <div style={{ paddingRight: space.xl }}>
+        <PageHeader
+          title="Requests"
+          flush
+          actions={
+            <>
+              <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
+              <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
+              <div style={{ position: 'relative' }}>
+                <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+                  Add Request
+                </Button>
+                <Menu
+                  isOpen={addMenuOpen}
+                  onClose={() => setAddMenuOpen(false)}
+                  items={ADD_MENU_CATEGORIES.map(c => ({
+                    id: c.id,
+                    label: c.label,
+                    description: c.desc,
+                    icon: <Icon icon={c.icon} />,
+                    onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
+                  }))}
+                  style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+                />
+              </div>
+            </>
+          }
+        />
       </div>
 
       <Board style={{ flex: 1, minHeight: 0 }}>
