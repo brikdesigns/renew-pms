@@ -7,10 +7,22 @@ import { cookies } from 'next/headers';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Open-redirect guard: a path-relative `redirect` value like `//evil.com/x` or
+// `/\evil.com` would let an attacker craft a callback URL that bounces a victim
+// to an arbitrary host after a successful code exchange. Only allow same-origin
+// paths that start with a single `/` and not `//` or `/\`. Anything else falls
+// back to /dashboard.
+function safePath(input: string | null): string {
+  if (!input) return '/dashboard';
+  if (!input.startsWith('/')) return '/dashboard';
+  if (input.startsWith('//') || input.startsWith('/\\')) return '/dashboard';
+  return input;
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const redirect = searchParams.get('redirect') ?? '/dashboard';
+  const redirect = safePath(searchParams.get('redirect'));
 
   if (code) {
     const cookieStore = await cookies();
