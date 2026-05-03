@@ -114,7 +114,6 @@ export function DepartmentsTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0 }}>Departments</h3>
           <span style={countBadge}>{loading ? '–' : visibleDepts.length}</span>
         </div>
         <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>

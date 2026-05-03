@@ -27,9 +27,6 @@ const subHeaderStyle: CSSProperties = {
   padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
@@ -110,7 +107,6 @@ export function RolesTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Practice Roles</h3>
           <span style={countBadge}>{loading ? '–' : roles.filter((r) => r.name !== 'Everyone').length}</span>
         </div>
         <Button variant="primary" size="sm" onClick={handleAdd}>Add Role</Button>

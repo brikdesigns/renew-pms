@@ -30,13 +30,3 @@ export const contentStyle: CSSProperties = {
   paddingBottom: '80px',   // layout-specific, no BDS token
   paddingInline: space.xl, // 32px
 };
-
-export const sectionTitleStyle: CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.medium,
-  fontWeight: font.weight.regular,
-  lineHeight: 1,
-  color: color.text.secondary,
-  margin: 0,
-  width: '100%',
-};
