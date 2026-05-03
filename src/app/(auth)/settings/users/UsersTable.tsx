@@ -32,9 +32,6 @@ const subHeaderStyle: CSSProperties = {
   padding: `${space.md} ${space.xl}`,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
@@ -272,7 +269,6 @@ export function UsersTable() {
     <div style={wrapStyle}>
       <div style={subHeaderStyle}>
         <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Users</h3>
           <span style={countBadge}>{filteredMembers.length}</span>
         </div>
         <div style={filterBarStyle}>
