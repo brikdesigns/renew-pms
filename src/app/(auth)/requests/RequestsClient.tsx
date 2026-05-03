@@ -510,7 +510,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   }, [requests, refetch, updateOptimistic, showToastTop]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ paddingRight: space.xl }}>
         <PageHeader
           title="Requests"
