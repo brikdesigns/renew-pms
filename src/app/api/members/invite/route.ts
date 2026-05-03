@@ -18,6 +18,12 @@ interface InviteBody {
   shift?: string | null;
 }
 
+// Practice admins can assign these roles to invitees. `brik_admin` is
+// intentionally excluded — only platform staff can grant cross-practice access,
+// and they do that via the dashboard, not this route. Anything else from the
+// caller falls back to 'staff'.
+const ASSIGNABLE_SYSTEM_ROLES = new Set(['admin', 'manager', 'staff']);
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 const INVITE_EXPIRY_DAYS = 7;
 
@@ -137,7 +143,7 @@ export async function POST(request: Request) {
       last_name: lastName,
       email,
       phone: body.phone?.trim() ?? null,
-      system_role: body.system_role ?? 'staff',
+      system_role: ASSIGNABLE_SYSTEM_ROLES.has(body.system_role ?? '') ? body.system_role : 'staff',
       is_active: true,
     }, { onConflict: 'id' });
 

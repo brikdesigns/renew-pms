@@ -155,9 +155,16 @@ export async function GET(request: Request) {
   const equipmentId = searchParams.get('equipment_id');
   if (equipmentId) query = query.eq('equipment_id', equipmentId);
 
-  // Staff filter: only requests submitted by or assigned to this member
-  if (mine) {
-    query = query.or(`submitted_by.eq.${mine},assigned_to.eq.${mine}`);
+  // Staff filter: only requests submitted by or assigned to this member.
+  // The `?mine` value is treated as a boolean flag — the actual filter uses
+  // the caller's own practice_member.id from the session, never a value
+  // supplied by the client. Otherwise any authenticated user could pass
+  // another member's id (e.g. a manager's) and read requests assigned to
+  // them. Tenant-scope is already enforced by `practice_id` above; this
+  // closes the within-practice IDOR.
+  if (mine && authUser.membership) {
+    const memberId = authUser.membership.memberId;
+    query = query.or(`submitted_by.eq.${memberId},assigned_to.eq.${memberId}`);
   }
 
   const { data, error } = await query;
