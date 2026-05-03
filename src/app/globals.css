@@ -177,36 +177,14 @@ body {
     font-family: var(--font-family-label);
   }
 
-  /* Select/Input placeholder: muted text color */
-  .bds-select__native,
-  .bds-text-input__input,
-  .bds-text-area__textarea {
-    color: var(--text-primary);
-  }
-
-  .bds-select__native option[value=""],
-  .bds-text-input__input::placeholder,
-  .bds-text-area__textarea::placeholder {
-    color: var(--text-muted);
-  }
-
-  /* Tags and Badges: uppercase, xs text, semibold */
-  .bds-tag,
-  .bds-badge {
-    text-transform: uppercase;
-    font-size: var(--label-tiny);
-    font-weight: var(--font-weight-semi-bold);
-  }
-
   /*
-   * Indicator height: 28px = 7 × 4px grid.
-   * BDS Badge/Tag sm natural height varies by content (26px text-only,
-   * 30px with icon). This locks both to 28px so any side-by-side
-   * pairing is always aligned. Upstream BDS fix pending.
+   * Native <select> empty-option color — match input placeholder muted-tone.
+   * BDS doesn't ship `<option>` styling; everything else in this group
+   * (filled-state color, ::placeholder color) was redundant with BDS
+   * defaults and was removed in #221.
    */
-  .bds-tag--sm,
-  .bds-badge--sm {
-    height: 28px;
+  .bds-select__native option[value=""] {
+    color: var(--text-muted);
   }
 
   /* Tags: tighter horizontal padding (xs instead of sm) */
@@ -262,12 +240,9 @@ body {
     padding: var(--padding-lg);
   }
 
-  /* Sheet: top-align close button with heading */
-  .bds-sheet__header,
-  .bds-sheet__header-top {
-    align-items: flex-start;
-  }
-
+  /* Sheet close button: zero top padding so the icon top-aligns with title.
+     BDS Sheet header already sets `align-items: flex-start`; the close
+     element ships with default vertical padding that nudges it down. */
   .bds-sheet__close {
     padding-top: 0;
   }
@@ -303,11 +278,6 @@ body {
 
   .bds-icon-button--sm .bds-icon-button__icon {
     font-size: var(--label-lg);
-  }
-
-  /* Menu items: one spacing step tighter than BDS default (md → sm) */
-  .bds-menu-item {
-    padding: var(--padding-sm);
   }
 
   /* Board card title: one step smaller than BDS default (label-lg → label-md) */
