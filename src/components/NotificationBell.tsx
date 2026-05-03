@@ -24,7 +24,7 @@ function parseNotificationLink(link: string | null): { type: SheetType; props: {
     if (path === '/tasks') return { type: 'task', props: { id: openId } };
     return null;
   } catch (e) {
-    console.warn('[NotificationBell] could not parse notification link, ignoring:', link, e);
+    console.warn('[NotificationBell] Could not parse notification link, falling back to navigation:', link, e);
     return null;
   }
 }
@@ -40,7 +40,7 @@ const unreadDotStyle: CSSProperties = {
   pointerEvents: 'none',
 };
 
-const dropdownPositionStyle: CSSProperties = {
+const defaultDropdownPosition: CSSProperties = {
   position: 'absolute', top: '100%', right: 0, marginTop: '4px',
   zIndex: 200,
 };
@@ -72,7 +72,12 @@ function toBdsItems(notifications: Notification[]): NotificationItemData[] {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  /** Override popover placement. Defaults to top-anchored, right-aligned (top-bar style). */
+  dropdownPosition?: CSSProperties;
+}
+
+export function NotificationBell({ dropdownPosition }: NotificationBellProps = {}) {
   const router = useRouter();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
@@ -128,7 +133,7 @@ export function NotificationBell() {
       {unreadCount > 0 && <span className={pulse ? 'dot-pulse' : ''} style={unreadDotStyle} />}
 
       {open && (
-        <div style={dropdownPositionStyle}>
+        <div style={dropdownPosition ?? defaultDropdownPosition}>
           <NotificationPopover
             notifications={toBdsItems(notifications)}
             onItemClick={handleItemClick}

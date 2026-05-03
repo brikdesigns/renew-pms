@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Tooltip } from '@brikdesigns/bds';
+import { IconButton, Menu, Tooltip } from '@brikdesigns/bds';
+import type { MenuItemData } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
+import { UserAvatar } from '@/components/UserAvatar';
+import { NotificationBell } from '@/components/NotificationBell';
+import { createClient } from '@/lib/supabase/client';
 import type { SystemRole } from '@/lib/auth';
 import type { CSSProperties } from 'react';
-import { font, color, motion, state, gap, space } from '@/lib/tokens';
+import { font, color, motion, state, gap, space, border, shadow } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
 
 // ─── Styles (using CSS vars from theme-renew.css) ────────────────────────────
@@ -91,6 +95,64 @@ const bottomGroupStyle: CSSProperties = {
   gap: gap.lg,
 };
 
+// Sidebar dropdowns open to the right of the 80px sidebar instead of below.
+// Avatar sits at the very bottom of the bottom group, so its menu floats up
+// (bottom-aligned with the avatar). The bell sits above the avatar; its
+// popover anchors to the bell's bottom so it grows upward and avoids the
+// viewport floor.
+const avatarMenuPosition: CSSProperties = {
+  position: 'absolute',
+  bottom: 0,
+  left: 'calc(100% + 8px)',
+  minWidth: 220,
+  zIndex: 100,
+};
+
+const notificationsPopoverPosition: CSSProperties = {
+  position: 'absolute',
+  bottom: 0,
+  left: 'calc(100% + 8px)',
+  zIndex: 200,
+};
+
+// Practice-name header rendered above the menu items.
+// FOLLOW-UP: brikdesigns/brik-bds#381 — once the `header` slot ships on
+// <Menu>, drop this style + DOM node + stopPropagation handler and pass
+// the practice name via the new prop. stopPropagation here keeps Menu's
+// outside-click handler from closing the menu when the header is clicked.
+const menuHeaderLabelStyle: CSSProperties = {
+  padding: `${space.sm} ${space.md}`,
+  borderBottom: `1px solid ${color.border.muted}`,
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
+  fontWeight: 600,
+  color: color.text.secondary,
+  lineHeight: font.lineHeight.tight,
+};
+
+const accountWrapStyle: CSSProperties = {
+  position: 'relative',
+};
+
+const menuFloatStyle: CSSProperties = {
+  ...avatarMenuPosition,
+  backgroundColor: color.surface.primary,
+  border: `1px solid ${color.border.muted}`,
+  borderRadius: border.radius.md,
+  boxShadow: shadow.lg,
+  overflow: 'hidden',
+};
+
+// Override BDS Menu's intrinsic floating chrome (background, shadow, radius,
+// position) when nesting inside menuFloatStyle. The wrapper provides the
+// visual container; Menu only contributes its item list + spacing.
+const menuInsideWrapperStyle: CSSProperties = {
+  position: 'static',
+  boxShadow: 'none',
+  borderRadius: 0,
+  backgroundColor: 'transparent',
+};
+
 // ─── Nav definition ──────────────────────────────────────────────────────────
 
 interface NavItem {
@@ -121,14 +183,45 @@ const NAV_ITEMS: NavItem[] = [
 
 interface AppSidebarProps {
   userRole?: SystemRole;
+  /** Display name (first name preferred). */
+  userName?: string;
+  /** Full name for avatar initials. */
+  userFullName?: string;
+  /** Department color key for avatar. */
+  userDepartment?: string | null;
+  /** Optional avatar image URL — falls back to initials. */
+  userAvatarUrl?: string | null;
+  /** Practice name shown as the avatar menu header. */
+  practiceName?: string;
 }
 
-export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
+export function AppSidebar({
+  userRole = 'staff',
+  userName,
+  userFullName,
+  userDepartment,
+  userAvatarUrl,
+  practiceName,
+}: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isDark, toggle } = useTheme();
   const isAdmin = userRole === 'brik_admin' || userRole === 'admin';
   const isPlatformAdmin = userRole === 'brik_admin';
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  const menuItems: MenuItemData[] = [
+    { id: 'profile', label: 'My Profile', onClick: () => { setMenuOpen(false); router.push('/settings/account'); } },
+    { id: 'signout', label: 'Sign Out', onClick: handleLogout },
+  ];
 
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (item.platformAdminOnly && !isPlatformAdmin) return false;
@@ -183,17 +276,8 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
         </nav>
       </div>
 
-      {/* Bottom actions */}
+      {/* Bottom actions — utilities first (help, theme), then identity (notifications, avatar). */}
       <div style={bottomGroupStyle}>
-        <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <IconButton
-            variant="secondary"
-            size="sm"
-            icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
-            label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            onClick={toggle}
-          />
-        </Tooltip>
         <Tooltip content="Help & User Guide" placement="right" delay={600}>
           <IconButton
             variant="secondary"
@@ -203,6 +287,52 @@ export function AppSidebar({ userRole = 'staff' }: AppSidebarProps) {
             onClick={() => window.open('/guide', '_blank', 'noopener,noreferrer')}
           />
         </Tooltip>
+        <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
+          <IconButton
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
+            label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={toggle}
+          />
+        </Tooltip>
+        <Tooltip content="Notifications" placement="right" delay={600}>
+          <NotificationBell dropdownPosition={notificationsPopoverPosition} />
+        </Tooltip>
+        <div style={accountWrapStyle}>
+          <IconButton
+            variant="ghost"
+            size="md"
+            label="User menu"
+            onClick={() => setMenuOpen(prev => !prev)}
+            icon={
+              <UserAvatar
+                name={userFullName ?? userName ?? '?'}
+                departmentColorKey={userDepartment}
+                avatarUrl={userAvatarUrl}
+                size="md"
+              />
+            }
+          />
+          {menuOpen && (
+            <div style={menuFloatStyle}>
+              {practiceName && (
+                <div
+                  style={menuHeaderLabelStyle}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  {practiceName}
+                </div>
+              )}
+              <Menu
+                items={menuItems}
+                isOpen={true}
+                onClose={() => setMenuOpen(false)}
+                style={menuInsideWrapperStyle}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </aside>
   );

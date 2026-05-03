@@ -41,21 +41,21 @@ if [[ ! -f "$DIRTY_MARKER" ]]; then
 
   cd "$PROJECT_ROOT"
 
-  DIRTY_COUNT=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
-  if [[ "$DIRTY_COUNT" -gt 0 ]]; then
-    BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-    echo ""
-    echo "⚠️  SESSION GUARD: $DIRTY_COUNT uncommitted change(s) on '$BRANCH'."
-    echo "   These may be from a prior session. Review before continuing:"
-    echo ""
-    git status --short 2>/dev/null | head -15
-    if [[ "$DIRTY_COUNT" -gt 15 ]]; then
-      echo "   ... and $((DIRTY_COUNT - 15)) more"
-    fi
-    echo ""
-    echo "   → Commit, stash, or discard before starting new work."
-    echo ""
+# Check for uncommitted changes
+DIRTY_COUNT=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$DIRTY_COUNT" -gt 0 ]]; then
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+  echo ""
+  echo "⚠️  SESSION GUARD: $DIRTY_COUNT uncommitted change(s) on '$BRANCH'."
+  echo "   These may be from a prior session. Review before continuing:"
+  echo ""
+  git status --short 2>/dev/null | head -15
+  if [[ "$DIRTY_COUNT" -gt 15 ]]; then
+    echo "   ... and $((DIRTY_COUNT - 15)) more"
   fi
+  echo ""
+  echo "   → Commit, stash, or discard before starting new work."
+  echo ""
 fi
 
 exit 0

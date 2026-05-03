@@ -113,14 +113,26 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 
 | Environment | Project Ref | Purpose |
 | --- | --- | --- |
-| Development | `zneuygoeorhkuhktmuld` | Local dev + staging (`.env.local`) |
-| Production | **NOT YET PROVISIONED** | Required before soft launch |
+| Staging / Dev | `zneuygoeorhkuhktmuld` (`renew-pms-staging`) | Local dev + staging branch deploys (`.env.local`) — has test personas + plus-addressed emails |
+| Production | `bbuimkdpmuggrszwenmg` (`renew-pms-production`) | Real customer data — provisioned 2026-05-02, clean schema, no users |
 
-> **BEFORE SOFT LAUNCH:** Provision a dedicated production Supabase project (Pro plan). Dev project must NEVER serve production client data.
+- CLI default-linked to staging via `scripts/project.env`. To run commands against prod: `supabase link --project-ref bbuimkdpmuggrszwenmg`, then **always re-link to staging** (`supabase link --project-ref zneuygoeorhkuhktmuld`) before continuing day-to-day work.
+- Credentials: 1Password — `Renew PMS — Supabase Dev` (staging) / `Renew PMS — Production DB` (prod, contains `db-password`, `project-ref`, `url`, `anon-key`, `service-role-key`).
+- RLS: 17/17 tables enabled, 38 policies — applied to both projects. See `~/.claude/skills/supabase-workflow.md` for patterns.
 
-- CLI linked to dev project: `supabase/config.toml` → `project_id = "renew-pms"`
-- Credentials: 1Password — "Renew PMS — Supabase Dev" / "Renew PMS — Production DB"
-- RLS: 17/17 tables enabled, 38 policies. See `~/.claude/skills/supabase-workflow.md` for patterns.
+### Migration mismatch — practice-specific seeds skipped on prod
+
+Seven historical migrations contain Renew Dental practice-specific data (test personas with `test+*@brikdesigns.com` plus-addresses + the hardcoded practice ID `d9f05b47-…`). They were marked applied on prod via `supabase migration repair --status applied <ver>` to skip execution. Affected migrations:
+
+- `00012_seed_practice_members.sql` — staff with test+ emails
+- `00013_seed_tasks.sql` — depends on 00012's members
+- `00016_seed_schedule_events.sql` — depends on 00012's members
+- `00020_seed_opening_office_template.sql` — practice-id-bound
+- `00021_seed_closing_office_template.sql` — practice-id-bound
+- `00024_seed_vendors.sql` — practice-id-bound
+- `00028_seed_vendor_contacts.sql` — depends on 00024
+
+Long-term fix tracked as a follow-up issue: refactor practice-specific seed content out of `supabase/migrations/` and into `supabase/seed.sql` so it only runs on `supabase db reset` for staging, never on prod schema migrations.
 
 ## Integrations
 
@@ -229,6 +241,21 @@ Always query the Storybook MCP for BDS component props before writing JSX. Endpo
 
 **Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
 
+## Naming conventions
+
+### "Sidebar" / "header" (renew language) ≠ `<PageHeader>` (BDS component)
+
+The global app shell chrome and the per-route content header are **two different concepts**. Don't conflate.
+
+| Concept | Renew code | BDS component | What it carries |
+| --- | --- | --- | --- |
+| **Global app shell chrome** | [`AppSidebar.tsx`](src/components/AppSidebar.tsx) | none — BDS `<NavBar>` is `surface-web`, banned for product apps | Logomark + nav icons (top); help / theme toggle / notifications / avatar menu (bottom). Avatar menu carries practice name + profile + sign-out. |
+| **Per-route content header** | (was renew-local — deleted in [#127](https://github.com/brikdesigns/renew-pms/pull/127)) | `<PageHeader>` from `@brikdesigns/bds` | Page title + subtitle + breadcrumbs + page-level actions + tabs |
+
+**Historical note.** Pre-2026-05-02, the global chrome lived in a top bar called `TopUtilityBar.tsx`, and the user often called it "the page header" in conversation. PR [#162](https://github.com/brikdesigns/renew-pms/pull/162) migrated all of that chrome (avatar, notifications, theme toggle, section context, Add button) into `AppSidebar.tsx` per the Path B decision (closed [#101](https://github.com/brikdesigns/renew-pms/issues/101) / 2026-05-01); `TopUtilityBar.tsx` was deleted. References to "TopUtilityBar" in older audit docs are historical.
+
+**How to apply.** When the user says "header" or "page header" in renew, default-assume they mean BDS `<PageHeader>` (the per-route content header in the body) — that's the only "header"-shaped element in the post-#162 layout. When they're talking about avatars, notifications, the theme toggle, or global navigation, that's the **sidebar** (`AppSidebar.tsx`). When in doubt, name the component explicitly before proceeding. **Don't propose a new BDS top-bar variant for renew** — the Path B decision rules that out.
+
 ## Component Rules
 
 ### BDS first
@@ -252,7 +279,7 @@ Always query the Storybook MCP for BDS component props before writing JSX. Endpo
 
 ## Branch Workflow
 
-> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below and update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh)).
+> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below, update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh), and update the `target-branch` in [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml)).
 
 **All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
 

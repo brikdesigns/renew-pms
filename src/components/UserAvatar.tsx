@@ -50,9 +50,11 @@ function getInitials(name: string): string {
  *
  * Color logic (single source of truth):
  * 1. If `department` is provided → department light bg + department text color
- * 2. Fallback → brand primary bg + inverse text
+ * 2. Fallback (no department assigned) → muted bg + primary text — neutral
+ *    "no signal" treatment. Avoids co-opting brand-primary, which fails
+ *    WCAG AA contrast in the Renew theme (white on light purple = ~2.43:1).
  *
- * Used in: UsersTable, TopUtilityBar, ProfileCard, ViewUserSheet, etc.
+ * Used in: UsersTable, AppSidebar, ProfileCard, ViewUserSheet, etc.
  */
 export function UserAvatar({
   name,
@@ -73,8 +75,8 @@ export function UserAvatar({
     bg = deptColors.light;
     fg = deptColors.text;
   } else {
-    bg = color.background.brandPrimary;
-    fg = color.text.inverse;
+    bg = color.background.muted;
+    fg = color.text.primary;
   }
 
   const baseStyle: CSSProperties = {
