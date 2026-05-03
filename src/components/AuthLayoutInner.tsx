@@ -44,10 +44,17 @@ const scheduleStyle: CSSProperties = {
   paddingBottom: 0,
 };
 
-// Tasks: board scrolls horizontally, so no right padding.
+// Tasks + Requests: flex column so the board fills remaining height under the
+// PageHeader. No right padding — the board scrolls horizontally to its right edge.
 const tasksStyle: CSSProperties = {
-  ...pageStyle,
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  paddingTop: space.md,
+  paddingLeft: space.xl,
   paddingRight: 0,
+  paddingBottom: space.xl,
 };
 
 interface AuthLayoutInnerProps {

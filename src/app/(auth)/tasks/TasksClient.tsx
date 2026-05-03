@@ -653,7 +653,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* ── Page header — title + right-aligned actions ── */}
       <div style={{ paddingRight: space.xl }}>
         <PageHeader
