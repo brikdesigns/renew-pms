@@ -26,7 +26,7 @@ const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', fle
 
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
+  paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
   gap: gap.md,
 };
 
@@ -39,7 +39,7 @@ const countBadge: CSSProperties = {
 
 const filterGroupStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 

@@ -4,9 +4,11 @@ import { usePathname } from 'next/navigation';
 import type { CSSProperties, ReactNode } from 'react';
 import { space } from '@/lib/tokens';
 
-// Default page layout — edge-to-edge horizontally so the BDS PageHeader
-// (padding-less since 0.57.0) lines up flush with body content. Vertical
-// gap between PageHeader and body lives in this container's flex `gap`.
+// Default page layout. Single source of truth for page-level horizontal inset
+// after BDS 0.57.0 made <PageHeader> edge-to-edge — title, subtitle, body
+// content, and the PageHeader bottom-divider all share `paddingInline: space.xl`
+// so they line up at the same column. Vertical gap between PageHeader and body
+// lives in this container's flex `gap`.
 const pageStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -14,12 +16,14 @@ const pageStyle: CSSProperties = {
   gap: space.lg,
   paddingTop: space.md,
   paddingBottom: space.xl,
+  paddingInline: space.xl,
   overflowY: 'auto',
 };
 
 // Settings has its own scroll container (settings/layout.tsx bodyStyle).
 // overflow: hidden here prevents a double scroll container that reveals
 // the gray app-shell background behind the white settings body.
+// Horizontal inset is owned by settings/layout.tsx bodyStyle, not here.
 const fullBleedSettingsStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -32,12 +36,13 @@ const fullBleedScrollStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  paddingInline: space.xl,
   overflowY: 'auto',
 };
 
-// Schedule: flex column so the calendar fills remaining height. Edge-to-edge
-// horizontally; `paddingBottom: 0` lets the calendar time grid bleed to the
-// bottom edge. Vertical gap between PageHeader and calendar via flex `gap`.
+// Schedule: flex column so the calendar fills remaining height. Horizontal
+// inset matches the rest of the app; `paddingBottom: 0` lets the calendar
+// time grid bleed to the bottom edge.
 const scheduleStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -46,11 +51,12 @@ const scheduleStyle: CSSProperties = {
   overflow: 'hidden',
   paddingTop: space.md,
   paddingBottom: 0,
+  paddingInline: space.xl,
 };
 
 // Tasks + Requests: flex column so the board fills remaining height under the
-// PageHeader. Edge-to-edge horizontally so PageHeader and Board align with the
-// main content boundary; vertical gap between them via flex `gap`.
+// PageHeader. Horizontal inset matches the rest of the app; vertical gap
+// between PageHeader and Board via flex `gap`.
 const tasksStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -59,6 +65,7 @@ const tasksStyle: CSSProperties = {
   overflow: 'hidden',
   paddingTop: space.md,
   paddingBottom: space.xl,
+  paddingInline: space.xl,
 };
 
 interface AuthLayoutInnerProps {
