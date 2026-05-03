@@ -4,11 +4,15 @@ import { usePathname } from 'next/navigation';
 import type { CSSProperties, ReactNode } from 'react';
 import { space } from '@/lib/tokens';
 
+// Default page layout — edge-to-edge horizontally so the BDS PageHeader
+// (padding-less since 0.57.0) lines up flush with body content. Vertical
+// gap between PageHeader and body lives in this container's flex `gap`.
 const pageStyle: CSSProperties = {
   flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: space.lg,
   paddingTop: space.md,
-  paddingLeft: space.xl,
-  paddingRight: space.xl,
   paddingBottom: space.xl,
   overflowY: 'auto',
 };
@@ -31,31 +35,29 @@ const fullBleedScrollStyle: CSSProperties = {
   overflowY: 'auto',
 };
 
-// Schedule: flex column so the calendar fills remaining height, with page padding.
-// paddingBottom: 0 lets the calendar time grid bleed to the bottom edge.
+// Schedule: flex column so the calendar fills remaining height. Edge-to-edge
+// horizontally; `paddingBottom: 0` lets the calendar time grid bleed to the
+// bottom edge. Vertical gap between PageHeader and calendar via flex `gap`.
 const scheduleStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  gap: space.lg,
   overflow: 'hidden',
   paddingTop: space.md,
-  paddingLeft: space.xl,
-  paddingRight: space.xl,
   paddingBottom: 0,
 };
 
 // Tasks + Requests: flex column so the board fills remaining height under the
-// PageHeader. Symmetric horizontal padding keeps PageHeader (full-bleed via flush)
-// aligned with the Board's left+right edges. Horizontal overflow scrolls inside
-// the padded area.
+// PageHeader. Edge-to-edge horizontally so PageHeader and Board align with the
+// main content boundary; vertical gap between them via flex `gap`.
 const tasksStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  gap: space.lg,
   overflow: 'hidden',
   paddingTop: space.md,
-  paddingLeft: space.xl,
-  paddingRight: space.xl,
   paddingBottom: space.xl,
 };
 

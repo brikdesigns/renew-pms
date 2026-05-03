@@ -32,7 +32,7 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingRight: space.xl };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 // Surface shell that wraps the table. Mirrors the dashboard card pattern
 // (background.primary + shadow.sm + space.lg padding + border.radius.lg) so
@@ -164,7 +164,6 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
       <div style={wrapStyle}>
         <PageHeader
           title="My Requests"
-          flush
           actions={<AddRequestButton onSelect={handleAddSelect} />}
         />
         <div style={emptyWrapStyle}>
@@ -192,7 +191,6 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
     <div style={wrapStyle}>
       <PageHeader
         title="My Requests"
-        flush
         actions={<AddRequestButton onSelect={handleAddSelect} />}
       />
 

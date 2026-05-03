@@ -546,7 +546,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <PageHeader
         title="Requests"
-        flush
         actions={
           <>
             <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
