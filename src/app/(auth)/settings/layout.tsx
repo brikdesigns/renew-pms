@@ -13,17 +13,23 @@ const settingsShellStyle: CSSProperties = {
   width: '100%',
 };
 
-// Settings shell scroll container. Owns the page-level horizontal inset for
-// every settings detail page — the BDS PageHeader (post-0.57.0, edge-to-edge)
-// and the body content below share the same column via this paddingInline.
+// Settings shell scroll container. Owns the page-level horizontal inset and
+// vertical rhythm for every settings detail page — the BDS PageHeader
+// (post-0.57.0, edge-to-edge) and the body content below share the same
+// column via paddingInline, and `gap` provides the PageHeader → body
+// spacing that the non-settings shells (pageStyle, tasksStyle, scheduleStyle
+// in AuthLayoutInner) already define.
 const bodyStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
   display: 'flex',
   flexDirection: 'column',
+  gap: space.lg,
+  paddingTop: space.md,
+  paddingBottom: space.xl,
+  paddingInline: space.xl,
   overflowY: 'auto',
   backgroundColor: color.page.primary,
-  paddingInline: space.xl,
 };
 
 // ─── Layout ──────────────────────────────────────────────────────────────────

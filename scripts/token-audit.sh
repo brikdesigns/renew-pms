@@ -408,6 +408,41 @@ else
   echo -e "  ${GREEN}Clean${NC}"
 fi
 
+# ── 16. .bds-* selectors in consumer CSS (ratchet) ──────────────────
+# Renew CSS must not target BDS internal class names. Every `.bds-*`
+# selector in src/ is a consumer-side override of BDS internals, which
+# silently masks BDS published behavior across releases (the failure
+# mode that produced PR #220 — `.bds-page-header` override masking the
+# 0.57.0 lean PageHeader for an entire release). Real divergences
+# belong in BDS as a prop/variant, not as a consumer CSS rule.
+# See issue #221 audit for the full taxonomy and BDS issues filed.
+#
+# Ratchet: the existing offenders are catalogued in #221 and pending
+# BDS API work to retire. Until then, we lock the count so a NEW
+# `.bds-*` selector can't sneak in. Decrease BDS_SELECTOR_BASELINE
+# in the same PR that removes selectors.
+BDS_SELECTOR_BASELINE=32
+section ".bds-* selectors in consumer CSS (ratchet — baseline ${BDS_SELECTOR_BASELINE})"
+
+BDS_SELECTOR_HITS=$(find "$SRC" -type f -name "*.css" \
+  | xargs grep -nE '^\s*\.bds-' 2>/dev/null \
+  || true)
+
+BDS_SELECTOR_COUNT=$(count_matches "$BDS_SELECTOR_HITS")
+if [ "$BDS_SELECTOR_COUNT" -gt "$BDS_SELECTOR_BASELINE" ]; then
+  NEW_COUNT=$((BDS_SELECTOR_COUNT - BDS_SELECTOR_BASELINE))
+  echo -e "  ${RED}${BDS_SELECTOR_COUNT} .bds-* selector(s) in consumer CSS — ${NEW_COUNT} above baseline of ${BDS_SELECTOR_BASELINE}${NC}"
+  echo -e "  ${DIM}New consumer-side overrides of BDS internals are not allowed. File as a BDS issue, add the prop/variant in BDS, then consume it. See issue #221 for the existing-offenders queue.${NC}"
+  echo "$BDS_SELECTOR_HITS" | head -20
+  VIOLATIONS=$((VIOLATIONS + NEW_COUNT))
+elif [ "$BDS_SELECTOR_COUNT" -lt "$BDS_SELECTOR_BASELINE" ]; then
+  echo -e "  ${YELLOW}${BDS_SELECTOR_COUNT} .bds-* selector(s) — below baseline of ${BDS_SELECTOR_BASELINE}; lower BDS_SELECTOR_BASELINE in scripts/token-audit.sh to lock the gain${NC}"
+elif [ "$BDS_SELECTOR_COUNT" -eq 0 ]; then
+  echo -e "  ${GREEN}Clean${NC}"
+else
+  echo -e "  ${DIM}${BDS_SELECTOR_COUNT} .bds-* selector(s) — at baseline; #221 BDS-issue queue must drain to lower it${NC}"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────
 echo ""
 echo "========================================="
