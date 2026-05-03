@@ -66,17 +66,6 @@ const cardTitleStyle: CSSProperties = {
   margin: 0,
 };
 
-const cardLinkStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.semibold,
-  color: color.text.brand,
-  textDecoration: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.xs,
-};
-
 const listStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -307,14 +296,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <div style={cardTitleStyle}>
                 {isStaff ? 'Your Overdue Tasks' : isManager ? 'Department Overdue Tasks' : 'Overdue Tasks'}
-              </h2>
+              </div>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedOverdueTasks.length}
               </span>
             </div>
-            <Link href="/tasks" style={cardLinkStyle}>
+            <Link href="/tasks" className="bds-text-link">
               View All
             </Link>
           </div>
@@ -353,9 +342,9 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <div style={cardTitleStyle}>
                 {isStaff ? 'Your Progress' : isManager ? 'Department Progress' : 'Today\u2019s Progress'}
-              </h2>
+              </div>
             </div>
           </div>
           {/* Top row: ring + stats spread across right */}
@@ -399,10 +388,10 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
         {showOnboarding && (
           <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
             <div style={cardHeaderStyle}>
-              <h2 style={cardTitleStyle}>
+              <div style={cardTitleStyle}>
                 {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
-              </h2>
-              <Link href="/training" style={cardLinkStyle}>
+              </div>
+              <Link href="/training" className="bds-text-link">
                 View All
               </Link>
             </div>
@@ -444,14 +433,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <div style={cardTitleStyle}>
                 {isStaff ? 'Your Requests' : isManager ? 'Department Requests' : 'Recent Requests'}
-              </h2>
+              </div>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedRequests.length}
               </span>
             </div>
-            <Link href="/requests" style={cardLinkStyle}>
+            <Link href="/requests" className="bds-text-link">
               View All
             </Link>
           </div>
