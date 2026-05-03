@@ -118,6 +118,16 @@ export async function POST(request: Request) {
     actionLink = data.properties.action_link;
   }
 
+  // Recovery-type magic links for users with email_confirmed_at=null are
+  // rejected as "otp_expired" before TTL — see #186. Confirm immediately so
+  // re-invites and any recovery flow for these users work. Idempotent.
+  const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
+    email_confirm: true,
+  });
+  if (confirmError) {
+    console.error('[invite] email_confirm failed:', confirmError.message);
+  }
+
   // Step 2: Upsert profile with the provided details
   const { error: profileError } = await admin
     .from('profiles')
