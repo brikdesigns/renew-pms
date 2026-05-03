@@ -75,7 +75,7 @@ const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`,
+  paddingBlock: space.md,
   borderBottom: `1px solid ${color.border.muted}`,
 };
 
@@ -98,7 +98,6 @@ const subHeaderCountStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
-  paddingInline: space.xl,
 };
 
 // typeChipStyle removed — TypeChip now uses BDS Tag

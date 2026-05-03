@@ -20,6 +20,9 @@ export const settingsPlaceholderStyle: CSSProperties = {
   fontSize: font.size.body.sm,
 };
 
+// Horizontal inset is provided by settings/layout.tsx bodyStyle (single source
+// of truth). This style only owns the inter-section vertical rhythm between
+// DataSection blocks on read-mode profile pages.
 export const contentStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -28,5 +31,4 @@ export const contentStyle: CSSProperties = {
   alignItems: 'flex-start',
   paddingTop: '40px',      // no exact BDS token (between space.xl=32px and space.huge=48px)
   paddingBottom: '80px',   // layout-specific, no BDS token
-  paddingInline: space.xl, // 32px
 };

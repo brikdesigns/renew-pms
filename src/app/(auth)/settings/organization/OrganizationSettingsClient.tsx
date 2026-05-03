@@ -165,7 +165,7 @@ export function OrganizationSettingsClient() {
         }
         tabs={
           <TabBar
-            variant="text"
+            variant="tab"
             items={ORG_TABS.map((tab) => ({
               label: tab.label,
               active: activeTab === tab.key,

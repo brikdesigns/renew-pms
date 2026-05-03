@@ -29,14 +29,14 @@ const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const subHeaderStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`,
+  paddingBlock: space.md,
 };
 const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
 const countBadge: CSSProperties = {
   fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
   color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };

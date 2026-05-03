@@ -60,7 +60,7 @@ const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`,
+  paddingBlock: space.md,
   borderBottom: `1px solid ${color.border.primary}`,
 };
 
@@ -92,7 +92,7 @@ const subHeaderCountStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
-  padding: `0 ${space.xl} ${space.xl}`,
+  paddingBottom: space.xl,
 };
 
 const typeChipStyle: CSSProperties = {
