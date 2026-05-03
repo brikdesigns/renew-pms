@@ -353,14 +353,11 @@ body {
   }
 
   /*
-   * PageHeader: align horizontal padding to renew body content (32px = --padding-xl)
-   * vs. BDS's 80px Figma spec, and add a bottom border for header/body separation.
-   * Keeps title left-aligned with table/field content below.
+   * PageHeader override REMOVED — was masking BDS 0.57.0 (lean PageHeader,
+   * 1px bottom border with `:has(.bds-page-header__tabs)` suppression). Renew
+   * now consumes BDS as designed, with no consumer-side overrides of BDS
+   * internal classes.
    */
-  .bds-page-header {
-    padding-inline: var(--padding-xl);
-    border-bottom: var(--border-width-md) solid var(--border-secondary);
-  }
 }
 
 /* ── Settings sub-nav entrance animation ── */
