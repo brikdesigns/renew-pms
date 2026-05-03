@@ -3,20 +3,18 @@
 /**
  * Renew PMS wrapper around the canonical DevFeedbackWidget in @brikdesigns/bds.
  *
- * Two render modes, selected by env flag:
+ * Two render modes, selected by env flag and asserted explicitly via the
+ * BDS `variant` prop (shipped in @brikdesigns/bds@0.55.0, brik-bds#383):
  *
  *   Slot mode (NEXT_PUBLIC_ENABLE_DEV_TOOLS=true or NODE_ENV=development)
- *     The widget registers as a slot inside BrikDevBar. We defer mounting
- *     until the bar is present so the BDS widget's internal devBarPresent
- *     check catches it on first render — prevents a brief FAB flash before
- *     the slot is reachable.
+ *     `variant="slot"` — registers with BrikDevBar; the BDS widget seeds
+ *     devBarPresent=true so no FAB flashes during shell load.
  *
  *   FAB mode (NEXT_PUBLIC_ENABLE_FEEDBACK_FAB=true, no DevBar)
- *     The widget renders immediately as a standalone floating action button.
- *     This is the customer-facing beta feedback path.
+ *     `variant="fab"` — renders the standalone floating action button
+ *     directly. This is the customer-facing beta feedback path.
  */
 
-import { useEffect, useState } from 'react';
 import { DevFeedbackWidget as BdsDevFeedbackWidget } from '@brikdesigns/bds';
 
 const SLOT_MODE =
@@ -27,26 +25,11 @@ const FAB_MODE =
   !SLOT_MODE && process.env.NEXT_PUBLIC_ENABLE_FEEDBACK_FAB === 'true';
 
 export function DevFeedbackWidget() {
-  const [barReady, setBarReady] = useState(false);
-
-  useEffect(() => {
-    if (!SLOT_MODE) return;
-    if (typeof window === 'undefined') return;
-
-    const iv = setInterval(() => {
-      if (window.BrikDevBar) {
-        setBarReady(true);
-        clearInterval(iv);
-      }
-    }, 100);
-    return () => clearInterval(iv);
-  }, []);
-
   if (!SLOT_MODE && !FAB_MODE) return null;
-  if (SLOT_MODE && !barReady) return null;
 
   return (
     <BdsDevFeedbackWidget
+      variant={SLOT_MODE ? 'slot' : 'fab'}
       endpoint="/api/feedback"
       contextLabel="Page"
     />
