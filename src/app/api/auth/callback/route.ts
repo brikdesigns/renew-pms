@@ -30,8 +30,13 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${redirect}`);
     }
+    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
   }
 
-  // Auth code exchange failed — redirect to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  // No code param → legacy implicit-flow callback. Tokens (or errors) are in
+  // the URL hash, which the server cannot read. Forward to the redirect
+  // destination unchanged; the browser preserves the hash across redirects,
+  // and @supabase/ssr's createBrowserClient on the destination page auto-
+  // detects the session via detectSessionInUrl (default true).
+  return NextResponse.redirect(`${origin}${redirect}`);
 }
