@@ -168,14 +168,6 @@
   display: none;
 }
 
-/* ─── Chip size fix — match border box across active/inactive states ────────── */
-/* primary-solid has no border; secondary-light has border-width-md (2px).
-   Add a transparent border so the box model stays consistent in both states. */
-
-.bds-chip--primary-solid {
-  border: var(--border-width-md) solid transparent;
-}
-
 /* ─── Scrollbar styling ──────────────────────────────────────────────────────── */
 
 .fc .fc-scroller::-webkit-scrollbar {

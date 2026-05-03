@@ -421,7 +421,7 @@ fi
 # BDS API work to retire. Until then, we lock the count so a NEW
 # `.bds-*` selector can't sneak in. Decrease BDS_SELECTOR_BASELINE
 # in the same PR that removes selectors.
-BDS_SELECTOR_BASELINE=32
+BDS_SELECTOR_BASELINE=28
 section ".bds-* selectors in consumer CSS (ratchet — baseline ${BDS_SELECTOR_BASELINE})"
 
 BDS_SELECTOR_HITS=$(find "$SRC" -type f -name "*.css" \
