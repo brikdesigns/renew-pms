@@ -1,0 +1,35 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental user provisioning  |  *** EXECUTE ***
+  prod: bbuimkdpmuggrszwenmg  |  practice: cf392bc9-d987-4ce4-acec-b65133b5a24e  |  18 users
+═══════════════════════════════════════════════════════════════
+Target practice: Renew Dental
+
+Pre-flight: all 18 role names resolve.
+
+email                              | user      | profile   | member
+-----------------------------------|-----------|-----------|----------
+drgray@renewdentaltn.com           | reused    | updated   | inserted
+chris@renewdentaltn.com            | created   | updated   | inserted
+office@renewdentaltn.com           | created   | updated   | inserted
+operations@renewdentaltn.com       | created   | updated   | inserted
+tessakay06@hotmail.com             | created   | updated   | inserted
+konnerbarefoot123@me.com           | created   | updated   | inserted
+samantha.rodriguez8@gmail.com      | created   | updated   | inserted
+sophiamattson72@gmail.com          | created   | updated   | inserted
+ivonneslife1980@gmail.com          | created   | updated   | inserted
+aviigitol0120@gmail.com            | created   | updated   | inserted
+jahammond087@gmail.com             | created   | updated   | inserted
+shelby2219@gmail.com               | created   | updated   | inserted
+ely23carrillo@gmail.com            | created   | updated   | inserted
+destinykerrda@gmail.com            | created   | updated   | inserted
+oliviamoreland@gmail.com           | created   | updated   | inserted
+cleasx4@comcast.net                | created   | updated   | inserted
+jbibee16@outlook.com               | created   | updated   | inserted
+sproctor1390@gmail.com             | created   | updated   | inserted
+
+Auth users: 17 created, 1 reused
+Practice members: 18 inserted, 0 unchanged
+
+Prod practice_members for Renew Dental: 19
+
+Done.
