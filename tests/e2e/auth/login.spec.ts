@@ -23,14 +23,14 @@ test.describe('Login Page', () => {
     await expect(page.getByText('Sign in to your practice')).toBeVisible();
     await expect(page.getByLabel('Email address')).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
   });
 
   test('shows error on invalid credentials', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('nonexistent@example.com');
     await page.getByLabel('Password', { exact: true }).fill('wrongpassword');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await expect(page.getByText(/invalid|credentials|error/i)).toBeVisible({ timeout: 10_000 });
   });
@@ -39,7 +39,7 @@ test.describe('Login Page', () => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('abbey+brikadmin@brikdesigns.com');
     await page.getByLabel('Password', { exact: true }).fill('WrongPassword!');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await expect(page.getByText(/invalid|credentials|error/i)).toBeVisible({ timeout: 10_000 });
   });
@@ -50,7 +50,7 @@ test.describe('Authenticated Login', () => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('abbey+brikadmin@brikdesigns.com');
     await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await page.waitForURL('**/dashboard**', { timeout: 15_000 });
     expect(page.url()).toContain('/dashboard');
@@ -60,7 +60,7 @@ test.describe('Authenticated Login', () => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill('abbey+owner@brikdesigns.com');
     await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await page.waitForURL('**/dashboard**', { timeout: 15_000 });
     expect(page.url()).toContain('/dashboard');

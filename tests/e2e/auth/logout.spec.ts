@@ -20,7 +20,7 @@ test.describe('Logout (Tier 0.3)', () => {
     await page.goto('/login');
     await page.getByLabel('Email address').fill(TEST_EMAIL);
     await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.waitForURL('**/dashboard**', { timeout: 15_000 });
 
     // 2. Open the user menu and click Sign Out
