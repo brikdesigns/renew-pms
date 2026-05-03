@@ -292,20 +292,6 @@ body {
     background-color: var(--color-purple-lighter);
   }
 
-  /* Board columns: allow vertical scroll on items but no horizontal scroll.
-     BDS clips the column when a background is set — override to visible so
-     cards don't get clipped and horizontal overflow stays on the board only. */
-  .bds-board-column {
-    overflow: visible;
-  }
-  .bds-board-column[style*="background"] {
-    overflow: visible;
-  }
-  .bds-board-column__items {
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
   /* Drag preview — browser captures this snapshot before RAF removes it */
   .bds-board-card--drag-preview {
     transform: rotate(2deg) scale(1.02);
