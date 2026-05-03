@@ -657,7 +657,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       {/* ── Page header — title + right-aligned actions + view tabs ── */}
       <PageHeader
         title="Tasks"
-        flush
         actions={
           <>
             {hasOverdueInView && (

@@ -9,7 +9,7 @@ import { gap, space, border } from '@/lib/tokens';
 // never flashes between auth-resolve and data-load.
 export default function RequestsLoading() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, paddingRight: space.xl }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div
         style={{
           display: 'flex',
