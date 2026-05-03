@@ -82,6 +82,23 @@ export async function POST(request: Request) {
   if (existingProfile?.id) {
     userId = existingProfile.id;
 
+    // Recovery-type magic links for users with email_confirmed_at=null are
+    // rejected as "otp_expired" before TTL — see #186. Confirm BEFORE
+    // generating the recovery link so the token is accepted at click.
+    // Idempotent for already-confirmed users.
+    //
+    // CRITICAL: this confirm step belongs ONLY on the recovery branch.
+    // Doing it on the invite branch (below) invalidates the type='invite'
+    // token because the invite click IS the email confirmation — the user
+    // would see otp_expired on a brand-new invite. The original #188 fix
+    // applied this to both branches and broke new-user invites at launch.
+    const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+    if (confirmError) {
+      console.error('[invite] email_confirm failed (recovery path):', confirmError.message);
+    }
+
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
@@ -97,6 +114,12 @@ export async function POST(request: Request) {
     }
     actionLink = data.properties.action_link;
   } else {
+    // Invite path: type='invite' creates the auth user with
+    // email_confirmed_at=NULL. The link click confirms the email and
+    // redirects to the password-set flow. We MUST NOT pre-confirm via
+    // updateUserById here — doing so invalidates the invite token and
+    // surfaces as otp_expired at click. The recovery branch above is
+    // the only correct place for the confirm call.
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'invite',
       email,
@@ -122,16 +145,6 @@ export async function POST(request: Request) {
     }
     userId = data.user.id;
     actionLink = data.properties.action_link;
-  }
-
-  // Recovery-type magic links for users with email_confirmed_at=null are
-  // rejected as "otp_expired" before TTL — see #186. Confirm immediately so
-  // re-invites and any recovery flow for these users work. Idempotent.
-  const { error: confirmError } = await admin.auth.admin.updateUserById(userId, {
-    email_confirm: true,
-  });
-  if (confirmError) {
-    console.error('[invite] email_confirm failed:', confirmError.message);
   }
 
   // Step 2: Upsert profile with the provided details
