@@ -7,8 +7,6 @@ import { Button, PasswordInput, TextInput } from '@brikdesigns/bds';
 import { color, font, gap, space, border, shadow } from '@/lib/tokens';
 import type { CSSProperties } from 'react';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-
 // ─── Layout ──────────────────────────────────────────────────────────────────
 
 const pageStyle: CSSProperties = {
@@ -129,10 +127,16 @@ export default function LoginPage() {
     setError(null);
 
     const supabase = createClient();
+    // Use the live page origin (not build-time NEXT_PUBLIC_SITE_URL) so the
+    // PKCE code-verifier cookie set by signInWithOAuth lands on the same
+    // host that the OAuth callback runs on. Mismatch (e.g. user starts on a
+    // deploy permalink, redirectTo points at the branch alias) results in
+    // "PKCE code verifier not found in storage" — the cookie was set on
+    // a different cookie jar than the one the callback reads from. See #195.
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${SITE_URL}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
