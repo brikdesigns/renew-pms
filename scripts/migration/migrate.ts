@@ -315,9 +315,10 @@ async function stepC(state: State): Promise<State> {
   }
   console.log(`  [c] vendor_contacts: ${DRY_RUN ? `would write ${contactRows.length}` : `wrote ${contactRows.length}`}`);
 
-  // 4. Equipment — null team_id; null vendor_id if it points to a non-allowed vendor
+  // 4. Equipment — null team_id (out of scope), null created_by (FK to profiles
+  //    we're not migrating), null vendor_id if it points to a non-allowed vendor.
   const eqResult = await copyTable('c/equipment', 'equipment', pid, (row: any) => {
-    const next = { ...row, team_id: null };
+    const next = { ...row, team_id: null, created_by: null };
     if (next.vendor_id && next.vendor_id !== allowedVendorId) {
       next.vendor_id = null;
     }
@@ -339,7 +340,15 @@ async function stepD(state: State): Promise<State> {
   if (!state.prod_practice_id) throw new Error('step a must complete first');
   const pid = state.prod_practice_id;
 
-  const t = await copyTable('d/task_templates', 'task_templates', pid);
+  // task_templates has two user-shaped FKs we can't resolve on prod:
+  //   - created_by → profiles (we're not migrating profiles)
+  //   - assigned_member_id → practice_members (we're not migrating members)
+  // assigned_role_id / department_id stay — they FK to reference tables we did migrate.
+  const t = await copyTable('d/task_templates', 'task_templates', pid, (row: any) => ({
+    ...row,
+    created_by: null,
+    assigned_member_id: null,
+  }));
   const c = await copyTable('d/checklist_items', 'checklist_items', pid);
 
   state.steps.d = {
