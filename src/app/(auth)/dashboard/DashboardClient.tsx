@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Card, CardTitle, Meter, PageHeader, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, CardTitle, Meter, PageHeader, ProgressCircle, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -139,31 +139,6 @@ const listItemSubStyle: CSSProperties = {
   fontWeight: font.weight.regular,
   color: color.text.secondary,
 };
-
-// ─── Progress ring (SVG donut) ───────────────────────────────────────────────
-
-function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
-  const stroke = 10;
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-
-  return (
-    <svg width={size} height={size} style={{ display: 'block' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color.background.muted} strokeWidth={stroke} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke={color.background.brandPrimary} strokeWidth={stroke}
-        strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text x="50%" y="50%" textAnchor="middle" dy="0.35em"
-        style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, fill: color.text.primary }}>
-        {pct}%
-      </text>
-    </svg>
-  );
-}
 
 // ─── Bar chart ───────────────────────────────────────────────────────────────
 
@@ -349,7 +324,7 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           </div>
           {/* Top row: ring + stats spread across right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: space.xl }}>
-            <ProgressRing pct={progressPct} />
+            <ProgressCircle value={progressPct} size="lg" showValue label="Today's progress" />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.green }}>{progressStats.completed}</div>
