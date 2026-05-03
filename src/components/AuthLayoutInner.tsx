@@ -45,7 +45,9 @@ const scheduleStyle: CSSProperties = {
 };
 
 // Tasks + Requests: flex column so the board fills remaining height under the
-// PageHeader. No right padding — the board scrolls horizontally to its right edge.
+// PageHeader. Symmetric horizontal padding keeps PageHeader (full-bleed via flush)
+// aligned with the Board's left+right edges. Horizontal overflow scrolls inside
+// the padded area.
 const tasksStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
@@ -53,7 +55,7 @@ const tasksStyle: CSSProperties = {
   overflow: 'hidden',
   paddingTop: space.md,
   paddingLeft: space.xl,
-  paddingRight: 0,
+  paddingRight: space.xl,
   paddingBottom: space.xl,
 };
 
