@@ -104,6 +104,50 @@ export default function ResetPasswordClient() {
 
   useEffect(() => {
     const supabase = createClient();
+
+    // Invite/recovery magic links land here with tokens in the URL fragment
+    // (e.g. #access_token=...&refresh_token=...&type=invite). The browser
+    // client's `detectSessionInUrl` is meant to auto-process this, but
+    // @supabase/ssr's PKCE-default createBrowserClient does not reliably
+    // pick up implicit-flow hash tokens — getUser() returns null and we
+    // wrongly render "link expired".
+    //
+    // Fix: parse the hash explicitly and call setSession() to establish
+    // the session deterministically, then strip the hash so the next
+    // render doesn't re-process. Falls back to getUser() when there are
+    // no tokens in the URL (recovery link already consumed, etc.).
+    if (typeof window === 'undefined') return;
+
+    const rawHash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(rawHash);
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+
+    if (accessToken && refreshToken) {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ data, error }) => {
+          if (error || !data.session) {
+            console.error('[reset-password] setSession failed:', error?.message);
+            setSessionState('missing');
+            return;
+          }
+          // Strip the hash so a refresh doesn't re-process the same tokens
+          // and so the access_token isn't visible in the URL bar.
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname + window.location.search,
+          );
+          setSessionState('valid');
+        });
+      return;
+    }
+
+    // No URL tokens — check existing session (e.g. user navigated here
+    // directly with a previously-established session).
     supabase.auth.getUser().then(({ data }) => {
       setSessionState(data.user ? 'valid' : 'missing');
     });
