@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Code-bearing URL must never be cached — a cached redirect could replay an
+// already-consumed OAuth code and surface as `invalid_grant`. See #195.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
@@ -30,7 +35,12 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${redirect}`);
     }
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+    // Surface the real reason on the client so we can collapse hypotheses
+    // (`invalid_grant` = code already consumed; `pkce_*` = verifier cookie
+    // didn't survive; otherwise = config/network). See #195.
+    console.error('[auth/callback] exchangeCodeForSession failed:', error.message, error.status);
+    const reasonParam = encodeURIComponent(error.message);
+    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed&reason=${reasonParam}`);
   }
 
   // No code param → legacy implicit-flow callback. Tokens (or errors) are in
