@@ -1,0 +1,12 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental migration  |  step a  |  *** EXECUTE ***
+  staging: zneuygoeorhkuhktmuld  →  prod: bbuimkdpmuggrszwenmg
+═══════════════════════════════════════════════════════════════
+  state: (no state file yet)
+
+[a] practices + offices
+  [a] minted prod_practice_id: cf392bc9-d987-4ce4-acec-b65133b5a24e
+  [a] preserving office id: e589607f-c225-4e40-b71d-8d327a6f22c2
+  [a] inserted practice + office
+
+Done.

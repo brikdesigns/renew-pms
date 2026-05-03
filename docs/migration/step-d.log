@@ -1,0 +1,13 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental migration  |  step d  |  *** EXECUTE ***
+  staging: zneuygoeorhkuhktmuld  →  prod: bbuimkdpmuggrszwenmg
+═══════════════════════════════════════════════════════════════
+  state: /Users/nickstanerson/Documents/Github/product/renew-pms-worktrees/migrate-renew-dental-to-prod/docs/migration/prod-ids.json
+
+[d] task_templates + checklist_items
+  [d/task_templates] task_templates: read 13 from staging, 13 to write
+  [d/task_templates] task_templates: wrote 13, prod count = 13
+  [d/checklist_items] checklist_items: read 133 from staging, 133 to write
+  [d/checklist_items] checklist_items: wrote 133, prod count = 133
+
+Done.

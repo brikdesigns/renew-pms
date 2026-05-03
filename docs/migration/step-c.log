@@ -1,0 +1,14 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental migration  |  step c  |  *** EXECUTE ***
+  staging: zneuygoeorhkuhktmuld  →  prod: bbuimkdpmuggrszwenmg
+═══════════════════════════════════════════════════════════════
+  state: /Users/nickstanerson/Documents/Github/product/renew-pms-worktrees/migrate-renew-dental-to-prod/docs/migration/prod-ids.json
+
+[c] vendor + vendor_contacts + equipment
+  [c] allowed vendor id: a3fd3cc4-26f4-45f5-af7b-e248e8d8c882
+  [c] vendors: wrote 1
+  [c] vendor_contacts: wrote 1
+  [c/equipment] equipment: read 39 from staging, 39 to write
+  [c/equipment] equipment: wrote 39, prod count = 39
+
+Done.
