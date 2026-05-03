@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # session-guard.sh — PreToolUse hook for Edit/Write operations
-# Warns Claude when the working tree has uncommitted changes from a prior session.
-# Runs once per session (creates a temp marker to avoid repeat warnings).
+#
+# Two checks, each fires at most once per parent shell:
+#   1. Warns Claude when the working tree has uncommitted changes from a
+#      prior session.
+#   2. Delegates Storybook autostart to the shared BDS helper
+#      (brik-bds/scripts/ensure-storybook.sh) so the behavior stays in
+#      one place across all BDS consumers.
 #
 # Hook input: JSON on stdin with tool_name and tool_input fields.
 # Exit 0 = allow, non-zero = block (we always allow but warn via stdout).
@@ -18,19 +23,23 @@ case "$TOOL_NAME" in
 esac
 
 PROJECT_ROOT="/Users/nickstanerson/Documents/GitHub/product/renew-pms"
-MARKER="/tmp/.renew-pms-session-guard-$$"
 
-# Only run once per session (keyed to parent shell PID)
+# Once-per-session keying
 PARENT_PID=$(ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')
-MARKER="/tmp/.renew-pms-session-guard-${PARENT_PID:-unknown}"
+DIRTY_MARKER="/tmp/.renew-pms-session-guard-${PARENT_PID:-unknown}"
 
-if [[ -f "$MARKER" ]]; then
-  exit 0
+# ── Storybook autostart (delegated to shared helper) ──────────────────
+ENSURE_STORYBOOK="$HOME/Documents/GitHub/brik/brik-bds/scripts/ensure-storybook.sh"
+if [[ -x "$ENSURE_STORYBOOK" ]]; then
+  export SESSION_GUARD_PARENT_PID="${PARENT_PID:-unknown}"
+  echo "$INPUT" | "$ENSURE_STORYBOOK" || true
 fi
 
-touch "$MARKER"
+# ── Dirty-tree warning ────────────────────────────────────────────────
+if [[ ! -f "$DIRTY_MARKER" ]]; then
+  touch "$DIRTY_MARKER"
 
-cd "$PROJECT_ROOT"
+  cd "$PROJECT_ROOT"
 
 # Check for uncommitted changes
 DIRTY_COUNT=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
