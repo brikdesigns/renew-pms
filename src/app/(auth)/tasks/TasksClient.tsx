@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, PageHeader, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -111,7 +111,7 @@ const poolColumnDropTarget: CSSProperties = {
   boxShadow: shadow.md,
 };
 
-const TASK_VIEW_SEGMENTS = [
+const TASK_VIEW_TABS: { label: string; value: TaskView }[] = [
   { label: 'All Tasks', value: 'all' },
   { label: 'My Tasks', value: 'mine' },
   { label: 'Open Tasks', value: 'open' },
@@ -654,58 +654,60 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      {/* ── Page header — title + right-aligned actions ── */}
-      <div style={{ paddingRight: space.xl }}>
-        <PageHeader
-          title="Tasks"
-          flush
-          actions={
-            <>
-              {hasOverdueInView && (
-                <Tooltip content="Overdue tasks present" placement="top">
-                  <Dot status="warning" size="sm" pulse />
-                </Tooltip>
-              )}
-              <IconButton
-                variant="secondary"
-                size="sm"
-                icon={<Icon icon={icon.filter} />}
-                label="Toggle filters"
-                onClick={() => setFiltersVisible((p) => !p)}
-                style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-              />
-              {canAddTask && (
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-                    Add Task
-                  </Button>
-                  <Menu
-                    isOpen={addMenuOpen}
-                    onClose={() => setAddMenuOpen(false)}
-                    items={ADD_TASK_TYPES.map(t => ({
-                      id: t.id,
-                      label: t.label,
-                      description: t.desc,
-                      icon: <Icon icon={t.icon} />,
-                      onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
-                    }))}
-                    style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
-                  />
-                </div>
-              )}
-            </>
-          }
-        />
-      </div>
+      {/* ── Page header — title + right-aligned actions + view tabs ── */}
+      <PageHeader
+        title="Tasks"
+        flush
+        actions={
+          <>
+            {hasOverdueInView && (
+              <Tooltip content="Overdue tasks present" placement="top">
+                <Dot status="warning" size="sm" pulse />
+              </Tooltip>
+            )}
+            <IconButton
+              variant="secondary"
+              size="sm"
+              icon={<Icon icon={icon.filter} />}
+              label="Toggle filters"
+              onClick={() => setFiltersVisible((p) => !p)}
+              style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
+            />
+            {canAddTask && (
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+                  Add Task
+                </Button>
+                <Menu
+                  isOpen={addMenuOpen}
+                  onClose={() => setAddMenuOpen(false)}
+                  items={ADD_TASK_TYPES.map(t => ({
+                    id: t.id,
+                    label: t.label,
+                    description: t.desc,
+                    icon: <Icon icon={t.icon} />,
+                    onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
+                  }))}
+                  style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
+                />
+              </div>
+            )}
+          </>
+        }
+        tabs={
+          <TabBar
+            variant="tab"
+            items={TASK_VIEW_TABS.map((t) => ({
+              label: t.label,
+              active: taskView === t.value,
+              onClick: () => setTaskView(t.value),
+            }))}
+          />
+        }
+      />
 
-      {/* ── Sub-toolbar — view segments + date picker ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${space.sm} ${space.xl} ${space.sm} 0` }}>
-        <SegmentedControl
-          items={TASK_VIEW_SEGMENTS}
-          value={taskView}
-          onChange={(v) => setTaskView(v as TaskView)}
-          size="sm"
-        />
+      {/* ── Sub-toolbar — date picker (filter/add live in PageHeader actions; view tabs in PageHeader tabs) ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: `${space.sm} 0` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
@@ -723,7 +725,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
       {/* ── Collapsible filter chips ── */}
       {filtersVisible && (
-        <div style={{ paddingRight: space.xl, paddingBottom: space.sm }}>
+        <div style={{ paddingBottom: space.sm }}>
           <TaskFilterBar
             departments={departments}
             selectedDepartment={selectedDepartment}

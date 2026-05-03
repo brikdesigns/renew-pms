@@ -32,6 +32,9 @@ export function DevFeedbackWidget() {
       variant={SLOT_MODE ? 'slot' : 'fab'}
       endpoint="/api/feedback"
       contextLabel="Page"
+      // BDS default is bottom-left (next to a dev sidebar); renew pins to
+      // bottom-right so it doesn't overlap AppSidebar chrome on the left.
+      fabPosition={{ bottom: '16px', right: '16px' }}
     />
   );
 }
