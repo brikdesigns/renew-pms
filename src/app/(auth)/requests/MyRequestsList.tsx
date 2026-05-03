@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Button, Menu, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Button, Menu, PageHeader, useSheetStack } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -32,23 +32,7 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, paddingRight: space.xl };
-
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} 0`, borderBottom: `1px solid ${color.border.muted}`,
-};
-
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-
-const titleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
-
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 // Surface shell that wraps the table. Mirrors the dashboard card pattern
 // (background.primary + shadow.sm + space.lg padding + border.radius.lg) so
@@ -178,13 +162,10 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
   if (!loading && requests.length === 0) {
     return (
       <div style={wrapStyle}>
-        <div style={subHeaderStyle}>
-          <div style={subHeaderLeftStyle}>
-            <h3 style={titleStyle}>My Requests</h3>
-            <span style={countBadge}>0</span>
-          </div>
-          <AddRequestButton onSelect={handleAddSelect} />
-        </div>
+        <PageHeader
+          title="My Requests"
+          actions={<AddRequestButton onSelect={handleAddSelect} />}
+        />
         <div style={emptyWrapStyle}>
           <h2 style={emptyTitleStyle}>No Requests Yet</h2>
           <p style={emptyDescStyle}>
@@ -208,13 +189,10 @@ export function MyRequestsList({ memberId }: MyRequestsListProps) {
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <h3 style={titleStyle}>My Requests</h3>
-          <span style={countBadge}>{loading ? '–' : sorted.length}</span>
-        </div>
-        <AddRequestButton onSelect={handleAddSelect} />
-      </div>
+      <PageHeader
+        title="My Requests"
+        actions={<AddRequestButton onSelect={handleAddSelect} />}
+      />
 
       <div style={tableShellStyle}>
         <Table size="default" flush>

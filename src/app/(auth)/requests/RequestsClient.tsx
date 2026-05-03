@@ -4,8 +4,13 @@ import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
-import { Tag, Chip, Button, IconButton, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@brikdesigns/bds';
+import { Tag, Chip, Button, IconButton, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
+import { StatusBadge } from '@/components/StatusBadge';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { Menu, MenuItem } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
@@ -19,14 +24,17 @@ import { color, font, space, gap, border, shadow } from '@/lib/tokens';
 
 // ─── Status pipeline ────────────────────────────────────────────────────────
 
+// Board columns for the "Open" tab. `closed` is intentionally excluded —
+// closed requests live on the dedicated "Closed" tab as a table view.
 const STATUS_PIPELINE = [
   { key: 'submitted',         label: 'Submitted' },
   { key: 'in_review',         label: 'In Review' },
   { key: 'in_progress',       label: 'In Progress' },
   { key: 'waiting_on_vendor', label: 'Waiting on Vendor' },
   { key: 'resolved',          label: 'Resolved' },
-  { key: 'closed',            label: 'Closed' },
 ] as const;
+
+type RequestsView = 'open' | 'closed';
 
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -91,28 +99,6 @@ function timeAgo(dateStr: string): string {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${space.md} 0`,
-  paddingRight: space.xl,
-};
-
-const headerLeftStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: space.sm,
-};
-
-const titleStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold,
-  color: color.text.primary,
-  margin: 0,
-};
-
 const countBadgeStyle: CSSProperties = {
   fontFamily: font.family.label,
   fontSize: font.size.body.xs,
@@ -121,12 +107,6 @@ const countBadgeStyle: CSSProperties = {
   backgroundColor: color.surface.secondary,
   padding: `2px ${gap.md}`,
   borderRadius: border.radius.sm,
-};
-
-const filterBarStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.md,
 };
 
 const columnBaseStyle: CSSProperties = {
@@ -154,10 +134,28 @@ const columnDropTargetStyle: CSSProperties = {
   boxShadow: shadow.md,
 };
 
+// ─── Closed-tab table styles (mirrors MyRequestsList.tableShellStyle) ─────
+
+const closedTableShellStyle: CSSProperties = {
+  flex: 1,
+  overflowX: 'auto',
+  backgroundColor: color.background.primary,
+  borderRadius: border.radius.lg,
+  boxShadow: shadow.sm,
+  padding: space.lg,
+};
+
+// TODO(bds-migration): body-cell bg is a local patch matching MyRequestsList.
+// Promote to BDS Table.css once the in-flight BDS session reconciles.
+const closedBodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
+const closedNameCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, fontWeight: font.weight.medium, color: color.text.primary };
+const closedSecondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontSize: font.size.label.sm, color: color.text.secondary };
+
 // ─── Loading skeleton ──────────────────────────────────────────────────────
 
 // Stagger card counts so the loading state looks like a real board, not a grid.
-const SKELETON_CARDS_PER_COLUMN = [3, 2, 2, 1, 0, 0];
+// Five columns now that `closed` lives on its own tab as a table.
+const SKELETON_CARDS_PER_COLUMN = [3, 2, 2, 1, 0];
 
 function BoardCardSkeleton() {
   return (
@@ -401,6 +399,7 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterPriority, setFilterPriority] = useState('All Priorities');
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [view, setView] = useState<RequestsView>('open');
   const { showToast: showToastTop } = useToast();
 
   // Drag-and-drop state
@@ -455,6 +454,12 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
         requests: byStatus.get(s.key) ?? [],
       }));
   }, [filtered]);
+
+  // Closed-tab list — only `closed` status, newest first.
+  const closedRequests = useMemo(
+    () => filtered.filter(r => r.status === 'closed').sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [filtered]
+  );
 
   // ── Drag-and-drop handlers ──────────────────────────────────────────────────
 
@@ -538,35 +543,44 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   }, [requests, refetch, updateOptimistic, showToastTop]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)' }}>
-      <div style={headerStyle}>
-        <div style={headerLeftStyle}>
-          <h3 style={titleStyle}>Requests</h3>
-          <span style={countBadgeStyle}>{filtered.length}</span>
-        </div>
-        <div style={filterBarStyle}>
-          <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
-          <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
-          <div style={{ position: 'relative' }}>
-            <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-              Add Request
-            </Button>
-            <Menu
-              isOpen={addMenuOpen}
-              onClose={() => setAddMenuOpen(false)}
-              items={ADD_MENU_CATEGORIES.map(c => ({
-                id: c.id,
-                label: c.label,
-                description: c.desc,
-                icon: <Icon icon={c.icon} />,
-                onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
-              }))}
-              style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
-            />
-          </div>
-        </div>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <PageHeader
+        title="Requests"
+        actions={
+          <>
+            <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
+            <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
+            <div style={{ position: 'relative' }}>
+              <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+                Add Request
+              </Button>
+              <Menu
+                isOpen={addMenuOpen}
+                onClose={() => setAddMenuOpen(false)}
+                items={ADD_MENU_CATEGORIES.map(c => ({
+                  id: c.id,
+                  label: c.label,
+                  description: c.desc,
+                  icon: <Icon icon={c.icon} />,
+                  onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
+                }))}
+                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+              />
+            </div>
+          </>
+        }
+        tabs={
+          <TabBar
+            variant="tab"
+            items={[
+              { label: 'Open', active: view === 'open', onClick: () => setView('open') },
+              { label: 'Closed', active: view === 'closed', onClick: () => setView('closed') },
+            ]}
+          />
+        }
+      />
 
+      {view === 'open' ? (
       <Board style={{ flex: 1, minHeight: 0 }}>
         {columns.map((col, colIdx) => {
           const isDropTarget = dropTargetKey === col.key;
@@ -665,6 +679,56 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
           );
         })}
       </Board>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <div style={closedTableShellStyle}>
+            <Table size="default" flush>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Submitted</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableSkeleton columns={5} />
+                ) : closedRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell style={closedBodyCellStyle} colSpan={5}>
+                      <div style={{ padding: space.lg, textAlign: 'center', color: color.text.muted, fontSize: font.size.body.sm, fontFamily: font.family.body }}>
+                        No closed requests
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : closedRequests.map(req => (
+                  <TableRow key={req.id} onClick={() => openRequest(req)} style={{ cursor: 'pointer' }}>
+                    <TableCell style={closedBodyCellStyle}>
+                      <span style={closedNameCellStyle}>{req.title}</span>
+                    </TableCell>
+                    <TableCell style={closedBodyCellStyle}>
+                      <Tag size="sm" style={{ backgroundColor: color.background.secondary, color: color.text.secondary }}>
+                        {CATEGORY_LABELS[req.category] ?? req.category}
+                      </Tag>
+                    </TableCell>
+                    <TableCell style={closedBodyCellStyle}>
+                      <PriorityBadge priority={req.urgency} />
+                    </TableCell>
+                    <TableCell style={closedBodyCellStyle}>
+                      <StatusBadge status={req.status} />
+                    </TableCell>
+                    <TableCell style={closedBodyCellStyle}>
+                      <span style={closedSecondaryCellStyle}>{timeAgo(req.created_at)}</span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
 
       <SubmitRequestSheet
         isOpen={submitOpen || editing !== null}
