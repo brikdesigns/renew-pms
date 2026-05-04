@@ -1,9 +1,23 @@
 import { NextResponse } from 'next/server';
-import * as Sentry from '@sentry/nextjs';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 
+const NOTION_API = 'https://api.notion.com/v1';
+const NOTION_VERSION = '2022-06-28';
+const BACKLOG_DATABASE_ID = '32097d34-ed28-8051-8225-eb6800c2e05a';
+const PRODUCT_NAME = 'Renew PMS';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+
+/** Map widget feedback types to Backlog Scope values */
+const SCOPE_MAP: Record<string, string> = {
+  bug: 'Critical',
+  ui: 'Normal',
+  suggestion: 'Low',
+  question: 'Low',
+};
+
+/** Map widget types to Notion Feedback Type select values */
 const FEEDBACK_TYPE_MAP: Record<string, string> = {
   bug: 'Bug',
   ui: 'UI Issue',
@@ -11,32 +25,28 @@ const FEEDBACK_TYPE_MAP: Record<string, string> = {
   question: 'Question',
 };
 
-const PRIORITY_MAP: Record<string, string> = {
-  bug: 'critical',
-  ui: 'normal',
-  suggestion: 'low',
-  question: 'low',
+/** Emoji prefix per type for the title */
+const EMOJI_MAP: Record<string, string> = {
+  bug: '🐛',
+  ui: '🎨',
+  suggestion: '💡',
+  question: '❓',
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-const SENTRY_ORG_SLUG = 'brik-designs';
-const SENTRY_PROJECT_SLUG = 'renew-pms';
-
 /**
- * POST /api/feedback — Submit user feedback to Sentry.
+ * POST /api/feedback — Submit QA feedback to Notion Backlog.
  *
- * Two-step pattern:
- *   1. Sentry.captureMessage(...) creates an issue event via the standard
- *      error-event transport (proven reliable from Netlify serverless).
- *   2. POST /api/0/projects/.../user-feedback/ attaches feedback content to
- *      that issue. Visible in Sentry's "User Feedback" tab on the issue and
- *      queryable via the legacy user-feedback API.
- *
- * Why not Sentry.captureFeedback alone? Documented but does not transmit
- * reliably from @sentry/nextjs v10.44 in Netlify functions — events drop
- * before ingestion. See #262 → #264 → debugging notes in this PR.
+ * Notion is the canonical feedback destination — provides triage workflow,
+ * status, comments, and kanban view. Restored after a brief detour through
+ * Sentry routing (#262 → #266) which was scope creep, not architecture intent.
  */
 export async function POST(request: Request) {
+  const notionToken = process.env.NOTION_TOKEN;
+  if (!notionToken) {
+    console.error('[feedback] NOTION_TOKEN not configured in env');
+    return NextResponse.json({ error: 'Feedback service not configured' }, { status: 500 });
+  }
+
   const supabase = await createClient();
   const authResult = await requireAuth(supabase);
   if (authResult instanceof NextResponse) return authResult;
@@ -53,58 +63,38 @@ export async function POST(request: Request) {
   const email = authUser.profile.email ?? 'unknown';
   const role = authUser.profile.system_role ?? 'staff';
   const type = feedback_type ?? 'bug';
-  const typeLabel = FEEDBACK_TYPE_MAP[type] ?? 'Bug';
-  const priority = PRIORITY_MAP[type] ?? 'normal';
-  const fullUrl = page_url ? `${BASE_URL}${page_url}` : BASE_URL;
-  const titleText = description.trim().slice(0, 80);
+  const emoji = EMOJI_MAP[type] ?? '📝';
+  const title = `${emoji} ${description.trim().slice(0, 80)}${description.length > 80 ? '...' : ''}`;
 
-  const eventId = Sentry.withScope((scope) => {
-    scope.setLevel('info');
-    scope.setTags({
-      feedback_type: typeLabel,
-      priority,
-      role,
-      product: 'Renew PMS',
-      source: 'feedback-widget',
-      page_url: page_url ?? '/',
-    });
-    scope.setUser({ username: submitter, email });
-    scope.setContext('feedback', { description: description.trim(), url: fullUrl });
-    return Sentry.captureMessage(`[Feedback] ${typeLabel}: ${titleText}`);
+  const res = await fetch(`${NOTION_API}/pages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      parent: { database_id: BACKLOG_DATABASE_ID },
+      properties: {
+        Name: { title: [{ text: { content: title } }] },
+        Description: { rich_text: [{ text: { content: description.trim() } }] },
+        Submitter: { rich_text: [{ text: { content: `${submitter} (${email})` } }] },
+        'Feedback Type': { select: { name: FEEDBACK_TYPE_MAP[type] ?? 'Bug' } },
+        Role: { select: { name: role } },
+        Product: { select: { name: PRODUCT_NAME } },
+        Status: { status: { name: 'Not Started' } },
+        Scope: { select: { name: SCOPE_MAP[type] ?? 'Normal' } },
+        URL: { url: `${BASE_URL}${page_url}` },
+      },
+    }),
   });
 
-  const flushed = await Sentry.flush(2000);
-  if (!flushed) console.warn('[feedback] Sentry flush timed out — captureMessage event may not have transmitted');
-
-  const sentryToken = process.env.SENTRY_AUTH_TOKEN;
-  if (sentryToken) {
-    try {
-      const fbResp = await fetch(
-        `https://sentry.io/api/0/projects/${SENTRY_ORG_SLUG}/${SENTRY_PROJECT_SLUG}/user-feedback/`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${sentryToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            event_id: eventId,
-            name: submitter,
-            email,
-            comments: description.trim(),
-          }),
-        },
-      );
-      if (!fbResp.ok) {
-        const errText = await fbResp.text().catch(() => 'unknown');
-        console.warn(`[feedback] Sentry user-feedback POST failed: ${fbResp.status} — ${errText.slice(0, 200)}`);
-      }
-    } catch (err) {
-      console.warn('[feedback] Sentry user-feedback POST threw:', err);
-    }
-  } else {
-    console.warn('[feedback] SENTRY_AUTH_TOKEN not configured — feedback metadata not attached');
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    console.error('[feedback] Notion API error:', res.status, JSON.stringify(errBody));
+    return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
   }
 
-  return NextResponse.json({ id: eventId, status: 'submitted' });
+  const page = await res.json();
+  return NextResponse.json({ id: page.id, status: 'submitted' });
 }
