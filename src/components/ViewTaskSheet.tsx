@@ -79,7 +79,7 @@ const TASK_TYPE_DISPLAY: Record<string, string> = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate, headless = false }: ViewTaskSheetProps) {
+export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTaskCompleted, onNavigate: _onNavigate, headless = false }: ViewTaskSheetProps) {
   const configureSheet = useConfigureSheet();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('details');
@@ -121,11 +121,11 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       .then(data => { if (Array.isArray(data)) setItems(data); })
       .catch(err => console.error('[ViewTaskSheet] failed to load checklist:', err))
       .finally(() => setLoadingItems(false));
-  }, [isOpen, taskProp?.id]);
+  }, [isOpen, taskProp]);
 
-  // Reset tab when task changes
+  // Reset tab when task changes (id is the identity for "different task")
   useEffect(() => {
-    if (task) setActiveTab('details');
+    if (task?.id) setActiveTab('details');
   }, [task?.id]);
 
   // ── Derived ──

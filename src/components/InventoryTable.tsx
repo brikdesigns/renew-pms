@@ -64,7 +64,6 @@ export function InventoryTable() {
   const { equipment, setEquipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editing, setEditing] = useState<EquipmentItem | null>(null);
-  const [viewing, setViewing] = useState<EquipmentItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterCategory, setFilterCategory] = useState<string | undefined>();
   const [filterCompany, setFilterCompany] = useState<string | undefined>();
@@ -96,7 +95,6 @@ export function InventoryTable() {
   const handleEdit = (item: EquipmentItem) => { setEditing(item); setEditSheetOpen(true); };
   const handleEditClose = () => { setEditSheetOpen(false); setEditing(null); };
   const handleView = (item: EquipmentItem) => {
-    setViewing(item);
     const viewData: InventoryViewData = {
       id: item.id, name: item.name, status: item.status,
       department: item.department_name ?? '', departmentColor: item.department_color ?? 'blue',

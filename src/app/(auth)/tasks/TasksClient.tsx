@@ -219,7 +219,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   const [viewingTask, setViewingTask] = useState<TaskViewData | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const [addTaskType, setAddTaskType] = useState('');
 
   // ── Drag-and-drop state (Open Tasks board) ────────────────────────────────
   const [poolDraggingId, setPoolDraggingId] = useState<string | null>(null);
@@ -386,8 +385,10 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     || showOverdue;
 
   // ── Map raw task data to MockTask ──────────────────────────────────────────
+  // Wrapped in useCallback so the useMemo deps below stay stable (no recreation
+  // each render). Closes over no component state; deps are intentionally empty.
 
-  function toMockTask(t: typeof assignedTasks[number]): MockTask {
+  const toMockTask = useCallback((t: typeof assignedTasks[number]): MockTask => {
     const isOverdue = t.status === 'overdue';
     // Derive assignment shape from which FK is set on the task. Tasks have no
     // assignment_mode column, so the discriminator IS the FK presence.
@@ -426,7 +427,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       checklistTotal: t.checklist_total ?? 0,
       checklistCompleted: t.checklist_completed ?? 0,
     };
-  }
+  }, []);
 
   // ── Build "All Tasks" board (grouped by person) ────────────────────────────
 
@@ -448,7 +449,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       };
       return { person, tasks: memberTasks.map(toMockTask) };
     });
-  }, [assignedTasks]);
+  }, [assignedTasks, toMockTask]);
 
   // ── Build "Open Tasks" board (grouped by status) ──────────────────────────
 
@@ -458,7 +459,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       const colTasks = mapped.filter((t) => (col.statuses as readonly string[]).includes(t.status));
       return { ...col, tasks: colTasks };
     });
-  }, [poolTasks]);
+  }, [poolTasks, toMockTask]);
 
   // ── Overdue presence (drives the single indicator next to the filter icon) ─
 
@@ -685,7 +686,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
                     label: t.label,
                     description: t.desc,
                     icon: <Icon icon={t.icon} />,
-                    onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
+                    onClick: () => { setAddSheetOpen(true); setAddMenuOpen(false); },
                   }))}
                   style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
                 />
@@ -875,7 +876,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       />
       <AddTaskSheet
         isOpen={addSheetOpen}
-        onClose={() => { setAddSheetOpen(false); setAddTaskType(''); }}
+        onClose={() => { setAddSheetOpen(false); }}
         onSaved={refetchAll}
         members={members}
         departments={departments}

@@ -117,7 +117,7 @@ interface MyRequestsListProps {
 
 export function MyRequestsList({ memberId }: MyRequestsListProps) {
   const { requests, loading, refetch } = useRequests({ mine: memberId });
-  const { openSheet, closeAll } = useSheetStack();
+  const { openSheet } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
