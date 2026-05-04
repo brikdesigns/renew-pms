@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -38,7 +39,7 @@ export async function GET() {
     .eq('practice_id', practiceId)
     .order('created_at');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(data ?? []);
 }
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
     .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, created_at, updated_at')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   // Auto-spawn today's task instance if the new template is active+recurring
   // and its mode FK is set. Idempotent at the SQL layer, so callers don't need

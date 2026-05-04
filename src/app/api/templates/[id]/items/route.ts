@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -29,7 +30,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .order('sort_order');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(data ?? []);
 }
@@ -72,7 +73,7 @@ export async function PUT(
     .eq('template_id', id)
     .eq('practice_id', practiceId);
 
-  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  if (deleteError) return apiError(deleteError);
 
   if (body.length === 0) return NextResponse.json([]);
 
@@ -91,7 +92,7 @@ export async function PUT(
     .insert(rows)
     .select('id, label, sort_order, room_id, equipment_id, supply_category_id');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(data ?? []);
 }

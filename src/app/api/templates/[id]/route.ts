@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -42,7 +43,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   return NextResponse.json(data);
@@ -127,7 +128,7 @@ export async function PUT(
     .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, updated_at')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
 
   // Mirror the new assignment onto today's existing un-completed task
@@ -182,7 +183,7 @@ export async function DELETE(
     .eq('practice_id', practiceId)
     .select('id');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!deleted || deleted.length === 0) {
     return NextResponse.json({ error: 'Template not found' }, { status: 404 });
   }

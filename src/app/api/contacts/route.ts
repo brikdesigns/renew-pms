@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
@@ -23,7 +24,7 @@ export async function GET() {
     .eq('practice_id', practiceId)
     .order('name');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   const contacts = (data ?? []).map(c => {
     const vendor = Array.isArray(c.vendors) ? c.vendors[0] : c.vendors;

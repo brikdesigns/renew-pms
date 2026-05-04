@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAdmin } from '@/lib/auth';
@@ -97,7 +98,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
 
   // Count past requests for the same equipment (excludes current request)
@@ -201,7 +202,7 @@ export async function PATCH(
     .select('id')
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
 
   // ── Notifications (fire and forget) ────────────────────────────────────────
