@@ -434,7 +434,7 @@ No rollback needed for §5.D — individual user issues are handled per-user, no
   | `NEXT_PUBLIC_ENABLE_FEEDBACK_FAB` | `true` | (any — slot mode wins anyway) | beta feedback FAB on prod, per PR #133 |
   | `RESEND_API_KEY` | (same — same Resend account, verified per §5.A) | (same) | one Resend account, both contexts |
   | `CRON_SECRET` | NEW value — `openssl rand -hex 32`, store in 1P `Renew PMS — Production Cron Secret` | NEW value — different from prod, store in 1P `Renew PMS — Staging Cron Secret`, replace existing | per §1.3 — separate-per-context isolation |
-  | `NOTION_TOKEN` | (same) | (same) | for `/api/feedback` |
+  | ~~`NOTION_TOKEN`~~ | retired | retired | `/api/feedback` migrated to Sentry User Feedback (#258 follow-up) — env var safe to remove |
   | `SENTRY_AUTH_TOKEN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT` | (same) | (same) | one Sentry project; environment tag set by `NEXT_PUBLIC_DEPLOY_ENVIRONMENT` |
   | `PACKAGES_READ_TOKEN` | (same) | (same) | for `npm ci` during build |
 
