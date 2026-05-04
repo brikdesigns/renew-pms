@@ -209,7 +209,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
-  const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [selectedFrequency, setSelectedFrequency] = useState('All Frequencies');
   const [selectedPriority, setSelectedPriority] = useState('All Priorities');
@@ -690,21 +689,16 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         }
       />
 
-      {/* ── Filter bar row — alert left, date picker center, filter toggle right ── */}
+      {/* ── Filter bar row — date picker left, filter chips right ── */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
+        display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: gap.lg,
         paddingBlock: space.sm,
+        flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          {hasOverdueInView && (
-            <Tooltip content="Overdue tasks present" placement="top">
-              <Dot status="warning" size="sm" pulse />
-            </Tooltip>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
             fontFamily: font.family.label,
@@ -717,38 +711,22 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           </span>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <IconButton
-            variant="secondary"
-            size="sm"
-            icon={<Icon icon={icon.filter} />}
-            label="Toggle filters"
-            onClick={() => setFiltersVisible((p) => !p)}
-            style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-          />
-        </div>
+        <TaskFilterBar
+          departments={departments}
+          selectedDepartment={selectedDepartment}
+          onDepartmentChange={setSelectedDepartment}
+          selectedFrequency={selectedFrequency}
+          onFrequencyChange={setSelectedFrequency}
+          selectedPriority={selectedPriority}
+          onPriorityChange={setSelectedPriority}
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+          showResolved={showResolved}
+          onShowResolvedChange={setShowResolved}
+          showOverdue={showOverdue}
+          onShowOverdueChange={setShowOverdue}
+        />
       </div>
-
-      {/* ── Collapsible filter chips ── */}
-      {filtersVisible && (
-        <div style={{ paddingBottom: space.sm }}>
-          <TaskFilterBar
-            departments={departments}
-            selectedDepartment={selectedDepartment}
-            onDepartmentChange={setSelectedDepartment}
-            selectedFrequency={selectedFrequency}
-            onFrequencyChange={setSelectedFrequency}
-            selectedPriority={selectedPriority}
-            onPriorityChange={setSelectedPriority}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
-            showResolved={showResolved}
-            onShowResolvedChange={setShowResolved}
-            showOverdue={showOverdue}
-            onShowOverdueChange={setShowOverdue}
-          />
-        </div>
-      )}
 
       {/* ── Board ── */}
       {(() => {
