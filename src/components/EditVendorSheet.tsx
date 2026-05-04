@@ -82,6 +82,10 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
           .map(e => e.id),
       } : EMPTY_FORM);
     }
+    // `equipment` is intentionally omitted: this effect initializes the form
+    // when the sheet opens. Re-running it when equipment loads would clobber
+    // user edits. The follow-on effect below handles the late-load case.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData]);
 
   // Sync equipment_ids when equipment loads after the sheet is already open

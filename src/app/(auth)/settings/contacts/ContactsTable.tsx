@@ -17,6 +17,16 @@ import { AddContactSheet, type ContactEditData } from '@/components/AddContactSh
 import { TableSkeleton } from '@/components/TableSkeleton';
 import '../_settingsTableStyles.css';
 
+// Maps the user-facing filter labels to the canonical vendor type values
+// stored on `vendors.type`. Module-level so useMemo deps stay stable.
+const TYPE_FILTER_MAP: Record<string, string> = {
+  Equipment: 'equipment',
+  Software: 'software',
+  Service: 'service',
+  Lab: 'lab',
+  'Referring Practice': 'referring_practice',
+};
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type RecordType = 'companies' | 'contacts';
@@ -311,7 +321,6 @@ export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Vendor | null>(null);
-  const [viewing, setViewing] = useState<Vendor | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [filterType, setFilterType] = useState('All Types');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
@@ -355,10 +364,6 @@ export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>
   const typeOptions = ['All Types', 'Equipment', 'Software', 'Service', 'Lab', 'Referring Practice'] as const;
   const statusOptions = ['All Statuses', 'Active', 'Inactive'] as const;
 
-  const TYPE_FILTER_MAP: Record<string, string> = {
-    Equipment: 'equipment', Software: 'software', Service: 'service', Lab: 'lab', 'Referring Practice': 'referring_practice',
-  };
-
   const filteredVendors = useMemo(() => {
     return vendors.filter(v => {
       if (filterType !== 'All Types' && v.type !== TYPE_FILTER_MAP[filterType]) return false;
@@ -389,7 +394,6 @@ export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>
 
   const handleEdit = (v: Vendor) => { setEditing(v); setSheetOpen(true); };
   const handleView = (v: Vendor) => {
-    setViewing(v);
     openSheet('vendor', {
       id: v.id,
       vendor: v,
