@@ -60,5 +60,10 @@ export async function POST(request: Request) {
     },
   });
 
+  // Required in Netlify serverless — function may terminate before the in-flight
+  // Sentry POST completes, silently dropping the event. Initial #262 ship missed this.
+  const flushed = await Sentry.flush(2000);
+  if (!flushed) console.warn('[feedback] Sentry flush timed out — event may not have transmitted');
+
   return NextResponse.json({ id: eventId, status: 'submitted' });
 }
