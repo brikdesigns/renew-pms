@@ -27,6 +27,7 @@
     "health:auth": "./scripts/auth-health.sh",
     "health:db": "./scripts/db-health.sh",
     "audit:tokens": "./scripts/token-audit.sh",
+    "test:hooks": "./scripts/test-claude-hooks.sh",
     "postinstall": "fumadocs-mdx",
     "prepare": "husky",
     "storybook": "storybook dev -p 6007",

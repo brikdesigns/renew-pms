@@ -321,6 +321,7 @@ npm run db:diff          # Generate migration diff (--use-migra)
 npm run db:status        # List migration status
 npm run db:gen-types     # Regenerate src/types/database.types.ts from staging schema (run after migrations)
 npm run db:seed-test-users  # Seed test user accounts
+npm run test:hooks       # Smoke-test .claude/hooks/* (bash-leak-guard, secret-scanner)
 
 ./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
 ./scripts/agent-preflight.sh # Pre-task environment validation
@@ -334,6 +335,18 @@ npm run db:seed-test-users  # Seed test user accounts
 **After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.
 
 ## Enforcement
+
+### PreToolUse hooks (Claude Code session-time)
+
+Wired in [`.claude/settings.json`](.claude/settings.json). Run before the tool call lands — block dangerous operations BEFORE they hit disk, the shell, or the transcript.
+
+| Hook | Matcher | Blocks |
+| --- | --- | --- |
+| [`worktree-check.sh`](.claude/hooks/worktree-check.sh) | `SessionStart`, `Edit\|Write\|NotebookEdit` | Cross-worktree drift; primary worktree on a `task/*` branch |
+| [`secret-scanner.sh`](.claude/hooks/secret-scanner.sh) | `Edit\|Write\|NotebookEdit` | Writing recognizable secret shapes into source (Supabase JWT, `re_`, `sk-ant-`, GitHub PAT, AWS, private keys, DB URLs with embedded passwords, etc.) |
+| [`bash-leak-guard.sh`](.claude/hooks/bash-leak-guard.sh) | `Bash` | Commands that exfiltrate secrets to the transcript: `netlify env:list --plain/--json`, `cat ~/.secrets/*`, `cat .env*` (excl. `.example`/`.sample`), `bash/sh/zsh -x`, `set -x`, bare `env`/`printenv`, `op item get … --reveal` not captured into a variable or file. **This guards the 2026-05-02 incident class** — see [#168](https://github.com/brikdesigns/renew-pms/issues/168). Prevention beats rotation cadence. |
+
+Smoke-test the hooks: `npm run test:hooks` (runs [`scripts/test-claude-hooks.sh`](scripts/test-claude-hooks.sh) — 36 cases covering both block and allow paths).
 
 ### Pre-commit hooks (automatic)
 
