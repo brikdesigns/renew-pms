@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
@@ -8,7 +8,7 @@ import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput, Field } from 
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { TableSkeleton } from '@/components/TableSkeleton';
-import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
+import { color, gap, departmentColor } from '@/lib/tokens';
 import { useTeams, type Team } from '@/hooks/useTeams';
 import { useDepartments } from '@/hooks/useDepartments';
 import { useMembers } from '@/hooks/useMembers';
@@ -25,19 +25,7 @@ import {
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
-};
-
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
-
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
@@ -56,7 +44,18 @@ interface TeamFormData {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function TeamsTable() {
+/**
+ * Imperative handle for the parent's PageHeader Add button to trigger the
+ * EditTeamSheet (rendered inside TeamsTable). See TeamsSettingsClient.
+ */
+export type TeamsTableHandle = {
+  openAddSheet: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface TeamsTableProps {}
+
+export const TeamsTable = forwardRef<TeamsTableHandle, TeamsTableProps>(function TeamsTable(_props, ref) {
   const { teams, setTeams, loading } = useTeams();
   const { departments } = useDepartments();
   const { members } = useMembers();
@@ -68,17 +67,23 @@ export function TeamsTable() {
   const [viewing, setViewing] = useState<Team | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
+  // Bridge for the Add button hosted in PageHeader actions.
+  useImperativeHandle(ref, () => ({
+    openAddSheet: () => {
+      setEditing(null);
+      setForm({ name: '', department_id: '', is_active: true });
+      setEditOpen(true);
+    },
+  }));
+
   // Form state
   const [form, setForm] = useState<TeamFormData>({ name: '', department_id: '', is_active: true });
   const [saving, setSaving] = useState(false);
 
   const activeDepts = departments.filter(d => d.is_active && d.name !== '(G) All Departments');
 
-  const handleAdd = () => {
-    setEditing(null);
-    setForm({ name: '', department_id: '', is_active: true });
-    setEditOpen(true);
-  };
+  // handleAdd lives on the parent (TeamsSettingsClient) and triggers the
+  // sheet via the imperative ref (openAddSheet).
 
   const handleEdit = (t: Team) => {
     setEditing(t);
@@ -151,14 +156,8 @@ export function TeamsTable() {
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <h3 style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0 }}>Teams</h3>
-          <span style={countBadge}>{loading ? '–' : teams.length}</span>
-        </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Team</Button>
-      </div>
-
+      {/* Add Team + filter chrome live on the parent's PageHeader
+          (see TeamsSettingsClient). */}
       <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
@@ -313,4 +312,4 @@ export function TeamsTable() {
       />
     </div>
   );
-}
+});

@@ -104,7 +104,7 @@ const emptyState: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewTemplateSheet({ isOpen = true, onClose, template: templateProp, id, onEdit, onNavigate }: ViewTemplateSheetProps) {
+export function ViewTemplateSheet({ isOpen = true, onClose, template: templateProp, id, onEdit, onNavigate: _onNavigate }: ViewTemplateSheetProps) {
   const [activeTab, setActiveTab] = useState('details');
   const [fetched, setFetched] = useState<TemplateViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);

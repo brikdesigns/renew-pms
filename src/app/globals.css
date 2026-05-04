@@ -46,20 +46,21 @@
   }
 }
 
-:root {
-  --background: var(--color-grayscale-white);
-  --foreground: var(--color-grayscale-black);
-}
-
 html,
 body {
   height: 100%;
   margin: 0;
 }
 
+/* Body inherits theme-aware semantic tokens. Earlier code routed body
+   bg/color through `--background` / `--foreground` mapped to PRIMITIVE
+   grayscale tokens (--color-grayscale-white/black), which don't change
+   between light/dark themes. Result: body text stayed dark in dark mode
+   regardless of `--text-primary`'s correct white value. Use the semantic
+   tokens directly so body color follows the theme. */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--page-primary);
+  color: var(--text-primary);
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -150,6 +151,25 @@ body {
 }
 
 @layer client-overrides {
+  /*
+   * BDS PageHeader internal rhythm — clinical-density tuning.
+   *
+   * BDS 0.57.3 (brik-bds#419) ships four component-scoped CSS variables
+   * on `.bds-page-header` so consumers can dial in the right rhythm via
+   * cascade. Renew's clinical-PMS surface wants:
+   *   - Title↔subtitle gap one tier wider than the BDS default (12px vs 6px)
+   *   - Breathing room before the bottom divider (16px vs 0)
+   * Other knobs (--page-header-section-gap, --page-header-actions-gap)
+   * stay at their BDS defaults.
+   *
+   * This is variable-tuning of a public BDS override surface, not an
+   * internal-style override — see scripts/token-audit.sh §16 exemption.
+   */
+  .bds-page-header { /* bds-lint-ignore — variable tuning, see brik-bds#419 */
+    --page-header-content-gap: var(--padding-sm);
+    --page-header-padding-bottom: var(--padding-md);
+  }
+
   /* Table: white header, muted borders, no rounded corners */
   .bds-table-head {
     background-color: var(--background-primary);
@@ -177,36 +197,14 @@ body {
     font-family: var(--font-family-label);
   }
 
-  /* Select/Input placeholder: muted text color */
-  .bds-select__native,
-  .bds-text-input__input,
-  .bds-text-area__textarea {
-    color: var(--text-primary);
-  }
-
-  .bds-select__native option[value=""],
-  .bds-text-input__input::placeholder,
-  .bds-text-area__textarea::placeholder {
-    color: var(--text-muted);
-  }
-
-  /* Tags and Badges: uppercase, xs text, semibold */
-  .bds-tag,
-  .bds-badge {
-    text-transform: uppercase;
-    font-size: var(--label-tiny);
-    font-weight: var(--font-weight-semi-bold);
-  }
-
   /*
-   * Indicator height: 28px = 7 × 4px grid.
-   * BDS Badge/Tag sm natural height varies by content (26px text-only,
-   * 30px with icon). This locks both to 28px so any side-by-side
-   * pairing is always aligned. Upstream BDS fix pending.
+   * Native <select> empty-option color — match input placeholder muted-tone.
+   * BDS doesn't ship `<option>` styling; everything else in this group
+   * (filled-state color, ::placeholder color) was redundant with BDS
+   * defaults and was removed in #221.
    */
-  .bds-tag--sm,
-  .bds-badge--sm {
-    height: 28px;
+  .bds-select__native option[value=""] {
+    color: var(--text-muted);
   }
 
   /* Tags: tighter horizontal padding (xs instead of sm) */
@@ -262,12 +260,9 @@ body {
     padding: var(--padding-lg);
   }
 
-  /* Sheet: top-align close button with heading */
-  .bds-sheet__header,
-  .bds-sheet__header-top {
-    align-items: flex-start;
-  }
-
+  /* Sheet close button: zero top padding so the icon top-aligns with title.
+     BDS Sheet header already sets `align-items: flex-start`; the close
+     element ships with default vertical padding that nudges it down. */
   .bds-sheet__close {
     padding-top: 0;
   }
@@ -305,11 +300,6 @@ body {
     font-size: var(--label-lg);
   }
 
-  /* Menu items: one spacing step tighter than BDS default (md → sm) */
-  .bds-menu-item {
-    padding: var(--padding-sm);
-  }
-
   /* Board card title: one step smaller than BDS default (label-lg → label-md) */
   .bds-board-card__title {
     font-size: var(--label-md);
@@ -319,20 +309,6 @@ body {
   .bds-board-card__check:hover {
     border-color: var(--border-brand-primary);
     background-color: var(--color-purple-lighter);
-  }
-
-  /* Board columns: allow vertical scroll on items but no horizontal scroll.
-     BDS clips the column when a background is set — override to visible so
-     cards don't get clipped and horizontal overflow stays on the board only. */
-  .bds-board-column {
-    overflow: visible;
-  }
-  .bds-board-column[style*="background"] {
-    overflow: visible;
-  }
-  .bds-board-column__items {
-    overflow-y: auto;
-    overflow-x: hidden;
   }
 
   /* Drag preview — browser captures this snapshot before RAF removes it */

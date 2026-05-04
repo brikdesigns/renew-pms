@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Button, IconButton, useSheetStack } from '@brikdesigns/bds';
+import { IconButton, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditRoleSheet, type RoleFormData } from '@/components/EditRoleSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewRoleSheet, type RoleViewData } from '@/components/ViewRoleSheet';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, gap } from '@/lib/tokens';
 import { useRoles } from '@/hooks/useRoles';
 import type { Role } from '@/hooks/useRoles';
 import { useMembers } from '@/hooks/useMembers';
@@ -22,19 +22,7 @@ import '../_settingsTableStyles.css';
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
-};
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const subHeaderTitleStyle: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0,
-};
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
 // TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
@@ -44,7 +32,18 @@ const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function RolesTable() {
+/**
+ * Imperative handle for the parent's PageHeader Add button to trigger the
+ * EditRoleSheet (rendered inside RolesTable). See RolesSettingsClient.
+ */
+export type RolesTableHandle = {
+  openAddSheet: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface RolesTableProps {}
+
+export const RolesTable = forwardRef<RolesTableHandle, RolesTableProps>(function RolesTable(_props, ref) {
   const { roles, setRoles, loading } = useRoles();
   const { members } = useMembers();
   const { pushSheet } = useSheetStack();
@@ -55,7 +54,11 @@ export function RolesTable() {
   const [viewing, setViewing] = useState<Role | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  const handleAdd = () => { setEditing(null); setSheetOpen(true); };
+  // Bridge for the Add button hosted in PageHeader actions.
+  useImperativeHandle(ref, () => ({
+    openAddSheet: () => { setEditing(null); setSheetOpen(true); },
+  }));
+
   const handleEdit = (r: Role) => { setEditing(r); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
   const handleDelete = async () => {
@@ -108,14 +111,8 @@ export function RolesTable() {
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <h3 style={subHeaderTitleStyle}>Practice Roles</h3>
-          <span style={countBadge}>{loading ? '–' : roles.filter((r) => r.name !== 'Everyone').length}</span>
-        </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Role</Button>
-      </div>
-
+      {/* Add Role + filter chrome live on the parent's PageHeader
+          (see RolesSettingsClient). */}
       <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
@@ -174,4 +171,4 @@ export function RolesTable() {
       />
     </div>
   );
-}
+});

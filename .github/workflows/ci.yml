@@ -41,6 +41,8 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
       PACKAGES_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
     steps:
       - uses: actions/checkout@v6
@@ -50,6 +52,14 @@ jobs:
           node-version: 22
           cache: npm
 
+      - uses: supabase/setup-cli@v1
+        with:
+          # Pinned to match the local CLI version that generated the committed
+          # `src/types/database.types.ts`. Bump in lockstep with local upgrades:
+          # run `supabase upgrade` locally, `npm run db:gen-types`, then bump
+          # this version in the same PR.
+          version: 2.90.0
+
       - name: Install dependencies
         run: npm ci
 
@@ -58,6 +68,28 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Schema types drift check
+        # Regenerate src/types/database.types.ts from the staging schema and
+        # diff against the committed file. Fails if a developer ran a migration
+        # without regenerating the TS types — surfaces the bug class that
+        # caught us during the 2026-05-03 prod migration (assigned_user_id →
+        # assigned_member_id rename).
+        run: |
+          supabase gen types typescript --project-id "$SUPABASE_STAGING_REF" --schema public > /tmp/regen.types.ts
+          if ! diff -q src/types/database.types.ts /tmp/regen.types.ts > /dev/null; then
+            echo "::error::src/types/database.types.ts is out of sync with the staging schema."
+            echo ""
+            echo "Fix locally:"
+            echo "  npm run db:gen-types"
+            echo "  git add src/types/database.types.ts"
+            echo "  git commit -m 'chore(renew): regenerate Supabase types'"
+            echo ""
+            echo "Diff (committed → staging):"
+            diff src/types/database.types.ts /tmp/regen.types.ts || true
+            exit 1
+          fi
+          echo "Types match staging schema."
 
       - name: Unit tests
         run: npm run test

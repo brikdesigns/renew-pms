@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo, useCallback, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, useRef, useMemo, useCallback, type CSSProperties } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,7 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import type { DatesSetArg, DateSelectArg, EventInput } from '@fullcalendar/core';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, Chip, IconButton, Menu } from '@brikdesigns/bds';
+import { Chip, IconButton, Menu } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useMembers, type Member } from '@/hooks/useMembers';
@@ -156,7 +156,18 @@ const viewToggleBarStyle: CSSProperties = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ScheduleCalendar() {
+/**
+ * Imperative handle for the parent's PageHeader Add Event button to trigger
+ * the AddEventSheet rendered inside ScheduleCalendar. See SchedulePage.
+ */
+export type ScheduleCalendarHandle = {
+  openAddEventSheet: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ScheduleCalendarProps {}
+
+export const ScheduleCalendar = forwardRef<ScheduleCalendarHandle, ScheduleCalendarProps>(function ScheduleCalendar(_props, ref) {
   const calendarRef = useRef<FullCalendar>(null);
   const [currentView, setCurrentView] = useState<'timeGridWeek' | 'timeGridDay' | 'dayGridMonth'>('timeGridWeek');
   const [dateTitle, setDateTitle] = useState('');
@@ -236,6 +247,12 @@ export function ScheduleCalendar() {
     setSheetOpen(true);
   }, []);
 
+  // Bridge for the Add Event button hosted in PageHeader actions (see
+  // SchedulePage). The AddEventSheet stays rendered inside this component.
+  useImperativeHandle(ref, () => ({
+    openAddEventSheet: handleAddNew,
+  }));
+
   return (
     <div style={containerStyle}>
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
@@ -275,10 +292,8 @@ export function ScheduleCalendar() {
             />
           </div>
 
-          <Button variant="primary" size="sm" onClick={handleAddNew}>
-            Add New
-            <Icon icon={icon.chevronDown} style={{ marginLeft: '4px' }} />
-          </Button>
+          {/* Add Event lives on the parent's PageHeader actions
+              (see schedule/page.tsx → SchedulePage). */}
         </div>
       </div>
 
@@ -335,4 +350,4 @@ export function ScheduleCalendar() {
       />
     </div>
   );
-}
+});

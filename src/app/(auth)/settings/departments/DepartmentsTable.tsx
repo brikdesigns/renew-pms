@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Button, IconButton, useSheetStack } from '@brikdesigns/bds';
+import { IconButton, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { EditDepartmentSheet, type DepartmentFormData } from '@/components/EditDepartmentSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewDepartmentSheet, type DepartmentViewData } from '@/components/ViewDepartmentSheet';
-import { color, font, space, gap, border, departmentColor } from '@/lib/tokens';
+import { color, gap, border, departmentColor } from '@/lib/tokens';
 import { useDepartments } from '@/hooks/useDepartments';
 import type { Department } from '@/hooks/useDepartments';
 import { useRoles } from '@/hooks/useRoles';
@@ -24,19 +24,7 @@ import '../_settingsTableStyles.css';
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
-};
-
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
-
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
@@ -49,7 +37,19 @@ const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function DepartmentsTable() {
+/**
+ * Imperative handle exposed by DepartmentsTable. The settings page wrapper
+ * (`DepartmentsSettingsClient`) hosts the Add button in the PageHeader actions
+ * slot but the EditDepartmentSheet stays rendered inside this table.
+ */
+export type DepartmentsTableHandle = {
+  openAddSheet: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface DepartmentsTableProps {}
+
+export const DepartmentsTable = forwardRef<DepartmentsTableHandle, DepartmentsTableProps>(function DepartmentsTable(_props, ref) {
   const { pushSheet } = useSheetStack();
   const { departments, setDepartments, loading } = useDepartments();
   const { roles } = useRoles();
@@ -61,7 +61,12 @@ export function DepartmentsTable() {
   const [viewing, setViewing] = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  const handleAdd = () => { setEditing(null); setSheetOpen(true); };
+  // Bridge for the Add button hosted in PageHeader actions (see
+  // DepartmentsSettingsClient). Sheet stays rendered below.
+  useImperativeHandle(ref, () => ({
+    openAddSheet: () => { setEditing(null); setSheetOpen(true); },
+  }));
+
   const handleEdit = (d: Department) => { setEditing(d); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
   const handleDelete = async () => {
@@ -112,14 +117,8 @@ export function DepartmentsTable() {
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <h3 style={{ fontFamily: font.family.label, fontSize: font.size.label.md, fontWeight: font.weight.semibold, color: color.text.primary, margin: 0 }}>Departments</h3>
-          <span style={countBadge}>{loading ? '–' : visibleDepts.length}</span>
-        </div>
-        <Button variant="primary" size="sm" onClick={handleAdd}>Add Department</Button>
-      </div>
-
+      {/* Add Department + filter chrome live on the parent's PageHeader
+          (see DepartmentsSettingsClient). */}
       <div style={tableWrap}>
         <Table size="default" flush>
           <TableHeader>
@@ -196,4 +195,4 @@ export function DepartmentsTable() {
       />
     </div>
   );
-}
+});

@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import { EditOrganizationSheet, type OrganizationData } from '@/components/EditOrganizationSheet';
 import { OfficeRoomsTab } from './OfficeRoomsTab';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Button, Field, FieldGrid, PageHeader, TabBar } from '@brikdesigns/bds';
+import { Button, DataSection, Field, FieldGrid, PageHeader, TabBar } from '@brikdesigns/bds';
 import {
   contentStyle,
-  sectionTitleStyle,
   settingsPlaceholderStyle,
 } from '../_shared';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -25,39 +24,39 @@ const ORG_TABS: { key: string; label: string }[] = [
 function DetailsTab({ practice }: { practice: OrganizationData }) {
   return (
     <div style={contentStyle}>
-      {/* Practice Information */}
-      <h2 style={sectionTitleStyle}>Practice Information</h2>
-      <FieldGrid columns={3} gap="lg">
-        <Field label="Practice Name" empty="—">{practice.name || null}</Field>
-        <Field label="Website" empty="—">{practice.website_url || null}</Field>
-        <Field label="Status" empty="—"><StatusBadge status={practice.status} /></Field>
-      </FieldGrid>
-      <FieldGrid columns={3} gap="lg">
-        <Field label="NPI Number" empty="—">{practice.npi_number || null}</Field>
-        <Field label="Tax ID" empty="—">{practice.tax_id || null}</Field>
-        <div />
-      </FieldGrid>
+      <DataSection title="Practice Information">
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Practice Name" empty="—">{practice.name || null}</Field>
+          <Field label="Website" empty="—">{practice.website_url || null}</Field>
+          <Field label="Status" empty="—"><StatusBadge status={practice.status} /></Field>
+        </FieldGrid>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="NPI Number" empty="—">{practice.npi_number || null}</Field>
+          <Field label="Tax ID" empty="—">{practice.tax_id || null}</Field>
+          <div />
+        </FieldGrid>
+      </DataSection>
 
-      {/* Address */}
-      <h2 style={sectionTitleStyle}>Address</h2>
-      <FieldGrid columns={3} gap="lg">
-        <Field label="Address Line 1" empty="—">{practice.address_line1 || null}</Field>
-        <Field label="Address Line 2" empty="—">{practice.address_line2 || null}</Field>
-        <Field label="City" empty="—">{practice.city || null}</Field>
-      </FieldGrid>
-      <FieldGrid columns={3} gap="lg">
-        <Field label="State" empty="—">{practice.state || null}</Field>
-        <Field label="ZIP Code" empty="—">{practice.zip || null}</Field>
-        <div />
-      </FieldGrid>
+      <DataSection title="Address">
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Address Line 1" empty="—">{practice.address_line1 || null}</Field>
+          <Field label="Address Line 2" empty="—">{practice.address_line2 || null}</Field>
+          <Field label="City" empty="—">{practice.city || null}</Field>
+        </FieldGrid>
+        <FieldGrid columns={3} gap="lg">
+          <Field label="State" empty="—">{practice.state || null}</Field>
+          <Field label="ZIP Code" empty="—">{practice.zip || null}</Field>
+          <div />
+        </FieldGrid>
+      </DataSection>
 
-      {/* Contact */}
-      <h2 style={sectionTitleStyle}>Contact</h2>
-      <FieldGrid columns={3} gap="lg">
-        <Field label="Email" empty="—">{practice.email || null}</Field>
-        <Field label="Phone" empty="—">{practice.phone || null}</Field>
-        <div />
-      </FieldGrid>
+      <DataSection title="Contact">
+        <FieldGrid columns={3} gap="lg">
+          <Field label="Email" empty="—">{practice.email || null}</Field>
+          <Field label="Phone" empty="—">{practice.phone || null}</Field>
+          <div />
+        </FieldGrid>
+      </DataSection>
     </div>
   );
 }
@@ -166,7 +165,7 @@ export function OrganizationSettingsClient() {
         }
         tabs={
           <TabBar
-            variant="text"
+            variant="tab"
             items={ORG_TABS.map((tab) => ({
               label: tab.label,
               active: activeTab === tab.key,

@@ -45,7 +45,12 @@ fi
 # same migration number. Detected at push time before CI gets involved.
 echo "Checking for migration number conflicts..."
 
-REMOTE_REF=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
+# Fallback base branch when no upstream is set (e.g. branch created via
+# manual `git checkout -b` instead of `./scripts/new-task.sh`). Should match
+# the BASE_BRANCH default in scripts/new-task.sh — flip both to "main" when
+# renew-pms goes live.
+FALLBACK_BASE="origin/staging"
+REMOTE_REF=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "$FALLBACK_BASE")
 REMOTE_BRANCH="${REMOTE_REF#origin/}"
 
 # Fetch latest remote state (quiet, don't fail if offline)

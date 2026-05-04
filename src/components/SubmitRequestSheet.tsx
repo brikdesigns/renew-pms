@@ -124,6 +124,9 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory, 
         setForm({ ...EMPTY_FORM, category: defaultCategory ?? '' });
       }
     }
+    // `defaultCategory` is captured at sheet-open time only — re-running when
+    // it changes would reset the user's category selection mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData]);
 
   // Fetch vendors once

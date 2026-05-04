@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { Tag, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
@@ -17,9 +17,19 @@ import { AddContactSheet, type ContactEditData } from '@/components/AddContactSh
 import { TableSkeleton } from '@/components/TableSkeleton';
 import '../_settingsTableStyles.css';
 
+// Maps the user-facing filter labels to the canonical vendor type values
+// stored on `vendors.type`. Module-level so useMemo deps stay stable.
+const TYPE_FILTER_MAP: Record<string, string> = {
+  Equipment: 'equipment',
+  Software: 'software',
+  Service: 'service',
+  Lab: 'lab',
+  'Referring Practice': 'referring_practice',
+};
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type RecordType = 'companies' | 'contacts';
+export type RecordType = 'companies' | 'contacts';
 
 export interface Vendor {
   id: string;
@@ -68,14 +78,9 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
-};
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
+const filterRowStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+  paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
@@ -88,10 +93,20 @@ const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, m
 // in-flight BDS session is reconciled, then remove this.
 const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
-const RECORD_SEGMENTS = [
-  { label: 'Companies', value: 'companies' },
-  { label: 'Contacts', value: 'contacts' },
+export const RECORD_SEGMENTS = [
+  { label: 'Companies', value: 'companies' as const },
+  { label: 'Contacts', value: 'contacts' as const },
 ];
+
+/**
+ * Imperative handle exposed by ContactsTable. The settings page wrapper
+ * (`ContactsSettingsClient`) hosts the Add button in the PageHeader actions
+ * slot but the Add sheets remain rendered here — this handle bridges the two.
+ */
+export type ContactsTableHandle = {
+  openAddCompany: () => void;
+  openAddContact: () => void;
+};
 
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
@@ -293,17 +308,19 @@ function ContactsView({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function ContactsTable() {
+interface ContactsTableProps {
+  recordType: RecordType;
+}
+
+export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>(function ContactsTable({ recordType }, ref) {
   const { openSheet, closeAll } = useSheetStack();
   const { showToast } = useToast();
-  const [recordType, setRecordType] = useState<RecordType>('companies');
 
   // Companies state
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Vendor | null>(null);
-  const [viewing, setViewing] = useState<Vendor | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [filterType, setFilterType] = useState('All Types');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
@@ -316,6 +333,13 @@ export function ContactsTable() {
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ContactEditData | null>(null);
   const [deleteContactTarget, setDeleteContactTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // Bridge for the Add Company / Add Contact buttons hosted in PageHeader
+  // actions (see ContactsSettingsClient). Sheets stay rendered below.
+  useImperativeHandle(ref, () => ({
+    openAddCompany: () => { setEditing(null); setSheetOpen(true); },
+    openAddContact: () => { setAddContactOpen(true); },
+  }));
 
   // Fetch vendors
   useEffect(() => {
@@ -339,10 +363,6 @@ export function ContactsTable() {
 
   const typeOptions = ['All Types', 'Equipment', 'Software', 'Service', 'Lab', 'Referring Practice'] as const;
   const statusOptions = ['All Statuses', 'Active', 'Inactive'] as const;
-
-  const TYPE_FILTER_MAP: Record<string, string> = {
-    Equipment: 'equipment', Software: 'software', Service: 'service', Lab: 'lab', 'Referring Practice': 'referring_practice',
-  };
 
   const filteredVendors = useMemo(() => {
     return vendors.filter(v => {
@@ -369,11 +389,11 @@ export function ContactsTable() {
   }, [contacts, filterCompany, filterContactType]);
 
   // ── Company handlers ──
+  // handleAdd lives on the parent (ContactsSettingsClient) and triggers the
+  // sheet via the imperative ref (openAddCompany).
 
-  const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (v: Vendor) => { setEditing(v); setSheetOpen(true); };
   const handleView = (v: Vendor) => {
-    setViewing(v);
     openSheet('vendor', {
       id: v.id,
       vendor: v,
@@ -453,33 +473,22 @@ export function ContactsTable() {
   // ── Derived ──
 
   const isCompanies = recordType === 'companies';
-  const count = isCompanies ? filteredVendors.length : filteredContacts.length;
-  const loading = isCompanies ? vendorsLoading : contactsLoading;
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <SegmentedControl
-            items={RECORD_SEGMENTS}
-            value={recordType}
-            onChange={(v) => setRecordType(v as RecordType)}
-            size="sm"
-          />
-          <span style={countBadge}>{loading ? '–' : count}</span>
-        </div>
+      {/* Filter chips row — segmented control + Add button live on the
+          parent's PageHeader (see ContactsSettingsClient). */}
+      <div style={filterRowStyle}>
         <div style={filterBarStyle}>
           {isCompanies ? (
             <>
               <ChipFilter options={typeOptions} selected={filterType} onChange={setFilterType} />
               <ChipFilter options={statusOptions} selected={filterStatus} onChange={setFilterStatus} />
-              <Button variant="primary" size="sm" onClick={handleAdd}>Add Company</Button>
             </>
           ) : (
             <>
               <ChipFilter options={companyOptions as unknown as readonly string[]} selected={filterCompany} onChange={setFilterCompany} />
               <ChipFilter options={typeOptions} selected={filterContactType} onChange={setFilterContactType} />
-              <Button variant="primary" size="sm" onClick={() => setAddContactOpen(true)}>Add Contact</Button>
             </>
           )}
         </div>
@@ -551,4 +560,4 @@ export function ContactsTable() {
       />
     </div>
   );
-}
+});

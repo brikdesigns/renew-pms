@@ -45,7 +45,7 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ViewRoomSheet({ onClose, room: roomProp, id, onNavigate }: ViewRoomSheetProps) {
+export function ViewRoomSheet({ onClose, room: roomProp, id, onNavigate: _onNavigate }: ViewRoomSheetProps) {
   const configureSheet = useConfigureSheet();
   const [fetched, setFetched] = useState<RoomViewData | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);

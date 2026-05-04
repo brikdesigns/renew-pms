@@ -209,7 +209,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   });
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [taskView, setTaskView] = useState<TaskView>('all');
-  const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [selectedFrequency, setSelectedFrequency] = useState('All Frequencies');
   const [selectedPriority, setSelectedPriority] = useState('All Priorities');
@@ -219,7 +218,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
   const [viewingTask, setViewingTask] = useState<TaskViewData | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const [addTaskType, setAddTaskType] = useState('');
 
   // ── Drag-and-drop state (Open Tasks board) ────────────────────────────────
   const [poolDraggingId, setPoolDraggingId] = useState<string | null>(null);
@@ -386,8 +384,10 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     || showOverdue;
 
   // ── Map raw task data to MockTask ──────────────────────────────────────────
+  // Wrapped in useCallback so the useMemo deps below stay stable (no recreation
+  // each render). Closes over no component state; deps are intentionally empty.
 
-  function toMockTask(t: typeof assignedTasks[number]): MockTask {
+  const toMockTask = useCallback((t: typeof assignedTasks[number]): MockTask => {
     const isOverdue = t.status === 'overdue';
     // Derive assignment shape from which FK is set on the task. Tasks have no
     // assignment_mode column, so the discriminator IS the FK presence.
@@ -426,7 +426,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       checklistTotal: t.checklist_total ?? 0,
       checklistCompleted: t.checklist_completed ?? 0,
     };
-  }
+  }, []);
 
   // ── Build "All Tasks" board (grouped by person) ────────────────────────────
 
@@ -448,7 +448,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       };
       return { person, tasks: memberTasks.map(toMockTask) };
     });
-  }, [assignedTasks]);
+  }, [assignedTasks, toMockTask]);
 
   // ── Build "Open Tasks" board (grouped by status) ──────────────────────────
 
@@ -458,12 +458,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       const colTasks = mapped.filter((t) => (col.statuses as readonly string[]).includes(t.status));
       return { ...col, tasks: colTasks };
     });
-  }, [poolTasks]);
-
-  // ── Overdue presence (drives the single indicator next to the filter icon) ─
-
-  const hasOverdueInView = (taskView === 'open' ? poolBoard : assignedBoard)
-    .some((col) => col.tasks.some((t) => t.overdue && !checked[t.id]));
+  }, [poolTasks, toMockTask]);
 
   // ── Apply filters (shared logic) ──────────────────────────────────────────
 
@@ -654,44 +649,29 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      {/* ── Page header — title + right-aligned actions + view tabs ── */}
+      {/* ── Page header — title + view tabs + Add Task action ── */}
       <PageHeader
         title="Tasks"
         actions={
-          <>
-            {hasOverdueInView && (
-              <Tooltip content="Overdue tasks present" placement="top">
-                <Dot status="warning" size="sm" pulse />
-              </Tooltip>
-            )}
-            <IconButton
-              variant="secondary"
-              size="sm"
-              icon={<Icon icon={icon.filter} />}
-              label="Toggle filters"
-              onClick={() => setFiltersVisible((p) => !p)}
-              style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-            />
-            {canAddTask && (
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-                  Add Task
-                </Button>
-                <Menu
-                  isOpen={addMenuOpen}
-                  onClose={() => setAddMenuOpen(false)}
-                  items={ADD_TASK_TYPES.map(t => ({
-                    id: t.id,
-                    label: t.label,
-                    description: t.desc,
-                    icon: <Icon icon={t.icon} />,
-                    onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
-                  }))}
-                  style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
-                />
-              </div>
-            )}
-          </>
+          canAddTask ? (
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+                Add Task
+              </Button>
+              <Menu
+                isOpen={addMenuOpen}
+                onClose={() => setAddMenuOpen(false)}
+                items={ADD_TASK_TYPES.map(t => ({
+                  id: t.id,
+                  label: t.label,
+                  description: t.desc,
+                  icon: <Icon icon={t.icon} />,
+                  onClick: () => { setAddSheetOpen(true); setAddMenuOpen(false); },
+                }))}
+                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
+              />
+            </div>
+          ) : undefined
         }
         tabs={
           <TabBar
@@ -705,9 +685,16 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         }
       />
 
-      {/* ── Sub-toolbar — date picker (filter/add live in PageHeader actions; view tabs in PageHeader tabs) ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: `${space.sm} 0` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
+      {/* ── Filter bar row — date picker left, filter chips right ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: gap.lg,
+        paddingBlock: space.sm,
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
             fontFamily: font.family.label,
@@ -720,28 +707,22 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           </span>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
         </div>
+        <TaskFilterBar
+          departments={departments}
+          selectedDepartment={selectedDepartment}
+          onDepartmentChange={setSelectedDepartment}
+          selectedFrequency={selectedFrequency}
+          onFrequencyChange={setSelectedFrequency}
+          selectedPriority={selectedPriority}
+          onPriorityChange={setSelectedPriority}
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+          showResolved={showResolved}
+          onShowResolvedChange={setShowResolved}
+          showOverdue={showOverdue}
+          onShowOverdueChange={setShowOverdue}
+        />
       </div>
-
-      {/* ── Collapsible filter chips ── */}
-      {filtersVisible && (
-        <div style={{ paddingBottom: space.sm }}>
-          <TaskFilterBar
-            departments={departments}
-            selectedDepartment={selectedDepartment}
-            onDepartmentChange={setSelectedDepartment}
-            selectedFrequency={selectedFrequency}
-            onFrequencyChange={setSelectedFrequency}
-            selectedPriority={selectedPriority}
-            onPriorityChange={setSelectedPriority}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
-            showResolved={showResolved}
-            onShowResolvedChange={setShowResolved}
-            showOverdue={showOverdue}
-            onShowOverdueChange={setShowOverdue}
-          />
-        </div>
-      )}
 
       {/* ── Board ── */}
       {(() => {
@@ -875,7 +856,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       />
       <AddTaskSheet
         isOpen={addSheetOpen}
-        onClose={() => { setAddSheetOpen(false); setAddTaskType(''); }}
+        onClose={() => { setAddSheetOpen(false); }}
         onSaved={refetchAll}
         members={members}
         departments={departments}
