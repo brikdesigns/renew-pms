@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Button, IconButton, FilterButton, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { IconButton, FilterBar, FilterButton, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { FilterButtonOption } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { EditInventorySheet, type InventoryFormData } from '@/components/EditInventorySheet';
 import type { InventoryViewData } from '@/components/ViewInventorySheet';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -22,22 +22,7 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
-
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`, borderBottom: `1px solid ${color.border.muted}`,
-  gap: gap.md,
-};
-
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm, flexShrink: 0 };
-
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
-
-const filterGroupStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
 
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 
@@ -51,25 +36,43 @@ const secondaryCellStyle: CSSProperties = { fontFamily: font.family.label, fontS
 // in-flight BDS session is reconciled, then remove this.
 const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
-const INVENTORY_SEGMENTS = [
-  { label: 'Equipment', value: 'equipment' },
-  { label: 'Supplies', value: 'supplies' },
+export type InventoryView = 'equipment' | 'supplies';
+
+export const INVENTORY_SEGMENTS = [
+  { label: 'Equipment', value: 'equipment' as const },
+  { label: 'Supplies', value: 'supplies' as const },
 ];
+
+/**
+ * Imperative handle for the parent's PageHeader Add button to trigger the
+ * EditInventorySheet (rendered inside InventoryTable). See
+ * InventorySettingsClient.
+ */
+export type InventoryTableHandle = {
+  openAddSheet: () => void;
+};
+
+interface InventoryTableProps {
+  view: InventoryView;
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function InventoryTable() {
+export const InventoryTable = forwardRef<InventoryTableHandle, InventoryTableProps>(function InventoryTable({ view }, ref) {
   const { openSheet, closeAll } = useSheetStack();
-  const [view, setView] = useState('equipment');
   const { equipment, setEquipment, loading } = useEquipment();
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editing, setEditing] = useState<EquipmentItem | null>(null);
-  const [viewing, setViewing] = useState<EquipmentItem | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterCategory, setFilterCategory] = useState<string | undefined>();
   const [filterCompany, setFilterCompany] = useState<string | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const { showToast } = useToast();
+
+  // Bridge for the Add Item button hosted in PageHeader actions.
+  useImperativeHandle(ref, () => ({
+    openAddSheet: () => { setEditing(null); setEditSheetOpen(true); },
+  }));
 
   const statusOptions: FilterButtonOption[] = [
     { id: 'active', label: 'Active' },
@@ -92,11 +95,11 @@ export function InventoryTable() {
     return true;
   });
 
-  const handleAdd = () => { setEditing(null); setEditSheetOpen(true); };
+  // handleAdd lives on the parent (InventorySettingsClient) and triggers
+  // the sheet via the imperative ref (openAddSheet).
   const handleEdit = (item: EquipmentItem) => { setEditing(item); setEditSheetOpen(true); };
   const handleEditClose = () => { setEditSheetOpen(false); setEditing(null); };
   const handleView = (item: EquipmentItem) => {
-    setViewing(item);
     const viewData: InventoryViewData = {
       id: item.id, name: item.name, status: item.status,
       department: item.department_name ?? '', departmentColor: item.department_color ?? 'blue',
@@ -168,44 +171,47 @@ export function InventoryTable() {
 
 
 
+  const handleClearFilters = () => {
+    setFilterStatus(undefined);
+    setFilterCategory(undefined);
+    setFilterCompany(undefined);
+  };
+
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <SegmentedControl items={INVENTORY_SEGMENTS} value={view} onChange={setView} size="sm" />
-          <span style={countBadge}>
-            {view === 'equipment'
-              ? <>{filteredItems.length}{filteredItems.length !== equipment.length && ` / ${equipment.length}`}</>
-              : '0'}
-          </span>
-        </div>
-        {view === 'equipment' && (
-          <div style={filterGroupStyle}>
-            <FilterButton
-              label="Status"
-              size="sm"
-              options={statusOptions}
-              value={filterStatus}
-              onChange={setFilterStatus}
-            />
-            <FilterButton
-              label="Category"
-              size="sm"
-              options={categoryOptions}
-              value={filterCategory}
-              onChange={setFilterCategory}
-            />
-            <FilterButton
-              label="Manufacturer"
-              size="sm"
-              options={companyOptions}
-              value={filterCompany}
-              onChange={setFilterCompany}
-            />
-            <Button variant="primary" size="sm" onClick={handleAdd}>Add Item</Button>
-          </div>
-        )}
-      </div>
+      {/* Equipment / Supplies tabs + Add Item live on the parent's PageHeader
+          (see InventorySettingsClient). The filter strip is BDS <FilterBar>
+          with FilterButton children — only relevant on the Equipment tab. */}
+      {view === 'equipment' && (
+        <FilterBar
+          total={equipment.length}
+          filtered={filteredItems.length}
+          label="items"
+          onClear={handleClearFilters}
+        >
+          <FilterButton
+            label="Status"
+            size="sm"
+            options={statusOptions}
+            value={filterStatus}
+            onChange={setFilterStatus}
+          />
+          <FilterButton
+            label="Category"
+            size="sm"
+            options={categoryOptions}
+            value={filterCategory}
+            onChange={setFilterCategory}
+          />
+          <FilterButton
+            label="Manufacturer"
+            size="sm"
+            options={companyOptions}
+            value={filterCompany}
+            onChange={setFilterCompany}
+          />
+        </FilterBar>
+      )}
 
       {view === 'supplies' && (
         <div style={{
@@ -303,4 +309,4 @@ export function InventoryTable() {
       />
     </div>
   );
-}
+});

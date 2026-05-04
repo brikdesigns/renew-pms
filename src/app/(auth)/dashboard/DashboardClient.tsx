@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Card, Meter, PageHeader, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Card, CardTitle, Meter, PageHeader, ProgressCircle, Tag, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -64,17 +64,6 @@ const cardTitleStyle: CSSProperties = {
   fontWeight: font.weight.bold,
   color: color.text.primary,
   margin: 0,
-};
-
-const cardLinkStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.semibold,
-  color: color.text.brand,
-  textDecoration: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  gap: gap.xs,
 };
 
 const listStyle: CSSProperties = {
@@ -150,31 +139,6 @@ const listItemSubStyle: CSSProperties = {
   fontWeight: font.weight.regular,
   color: color.text.secondary,
 };
-
-// ─── Progress ring (SVG donut) ───────────────────────────────────────────────
-
-function ProgressRing({ pct, size = 120 }: { pct: number; size?: number }) {
-  const stroke = 10;
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-
-  return (
-    <svg width={size} height={size} style={{ display: 'block' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color.background.muted} strokeWidth={stroke} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke={color.background.brandPrimary} strokeWidth={stroke}
-        strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text x="50%" y="50%" textAnchor="middle" dy="0.35em"
-        style={{ fontFamily: font.family.heading, fontSize: font.size.heading.medium, fontWeight: font.weight.bold, fill: color.text.primary }}>
-        {pct}%
-      </text>
-    </svg>
-  );
-}
 
 // ─── Bar chart ───────────────────────────────────────────────────────────────
 
@@ -307,14 +271,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.priorityCritical} style={{ color: color.system.red, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Overdue Tasks' : isManager ? 'Department Overdue Tasks' : 'Overdue Tasks'}
-              </h2>
+              </CardTitle>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedOverdueTasks.length}
               </span>
             </div>
-            <Link href="/tasks" style={cardLinkStyle}>
+            <Link href="/tasks" className="bds-text-link">
               View All
             </Link>
           </div>
@@ -353,14 +317,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.circleCheck} style={{ color: color.system.green, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Progress' : isManager ? 'Department Progress' : 'Today\u2019s Progress'}
-              </h2>
+              </CardTitle>
             </div>
           </div>
           {/* Top row: ring + stats spread across right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: space.xl }}>
-            <ProgressRing pct={progressPct} />
+            <ProgressCircle value={progressPct} size="lg" showValue label="Today's progress" />
             <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: font.family.heading, fontSize: font.size.heading.large, fontWeight: font.weight.bold, color: color.system.green }}>{progressStats.completed}</div>
@@ -399,10 +363,10 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
         {showOnboarding && (
           <Card variant="elevated" padding="lg" style={cardMinHeightStyle}>
             <div style={cardHeaderStyle}>
-              <h2 style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Onboarding' : isManager ? 'Department Onboarding' : 'Onboarding Status'}
-              </h2>
-              <Link href="/training" style={cardLinkStyle}>
+              </CardTitle>
+              <Link href="/training" className="bds-text-link">
                 View All
               </Link>
             </div>
@@ -444,14 +408,14 @@ export default function DashboardClient({ userName, systemRole, employeeType, us
           <div style={cardHeaderStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: gap.md }}>
               <Icon icon={icon.requests} style={{ color: color.text.brand, fontSize: font.size.body.md } as CSSProperties & Record<string, string>} />
-              <h2 style={cardTitleStyle}>
+              <CardTitle as="h3" style={cardTitleStyle}>
                 {isStaff ? 'Your Requests' : isManager ? 'Department Requests' : 'Recent Requests'}
-              </h2>
+              </CardTitle>
               <span style={{ fontFamily: font.family.subtitle, fontSize: font.size.subtitle.md, fontWeight: font.weight.semibold, color: color.text.muted, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm }}>
                 {scopedRequests.length}
               </span>
             </div>
-            <Link href="/requests" style={cardLinkStyle}>
+            <Link href="/requests" className="bds-text-link">
               View All
             </Link>
           </div>

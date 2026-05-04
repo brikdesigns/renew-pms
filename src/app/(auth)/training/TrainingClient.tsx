@@ -6,38 +6,13 @@ import { TrainingCard, type TrainingMember } from '@/components/TrainingCard';
 import { TrainingFilterBar, type EmployeeTypeFilter, type EmployeeTypeSegment } from '@/components/TrainingFilterBar';
 import { useMembers } from '@/hooks/useMembers';
 import type { SystemRole } from '@/lib/auth';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const pageStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-};
-
-const staffHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: space.sm,
-  padding: `${space.sm} 0`,
-};
-
-const staffTitleStyle: React.CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.md,
-  fontWeight: font.weight.semibold,
-  color: color.text.primary,
-  margin: 0,
-};
-
-const staffCountStyle: React.CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.body.xs,
-  fontWeight: font.weight.medium,
-  color: color.text.secondary,
-  backgroundColor: color.surface.secondary,
-  padding: `2px ${gap.md}`,
-  borderRadius: border.radius.sm,
 };
 
 const listStyle: React.CSSProperties = {
@@ -124,7 +99,7 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
   return (
     <div style={pageStyle}>
       <PageHeader title="Training" />
-      {showFilters ? (
+      {showFilters && (
         <TrainingFilterBar
           selectedDepartment={selectedDepartment}
           onDepartmentChange={setSelectedDepartment}
@@ -132,11 +107,6 @@ export default function TrainingClient({ systemRole, currentMemberId, userDepart
           onSegmentChange={setActiveSegment}
           count={loading ? '–' : filtered.length}
         />
-      ) : (
-        <div style={staffHeaderStyle}>
-          <h3 style={staffTitleStyle}>My Training</h3>
-          <span style={staffCountStyle}>{loading ? '–' : filtered.length}</span>
-        </div>
       )}
       <div style={listStyle}>
         {filtered.map((member) => (

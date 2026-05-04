@@ -20,23 +20,14 @@ export const settingsPlaceholderStyle: CSSProperties = {
   fontSize: font.size.body.sm,
 };
 
+// Vertical + horizontal page-level insets are provided by settings/layout.tsx
+// bodyStyle (single source of truth — paddingInline + paddingTop/Bottom + the
+// gap between PageHeader and body). This style only owns the inter-section
+// vertical rhythm between DataSection blocks on read-mode profile pages.
 export const contentStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  gap: space.huge,         // 48px
+  gap: space.huge,         // 48px between sibling DataSection blocks
   alignItems: 'flex-start',
-  paddingTop: '40px',      // no exact BDS token (between space.xl=32px and space.huge=48px)
-  paddingBottom: '80px',   // layout-specific, no BDS token
-  paddingInline: space.xl, // 32px
-};
-
-export const sectionTitleStyle: CSSProperties = {
-  fontFamily: font.family.heading,
-  fontSize: font.size.heading.medium,
-  fontWeight: font.weight.regular,
-  lineHeight: 1,
-  color: color.text.secondary,
-  margin: 0,
-  width: '100%',
 };

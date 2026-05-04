@@ -60,7 +60,7 @@ const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${space.md} ${space.xl}`,
+  paddingBlock: space.md,
   borderBottom: `1px solid ${color.border.primary}`,
 };
 
@@ -92,7 +92,7 @@ const subHeaderCountStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
-  padding: `0 ${space.xl} ${space.xl}`,
+  paddingBottom: space.xl,
 };
 
 const typeChipStyle: CSSProperties = {
@@ -137,12 +137,11 @@ function StatusIndicator({ active }: { active: boolean }) {
 
 export function OfficeRoomsTab() {
   const { openSheet } = useSheetStack();
-  const { rooms: apiRooms, setRooms, loading: roomsLoading } = useRooms();
+  const { rooms: apiRooms, setRooms } = useRooms();
   const rooms: RoomRow[] = apiRooms.map((r) => ({ ...r, description: '', is_custom: false }));
   const { showToast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<RoomRow | null>(null);
-  const [viewingRoom, setViewingRoom] = useState<RoomRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleAddClick = () => {
@@ -156,7 +155,6 @@ export function OfficeRoomsTab() {
   };
 
   const handleViewClick = (room: RoomRow) => {
-    setViewingRoom(room);
     openSheet('room', {
       id: room.id,
       room: { id: room.id, name: room.name, room_type: room.room_type, description: room.description, is_custom: room.is_custom, is_active: room.is_active },

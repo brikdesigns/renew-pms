@@ -1,0 +1,24 @@
+{
+  "staging_practice_id": "d9f05b47-5429-41bc-aea9-79043c5c7062",
+  "steps": {
+    "a": {
+      "completed_at": "2026-05-03T22:18:20.908Z",
+      "rows_written": 2
+    },
+    "b": {
+      "completed_at": "2026-05-03T22:19:44.177Z",
+      "rows_written": 75
+    },
+    "c": {
+      "completed_at": "2026-05-03T22:22:17.426Z",
+      "rows_written": 41
+    },
+    "d": {
+      "completed_at": "2026-05-03T22:31:55.695Z",
+      "rows_written": 146
+    }
+  },
+  "prod_practice_id": "cf392bc9-d987-4ce4-acec-b65133b5a24e",
+  "prod_office_id": "e589607f-c225-4e40-b71d-8d327a6f22c2",
+  "minted_at": "2026-05-03T22:18:20.907Z"
+}

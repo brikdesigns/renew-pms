@@ -1,0 +1,57 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental migration  |  step all  |  DRY-RUN
+  staging: zneuygoeorhkuhktmuld  →  prod: bbuimkdpmuggrszwenmg
+═══════════════════════════════════════════════════════════════
+  state: (no state file yet)
+
+[a] practices + offices
+  [a] minted prod_practice_id: 5741310f-2f39-46c5-a42e-9ae344eb8a7b
+  [a] preserving office id: e589607f-c225-4e40-b71d-8d327a6f22c2
+  [a] DRY-RUN — no writes. Would insert 1 practice + 1 office.
+
+[b] reference data
+  [b/departments] departments: read 9 from staging, 9 to write
+  [b/practice_role_types] practice_role_types: read 11 from staging, 11 to write
+  [b/task_types] task_types: read 6 from staging, 6 to write
+  [b/task_categories] task_categories: read 8 from staging, 8 to write
+  [b/compliance_types] compliance_types: read 6 from staging, 6 to write
+  [b/equipment_categories] equipment_categories: read 9 from staging, 9 to write
+  [b/supply_categories] supply_categories: read 7 from staging, 7 to write
+  [b/rooms] rooms: read 19 from staging, 19 to write
+  [dry-run] would update state file
+
+[c] vendor + vendor_contacts + equipment
+  [c] allowed vendor id: a3fd3cc4-26f4-45f5-af7b-e248e8d8c882
+  [c] vendors: would write 1 (Wright Technology Solutions)
+  [c] vendor_contacts: would write 1
+  [c/equipment] equipment: read 39 from staging, 39 to write
+  [dry-run] would update state file
+
+[d] task_templates + checklist_items
+  [d/task_templates] task_templates: read 13 from staging, 13 to write
+  [d/checklist_items] checklist_items: read 133 from staging, 133 to write
+  [dry-run] would update state file
+
+[verify] row-count comparison
+  table                     | expected |    prod |  match
+  --------------------------|---------:|--------:|-------
+  practices                 |        1 |       0 |  ✗
+  offices                   |        1 |       0 |  ✗
+  departments               |        9 |       0 |  ✗
+  practice_role_types       |       11 |       0 |  ✗
+  task_types                |        6 |       0 |  ✗
+  task_categories           |        8 |       0 |  ✗
+  compliance_types          |        6 |       0 |  ✗
+  equipment_categories      |        9 |       0 |  ✗
+  supply_categories         |        7 |       0 |  ✗
+  rooms                     |       19 |       0 |  ✗
+  vendors                   |        1 |       0 |  ✗
+  vendor_contacts           |        1 |       0 |  ✗
+  equipment                 |       39 |       0 |  ✗
+  task_templates            |       13 |       0 |  ✗
+  checklist_items           |      133 |       0 |  ✗
+
+  15 mismatches — investigate before declaring done.
+
+Done.
+(dry-run — no prod writes performed)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, type CSSProperties } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { Tag, Button, Dialog, ActivityTimeline, useConfigureSheet, Field, FieldGrid } from '@brikdesigns/bds';
 import { StatusBadge, statusLabel } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
@@ -75,9 +75,9 @@ export function ViewRequestSheet({ onClose, request: requestProp, id, isAdmin = 
 
   const request = requestProp ?? fetched;
 
-  // Reset tab when request changes
+  // Reset tab when request changes (id is the identity for "different request")
   useEffect(() => {
-    if (request) setActiveTab('details');
+    if (request?.id) setActiveTab('details');
   }, [request?.id]);
 
   const handleReject = async () => {

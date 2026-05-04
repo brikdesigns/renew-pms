@@ -113,9 +113,9 @@ export function ViewInventorySheet({ onClose, item: itemProp, id, onEdit, onNavi
       .finally(() => setRequestsLoading(false));
   }, [item?.id]);
 
-  // Reset tab when item changes
+  // Reset tab when item changes (id is the identity for "different item")
   useEffect(() => {
-    if (item) setActiveTab('details');
+    if (item?.id) setActiveTab('details');
   }, [item?.id]);
 
   // ── Configure sheet ──────────────────────────────────────────────────────

@@ -319,6 +319,7 @@ npm run test             # Vitest
 npm run db:push          # Push migrations to dev Supabase
 npm run db:diff          # Generate migration diff (--use-migra)
 npm run db:status        # List migration status
+npm run db:gen-types     # Regenerate src/types/database.types.ts from staging schema (run after migrations)
 npm run db:seed-test-users  # Seed test user accounts
 
 ./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)

@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════
+  Renew Dental migration  |  step b  |  *** EXECUTE ***
+  staging: zneuygoeorhkuhktmuld  →  prod: bbuimkdpmuggrszwenmg
+═══════════════════════════════════════════════════════════════
+  state: /Users/nickstanerson/Documents/Github/product/renew-pms-worktrees/migrate-renew-dental-to-prod/docs/migration/prod-ids.json
+
+[b] reference data
+  [b/departments] departments: read 9 from staging, 9 to write
+  [b/departments] departments: wrote 9, prod count = 9
+  [b/practice_role_types] practice_role_types: read 11 from staging, 11 to write
+  [b/practice_role_types] practice_role_types: wrote 11, prod count = 11
+  [b/task_types] task_types: read 6 from staging, 6 to write
+  [b/task_types] task_types: wrote 6, prod count = 6
+  [b/task_categories] task_categories: read 8 from staging, 8 to write
+  [b/task_categories] task_categories: wrote 8, prod count = 8
+  [b/compliance_types] compliance_types: read 6 from staging, 6 to write
+  [b/compliance_types] compliance_types: wrote 6, prod count = 6
+  [b/equipment_categories] equipment_categories: read 9 from staging, 9 to write
+  [b/equipment_categories] equipment_categories: wrote 9, prod count = 9
+  [b/supply_categories] supply_categories: read 7 from staging, 7 to write
+  [b/supply_categories] supply_categories: wrote 7, prod count = 7
+  [b/rooms] rooms: read 19 from staging, 19 to write
+  [b/rooms] rooms: wrote 19, prod count = 19
+
+Done.

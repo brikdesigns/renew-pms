@@ -7,7 +7,7 @@ import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Chip, Button, IconButton, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Chip, Button, IconButton, FilterBar, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableSkeleton } from '@/components/TableSkeleton';
@@ -387,10 +387,10 @@ interface RequestsClientProps {
   isAdmin: boolean;
 }
 
-export default function RequestsClient({ isAdmin }: RequestsClientProps) {
+export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProps) {
   const { requests, loading, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
-  const { openSheet, closeAll } = useSheetStack();
+  const { openSheet } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -405,7 +405,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   // Drag-and-drop state
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
-  const [settling, setSettling] = useState(false);
   const isDragging = useRef(false);
 
   // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
@@ -520,8 +519,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
 
     // Optimistic: move card to new column immediately
     updateOptimistic(requestId, { status: targetStatusKey });
-    setSettling(true);
-    setTimeout(() => setSettling(false), 400);
 
     try {
       const res = await fetch(`/api/requests/${requestId}`, {
@@ -547,27 +544,23 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
       <PageHeader
         title="Requests"
         actions={
-          <>
-            <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
-            <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
-            <div style={{ position: 'relative' }}>
-              <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-                Add Request
-              </Button>
-              <Menu
-                isOpen={addMenuOpen}
-                onClose={() => setAddMenuOpen(false)}
-                items={ADD_MENU_CATEGORIES.map(c => ({
-                  id: c.id,
-                  label: c.label,
-                  description: c.desc,
-                  icon: <Icon icon={c.icon} />,
-                  onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
-                }))}
-                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
-              />
-            </div>
-          </>
+          <div style={{ position: 'relative' }}>
+            <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+              Add Request
+            </Button>
+            <Menu
+              isOpen={addMenuOpen}
+              onClose={() => setAddMenuOpen(false)}
+              items={ADD_MENU_CATEGORIES.map(c => ({
+                id: c.id,
+                label: c.label,
+                description: c.desc,
+                icon: <Icon icon={c.icon} />,
+                onClick: () => { setSubmitCategory(c.id); setSubmitOpen(true); setAddMenuOpen(false); },
+              }))}
+              style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 280 }}
+            />
+          </div>
         }
         tabs={
           <TabBar
@@ -579,6 +572,18 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
           />
         }
       />
+
+      {/* Filter strip — BDS <FilterBar> sits between PageHeader and the Board.
+          Owns the category/priority chip filters + filtered-count counter. */}
+      <FilterBar
+        total={requests.length}
+        filtered={filtered.length}
+        label="requests"
+        onClear={() => { setFilterCategory('All Categories'); setFilterPriority('All Priorities'); }}
+      >
+        <ChipFilter options={CATEGORY_FILTER} selected={filterCategory} onChange={setFilterCategory} />
+        <ChipFilter options={PRIORITY_FILTER} selected={filterPriority} onChange={setFilterPriority} />
+      </FilterBar>
 
       {view === 'open' ? (
       <Board style={{ flex: 1, minHeight: 0 }}>

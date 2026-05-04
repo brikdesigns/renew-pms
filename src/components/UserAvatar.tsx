@@ -1,8 +1,6 @@
 import type { CSSProperties } from 'react';
-import Image from 'next/image';
+import { Avatar as BDSAvatar } from '@brikdesigns/bds';
 import { font, color, border, departmentColor } from '@/lib/tokens';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'button';
 
@@ -22,37 +20,29 @@ interface UserAvatarProps {
   style?: CSSProperties;
 }
 
-// ─── Size map ────────────────────────────────────────────────────────────────
-
-const SIZE_MAP: Record<AvatarSize, { dimension: string; dimensionPx: number; fontSize: string }> = {
-  sm:     { dimension: '28px', dimensionPx: 28, fontSize: font.size.body.xs },
-  md:     { dimension: '40px', dimensionPx: 40, fontSize: font.size.body.sm },
-  /** Matches sm IconButton min-height (44px) for table row alignment */
-  button: { dimension: '44px', dimensionPx: 44, fontSize: font.size.body.md },
-  lg:     { dimension: '48px', dimensionPx: 48, fontSize: font.size.body.md },
+// Renew avatar pixel sizes — BDS sm/lg map to renew md/lg directly, but
+// renew sm (28) and 'button' (44, sm-IconButton-aligned) need overrides.
+const SIZE_PIXELS: Record<AvatarSize, { dimension: string; fontSize: string }> = {
+  sm:     { dimension: '28px', fontSize: font.size.body.xs },
+  md:     { dimension: '40px', fontSize: font.size.body.sm },
+  button: { dimension: '44px', fontSize: font.size.body.md },
+  lg:     { dimension: '48px', fontSize: font.size.body.md },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-// ─── Component ───────────────────────────────────────────────────────────────
-
 /**
- * UserAvatar — Consistent avatar rendering across the portal.
+ * UserAvatar — Renew wrapper around BDS `<Avatar>`.
  *
- * Color logic (single source of truth):
- * 1. If `department` is provided → department light bg + department text color
- * 2. Fallback (no department assigned) → muted bg + primary text — neutral
- *    "no signal" treatment. Avoids co-opting brand-primary, which fails
- *    WCAG AA contrast in the Renew theme (white on light purple = ~2.43:1).
+ * Adds renew-specific behavior the BDS primitive doesn't carry:
+ * - Department color theming (background + text from `departments.color`)
+ * - No-department safe-contrast fallback per #170
+ *   (`background.muted` + `text.primary` — ~18:1 light / ~20:1 dark)
+ * - `button` size variant (44px) for sm-IconButton-aligned table rows
+ * - `rounded` shape (10px radius) alongside default circle
+ *
+ * Tradeoff: BDS Avatar uses a raw `<img>` (no Next Image optimization).
+ * Acceptable for 28–48px avatars. Initial-derivation also shifts from
+ * "first letter of every word, sliced to 2" to BDS's "first + last word"
+ * — for typical first-last names the result is identical.
  *
  * Used in: UsersTable, AppSidebar, ProfileCard, ViewUserSheet, etc.
  */
@@ -64,12 +54,10 @@ export function UserAvatar({
   shape = 'circle',
   style: styleProp,
 }: UserAvatarProps) {
-  const { dimension, dimensionPx, fontSize } = SIZE_MAP[size];
+  const { dimension, fontSize } = SIZE_PIXELS[size];
 
-  // Resolve colors from department (or fall back to brand primary)
   let bg: string;
   let fg: string;
-
   if (departmentColorKey) {
     const deptColors = departmentColor(departmentColorKey);
     bg = deptColors.light;
@@ -79,41 +67,25 @@ export function UserAvatar({
     fg = color.text.primary;
   }
 
-  const baseStyle: CSSProperties = {
-    width: dimension,
-    height: dimension,
-    borderRadius: shape === 'circle' ? border.radius.circle : '10px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    fontFamily: font.family.label,
-    fontSize,
-    fontWeight: font.weight.bold,
-    lineHeight: 1,
-    backgroundColor: bg,
-    color: fg,
-    ...styleProp,
-  };
-
-  if (avatarUrl) {
-    return (
-      <Image
-        src={avatarUrl}
-        alt={name}
-        width={dimensionPx}
-        height={dimensionPx}
-        style={{
-          ...baseStyle,
-          objectFit: 'cover',
-        }}
-      />
-    );
-  }
+  const borderRadius = shape === 'circle' ? border.radius.circle : '10px';
 
   return (
-    <span style={baseStyle} aria-label={name}>
-      {getInitials(name)}
-    </span>
+    <BDSAvatar
+      name={name}
+      src={avatarUrl ?? undefined}
+      alt={name}
+      style={{
+        width: dimension,
+        height: dimension,
+        fontFamily: font.family.label,
+        fontSize,
+        fontWeight: font.weight.bold,
+        backgroundColor: bg,
+        color: fg,
+        borderRadius,
+        flexShrink: 0,
+        ...styleProp,
+      }}
+    />
   );
 }
