@@ -58,11 +58,11 @@ export const font = {
    * subtitle/lg         → --subtitle-lg            → 16px     (font-size/100)
    *
    * ── Heading (font-family-heading · Century Schoolbook) ────────────────────
-   * NOTE: Heading scale starts at font-size/200 (18px). font-size/100 (16px)
+   * NOTE: Heading scale starts at font-size/300 (20px). font-size/100 (16px)
    *       is body/label territory — there is NO heading at 16px.
-   * heading/xs  (tiny)  → --heading-tiny           → 18px   (font-size/200)
-   * heading/sm          → --heading-sm             → 20px   (font-size/300)
-   * heading/md          → --heading-md             → 22.5px (font-size/400)
+   * heading/tiny        → --heading-tiny           → 20px   (font-size/300)
+   * heading/sm          → --heading-sm             → 22.5px (font-size/400)
+   * heading/md          → --heading-md             → 25.3px (font-size/500)
    * heading/lg          → --heading-lg             → 28.5px (font-size/600)
    * heading/xl          → --heading-xl             → 32px   (font-size/700)
    * heading/xxl         → --heading-xxl            → 36px   (font-size/800)
@@ -90,10 +90,10 @@ export const font = {
       lg: 'var(--subtitle-lg)',  // 16px
     },
     heading: {
-      /** 18px (font-size/200) — smallest heading; do NOT use font-size/100 (16px) for headings */
+      /** 20px (font-size/300) — smallest heading; do NOT use font-size/100 (16px) for headings */
       tiny: 'var(--heading-tiny)',
-      small: 'var(--heading-sm)',    // 20px
-      medium: 'var(--heading-md)',   // 22.5px
+      small: 'var(--heading-sm)',    // 22.5px
+      medium: 'var(--heading-md)',   // 25.3px
       large: 'var(--heading-lg)',    // 28.5px
       xLarge: 'var(--heading-xl)',   // 32px
       xxLarge: 'var(--heading-xxl)', // 36px
