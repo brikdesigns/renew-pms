@@ -1,5 +1,21 @@
 #!/usr/bin/env sh
 
+# ── gitleaks secret scan ──
+# Defense-in-depth for the secret-leak prevention layer (renew-pms#258 +
+# brik-llm#193). Renew-pms doesn't have git-secrets installed; gitleaks is
+# the local secret-scan layer here. Graceful skip if not installed (CI/fresh).
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "🔍 Running gitleaks secret scan..."
+  config_arg=""
+  [ -f .gitleaks.toml ] && config_arg="--config .gitleaks.toml"
+  if ! gitleaks protect --staged --redact --no-banner --verbose $config_arg; then
+    echo ""
+    echo "   Secret detected. Move to ~/.secrets/<name>.env and use process.env.<NAME>."
+    echo "   If false positive, add to .gitleaks.toml."
+    exit 1
+  fi
+fi
+
 echo "Running lint..."
 npm run lint
 

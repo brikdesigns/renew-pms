@@ -1,0 +1,24 @@
+name: Secret scan
+
+# Why: defense-in-depth for the secret-leak prevention layer shipped 2026-05-04
+# (renew-pms#258 hooks + brik-llm#193 follow-up). Renew-pms is the repo where
+# the original 2026-05-02 leak incident filed #168 — the CI gate completes
+# the loop closed by #258 (PreToolUse hook block), this PR (local pre-commit),
+# and now the cross-machine CI scanner.
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

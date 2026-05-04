@@ -1,0 +1,18 @@
+# Brik gitleaks config for renew-pms.
+# Allowlists: secret-scanner test fixtures, Claude Code hook detection regexes,
+# Webflow design-tokens metadata.
+#
+# Source of truth (when brik-llm canonical config lands per #193 Phase 3):
+#   brik-llm/operations/security/.gitleaks.toml
+# Until then, edit this file directly. Mirror changes to other Brik repos.
+
+[allowlist]
+description = "Brik allowlist — test fixtures + design-token metadata"
+paths = [
+  '''.*\.claude/hooks/.*\.sh''',
+  '''scripts/test-claude-hooks\.sh''',
+  '''.*test-secret-scanner.*''',
+  '''.*test-bash-leak.*''',
+  '''.*/design-tokens/metadata\.json''',
+  '''.*/mockups/.+\.(html|json)''',
+]
