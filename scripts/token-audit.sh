@@ -421,11 +421,21 @@ fi
 # BDS API work to retire. Until then, we lock the count so a NEW
 # `.bds-*` selector can't sneak in. Decrease BDS_SELECTOR_BASELINE
 # in the same PR that removes selectors.
+#
+# Exemption: a `.bds-*` selector that exists *only* to set the
+# component-scoped CSS variables BDS publishes as override surfaces
+# (e.g. `--page-header-content-gap`, `--select-chevron-color`) is a
+# documented tuning, not an internal-style override. Tag the selector
+# line with a `/* bds-lint-ignore */` marker — same convention BDS
+# uses for component-scoped variable references — and the lint skips
+# it. The marker forces an explicit acknowledgement that the rule is
+# tuning a public BDS surface, not hijacking an internal one.
 BDS_SELECTOR_BASELINE=28
 section ".bds-* selectors in consumer CSS (ratchet — baseline ${BDS_SELECTOR_BASELINE})"
 
 BDS_SELECTOR_HITS=$(find "$SRC" -type f -name "*.css" \
   | xargs grep -nE '^\s*\.bds-' 2>/dev/null \
+  | grep -v 'bds-lint-ignore' \
   || true)
 
 BDS_SELECTOR_COUNT=$(count_matches "$BDS_SELECTOR_HITS")
