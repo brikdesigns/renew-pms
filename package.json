@@ -13,6 +13,7 @@
     "db:push": "supabase db push",
     "db:diff": "supabase db diff --use-migra",
     "db:status": "supabase migration list",
+    "db:gen-types": "supabase gen types typescript --project-id zneuygoeorhkuhktmuld --schema public > src/types/database.types.ts",
     "db:seed-test-users": "npx tsx scripts/seed-test-users.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
