@@ -11,10 +11,10 @@ import {
 } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Menu, Tag, useSheetStack } from '@brikdesigns/bds';
+import { IconButton, Tag, useSheetStack } from '@brikdesigns/bds';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
-import { color, font, space, gap, border, shadow } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { FREQUENCY_LABELS } from '@/lib/frequency-labels';
 import { FrequencyTag } from '@/components/FrequencyTag';
 import { StatusBadge } from '@/components/StatusBadge';

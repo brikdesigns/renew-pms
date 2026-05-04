@@ -4,12 +4,12 @@ import { forwardRef, useImperativeHandle, useState, useEffect, useMemo, type CSS
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import { Tag, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { EditVendorSheet, type VendorFormData } from '@/components/EditVendorSheet';
@@ -384,8 +384,9 @@ export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>
   }, [contacts, filterCompany, filterContactType]);
 
   // ── Company handlers ──
+  // handleAdd lives on the parent (ContactsSettingsClient) and triggers the
+  // sheet via the imperative ref (openAddCompany).
 
-  const handleAdd = () => { setEditing(null); setSheetOpen(true); };
   const handleEdit = (v: Vendor) => { setEditing(v); setSheetOpen(true); };
   const handleView = (v: Vendor) => {
     setViewing(v);
