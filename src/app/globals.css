@@ -151,6 +151,25 @@ body {
 }
 
 @layer client-overrides {
+  /*
+   * BDS PageHeader internal rhythm — clinical-density tuning.
+   *
+   * BDS 0.57.3 (brik-bds#419) ships four component-scoped CSS variables
+   * on `.bds-page-header` so consumers can dial in the right rhythm via
+   * cascade. Renew's clinical-PMS surface wants:
+   *   - Title↔subtitle gap one tier wider than the BDS default (12px vs 6px)
+   *   - Breathing room before the bottom divider (16px vs 0)
+   * Other knobs (--page-header-section-gap, --page-header-actions-gap)
+   * stay at their BDS defaults.
+   *
+   * This is variable-tuning of a public BDS override surface, not an
+   * internal-style override — see scripts/token-audit.sh §16 exemption.
+   */
+  .bds-page-header { /* bds-lint-ignore — variable tuning, see brik-bds#419 */
+    --page-header-content-gap: var(--padding-sm);
+    --page-header-padding-bottom: var(--padding-md);
+  }
+
   /* Table: white header, muted borders, no rounded corners */
   .bds-table-head {
     background-color: var(--background-primary);
