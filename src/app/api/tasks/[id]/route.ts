@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAdmin } from '@/lib/auth';
@@ -45,7 +46,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // Authorize visibility — return 404 (not 403) so we don't leak existence.
@@ -188,7 +189,7 @@ export async function PATCH(
     .eq('id', id)
     .eq('practice_id', practiceId)
     .maybeSingle();
-  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
+  if (existingErr) return apiError(existingErr);
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   const scope = await resolveTaskScope(admin, authUser, practiceId);
@@ -208,7 +209,7 @@ export async function PATCH(
     .select('id')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   return NextResponse.json({ id: data.id });

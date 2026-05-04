@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -27,7 +28,7 @@ export async function GET() {
     .eq('practice_id', practiceId)
     .order('sort_order');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   // Count members per role
   const { data: memberData } = await admin
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'A role with that name already exists' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 
   const deptRaw2 = data.departments as { id: string; name: string; color: string } | { id: string; name: string; color: string }[] | null;

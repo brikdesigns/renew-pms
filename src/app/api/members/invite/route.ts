@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePracticeAdmin } from '@/lib/auth';
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
 
   if (profileError) {
     console.error('[invite] Failed to upsert profile:', profileError.message);
-    return NextResponse.json({ error: profileError.message }, { status: 500 });
+    return apiError(profileError);
   }
 
   // Step 3: Create practice_member (duplicate check via unique constraint)
@@ -185,7 +186,7 @@ export async function POST(request: Request) {
       );
     }
     console.error('[invite] Failed to create practice_member:', memberError.message);
-    return NextResponse.json({ error: memberError.message }, { status: 500 });
+    return apiError(memberError);
   }
 
   // Step 4: Fetch the full member record with joins

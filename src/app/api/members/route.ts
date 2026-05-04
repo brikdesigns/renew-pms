@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'User is already a member of this practice' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 
   return NextResponse.json(flattenMember(data), { status: 201 });

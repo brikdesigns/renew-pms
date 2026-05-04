@@ -86,7 +86,7 @@ export async function spawnTodayForTemplate(
   const { error } = await admin.rpc('generate_daily_tasks', { p_practice_id: practiceId });
   if (error) {
     console.error('[templates] spawnTodayForTemplate failed:', error);
-    return { ok: false, error: error.message };
+    return { ok: false, error: 'Daily task generation failed' };
   }
   return { ok: true };
 }
@@ -149,7 +149,7 @@ export async function propagateAssignmentToTodaysTasks(
 
   if (error) {
     console.error('[templates] propagateAssignmentToTodaysTasks failed:', error);
-    return { ok: false, error: error.message };
+    return { ok: false, error: 'Assignment propagation failed' };
   }
 
   return { ok: true, updatedCount: data?.length ?? 0 };

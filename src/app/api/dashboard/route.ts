@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
@@ -72,7 +73,7 @@ export async function GET() {
     .order('due_date', { ascending: false })
     .limit(6);
 
-  if (overdueErr) return NextResponse.json({ error: overdueErr.message }, { status: 500 });
+  if (overdueErr) return apiError(overdueErr);
 
   const overdueTasks = (rawOverdue ?? []).map((t: RawOverdueTask) => {
     const member = first(t.practice_members);
@@ -126,7 +127,7 @@ export async function GET() {
   if (visibilityOr !== null) todayQuery = todayQuery.or(visibilityOr);
   const { data: todayTasks, error: todayErr } = await todayQuery.limit(500);
 
-  if (todayErr) return NextResponse.json({ error: todayErr.message }, { status: 500 });
+  if (todayErr) return apiError(todayErr);
 
   // Deduplicate
   const seen = new Set<string>();
@@ -185,7 +186,7 @@ export async function GET() {
     .order('updated_at', { ascending: false })
     .limit(6);
 
-  if (reqErr) return NextResponse.json({ error: reqErr.message }, { status: 500 });
+  if (reqErr) return apiError(reqErr);
 
   const recentRequests = (rawRequests ?? []).map((r) => {
     const submitter = first(r.submitted_member as SubmitterJoin | SubmitterJoin[] | null);
