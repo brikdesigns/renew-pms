@@ -217,27 +217,6 @@ body {
     padding-inline: var(--padding-sm);
   }
 
-  /*
-   * Indicator height: 28px = 7 × 4px grid.
-   * BDS Badge/Tag sm natural height varies by content (26px text-only,
-   * 30px with icon). This locks both to 28px so any side-by-side
-   * pairing is always aligned. Upstream BDS fix pending.
-   */
-  .bds-tag--sm,
-  .bds-badge--sm {
-    height: 28px;
-  }
-
-  /* Tags: tighter horizontal padding (xs instead of sm) */
-  .bds-tag--sm {
-    padding-inline: var(--padding-xs);
-  }
-
-  .bds-tag--md,
-  .bds-tag--lg {
-    padding-inline: var(--padding-sm);
-  }
-
   /* Board subtitles: token-driven casing + fix BDS Board.css body→label font */
   .bds-board-header__subtitle,
   .bds-board-card__subtitle {

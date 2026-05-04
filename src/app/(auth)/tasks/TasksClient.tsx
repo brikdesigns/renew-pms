@@ -460,11 +460,6 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     });
   }, [poolTasks, toMockTask]);
 
-  // ── Overdue presence (drives the single indicator next to the filter icon) ─
-
-  const hasOverdueInView = (taskView === 'open' ? poolBoard : assignedBoard)
-    .some((col) => col.tasks.some((t) => t.overdue && !checked[t.id]));
-
   // ── Apply filters (shared logic) ──────────────────────────────────────────
 
   function applyFilters(tasks: MockTask[]): MockTask[] {
