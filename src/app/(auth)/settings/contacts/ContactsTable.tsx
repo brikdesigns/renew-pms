@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, useEffect, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Button, IconButton, Chip, Menu, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
@@ -19,7 +19,7 @@ import '../_settingsTableStyles.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type RecordType = 'companies' | 'contacts';
+export type RecordType = 'companies' | 'contacts';
 
 export interface Vendor {
   id: string;
@@ -68,14 +68,9 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+const filterRowStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
   paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
-};
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
@@ -88,10 +83,20 @@ const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, m
 // in-flight BDS session is reconciled, then remove this.
 const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
-const RECORD_SEGMENTS = [
-  { label: 'Companies', value: 'companies' },
-  { label: 'Contacts', value: 'contacts' },
+export const RECORD_SEGMENTS = [
+  { label: 'Companies', value: 'companies' as const },
+  { label: 'Contacts', value: 'contacts' as const },
 ];
+
+/**
+ * Imperative handle exposed by ContactsTable. The settings page wrapper
+ * (`ContactsSettingsClient`) hosts the Add button in the PageHeader actions
+ * slot but the Add sheets remain rendered here — this handle bridges the two.
+ */
+export type ContactsTableHandle = {
+  openAddCompany: () => void;
+  openAddContact: () => void;
+};
 
 // ─── ChipFilter ─────────────────────────────────────────────────────────────
 
@@ -293,10 +298,13 @@ function ContactsView({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function ContactsTable() {
+interface ContactsTableProps {
+  recordType: RecordType;
+}
+
+export const ContactsTable = forwardRef<ContactsTableHandle, ContactsTableProps>(function ContactsTable({ recordType }, ref) {
   const { openSheet, closeAll } = useSheetStack();
   const { showToast } = useToast();
-  const [recordType, setRecordType] = useState<RecordType>('companies');
 
   // Companies state
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -316,6 +324,13 @@ export function ContactsTable() {
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ContactEditData | null>(null);
   const [deleteContactTarget, setDeleteContactTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // Bridge for the Add Company / Add Contact buttons hosted in PageHeader
+  // actions (see ContactsSettingsClient). Sheets stay rendered below.
+  useImperativeHandle(ref, () => ({
+    openAddCompany: () => { setEditing(null); setSheetOpen(true); },
+    openAddContact: () => { setAddContactOpen(true); },
+  }));
 
   // Fetch vendors
   useEffect(() => {
@@ -453,33 +468,22 @@ export function ContactsTable() {
   // ── Derived ──
 
   const isCompanies = recordType === 'companies';
-  const count = isCompanies ? filteredVendors.length : filteredContacts.length;
-  const loading = isCompanies ? vendorsLoading : contactsLoading;
 
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <SegmentedControl
-            items={RECORD_SEGMENTS}
-            value={recordType}
-            onChange={(v) => setRecordType(v as RecordType)}
-            size="sm"
-          />
-          <span style={countBadge}>{loading ? '–' : count}</span>
-        </div>
+      {/* Filter chips row — segmented control + Add button live on the
+          parent's PageHeader (see ContactsSettingsClient). */}
+      <div style={filterRowStyle}>
         <div style={filterBarStyle}>
           {isCompanies ? (
             <>
               <ChipFilter options={typeOptions} selected={filterType} onChange={setFilterType} />
               <ChipFilter options={statusOptions} selected={filterStatus} onChange={setFilterStatus} />
-              <Button variant="primary" size="sm" onClick={handleAdd}>Add Company</Button>
             </>
           ) : (
             <>
               <ChipFilter options={companyOptions as unknown as readonly string[]} selected={filterCompany} onChange={setFilterCompany} />
               <ChipFilter options={typeOptions} selected={filterContactType} onChange={setFilterContactType} />
-              <Button variant="primary" size="sm" onClick={() => setAddContactOpen(true)}>Add Contact</Button>
             </>
           )}
         </div>
@@ -551,4 +555,4 @@ export function ContactsTable() {
       />
     </div>
   );
-}
+});

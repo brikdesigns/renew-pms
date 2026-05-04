@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'react';
 import {
   Table,
   TableHeader,
@@ -11,7 +11,7 @@ import {
 } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Button, IconButton, Menu, Tag, SegmentedControl, useSheetStack } from '@brikdesigns/bds';
+import { IconButton, Menu, Tag, useSheetStack } from '@brikdesigns/bds';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap, border, shadow } from '@/lib/tokens';
@@ -71,30 +71,6 @@ const tabContentStyle: CSSProperties = {
   flex: 1,
 };
 
-const subHeaderStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingBlock: space.md,
-  borderBottom: `1px solid ${color.border.muted}`,
-};
-
-const subHeaderLeftStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: space.sm,
-};
-
-const subHeaderCountStyle: CSSProperties = {
-  fontFamily: font.family.label,
-  fontSize: font.size.label.sm,
-  fontWeight: font.weight.medium,
-  color: color.text.secondary,
-  backgroundColor: color.surface.secondary,
-  padding: `2px ${gap.md}`,
-  borderRadius: border.radius.sm,
-};
-
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
@@ -109,7 +85,7 @@ const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyCon
 // in-flight BDS session is reconciled, then remove this.
 const bodyCellStyle: CSSProperties = { backgroundColor: color.background.primary };
 
-const ADD_MENU_TYPES = [
+export const ADD_MENU_TYPES = [
   { id: 'checklist',     label: 'Checklist',  desc: 'Recurring to-do lists',      icon: icon.typeChecklist },
   { id: 'procedure',     label: 'Procedure',  desc: 'Step-by-step workflows',      icon: icon.typeProcedure },
   { id: 'compliance',    label: 'Compliance', desc: 'Regulatory & safety tasks',   icon: icon.typeCompliance },
@@ -120,16 +96,27 @@ const ADD_MENU_TYPES = [
 const TASK_TYPES = ['checklist', 'procedure', 'compliance', 'request'];
 const TRAINING_TYPES = ['onboarding', 'skill_training'];
 
-type TemplateSegment = 'tasks' | 'training';
+export type TemplateSegment = 'tasks' | 'training';
 
-const TEMPLATE_SEGMENTS = [
-  { label: 'Tasks', value: 'tasks' },
-  { label: 'Training', value: 'training' },
+export const TEMPLATE_SEGMENTS = [
+  { label: 'Tasks', value: 'tasks' as const },
+  { label: 'Training', value: 'training' as const },
 ];
 
-const SEGMENT_TYPES: Record<TemplateSegment, string[]> = {
+export const SEGMENT_TYPES: Record<TemplateSegment, string[]> = {
   tasks: TASK_TYPES,
   training: TRAINING_TYPES,
+};
+
+/**
+ * Imperative handle exposed by TemplatesTable. The settings page wrapper
+ * (`TemplatesSettingsClient`) hosts the Add button in the PageHeader actions
+ * slot but the EditTemplateSheet remains rendered inside TemplatesTable —
+ * this handle bridges the two so the parent can trigger the sheet without
+ * lifting all the sheet state up.
+ */
+export type TemplatesTableHandle = {
+  openAddSheet: (type: string) => void;
 };
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -146,10 +133,13 @@ function TypeChip({ type }: { type: string }) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function TemplatesTable() {
+interface TemplatesTableProps {
+  segment: TemplateSegment;
+}
+
+export const TemplatesTable = forwardRef<TemplatesTableHandle, TemplatesTableProps>(function TemplatesTable({ segment }, ref) {
   const { pushSheet } = useSheetStack();
   const { templates, setTemplates, loading: templatesLoading } = useTemplates();
-  const [segment, setSegment] = useState<TemplateSegment>('tasks');
   const typeFilter = SEGMENT_TYPES[segment];
 
   // Reference data for form selects
@@ -173,16 +163,21 @@ export function TemplatesTable() {
   const [newTemplateType, setNewTemplateType] = useState('checklist');
   const [viewSheetOpen, setViewSheetOpen] = useState(false);
   const [viewingTemplate, setViewingTemplate] = useState<TaskTemplate | null>(null);
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // Bridge for the Add button hosted in PageHeader actions (see
+  // TemplatesSettingsClient). The sheet itself stays rendered here.
+  useImperativeHandle(ref, () => ({
+    openAddSheet: (type: string) => {
+      setEditingTemplate(null);
+      setNewTemplateType(type);
+      setSheetOpen(true);
+    },
+  }));
 
   const filteredTemplates = typeFilter
     ? templates.filter((t) => typeFilter.includes(t.type))
     : templates;
-
-  const filteredAddTypes = typeFilter
-    ? ADD_MENU_TYPES.filter((t) => typeFilter.includes(t.id))
-    : ADD_MENU_TYPES;
 
   // ─── Resolve UUID to display name ─────────────────────────────────────────
 
@@ -219,13 +214,7 @@ export function TemplatesTable() {
     f ? (FREQUENCY_LABELS[f] ?? f) : '—';
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
-
-  const handleAddClick = (type: string) => {
-    setEditingTemplate(null);
-    setAddMenuOpen(false);
-    setNewTemplateType(type);
-    setSheetOpen(true);
-  };
+  // Add flow lives on the parent — see useImperativeHandle above.
 
   const handleEditClick = (template: TaskTemplate) => {
     setEditingTemplate(template);
@@ -424,42 +413,8 @@ export function TemplatesTable() {
 
   return (
     <div style={tabContentStyle}>
-      {/* Sub-header */}
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <SegmentedControl
-            items={TEMPLATE_SEGMENTS}
-            value={segment}
-            onChange={(v) => setSegment(v as TemplateSegment)}
-            size="sm"
-          />
-          <span style={subHeaderCountStyle}>{filteredTemplates.length}</span>
-        </div>
-        <div style={{ position: 'relative' }}>
-          <Button
-            variant="primary"
-            size="sm"
-            iconAfter={<Icon icon={icon.chevronDown} />}
-            onClick={() => setAddMenuOpen((p) => !p)}
-          >
-            Add Template
-          </Button>
-          <Menu
-            isOpen={addMenuOpen}
-            onClose={() => setAddMenuOpen(false)}
-            items={filteredAddTypes.map((t) => ({
-              id: t.id,
-              label: t.label,
-              description: t.desc,
-              icon: <Icon icon={t.icon} />,
-              onClick: () => handleAddClick(t.id),
-            }))}
-            style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 240 }}
-          />
-        </div>
-      </div>
-
-      {/* Templates table */}
+      {/* Templates table — segmented control + Add button live on the
+          parent's PageHeader (see TemplatesSettingsClient). */}
       <div style={tableWrapperStyle}>
         <Table size="default" flush>
           <TableHeader>
@@ -560,4 +515,4 @@ export function TemplatesTable() {
       />
     </div>
   );
-}
+});
