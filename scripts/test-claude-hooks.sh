@@ -59,6 +59,17 @@ bash_case "netlify env:list --json"      "netlify env:list --json"              
 bash_case "cat ~/.secrets/*"             "cat ~/.secrets/anthropic.env"                  deny
 bash_case "cat .env.local"               "cat .env.local"                                deny
 bash_case "cat .env"                     "cat .env"                                      deny
+# Widened 2026-05-04 — new SECRET_READING_TOOLS alternation
+bash_case "grep ~/.secrets/*.env"        "grep TOKEN ~/.secrets/brik-packages.env"       deny
+bash_case "grep glob ~/.secrets/*.env"   "grep PATTERN ~/.secrets/*.env"                 deny
+bash_case "egrep on .env"                "egrep '^FOO=' .env"                            deny
+bash_case "ripgrep on .env.production"   "rg SECRET .env.production"                     deny
+bash_case "sed on ~/.secrets file"       "sed -n 1,5p ~/.secrets/brik-packages.env"      deny
+bash_case "awk on .env.local"            "awk -F= '{print \$2}' .env.local"              deny
+bash_case "jq on ~/.secrets json"        "jq .key ~/.secrets/foo.json"                   deny
+bash_case "xxd on ~/.secrets file"       "xxd ~/.secrets/anthropic.env"                  deny
+bash_case "strings on ~/.secrets file"   "strings ~/.secrets/anthropic.env"              deny
+bash_case "head on .env"                 "head -1 .env"                                  deny
 bash_case "bash -x scripts/setup.sh"     "bash -x scripts/setup.sh"                      deny
 bash_case "set -x then source secrets"   "set -x; source ~/.secrets/foo.env"             deny
 bash_case "bare env"                     "env | head"                                    deny
@@ -79,6 +90,21 @@ bash_case "netlify env:get redirected"   "netlify env:get NODE_ENV > /dev/null 2
 bash_case "npm run build"                "npm run build"                                 allow
 bash_case "gh pr list"                   "gh pr list"                                    allow
 bash_case "cat src file"                 "cat src/app/api/vendors/route.ts"              allow
+# Allow non-secret-file uses of widened tools
+bash_case "grep stdin (op pipe)"         "op item list | grep -i token"                  allow
+bash_case "grep src file"                "grep TODO src/app/page.tsx"                    allow
+bash_case "sed src file"                 "sed -i 's/foo/bar/' src/app/page.tsx"          allow
+bash_case "jq on package.json"           "jq .version package.json"                      allow
+bash_case "grep .env.example"            "grep DATABASE_URL .env.example"                allow
+bash_case "grep .env.sample"             "grep API_KEY .env.sample"                      allow
+# Heredoc bodies are data, not commands — commit/PR messages that document
+# leak vectors must not self-block (false-positive class observed 2026-05-04).
+bash_case "git commit heredoc w/ ~/.secrets prose" \
+  "$(printf 'git commit -m "$(cat <<EOF\nfix: widen guard to catch grep against ~/.secrets/\nEOF\n)"')" \
+  allow
+bash_case "git commit heredoc w/ grep prose" \
+  "$(printf 'git commit -m "$(cat <<EOF\nleaked via: grep TOKEN .env.local\nEOF\n)"')" \
+  allow
 
 # ---- secret-scanner ----
 
