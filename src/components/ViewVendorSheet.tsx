@@ -87,8 +87,9 @@ export function ViewVendorSheet({ onClose, vendor: vendorProp, id, onEdit, onNav
       .catch(err => console.error('[ViewVendorSheet] failed to load contacts:', err));
   }, [vendor]);
 
+  // Reset tab when vendor changes (id is the identity for "different vendor")
   useEffect(() => {
-    if (vendor) setActiveTab('details');
+    if (vendor?.id) setActiveTab('details');
   }, [vendor?.id]);
 
   useLayoutEffect(() => {

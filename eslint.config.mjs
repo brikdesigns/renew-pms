@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
       // - window.location.href assignment is an intentional hard-reload for session refresh
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/immutability': 'off',
+      // Allow underscore-prefixed unused vars/args/destructures so that
+      // intentionally-reserved props (e.g. `_isAdmin` reserved for future
+      // admin-only actions) and ignored callback args don't trip the rule.
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
       // Fail-loud guardrails — no silent failures
       'no-empty': ['error', { allowEmptyCatch: false }],
       '@typescript-eslint/no-non-null-assertion': 'error',

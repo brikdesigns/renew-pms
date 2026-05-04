@@ -387,10 +387,10 @@ interface RequestsClientProps {
   isAdmin: boolean;
 }
 
-export default function RequestsClient({ isAdmin }: RequestsClientProps) {
+export default function RequestsClient({ isAdmin: _isAdmin }: RequestsClientProps) {
   const { requests, loading, refetch, updateOptimistic } = useRequests();
   const { members } = useMembers();
-  const { openSheet, closeAll } = useSheetStack();
+  const { openSheet } = useSheetStack();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -405,7 +405,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
   // Drag-and-drop state
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetKey, setDropTargetKey] = useState<string | null>(null);
-  const [settling, setSettling] = useState(false);
   const isDragging = useRef(false);
 
   // Open a request in the global sheet stack (supports drill-down into equipment, room, vendor)
@@ -520,8 +519,6 @@ export default function RequestsClient({ isAdmin }: RequestsClientProps) {
 
     // Optimistic: move card to new column immediately
     updateOptimistic(requestId, { status: targetStatusKey });
-    setSettling(true);
-    setTimeout(() => setSettling(false), 400);
 
     try {
       const res = await fetch(`/api/requests/${requestId}`, {

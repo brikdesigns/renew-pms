@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo, type CSSProperties } from 'react';
+import { forwardRef, useImperativeHandle, useState, useMemo, type CSSProperties } from 'react';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Badge, Tag, Button, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import { Badge, Tag, IconButton, Chip, Menu, FilterBar, useSheetStack } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -12,7 +12,7 @@ import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, space, gap, border } from '@/lib/tokens';
+import { color, font, space, gap } from '@/lib/tokens';
 import { useMembers, type Member } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -26,20 +26,10 @@ const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
-const subHeaderStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  paddingBlock: space.md,
-};
-const subHeaderLeftStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: space.sm };
-const countBadge: CSSProperties = {
-  fontFamily: font.family.label, fontSize: font.size.body.xs, fontWeight: font.weight.medium,
-  color: color.text.secondary, backgroundColor: color.surface.secondary, padding: `2px ${gap.md}`, borderRadius: border.radius.sm,
-};
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
-const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
 const menuStyle: CSSProperties = { position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 };
 
@@ -66,7 +56,18 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function UsersTable() {
+/**
+ * Imperative handle for the parent's PageHeader Add button to trigger the
+ * EditUserSheet (rendered inside UsersTable). See UsersSettingsClient.
+ */
+export type UsersTableHandle = {
+  openInviteSheet: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface UsersTableProps {}
+
+export const UsersTable = forwardRef<UsersTableHandle, UsersTableProps>(function UsersTable(_props, ref) {
   const { pushSheet } = useSheetStack();
   const { members, setMembers, loading } = useMembers();
   const { departments } = useDepartments();
@@ -77,6 +78,11 @@ export function UsersTable() {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewing, setViewing] = useState<Member | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  // Bridge for the Invite User button hosted in PageHeader actions.
+  useImperativeHandle(ref, () => ({
+    openInviteSheet: () => { setEditing(null); setSheetOpen(true); },
+  }));
 
   // ── Filters ──
   const [filterRole, setFilterRole] = useState('All Roles');
@@ -135,7 +141,8 @@ export function UsersTable() {
     });
   }, [members, filterRole, filterDept, filterStatus, filterType]);
 
-  const handleAdd = () => { setEditing(null); setSheetOpen(true); };
+  // handleAdd lives on the parent (UsersSettingsClient) and triggers the
+  // sheet via the imperative ref (openInviteSheet).
   const handleEdit = (m: Member) => { setEditing(m); setSheetOpen(true); };
   const handleClose = () => { setSheetOpen(false); setEditing(null); };
   const handleDelete = async () => {
@@ -265,20 +272,29 @@ export function UsersTable() {
       }
     : null;
 
+  const handleClearFilters = () => {
+    setFilterRole('All Roles');
+    setFilterDept('All Departments');
+    setFilterStatus('All Statuses');
+    setFilterType('All Types');
+  };
+
   return (
     <div style={wrapStyle}>
-      <div style={subHeaderStyle}>
-        <div style={subHeaderLeftStyle}>
-          <span style={countBadge}>{filteredMembers.length}</span>
-        </div>
-        <div style={filterBarStyle}>
-          <ChipFilter options={roleOptions} selected={filterRole} onChange={handleRoleChange} />
-          <ChipFilter options={deptOptions} selected={filterDept} onChange={handleDeptChange} />
-          <ChipFilter options={statusOptions} selected={filterStatus} onChange={setFilterStatus} />
-          <ChipFilter options={typeOptions} selected={filterType} onChange={setFilterType} />
-          <Button variant="primary" size="sm" onClick={handleAdd}>Invite User</Button>
-        </div>
-      </div>
+      {/* Invite User lives on the parent's PageHeader (UsersSettingsClient).
+          This row is the page's filter strip — BDS <FilterBar> with Chip
+          children for the four facets (role, department, status, type). */}
+      <FilterBar
+        total={members.length}
+        filtered={filteredMembers.length}
+        label="users"
+        onClear={handleClearFilters}
+      >
+        <ChipFilter options={roleOptions} selected={filterRole} onChange={handleRoleChange} />
+        <ChipFilter options={deptOptions} selected={filterDept} onChange={handleDeptChange} />
+        <ChipFilter options={statusOptions} selected={filterStatus} onChange={setFilterStatus} />
+        <ChipFilter options={typeOptions} selected={filterType} onChange={setFilterType} />
+      </FilterBar>
 
       <div style={tableWrap}>
         <Table size="default" flush>
@@ -366,4 +382,4 @@ export function UsersTable() {
       />
     </div>
   );
-}
+});

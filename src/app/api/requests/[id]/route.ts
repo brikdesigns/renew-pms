@@ -44,7 +44,6 @@ function flattenRequest(r: any) {
   const submitter = first(r.submitted_member);
   const submitterProfile = submitter ? first((submitter as MemberJoin).profiles) : null;
   const submitterRole = submitter ? first((submitter as MemberJoin).practice_role_types) : null;
-  const submitterDept = submitterRole ? first(submitterRole.departments) : null;
   const assignee = first(r.assigned_member);
   const assigneeProfile = assignee ? first((assignee as AssigneeMemberJoin).profiles) : null;
   const room = first(r.rooms);
