@@ -654,44 +654,29 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      {/* ── Page header — title + right-aligned actions + view tabs ── */}
+      {/* ── Page header — title + view tabs + Add Task action ── */}
       <PageHeader
         title="Tasks"
         actions={
-          <>
-            {hasOverdueInView && (
-              <Tooltip content="Overdue tasks present" placement="top">
-                <Dot status="warning" size="sm" pulse />
-              </Tooltip>
-            )}
-            <IconButton
-              variant="secondary"
-              size="sm"
-              icon={<Icon icon={icon.filter} />}
-              label="Toggle filters"
-              onClick={() => setFiltersVisible((p) => !p)}
-              style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
-            />
-            {canAddTask && (
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
-                  Add Task
-                </Button>
-                <Menu
-                  isOpen={addMenuOpen}
-                  onClose={() => setAddMenuOpen(false)}
-                  items={ADD_TASK_TYPES.map(t => ({
-                    id: t.id,
-                    label: t.label,
-                    description: t.desc,
-                    icon: <Icon icon={t.icon} />,
-                    onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
-                  }))}
-                  style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
-                />
-              </div>
-            )}
-          </>
+          canAddTask ? (
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Button variant="primary" size="sm" iconAfter={<Icon icon={icon.chevronDown} />} onClick={() => setAddMenuOpen(p => !p)}>
+                Add Task
+              </Button>
+              <Menu
+                isOpen={addMenuOpen}
+                onClose={() => setAddMenuOpen(false)}
+                items={ADD_TASK_TYPES.map(t => ({
+                  id: t.id,
+                  label: t.label,
+                  description: t.desc,
+                  icon: <Icon icon={t.icon} />,
+                  onClick: () => { setAddTaskType(t.id); setAddSheetOpen(true); setAddMenuOpen(false); },
+                }))}
+                style={{ top: '100%', right: 0, marginTop: gap.sm, minWidth: 260 }}
+              />
+            </div>
+          ) : undefined
         }
         tabs={
           <TabBar
@@ -705,9 +690,21 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         }
       />
 
-      {/* ── Sub-toolbar — date picker (filter/add live in PageHeader actions; view tabs in PageHeader tabs) ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: `${space.sm} 0` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm }}>
+      {/* ── Filter bar row — alert left, date picker center, filter toggle right ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        alignItems: 'center',
+        paddingBlock: space.sm,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+          {hasOverdueInView && (
+            <Tooltip content="Overdue tasks present" placement="top">
+              <Dot status="warning" size="sm" pulse />
+            </Tooltip>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, justifyContent: 'center' }}>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
             fontFamily: font.family.label,
@@ -719,6 +716,16 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
             {formatDate(selectedDate)}
           </span>
           <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <IconButton
+            variant="secondary"
+            size="sm"
+            icon={<Icon icon={icon.filter} />}
+            label="Toggle filters"
+            onClick={() => setFiltersVisible((p) => !p)}
+            style={hasActiveFilters ? { backgroundColor: color.surface.accent, color: color.text.brand } : undefined}
+          />
         </div>
       </div>
 
