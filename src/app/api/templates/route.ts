@@ -117,5 +117,10 @@ export async function POST(request: Request) {
   // to dedupe. We don't await-on-failure: the template row is already saved.
   await spawnTodayForTemplate(admin, practiceId, data);
 
+  // Auto-spawn today's task instance if the new template is active+recurring
+  // and its mode FK is set. Idempotent at the SQL layer, so callers don't need
+  // to dedupe. We don't await-on-failure: the template row is already saved.
+  await spawnTodayForTemplate(admin, practiceId, data);
+
   return NextResponse.json({ ...data, checklist_items: [] }, { status: 201 });
 }

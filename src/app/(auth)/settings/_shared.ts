@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { color, font } from '@/lib/tokens';
+import { color, font, space } from '@/lib/tokens';
 
 // ─── Shared settings page styles ─────────────────────────────────────────────
 // All color/font references use BDS semantic tokens via @/lib/tokens.
@@ -20,18 +20,14 @@ export const settingsPlaceholderStyle: CSSProperties = {
   fontSize: font.size.body.sm,
 };
 
-// Inter-section rhythm is owned by BDS DataSection's adjacent-sibling rule
-// (`+ .bds-data-section { margin-top + padding-top + border-top }`). The
-// previous `gap: space.huge` here stacked on top of that, producing ~110px
-// between sections — sections felt detached while their interiors felt
-// crammed. Letting DataSection own the rhythm gives the canonical
-// 32px+divider+32px cadence from the BDS Form/Read-Mode Page pattern.
-//
-// `alignItems: stretch` lets each DataSection fill the column instead of
-// hugging its narrowest child, so wide viewports use horizontal space.
+// Vertical + horizontal page-level insets are provided by settings/layout.tsx
+// bodyStyle (single source of truth — paddingInline + paddingTop/Bottom + the
+// gap between PageHeader and body). This style only owns the inter-section
+// vertical rhythm between DataSection blocks on read-mode profile pages.
 export const contentStyle: CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'stretch',
+  gap: space.huge,         // 48px between sibling DataSection blocks
+  alignItems: 'flex-start',
 };

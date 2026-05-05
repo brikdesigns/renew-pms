@@ -183,7 +183,7 @@ export async function DELETE(
     .eq('practice_id', practiceId)
     .select('id');
 
-  if (error) return apiError(error);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!deleted || deleted.length === 0) {
     return NextResponse.json({ error: 'Template not found' }, { status: 404 });
   }

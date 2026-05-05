@@ -24,7 +24,7 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 

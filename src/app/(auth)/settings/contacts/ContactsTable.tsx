@@ -82,7 +82,7 @@ const filterRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
   paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };

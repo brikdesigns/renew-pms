@@ -14,6 +14,6 @@ export async function PATCH() {
 
   const admin = createAdminClient();
   const { error } = await admin.from('notifications').update({ is_read: true }).eq('user_id', authUser.profile.id).eq('is_read', false);
-  if (error) return apiError(error);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

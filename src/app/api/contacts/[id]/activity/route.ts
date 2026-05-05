@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
@@ -59,7 +58,7 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (reqErr) {
-    return apiError(reqErr);
+    return NextResponse.json({ error: reqErr.message }, { status: 500 });
   }
 
   const rows = (requests ?? []).map(r => {

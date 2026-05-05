@@ -74,6 +74,7 @@ const tabContentStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
+  paddingInline: space.xl,
 };
 
 // typeChipStyle removed — TypeChip now uses BDS Tag

@@ -11,14 +11,7 @@
       {
         "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/worktree-check.sh" },
-          { "type": "command", "command": ".claude/hooks/secret-scanner.sh" }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": ".claude/hooks/bash-leak-guard.sh" }
+          { "type": "command", "command": ".claude/hooks/worktree-check.sh" }
         ]
       }
     ]

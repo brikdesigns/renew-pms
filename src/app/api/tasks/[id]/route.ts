@@ -189,7 +189,7 @@ export async function PATCH(
     .eq('id', id)
     .eq('practice_id', practiceId)
     .maybeSingle();
-  if (existingErr) return apiError(existingErr);
+  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   const scope = await resolveTaskScope(admin, authUser, practiceId);

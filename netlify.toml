@@ -6,10 +6,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # The Claude Code hook test harness contains synthetic secret-shaped strings
-  # (fake github_pat_*, xoxb-*, sk-ant-* values) used to verify the scanner blocks them.
-  # Netlify's own secret-scanning would otherwise flag these test fixtures.
-  SECRETS_SCAN_OMIT_PATHS = "scripts/test-claude-hooks.sh"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
