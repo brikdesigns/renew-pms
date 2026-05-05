@@ -74,24 +74,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # TEMP DEBUG (revert after diagnosis): inspect what the runner has for
-      # SUPABASE_ACCESS_TOKEN. Prints prefix (first 4 chars) + length only —
-      # never the full value. GitHub Actions masking only triggers on the full
-      # secret string; substrings of any secret pass through unmasked, so we
-      # can safely log "sbp_" + "44" if the value is correct, or "eyJh" + "200+"
-      # if a JWT was set instead. See brik-llm#195 / token-management session.
-      - name: DEBUG — inspect SUPABASE_ACCESS_TOKEN shape
-        run: |
-          echo "--- SUPABASE_ACCESS_TOKEN diagnostics ---"
-          echo "Length: ${#SUPABASE_ACCESS_TOKEN}"
-          echo "First 4 chars: '${SUPABASE_ACCESS_TOKEN:0:4}'"
-          echo "Last 2 chars: '${SUPABASE_ACCESS_TOKEN: -2}'"
-          echo "Hex of first 4 bytes: $(printf '%s' "${SUPABASE_ACCESS_TOKEN:0:4}" | xxd | head -1)"
-          echo "Hex of last 2 bytes:  $(printf '%s' "${SUPABASE_ACCESS_TOKEN: -2}" | xxd | head -1)"
-          echo "--- Supabase CLI version actually installed ---"
-          supabase --version
-          echo "--- end diagnostics ---"
-
       - name: Schema types drift check
         # Regenerate src/types/database.types.ts from the staging schema and
         # diff against the committed file. Fails if a developer ran a migration
