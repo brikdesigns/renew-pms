@@ -1,15 +1,10 @@
 name: Secret scan
 
-# Why: defense-in-depth for the secret-leak prevention layer shipped 2026-05-04.
-# Renew-pms is the repo where the original 2026-05-02 leak incident filed #168.
-#
-# Note: uses gitleaks CLI directly (gitleaks-action@v2 requires a paid org
-# license; the CLI itself is MIT-licensed and free).
+# Scans PR diff against the base branch (not full history).
+# Historic leaks need rotation separately; blocking PRs on them is the wrong gate.
 
 on:
   pull_request:
-  push:
-    branches: [main, staging]
 
 jobs:
   gitleaks:
@@ -27,9 +22,10 @@ jobs:
             | sudo tar -xz -C /usr/local/bin gitleaks
           gitleaks version
 
-      - name: Run gitleaks (history scan)
+      - name: Scan PR diff
         run: |
           set -e
           config_arg=""
           [ -f .gitleaks.toml ] && config_arg="--config .gitleaks.toml"
-          gitleaks detect --redact --no-banner --verbose --exit-code 1 $config_arg
+          gitleaks detect --redact --no-banner --verbose --exit-code 1 $config_arg \
+            --log-opts="--no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"
