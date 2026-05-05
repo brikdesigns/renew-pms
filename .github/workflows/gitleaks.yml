@@ -1,0 +1,31 @@
+name: Secret scan
+
+# Scans PR diff against the base branch (not full history).
+# Historic leaks need rotation separately; blocking PRs on them is the wrong gate.
+
+on:
+  pull_request:
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          set -e
+          VERSION=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan PR diff
+        run: |
+          set -e
+          config_arg=""
+          [ -f .gitleaks.toml ] && config_arg="--config .gitleaks.toml"
+          gitleaks detect --redact --no-banner --verbose --exit-code 1 $config_arg \
+            --log-opts="--no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"
