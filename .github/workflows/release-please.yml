@@ -3,8 +3,8 @@ name: release-please
 # Automated versioning + changelog for renew-pms.
 #
 # How it works:
-#   1. Watches conventional-commit messages on the trunk branch (currently `staging`
-#      pre-launch — flip to `main` after launch, see CLAUDE.md § Branch Workflow).
+#   1. Watches conventional-commit messages on the trunk branch (`main` post-launch
+#      as of 2026-05-04 — was `staging` pre-launch).
 #   2. Opens a "release PR" that bumps `package.json`, `.release-please-manifest.json`,
 #      and writes/updates `CHANGELOG.md` based on the commit log since the last release.
 #   3. When the release PR is merged, release-please creates the matching git tag +
@@ -18,7 +18,7 @@ name: release-please
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
 
 permissions:
   contents: write
@@ -34,5 +34,5 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          target-branch: staging
+          target-branch: main
           token: ${{ secrets.GITHUB_TOKEN }}

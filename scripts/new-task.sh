@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 # new-task.sh — Create an isolated git worktree for a single task.
 #
-# Branches from origin/$BASE_BRANCH (default: staging — we're pre-launch).
+# Branches from origin/$BASE_BRANCH (default: main — post-launch as of
+# 2026-05-04 beta launch).
 # Enforces task/{scope}-{name} naming. Installs dependencies in the worktree.
-#
-# At go-live, change the BASE_BRANCH default below to "main" and update
-# the Branch Workflow section in CLAUDE.md to match.
 #
 # Usage:
 #   ./scripts/new-task.sh {scope}-{name}
-#   BASE_BRANCH=main ./scripts/new-task.sh infra-some-thing   # one-off override
+#   BASE_BRANCH=staging ./scripts/new-task.sh infra-some-thing   # one-off override
 #
 # Creates:
 #   ../renew-pms-worktrees/{scope}-{name}/   on branch  task/{scope}-{name}
@@ -20,8 +18,8 @@
 
 set -euo pipefail
 
-# ── Base branch (pre-launch default: staging; flip to main at go-live) ──
-BASE_BRANCH="${BASE_BRANCH:-staging}"
+# ── Base branch (post-launch as of 2026-05-04: default main) ──
+BASE_BRANCH="${BASE_BRANCH:-main}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
