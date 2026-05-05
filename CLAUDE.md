@@ -45,6 +45,20 @@ Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `
 
 **Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
 
+## Security — read the canonical 5 before any credential work
+
+> **Canonical doc set — five files, no more.** Read these before doing anything credential-related (rotating, fetching, env-setting, writing config). Do NOT create a sixth security md file in this repo.
+>
+> 1. **Human entry point:** [Notion — Security Best Practices](https://www.notion.so/Security-Best-Practices-35797d34ed2880b49446e2d93497a487)
+> 2. **Per-repo lookup:** [`brik-llm/operations/security/repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md) — every Brik repo's credentials → 1P entry
+> 3. **Per-secret destinations:** [`brik-llm/operations/security/auth-surfaces.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/auth-surfaces.md)
+> 4. **Rotation doctrine:** [`brik-llm/operations/security/when-to-rotate.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/when-to-rotate.md) — **HARD RULE: agents never initiate rotation; humans do.** Agents propose only on real-exposure triggers (chat paste, public repo, third-party leak) and propagate after the human-driven provider-side action.
+> 5. **Manual procedure per provider:** [`brik-llm/operations/macos/openclaw/runbooks/token-rotation.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/macos/openclaw/runbooks/token-rotation.md)
+>
+> Source-of-truth for every credential value: **1Password Development vault.** Never paste secrets into chat or commits. Reference 1P items by ID, not title. Update existing 1P entries, never create "FOO NEW" duplicates.
+>
+> **Renew-specific:** Supabase prod + staging credentials, Resend, Sentry, two `CRON_SECRET` values (prod + staging), `PACKAGES_READ_TOKEN`, and `RELEASE_PLEASE_TOKEN` — full inventory under `## renew-pms` in [`repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md#renew-pms). 2026-05-05 incident note: `SUPABASE_ACCESS_TOKEN` format-mismatch CI failures came from cross-session rotation activity; if you see a similar `Invalid access token format` from `supabase` CLI, check for org-level secret override or `gh secret set` value-encoding before rotating again.
+
 ## Business Context
 
 - Single dental practice client initially; validated before going to market
