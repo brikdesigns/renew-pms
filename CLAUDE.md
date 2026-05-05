@@ -6,6 +6,25 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
+## Compliance Profile — Healthcare ADA
+
+Renew PMS is a healthcare-adjacent SaaS — every tenant is a dental practice (HIPAA covered entity). Read the canonical Brik Healthcare Accessibility & Compliance Standards before:
+
+- Touching any tenant-visible surface (practice dashboard, training UI, patient intake flows)
+- Changing color/contrast tokens or atmosphere choices
+- Adding or modifying animation / motion (vestibular sensitivity matters in clinical workflows)
+- Building features that touch PHI flows (patient records, treatment plans, secure messaging)
+
+**Canonical doc:** [`@brikdesigns/bds/content-system/compliance/healthcare-ada.md`](https://design.brikdesigns.com/docs/content-system/compliance/Healthcare-ADA) — ships with BDS via `npm update @brikdesigns/bds`.
+
+**Companion docs:**
+- [`brik-llm/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md`](https://github.com/brikdesigns/brik-llm/blob/main/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md) — universal Brik a11y baseline + WCAG 2.1 AA CI-gate pattern.
+- [`@brikdesigns/bds/content-system/compliance/accessibility-overlays.md`](https://design.brikdesigns.com/docs/content-system/compliance/accessibility-overlays) — no-overlay policy.
+
+**Project-specific overrides:** axe-core/Playwright CI gate not yet wired (tracked under [brik-llm#130](https://github.com/brikdesigns/brik-llm/issues/130) phase 4.4). Adopting the portal pattern is the canonical path.
+
+---
+
 ## Worktree (renew-pms specifics)
 
 - **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
