@@ -30,7 +30,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) return apiError(error, { status: 404 });
 
   const vendor = Array.isArray(data.vendors) ? data.vendors[0] : data.vendors;
   return NextResponse.json({

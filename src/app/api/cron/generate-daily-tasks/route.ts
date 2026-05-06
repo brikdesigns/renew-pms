@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('[cron/generate-daily-tasks] run_daily_tasks failed:', error);
-    return NextResponse.json({ error: error.message, elapsedMs }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', elapsedMs }, { status: 500 });
   }
 
   return NextResponse.json({

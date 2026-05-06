@@ -26,7 +26,7 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 // padding-lg). A flex `gap` here doubles up that spacing — drop it.
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
