@@ -61,9 +61,12 @@ export async function PATCH(
 
   const admin = createAdminClient();
 
-  // Update each item
+  // Update each item, surfacing any failures rather than silently swallowing.
+  // CLAUDE.md "Fail Loud, Never Fake" — caller can't distinguish a partial
+  // update from a full success without this.
+  const failures: Array<{ id: string; error: string }> = [];
   for (const item of body.items) {
-    await admin
+    const { error: itemError } = await admin
       .from('task_checklist_items')
       .update({
         is_completed: item.is_completed,
@@ -73,6 +76,17 @@ export async function PATCH(
       .eq('id', item.id)
       .eq('task_id', id)
       .eq('practice_id', practiceId);
+    if (itemError) {
+      console.error('[checklist PATCH] item update failed:', { itemId: item.id, error: itemError.message });
+      failures.push({ id: item.id, error: 'Update failed' });
+    }
+  }
+
+  if (failures.length > 0) {
+    return NextResponse.json(
+      { error: 'Some items failed to update', failures },
+      { status: 207 },
+    );
   }
 
   // Return fresh list
