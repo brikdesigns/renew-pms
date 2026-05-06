@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.1.2](https://github.com/brikdesigns/renew-pms/compare/v0.1.1...v0.1.2) (2026-05-06)
+
+
+### Features
+
+* **feedback:** retire NOTION_TOKEN — route /api/feedback to Sentry ([#262](https://github.com/brikdesigns/renew-pms/issues/262)) ([7bca9c5](https://github.com/brikdesigns/renew-pms/commit/7bca9c56ba5d20924cb099c82f1545e7b1c51d51))
+* **infra:** add PreToolUse hooks blocking secret leak vectors ([#258](https://github.com/brikdesigns/renew-pms/issues/258)) ([#259](https://github.com/brikdesigns/renew-pms/issues/259)) ([ab65f3a](https://github.com/brikdesigns/renew-pms/commit/ab65f3a550c35dca6182524dec3e46b7a3616528))
+* **security:** add gitleaks pre-commit + CI workflow ([#275](https://github.com/brikdesigns/renew-pms/issues/275)) ([9f1004a](https://github.com/brikdesigns/renew-pms/commit/9f1004acd83b2dc200d7e76125a8275c3a884684))
+* **settings:** tighten profile read-mode rhythm + drop double-spacing ([#268](https://github.com/brikdesigns/renew-pms/issues/268)) ([6b2b58a](https://github.com/brikdesigns/renew-pms/commit/6b2b58a34612f1562d45b183a50a2643f3b99377))
+
+
+### Bug Fixes
+
+* **ci:** use GITHUB_TOKEN for GHCR auth (no more PACKAGES_READ_TOKEN) ([#274](https://github.com/brikdesigns/renew-pms/issues/274)) ([78b72a0](https://github.com/brikdesigns/renew-pms/commit/78b72a05583cd9ff92a4a730cdec89927b7c1272))
+* **feedback:** flush Sentry events before serverless function returns ([#264](https://github.com/brikdesigns/renew-pms/issues/264)) ([bfe571b](https://github.com/brikdesigns/renew-pms/commit/bfe571b0234f9e345321df89f4ef9692c9d97408))
+* **feedback:** restore Notion as feedback destination on staging ([#269](https://github.com/brikdesigns/renew-pms/issues/269)) ([11aa13d](https://github.com/brikdesigns/renew-pms/commit/11aa13d20c0194d1e4b360996c48115a6bd2c03b))
+* **infra:** widen bash-leak-guard against secret stores ([#271](https://github.com/brikdesigns/renew-pms/issues/271)) ([42b5f76](https://github.com/brikdesigns/renew-pms/commit/42b5f76473efae534b0d63fec619891ac0a52540))
+* **rls:** tighten practice_members + vendor_messages policy scope ([#292](https://github.com/brikdesigns/renew-pms/issues/292)) ([c8934f8](https://github.com/brikdesigns/renew-pms/commit/c8934f886e314aead97765adc70cba10f90739ed))
+* **security:** pre-launch QA batch — five small fixes ([#291](https://github.com/brikdesigns/renew-pms/issues/291)) ([a4b07b6](https://github.com/brikdesigns/renew-pms/commit/a4b07b6f3e6c1df2cca672d80128299d03bc485e))
+* **security:** replace in-memory rate limiter with Upstash Redis ([#286](https://github.com/brikdesigns/renew-pms/issues/286)) ([ec0e8b2](https://github.com/brikdesigns/renew-pms/commit/ec0e8b20f36db274d0e6a297e27f13768c8c52da))
+* **security:** sanitize Supabase error.message in API responses ([#256](https://github.com/brikdesigns/renew-pms/issues/256)) ([2a226d3](https://github.com/brikdesigns/renew-pms/commit/2a226d3abd8aa2e63055cf53366011b450a708a4)), closes [#207](https://github.com/brikdesigns/renew-pms/issues/207)
+* **ui:** nav tooltip linger + page-anatomy spacing batch ([#294](https://github.com/brikdesigns/renew-pms/issues/294)) ([859243f](https://github.com/brikdesigns/renew-pms/commit/859243fbe38e620172345e5e697b990e95bcb847))
+
+
+### Documentation
+
+* **claude:** add Compliance Profile section pointing at BDS canonical ([#289](https://github.com/brikdesigns/renew-pms/issues/289)) ([71049e5](https://github.com/brikdesigns/renew-pms/commit/71049e514b1b2d0795a49d57136bf862e85135a8))
+* **claude:** link the canonical 5 security docs ([#287](https://github.com/brikdesigns/renew-pms/issues/287)) ([6f21646](https://github.com/brikdesigns/renew-pms/commit/6f2164616286959a72451f08893f629508df1254))
+
 ## [0.1.1](https://github.com/brikdesigns/renew-pms/compare/v0.1.0...v0.1.1) (2026-05-04)
 
 
