@@ -8,7 +8,7 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ## Worktree (renew-pms specifics)
 
-- **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
+- **Base branch:** `main` (post-launch as of 2026-05-04 beta)
 - **Worktree path:** `../renew-pms-worktrees/{slug}`
 - **Spawn:** `./scripts/new-task.sh {slug}` from the primary
 - **Hook:** `.claude/hooks/worktree-check.sh` warns on session start + first edit; also detects cross-worktree drift
@@ -279,9 +279,9 @@ The global app shell chrome and the per-route content header are **two different
 
 ## Branch Workflow
 
-> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below, update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh), and update the `target-branch` in [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml)).
+> **As of 2026-05-04 (beta launch):** renew-pms is post-launch. `main` is the **primary** branch; all feature + dependency work targets `main` first and Netlify deploys `main` to https://renew.brikdesigns.com. `staging` exists as a pre-prod mirror that gets back-merged from `main` after each shipped batch.
 
-**All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
+**All work happens on `task/{scope}-{name}` branches created from `main`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
 
 ```bash
 # Start a new task (always use this — never manual git checkout -b)
@@ -296,12 +296,12 @@ The global app shell chrome and the per-route content header are **two different
 **Rules:**
 
 1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
-2. **Branch from `staging` (pre-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=main ./scripts/new-task.sh ...` for the rare infra PR that needs to land on `main` directly.
+2. **Branch from `main` (post-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=staging ./scripts/new-task.sh ...` only when you need to land on `staging` directly (rare).
 3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
 4. **Never touch `main` or `staging` directly.** Only Nick merges.
 5. **Delete branches after merge.** GitHub auto-deletes on merge by default; closed-without-merge branches (like superseded version bumps) get deleted manually.
 
-**Merge flow (pre-launch):** `task/` branch → PR to `staging` → squash merge → periodic `staging → main` promotion when the infra warrants it. **Post-launch flow** (future): `task/` → PR to `main` → squash merge → `main → staging` → production.
+**Merge flow (post-launch):** `task/` branch → PR to `main` → squash merge → Netlify deploys → periodic `main → staging` back-merge to keep staging mirror current. The `staging` branch is **not** the trunk — it's a downstream mirror used for pre-prod previews and integration testing when needed.
 
 ## Session Discipline
 

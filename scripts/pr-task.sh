@@ -3,20 +3,18 @@
 #
 # Automates the push→PR step so branches don't go stale.
 # Generates a summary from the commit log automatically.
-# Targets BASE_BRANCH (default: staging). Use --base to override.
+# Targets BASE_BRANCH (default: main, post-launch as of 2026-05-04).
+# Use --base to override.
 #
 # Usage:
-#   ./scripts/pr-task.sh              # auto-generate title + body from commits
-#   ./scripts/pr-task.sh "Custom PR title"   # override title
-#   ./scripts/pr-task.sh --base main         # target main instead of staging
+#   ./scripts/pr-task.sh                        # auto-generate title + body from commits
+#   ./scripts/pr-task.sh "Custom PR title"      # override title
+#   ./scripts/pr-task.sh --base staging         # target staging instead of main
 #
 # Requirements:
 #   - Must be on a task/* branch (not main or staging).
 #   - Branch must have commits ahead of base branch.
 #   - gh CLI must be authenticated.
-#
-# Pre-launch: BASE_BRANCH=staging (saves Netlify build credits on main).
-# Post-launch: Change BASE_BRANCH default to "main" when production goes live.
 
 set -euo pipefail
 
@@ -26,8 +24,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # ── Base branch config ──
-# Change this to "main" when renew-pms goes live.
-BASE_BRANCH="staging"
+# Post-launch: main is the trunk (was staging pre-launch, flipped 2026-05-04).
+BASE_BRANCH="main"
 
 # ── Parse flags ──
 POSITIONAL_ARGS=()
