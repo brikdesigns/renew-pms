@@ -1091,7 +1091,16 @@
   function closePanel() {
     if (panelEl) panelEl.style.display = 'none';
     lockedEl = null;
-    drawOutline(hoveredEl, false);
+    // Only re-draw the hover outline if the inspector is still active.
+    // Without this guard, deactivating mid-inspect (toggleActive → closePanel)
+    // would clearOutline() and then immediately drawOutline() back on top,
+    // leaving a phantom highlight zone over the last hovered element until
+    // the next page navigation. (Upstream: brik-llm/scripts/brik-dev-tool.)
+    if (active) {
+      drawOutline(hoveredEl, false);
+    } else {
+      clearOutline();
+    }
   }
 
   function escapeHtml(s) {

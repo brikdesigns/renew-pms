@@ -56,11 +56,14 @@ const tabContentStyle: CSSProperties = {
   flex: 1,
 };
 
+// PageHeader → sub-header rhythm comes from settings/layout.tsx bodyStyle's
+// `gap: space.lg`. A paddingTop here doubled it up; only the sub-header →
+// table rhythm (paddingBottom + bottom border as divider) lives on this row.
 const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  paddingBlock: space.md,
+  paddingBottom: space.md,
   borderBottom: `1px solid ${color.border.primary}`,
 };
 
