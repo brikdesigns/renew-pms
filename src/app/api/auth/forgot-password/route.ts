@@ -31,7 +31,7 @@ const MIN_RESPONSE_MS = 350;
  */
 export async function POST(request: Request) {
   const start = Date.now();
-  const limited = rateLimitOrNull(request, 'forgot-password', FORGOT_PASSWORD_LIMIT);
+  const limited = await rateLimitOrNull(request, 'forgot-password', FORGOT_PASSWORD_LIMIT);
   if (limited) return limited;
 
   const respond = async () => {
