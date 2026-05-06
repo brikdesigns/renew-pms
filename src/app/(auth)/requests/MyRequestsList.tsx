@@ -32,7 +32,11 @@ const ADD_MENU_CATEGORIES = [
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
+// PageHeader → body rhythm. The auth shell's tasksStyle defines
+// `gap: space.lg`, but this wrapper is the only flex child of <main> so that
+// gap doesn't activate — owning it here keeps the table card from sitting
+// flush against the PageHeader bottom edge.
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
 
 // Surface shell that wraps the table. Mirrors the dashboard card pattern
 // (background.primary + shadow.sm + space.lg padding + border.radius.lg) so

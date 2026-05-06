@@ -78,9 +78,12 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
+// PageHeader → filter rhythm comes from settings/layout.tsx bodyStyle's
+// `gap: space.lg`. A paddingTop here doubled it up; only the filter → table
+// rhythm (paddingBottom + bottom border as divider) lives on this row now.
 const filterRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-  paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
+  paddingBottom: space.md, borderBottom: `1px solid ${color.border.muted}`,
 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };

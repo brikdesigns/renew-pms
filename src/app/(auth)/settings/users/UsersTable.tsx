@@ -12,7 +12,7 @@ import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, space, gap } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 import { useMembers, type Member } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -26,7 +26,9 @@ const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
+// BDS <FilterBar> already owns the FilterBar → table rhythm (margin-bottom:
+// padding-lg). A flex `gap` here doubles up that spacing — drop it.
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
