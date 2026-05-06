@@ -1966,6 +1966,7 @@ export type Database = {
       }
       get_my_system_role: { Args: never; Returns: string }
       is_admin_role: { Args: never; Returns: boolean }
+      is_brik_admin: { Args: never; Returns: boolean }
       run_daily_tasks: { Args: never; Returns: undefined }
       seed_practice_defaults: {
         Args: { p_office_id: string; p_practice_id: string }
