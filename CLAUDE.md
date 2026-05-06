@@ -6,6 +6,25 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
+## Compliance Profile — Healthcare ADA
+
+Renew PMS is a healthcare-adjacent SaaS — every tenant is a dental practice (HIPAA covered entity). Read the canonical Brik Healthcare Accessibility & Compliance Standards before:
+
+- Touching any tenant-visible surface (practice dashboard, training UI, patient intake flows)
+- Changing color/contrast tokens or atmosphere choices
+- Adding or modifying animation / motion (vestibular sensitivity matters in clinical workflows)
+- Building features that touch PHI flows (patient records, treatment plans, secure messaging)
+
+**Canonical doc:** [`@brikdesigns/bds/content-system/compliance/healthcare-ada.md`](https://design.brikdesigns.com/docs/content-system/compliance/Healthcare-ADA) — ships with BDS via `npm update @brikdesigns/bds`.
+
+**Companion docs:**
+- [`brik-llm/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md`](https://github.com/brikdesigns/brik-llm/blob/main/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md) — universal Brik a11y baseline + WCAG 2.1 AA CI-gate pattern.
+- [`@brikdesigns/bds/content-system/compliance/accessibility-overlays.md`](https://design.brikdesigns.com/docs/content-system/compliance/accessibility-overlays) — no-overlay policy.
+
+**Project-specific overrides:** axe-core/Playwright CI gate not yet wired (tracked under [brik-llm#130](https://github.com/brikdesigns/brik-llm/issues/130) phase 4.4). Adopting the portal pattern is the canonical path.
+
+---
+
 ## Worktree (renew-pms specifics)
 
 - **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
@@ -44,6 +63,20 @@ Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAU
 Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `@brikdesigns/claude-client` requirement live in cross-repo § "How to add Claude to any Brik app."
 
 **Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
+
+## Security — read the canonical 5 before any credential work
+
+> **Canonical doc set — five files, no more.** Read these before doing anything credential-related (rotating, fetching, env-setting, writing config). Do NOT create a sixth security md file in this repo.
+>
+> 1. **Human entry point:** [Notion — Security Best Practices](https://www.notion.so/Security-Best-Practices-35797d34ed2880b49446e2d93497a487)
+> 2. **Per-repo lookup:** [`brik-llm/operations/security/repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md) — every Brik repo's credentials → 1P entry
+> 3. **Per-secret destinations:** [`brik-llm/operations/security/auth-surfaces.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/auth-surfaces.md)
+> 4. **Rotation doctrine:** [`brik-llm/operations/security/when-to-rotate.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/when-to-rotate.md) — **HARD RULE: agents never initiate rotation; humans do.** Agents propose only on real-exposure triggers (chat paste, public repo, third-party leak) and propagate after the human-driven provider-side action.
+> 5. **Manual procedure per provider:** [`brik-llm/operations/macos/openclaw/runbooks/token-rotation.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/macos/openclaw/runbooks/token-rotation.md)
+>
+> Source-of-truth for every credential value: **1Password Development vault.** Never paste secrets into chat or commits. Reference 1P items by ID, not title. Update existing 1P entries, never create "FOO NEW" duplicates.
+>
+> **Renew-specific:** Supabase prod + staging credentials, Resend, Sentry, two `CRON_SECRET` values (prod + staging), `PACKAGES_READ_TOKEN`, and `RELEASE_PLEASE_TOKEN` — full inventory under `## renew-pms` in [`repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md#renew-pms). 2026-05-05 incident note: `SUPABASE_ACCESS_TOKEN` format-mismatch CI failures came from cross-session rotation activity; if you see a similar `Invalid access token format` from `supabase` CLI, check for org-level secret override or `gh secret set` value-encoding before rotating again.
 
 ## Business Context
 

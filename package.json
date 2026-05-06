@@ -49,6 +49,8 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.99.2",
     "@types/mdx": "^2.0.13",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "fumadocs-core": "^16.7.0",
     "fumadocs-mdx": "^14.2.11",
     "fumadocs-ui": "^16.7.0",

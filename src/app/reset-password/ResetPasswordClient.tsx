@@ -171,7 +171,16 @@ export default function ResetPasswordClient() {
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {
-      setError(updateError.message);
+      // Don't surface raw Supabase error.message — Supabase strings can be
+      // verbose, technical, or schema-leaky. Map to user-friendly text;
+      // operator sees the underlying cause in console + Sentry.
+      console.error('[reset-password] updateUser failed:', updateError.message);
+      const raw = updateError.message?.toLowerCase() ?? '';
+      if (raw.includes('session') || raw.includes('expired') || raw.includes('jwt')) {
+        setError('Your session has expired. Request a new password-reset link to continue.');
+      } else {
+        setError('Could not set your password. Please try again or request a new link.');
+      }
       setLoading(false);
       return;
     }

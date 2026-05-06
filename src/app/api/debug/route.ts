@@ -20,11 +20,19 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json({
-    step: 'profile',
-    userId: user.id,
-    userEmail: user.email,
-    profile,
-    profileError,
-  });
+  return NextResponse.json(
+    {
+      step: 'profile',
+      userId: user.id,
+      userEmail: user.email,
+      profile,
+      profileError,
+    },
+    {
+      // Auth-tier debug payload — never cache at CDN/proxy. Without this
+      // header, an intermediary could serve one brik_admin's profile to
+      // another. Pair with any future PHI-emitting route.
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
+    },
+  );
 }
