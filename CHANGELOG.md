@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.1.2](https://github.com/brikdesigns/renew-pms/compare/v0.1.1...v0.1.2) (2026-05-06)
+
+
+### Features
+
+* add consumer Storybook for Renew theme preview ([10bbbab](https://github.com/brikdesigns/renew-pms/commit/10bbbabe101b986c6b995132ba76ff25912d05eb))
+* add consumer Storybook for Renew theme preview ([ae2ed7c](https://github.com/brikdesigns/renew-pms/commit/ae2ed7c8212b091d8845336e4439b5698edcde72))
+* add QA infrastructure — Playwright E2E, auth health, seed migration fix ([d2def9f](https://github.com/brikdesigns/renew-pms/commit/d2def9fdf96543be94ace7bb9d7be9b10c83c010))
+* add schedule calendar with FullCalendar and event CRUD ([7ea8a53](https://github.com/brikdesigns/renew-pms/commit/7ea8a53722cb9db5c885ded78cac60536519db3b))
+* **auth:** add Sign in with Google to /login ([#190](https://github.com/brikdesigns/renew-pms/issues/190)) ([8dee59d](https://github.com/brikdesigns/renew-pms/commit/8dee59d1e8cd0e75d29a70ab0acc20a208292917))
+* consolidate settings UI — segmented controls, teams under departments, vendor icon tag ([152e40e](https://github.com/brikdesigns/renew-pms/commit/152e40e66ab27b14d413d7cc0b78bb08c350fc50))
+* contacts and vendor management ([3113214](https://github.com/brikdesigns/renew-pms/commit/3113214538b1b255d8d614ccf6c69bf25e707275))
+* **infra:** auto-start BDS Storybook on first UI edit ([#15](https://github.com/brikdesigns/renew-pms/issues/15)) ([e519209](https://github.com/brikdesigns/renew-pms/commit/e519209c9f1754af378fd2ff5451b61b8f3319ed))
+* notification system — bell, API, real-time hooks ([a3357ad](https://github.com/brikdesigns/renew-pms/commit/a3357ad1ed22007fa5096439ba32b22445d9c7b0))
+* **prod:** promote staging → main — beta launch (BDS 0.57.5 + 215 commits) ([#254](https://github.com/brikdesigns/renew-pms/issues/254)) ([4e648b3](https://github.com/brikdesigns/renew-pms/commit/4e648b3e35cd23dcea2ba60143ca8e2dd69e41e0))
+* **prod:** promote UI updates to main — BDS 0.57.1 + lean PageHeader ([#222](https://github.com/brikdesigns/renew-pms/issues/222)) ([94deaf1](https://github.com/brikdesigns/renew-pms/commit/94deaf17542863ad733d54638ea2e204f791baee))
+* QA infrastructure, CI pipeline, invite flow fix ([9cc225d](https://github.com/brikdesigns/renew-pms/commit/9cc225d9be2cef0d11ba38ebc5a9e80e443658db))
+* requests feature, template seeds, task checklist items ([ef3c670](https://github.com/brikdesigns/renew-pms/commit/ef3c6703da208a19f10c0ac9b123c8fe584f4160))
+* requests feature, UI polish, dark mode fixes ([9f7433b](https://github.com/brikdesigns/renew-pms/commit/9f7433b852aaa137f9fce694c85c01ef590a4fda))
+* requests UI polish + guide documentation ([5829738](https://github.com/brikdesigns/renew-pms/commit/5829738ca6d9b201256f8e5ceb16abc0228100e1))
+* role-based views, global sheet navigation, teams settings page ([b41b2a9](https://github.com/brikdesigns/renew-pms/commit/b41b2a9161458215c20fcad9decc436d3be23191))
+* schedule calendar, dark mode fixes, task CRUD, account settings ([c08bf70](https://github.com/brikdesigns/renew-pms/commit/c08bf7038e897b5978bf9b754016e04e4a86b7d5))
+* tasks board — pool tasks, filters, checklist view ([22391ae](https://github.com/brikdesigns/renew-pms/commit/22391ae6f3fe9482a11df7a7032452ae49fbcbc3))
+* template-driven task creation, task CRUD API, account settings ([4a1234f](https://github.com/brikdesigns/renew-pms/commit/4a1234fa43def09fff9a2a226e09d2c5b7658f96))
+
+
+### Bug Fixes
+
+* add vendor_id + department_id columns to equipment table ([6a357b5](https://github.com/brikdesigns/renew-pms/commit/6a357b506907d9139d786b4603b40c11f7464c30))
+* add vitest config to exclude E2E tests from unit test runner ([4bfc05c](https://github.com/brikdesigns/renew-pms/commit/4bfc05ce251785076782d65cf73913854e115d3b))
+* add vitest config to exclude E2E tests from unit test runner ([06255bf](https://github.com/brikdesigns/renew-pms/commit/06255bf97dbc801f9b0123a8d7f3b8a830f3652d))
+* add vitest config to exclude E2E tests from unit test runner ([4713dee](https://github.com/brikdesigns/renew-pms/commit/4713dee48bacfc423cdeb5eb0d45d77df6cae745))
+* **auth:** cherry-pick 5 launch-eve auth fixes from staging → main (prod promo) ([#219](https://github.com/brikdesigns/renew-pms/issues/219)) ([67c8a3f](https://github.com/brikdesigns/renew-pms/commit/67c8a3ff96c7960d8372d538bc2bdbdd55a60f1d))
+* **auth:** confirm email on invite to unblock recovery-type magic links ([#188](https://github.com/brikdesigns/renew-pms/issues/188)) ([635f47e](https://github.com/brikdesigns/renew-pms/commit/635f47e914d395f20a1e8467748803158bfda42c))
+* **auth:** pass through callback on no-code (implicit flow) ([#184](https://github.com/brikdesigns/renew-pms/issues/184)) ([c842aa5](https://github.com/brikdesigns/renew-pms/commit/c842aa5ec71462b91ac0e9621b4d45eebba9e533))
+* CI pipeline — env loading for CI, fumadocs type generation ([e6ebc5e](https://github.com/brikdesigns/renew-pms/commit/e6ebc5e4f504343c0dbf590e2331a0f8cddf8957))
+* dark mode token overrides, UI consistency across pages ([4eae4b7](https://github.com/brikdesigns/renew-pms/commit/4eae4b7881883d64c682064d85017e45f9743567))
+* dark mode tokens, UI consistency, delete dialogs, form polish ([c9ffc63](https://github.com/brikdesigns/renew-pms/commit/c9ffc6317e11fa5f5d96fe1ef4905dbb70ed0d2f))
+* equipment form — status mapping, PATCH payload, form pre-population ([0f42e5d](https://github.com/brikdesigns/renew-pms/commit/0f42e5db81e281fd68d16e825f0efe181f03dfe9))
+* **feedback:** hotfix prod — cherry-pick [#262](https://github.com/brikdesigns/renew-pms/issues/262) + [#264](https://github.com/brikdesigns/renew-pms/issues/264) to main ([#265](https://github.com/brikdesigns/renew-pms/issues/265)) ([38ca4e7](https://github.com/brikdesigns/renew-pms/commit/38ca4e70e31fb66396abc8632e11653da3790a54))
+* **feedback:** restore Notion as feedback destination ([#267](https://github.com/brikdesigns/renew-pms/issues/267)) ([28ccd64](https://github.com/brikdesigns/renew-pms/commit/28ccd64c99199a2c8fd89800392335fe581708d1))
+* **feedback:** use captureMessage + direct user-feedback POST ([#266](https://github.com/brikdesigns/renew-pms/issues/266)) ([fce04eb](https://github.com/brikdesigns/renew-pms/commit/fce04eb47348f74de17a3adba859ba621374d753))
+* practice API — use getPracticeId + admin client ([0fdfc7a](https://github.com/brikdesigns/renew-pms/commit/0fdfc7a40793c393ad4210529babdc2301cce744))
+* remove duplicate closing braces in BDS ProgressBar and Select CSS ([95ac63f](https://github.com/brikdesigns/renew-pms/commit/95ac63fe75a024843ebd66c1d402c99a11e0ac4e))
+* standardize all API routes to admin client for DB operations ([d3153f3](https://github.com/brikdesigns/renew-pms/commit/d3153f3658bc3e657f6022780a215df94f1d7c33))
+* update BDS submodule + resolve pre-existing type errors ([165b08a](https://github.com/brikdesigns/renew-pms/commit/165b08af484f05d5ac5960f647d4eb459b99e935))
+* update BDS submodule + resolve pre-existing type errors ([9c99d07](https://github.com/brikdesigns/renew-pms/commit/9c99d07bd141cffd36ad968ae473f04b61e1e9e4))
+* useVendors hook — add setVendors return + missing interface fields ([a10a548](https://github.com/brikdesigns/renew-pms/commit/a10a5489a0a04038d8c159d6ffa791cc21dba65c))
+* vendor PATCH/DELETE — use admin client to avoid RLS timing issue ([ecd276d](https://github.com/brikdesigns/renew-pms/commit/ecd276d845796fa775090d390cde6a08871b9194))
+
+
+### Refactors
+
+* **infra:** delegate Storybook autostart to BDS shared helper ([#16](https://github.com/brikdesigns/renew-pms/issues/16)) ([06d4a53](https://github.com/brikdesigns/renew-pms/commit/06d4a53f36b5924d170412ca1b298497fd70a714))
+* rename system_role values across app code and docs ([786082e](https://github.com/brikdesigns/renew-pms/commit/786082e7d078bd261246888436e59bdb278b497f))
+
+
+### Documentation
+
+* add branching model to CLAUDE.md ([f3ee398](https://github.com/brikdesigns/renew-pms/commit/f3ee398e7369338d6439203ebe30b4fc80cc741c))
+
 ## [0.1.1](https://github.com/brikdesigns/renew-pms/compare/v0.1.0...v0.1.1) (2026-05-04)
 
 
