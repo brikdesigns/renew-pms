@@ -22,7 +22,9 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
+// BDS <FilterBar> already owns the FilterBar → table rhythm (margin-bottom:
+// padding-lg). A flex `gap` here doubles up that spacing — drop it.
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 

@@ -261,6 +261,13 @@ export function AppSidebar({
                   aria-label={item.label}
                   onMouseEnter={() => setHoveredItem(item.href)}
                   onMouseLeave={() => setHoveredItem(null)}
+                  // BDS Tooltip shows on focus + hover. A click sets focus on the
+                  // Link, and that focus persists across SPA navigation — so the
+                  // tooltip pops up on the new page until something blurs the
+                  // link (typically the user clicking somewhere in the body).
+                  // Blur immediately after click to dismiss the tooltip; keyboard
+                  // users still get it via Tab focus.
+                  onClick={(e) => e.currentTarget.blur()}
                 >
                   <Icon
                     icon={item.icon}

@@ -25,11 +25,6 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Active',
 };
 
-// Caps the read-mode column on wide viewports so 2-col fields remain
-// scannable. Matches the cap used in the BDS Form/Read-Mode Page canonical
-// pattern (Frame width sized for legibility, not viewport).
-const readModeContentStyle = { ...contentStyle, maxWidth: '1100px' };
-
 export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSettingsClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(profile);
@@ -42,7 +37,7 @@ export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSet
           <Button variant="primary" size="sm" onClick={() => setSheetOpen(true)}>Edit Profile</Button>
         }
       />
-      <div style={readModeContentStyle}>
+      <div style={contentStyle}>
         <DataSection title="Contact Information">
           <FieldGrid columns={2}>
             <Field label="First Name" empty="—">{currentProfile.first_name || null}</Field>
