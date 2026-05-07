@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/brikdesigns/renew-pms/compare/v0.1.3...v0.1.4) (2026-05-07)
+
+
+### Features
+
+* **auth:** retire raw_user_meta_data.system_role pattern ([#300](https://github.com/brikdesigns/renew-pms/issues/300)) ([b758989](https://github.com/brikdesigns/renew-pms/commit/b758989cfb51aa51451cfc3e8a360c3ab6b41d81))
+
 ## [0.1.3](https://github.com/brikdesigns/renew-pms/compare/v0.1.2...v0.1.3) (2026-05-07)
 
 
