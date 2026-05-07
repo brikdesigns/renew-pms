@@ -28,9 +28,10 @@ export async function GET(
   const { data, error } = await admin
     .from('tasks')
     .select(`
-      id, title, status, priority, frequency, due_date,
+      id, title, status, priority, frequency, due_date, template_id,
       assigned_to, assigned_department, assigned_role_id,
       task_types(name),
+      task_templates(name, display_mode),
       departments!tasks_assigned_department_fkey(name, color),
       rooms(name),
       equipment(name),
@@ -63,6 +64,8 @@ export async function GET(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const taskType = first(data.task_types as any) as { name: string } | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parentTemplate = first(data.task_templates as any) as { name: string; display_mode: string } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dept = first(data.departments as any) as { name: string; color: string } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,6 +106,8 @@ export async function GET(
     id: data.id,
     title: data.title,
     templateName: taskType?.name ?? 'Task',
+    parentTemplateName: parentTemplate?.name ?? null,
+    displayMode: parentTemplate?.display_mode ?? null,
     taskType: (taskType?.name ?? 'checklist').toLowerCase().replace(/\s+/g, '_'),
     due: data.due_date ? 'Due today' : 'Due today',
     dept: dept?.name ?? '',
