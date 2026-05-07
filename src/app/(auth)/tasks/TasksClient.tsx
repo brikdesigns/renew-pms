@@ -32,6 +32,10 @@ interface MockTask {
   priority: 'critical' | 'error' | 'warning' | 'info';
   type: 'checklist' | 'procedure' | 'compliance' | 'skill_training' | 'onboarding' | 'request';
   template: string;
+  /** Parent template name (e.g. "Clean Restrooms") — for expanded-mode "Part of" labelling. Null when the task has no parent template. */
+  parentTemplateName: string | null;
+  /** Parent template display mode (`expanded` / `nested`) — drives whether the detail surface shows "Part of …". */
+  displayMode: string | null;
   overdue: boolean;
   status: string;
   assignmentType: 'individual' | 'role' | 'department' | 'pool';
@@ -417,6 +421,8 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       priority: mapPriority(t.priority),
       type: mapType(t.type_name),
       template: t.type_name ?? 'Task',
+      parentTemplateName: t.parent_template_name ?? null,
+      displayMode: t.display_mode ?? null,
       overdue: isOverdue,
       status: t.status,
       assignmentType,
@@ -518,6 +524,8 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       id: task.id,
       title: task.title,
       templateName: task.template,
+      parentTemplateName: task.parentTemplateName,
+      displayMode: task.displayMode,
       taskType: task.type,
       due: task.due,
       dept: task.dept,

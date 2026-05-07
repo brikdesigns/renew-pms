@@ -5,6 +5,7 @@ import { Sheet, Button, IconButton, Modal, TextInput, TextArea, Select, Switch }
 import type { SheetTab } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
+import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space } from '@/lib/tokens';
 import {
   sheetBodyStyle,
@@ -242,6 +243,7 @@ export function EditTemplateSheet({
   taskCategories = [],
   complianceTypes = [],
 }: EditTemplateSheetProps) {
+  const { showToast } = useToast();
   const [form, setForm] = useState<TemplateFormData>(EMPTY_FORM);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -378,6 +380,34 @@ export function EditTemplateSheet({
       setActiveTab('details');
       return;
     }
+
+    // Block items violations early — keeps the data clean at the source so
+    // generator output (one task per item, expanded mode) can't ship a
+    // confusing "parent" task whose label echoes the template name. See #299.
+    const templateNameNorm = form.name.trim().toLowerCase();
+    const empties = items.filter((i) => !i.label.trim());
+    const duplicates = items.filter(
+      (i) => i.label.trim().length > 0 && i.label.trim().toLowerCase() === templateNameNorm,
+    );
+    if (empties.length > 0) {
+      setActiveTab('tasks');
+      showToast({
+        title: 'Items must have a label',
+        description: `${empties.length} item${empties.length === 1 ? ' is' : 's are'} blank. Add a label or remove the empty row${empties.length === 1 ? '' : 's'}.`,
+        variant: 'error',
+      });
+      return;
+    }
+    if (duplicates.length > 0) {
+      setActiveTab('tasks');
+      showToast({
+        title: 'Item label matches template name',
+        description: `An item is named "${duplicates[0].label.trim()}" — same as the template. In expanded mode, that spawns a redundant task that reads as a phantom parent. Rename or remove it.`,
+        variant: 'error',
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       await onSave(form, items);

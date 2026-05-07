@@ -12,6 +12,7 @@ type MemberJoin = {
   practice_role_types: RoleJoin | RoleJoin[] | null;
 };
 type TaskTypeJoin = { name: string };
+type TaskTemplateJoin = { name: string; display_mode: string };
 type RoomJoin = { name: string };
 type EquipmentJoin = { name: string };
 type SupplyCategoryJoin = { name: string };
@@ -24,6 +25,7 @@ export interface RawTask {
   priority: string;
   frequency: string | null;
   due_date: string | null;
+  template_id: string | null;
   assigned_to: string;
   assigned_role_id: string | null;
   assigned_department: string | null;
@@ -32,6 +34,7 @@ export interface RawTask {
   equipment_id: string | null;
   supply_category_id: string | null;
   task_types: TaskTypeJoin | TaskTypeJoin[] | null;
+  task_templates: TaskTemplateJoin | TaskTemplateJoin[] | null;
   rooms: RoomJoin | RoomJoin[] | null;
   equipment: EquipmentJoin | EquipmentJoin[] | null;
   supply_categories: SupplyCategoryJoin | SupplyCategoryJoin[] | null;
@@ -50,6 +53,7 @@ export function flattenTask(t: RawTask) {
   const roleDept = role ? first(role.departments) : null;
   const taskDept = first(t.departments);
   const taskType = first(t.task_types);
+  const parentTemplate = first(t.task_templates);
   const room = first(t.rooms);
   const equipment = first(t.equipment);
   const supplyCategory = first(t.supply_categories);
@@ -67,6 +71,9 @@ export function flattenTask(t: RawTask) {
     due_date: t.due_date,
     type_name: taskType?.name ?? null,
     task_type_id: t.task_type_id,
+    template_id: t.template_id,
+    parent_template_name: parentTemplate?.name ?? null,
+    display_mode: parentTemplate?.display_mode ?? null,
     room_name: room?.name ?? null,
     room_id: t.room_id,
     equipment_name: equipment?.name ?? null,
@@ -85,10 +92,11 @@ export function flattenTask(t: RawTask) {
 }
 
 export const TASK_SELECT = `
-  id, title, description, status, priority, frequency, due_date,
+  id, title, description, status, priority, frequency, due_date, template_id,
   assigned_to, assigned_role_id, assigned_department,
   task_type_id, room_id, equipment_id, supply_category_id,
   task_types(name),
+  task_templates(name, display_mode),
   rooms(name),
   equipment(name),
   supply_categories(name),
