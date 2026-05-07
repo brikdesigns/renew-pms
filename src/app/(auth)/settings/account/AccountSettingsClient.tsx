@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { EditProfileSheet, type ProfileFormData } from '@/components/EditProfileSheet';
+import { ChangePasswordSheet } from '@/components/ChangePasswordSheet';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
 import { Button, DataSection, Field, FieldGrid, PageHeader } from '@brikdesigns/bds';
 import { SHIFT_LABELS } from '@/lib/member-labels';
@@ -11,6 +12,21 @@ interface AccountSettingsClientProps {
   profile: ProfileFormData;
   memberId: string | null;
   isAdmin: boolean;
+  /** True when the user has an email/password identity (i.e. can change their password here). */
+  hasEmailIdentity: boolean;
+  /** Non-email providers linked to this user (e.g. ['google']). Drives the SSO-only message. */
+  ssoProviders: string[];
+}
+
+const SSO_PROVIDER_LABELS: Record<string, string> = {
+  google: 'Google',
+  apple: 'Apple',
+  microsoft: 'Microsoft',
+  azure: 'Microsoft',
+};
+
+function ssoProviderLabel(slug: string): string {
+  return SSO_PROVIDER_LABELS[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -25,9 +41,12 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Active',
 };
 
-export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSettingsClientProps) {
+export function AccountSettingsClient({ profile, memberId, isAdmin, hasEmailIdentity, ssoProviders }: AccountSettingsClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(profile);
+  const ssoOnly = !hasEmailIdentity && ssoProviders.length > 0;
+  const ssoLabel = ssoProviders.map(ssoProviderLabel).join(', ');
 
   return (
     <>
@@ -69,11 +88,24 @@ export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSet
           </Field>
         </DataSection>
 
-        <DataSection title="Password">
-          <FieldGrid columns={2}>
-            <Field label="Password" empty="—">••••••••</Field>
-            <Field label="Last Changed" empty="—">{null}</Field>
-          </FieldGrid>
+        <DataSection
+          title="Security"
+          actions={hasEmailIdentity ? (
+            <Button variant="primary" size="sm" onClick={() => setPasswordSheetOpen(true)}>
+              Change Password
+            </Button>
+          ) : undefined}
+        >
+          {ssoOnly ? (
+            <Field label="Sign-in method" empty="—">
+              {`You sign in with ${ssoLabel}. Manage your password in your ${ssoLabel} account.`}
+            </Field>
+          ) : (
+            <FieldGrid columns={2}>
+              <Field label="Password" empty="—">••••••••</Field>
+              <Field label="Sign-in method" empty="—">Email + password</Field>
+            </FieldGrid>
+          )}
         </DataSection>
       </div>
 
@@ -84,6 +116,10 @@ export function AccountSettingsClient({ profile, memberId, isAdmin }: AccountSet
         memberId={memberId}
         isAdmin={isAdmin}
         onSaved={(updated) => setCurrentProfile(updated)}
+      />
+      <ChangePasswordSheet
+        isOpen={passwordSheetOpen}
+        onClose={() => setPasswordSheetOpen(false)}
       />
     </>
   );
