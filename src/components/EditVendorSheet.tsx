@@ -135,6 +135,7 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
       title={isEdit ? `Edit ${initialData.name}` : 'Add Vendor'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="vendor-form" disabled={saving || !canSave}>

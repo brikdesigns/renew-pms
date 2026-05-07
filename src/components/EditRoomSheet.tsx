@@ -104,7 +104,7 @@ export function EditRoomSheet({ isOpen, onClose, initialData, onSave }: EditRoom
       title={isEdit ? 'Edit Room' : 'Add Room'}
       width="600px"
       side="right"
-    
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="edit-room-form" disabled={saving}>
