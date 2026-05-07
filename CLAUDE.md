@@ -122,6 +122,7 @@ Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI han
   - `staff` → individual contributor; scoped to own work and department
 - **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice. Each role has a `default_system_role` that suggests the permission tier at invite time.
 - **Permission check helper:** Use `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks
+- **Source of truth.** `profiles.system_role` is the **only** source of truth for permission tier. `auth.users.raw_user_meta_data.system_role` (and the client-side mirror `user_metadata.system_role`) are **not consulted by any runtime code** — the `handle_new_user` trigger defaults every new profile to `'staff'` and callers must upsert `public.profiles` separately if a different role is needed (per migration 00049 / [#203](https://github.com/brikdesigns/renew-pms/issues/203)). Do not write `system_role` into `user_metadata` from any seed, script, or `admin.createUser()` call — the regression check in `tests/auth/no-system-role-metadata.test.ts` will fail it.
 
 ### Reference tables (user-renameable — never hardcode values in app logic)
 
