@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/brikdesigns/renew-pms/compare/v0.1.2...v0.1.3) (2026-05-07)
+
+
+### Features
+
+* **ux:** templates sheet UX + global edit-sheet outside-click guard ([#298](https://github.com/brikdesigns/renew-pms/issues/298)) ([9b5705d](https://github.com/brikdesigns/renew-pms/commit/9b5705d19b501fbdf34dafa568bdaec675c947ed))
+
+
+### Documentation
+
+* **process:** add release-runbook for staging→main→staging cycle ([#296](https://github.com/brikdesigns/renew-pms/issues/296)) ([4898ef9](https://github.com/brikdesigns/renew-pms/commit/4898ef931845ef4625229f0fd42ec21216fae223))
+
 ## [0.1.2](https://github.com/brikdesigns/renew-pms/compare/v0.1.1...v0.1.2) (2026-05-06)
 
 
