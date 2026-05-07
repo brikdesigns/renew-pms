@@ -306,6 +306,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
       title={isEdit ? 'Edit User' : 'Invite User'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       tabs={sheetTabs}
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}

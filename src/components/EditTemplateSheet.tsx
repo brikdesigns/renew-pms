@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, AddableFieldRowList, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { Sheet, Button, IconButton, Modal, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
-import { useToast } from '@/components/ToastProvider';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { color, font, gap, space } from '@/lib/tokens';
 import {
   sheetBodyStyle,
@@ -168,6 +169,19 @@ const formRowHalf: React.CSSProperties = {
   minWidth: 0,
 };
 
+const itemListStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: gap.sm,
+};
+
+const itemRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto auto',
+  gap: gap.sm,
+  alignItems: 'center',
+};
+
 const itemContextRowStyle: React.CSSProperties = {
   gridColumn: '1 / -1',
   display: 'flex',
@@ -191,6 +205,12 @@ const itemIndexStyle: React.CSSProperties = {
   fontSize: font.size.body.sm,
   alignSelf: 'center',
   minWidth: '24px',
+};
+
+const itemEmptyStyle: React.CSSProperties = {
+  color: color.text.muted,
+  fontSize: font.size.body.sm,
+  margin: 0,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -222,17 +242,43 @@ export function EditTemplateSheet({
   taskCategories = [],
   complianceTypes = [],
 }: EditTemplateSheetProps) {
-  const { showToast } = useToast();
   const [form, setForm] = useState<TemplateFormData>(EMPTY_FORM);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const isEdit = initialData !== null;
   const typeLabel = TYPE_LABELS[form.type] ?? form.type;
   const fields = TYPE_FIELDS[form.type] ?? TYPE_FIELDS.checklist;
   const sheetTitle = isEdit ? `Edit ${typeLabel}` : `Add ${typeLabel}`;
+
+  const isDirty = useMemo(
+    () => {
+      const baselineForm = initialData ?? EMPTY_FORM;
+      const baselineItems = initialItems ?? [];
+      return (
+        JSON.stringify(form) !== JSON.stringify(baselineForm) ||
+        JSON.stringify(items) !== JSON.stringify(baselineItems)
+      );
+    },
+    [form, items, initialData, initialItems]
+  );
+
+  const requestClose = () => {
+    if (saving) return;
+    if (isDirty) {
+      setConfirmCancelOpen(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const confirmDiscard = () => {
+    setConfirmCancelOpen(false);
+    onClose();
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -274,25 +320,6 @@ export function EditTemplateSheet({
     });
   };
 
-  /**
-   * `AddableFieldRowList` owns add/remove. When it removes a row, prune any
-   * expanded-id Set entry that no longer matches a live item — the Set is
-   * keyed by id, but BDS removes by index.
-   */
-  const handleItemsChange = (next: ChecklistItem[]) => {
-    setItems(next);
-    setExpandedItems((prev) => {
-      const validIds = new Set(next.map((i) => i.id));
-      let drift = false;
-      const cleaned = new Set<string>();
-      prev.forEach((id) => {
-        if (validIds.has(id)) cleaned.add(id);
-        else drift = true;
-      });
-      return drift ? cleaned : prev;
-    });
-  };
-
   const newChecklistItem = (): ChecklistItem => ({
     id: crypto.randomUUID(),
     label: '',
@@ -300,6 +327,24 @@ export function EditTemplateSheet({
     equipment_id: '',
     supply_category_id: '',
   });
+
+  const addItem = () => {
+    setItems((prev) => [...prev, newChecklistItem()]);
+  };
+
+  const updateItemLabel = (id: string, label: string) => {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, label } : i)));
+  };
+
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setExpandedItems((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
 
   const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
     setItems((prev) => prev.map((i) => {
@@ -339,11 +384,6 @@ export function EditTemplateSheet({
     } finally {
       setSaving(false);
     }
-    showToast({
-      title: isEdit ? 'Template updated' : 'Template created',
-      description: isEdit ? `${form.name} has been updated.` : `${form.name} has been created.`,
-      variant: 'success',
-    });
     onClose();
   };
 
@@ -566,26 +606,25 @@ export function EditTemplateSheet({
         </p>
       </div>
 
-      <AddableFieldRowList<ChecklistItem>
-        values={items}
-        onChange={handleItemsChange}
-        newRow={newChecklistItem}
-        columns="auto 1fr auto"
-        addLabel={form.type === 'procedure' ? 'Add Step' : `Add ${typeLabel} Item`}
-        removeLabel={form.type === 'procedure' ? 'Remove step' : 'Remove item'}
-        emptyLabel={`No ${form.type === 'procedure' ? 'steps' : 'items'} added yet. Click "Add" to start.`}
-        size="sm"
-      >
-        {({ row, index, update }) => {
+      <div style={itemListStyle}>
+        {items.length === 0 && (
+          <p style={itemEmptyStyle}>
+            {`No ${form.type === 'procedure' ? 'steps' : 'items'} added yet. Click "Add" to start.`}
+          </p>
+        )}
+        {items.map((row, index) => {
           const isExpanded = expandedItems.has(row.id);
           const itemHasContext = hasContext(row);
+          const removeLabel = form.type === 'procedure'
+            ? `Remove step ${index + 1}`
+            : `Remove item ${index + 1}`;
           return (
-            <>
+            <div key={row.id} style={itemRowStyle}>
               <span style={itemIndexStyle}>{index + 1}.</span>
               <TextInput
                 size="sm"
                 value={row.label}
-                onChange={(e) => update({ label: e.target.value })}
+                onChange={(e) => updateItemLabel(row.id, e.target.value)}
                 placeholder={form.type === 'procedure'
                   ? 'e.g. Verify autoclave temperature'
                   : 'e.g. Check and refill hand sanitizer stations'}
@@ -593,33 +632,33 @@ export function EditTemplateSheet({
               />
               <div style={itemActionsStyle}>
                 {!isExpanded && !itemHasContext && (
-                  <Button
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="tiny"
+                    variant="secondary"
+                    size="sm"
+                    icon={<Icon icon={icon.rooms} />}
+                    label="Link to inventory"
                     onClick={() => toggleItemExpand(row.id)}
-                  >
-                    + Link to inventory
-                  </Button>
+                  />
                 )}
                 {!isExpanded && itemHasContext && (
                   <>
-                    <Button
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="tiny"
+                      variant="secondary"
+                      size="sm"
+                      icon={<Icon icon={icon.edit} />}
+                      label="Edit inventory link"
                       onClick={() => toggleItemExpand(row.id)}
-                    >
-                      Edit link
-                    </Button>
-                    <Button
+                    />
+                    <IconButton
                       type="button"
-                      variant="danger-ghost"
-                      size="tiny"
+                      variant="secondary"
+                      size="sm"
+                      icon={<Icon icon={icon.trash} />}
+                      label="Remove inventory link"
                       onClick={() => clearItemContext(row.id)}
-                    >
-                      Remove link
-                    </Button>
+                    />
                   </>
                 )}
                 {isExpanded && (
@@ -633,6 +672,14 @@ export function EditTemplateSheet({
                   </Button>
                 )}
               </div>
+              <IconButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<Icon icon={icon.trash} />}
+                label={removeLabel}
+                onClick={() => removeItem(row.id)}
+              />
               {isExpanded && (
                 <div style={itemContextRowStyle}>
                   <div style={contextSelectWrap}>
@@ -667,10 +714,15 @@ export function EditTemplateSheet({
                   </div>
                 </div>
               )}
-            </>
+            </div>
           );
-        }}
-      </AddableFieldRowList>
+        })}
+        <div>
+          <Button type="button" variant="secondary" size="sm" onClick={addItem}>
+            {form.type === 'procedure' ? 'Add Step' : `Add ${typeLabel} Item`}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 
@@ -680,27 +732,41 @@ export function EditTemplateSheet({
   ];
 
   return (
-    <Sheet
-      isOpen={isOpen}
-      onClose={onClose}
-      title={sheetTitle}
-      width="600px"
-      side="right"
-      tabs={sheetTabs}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      footer={<>
-        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
-        <Button
-          variant="primary"
-          size="md"
-          type="button"
-          onClick={() => { void submit(); }}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </>}
-    />
+    <>
+      <Sheet
+        isOpen={isOpen}
+        onClose={requestClose}
+        title={sheetTitle}
+        width="600px"
+        side="right"
+        closeOnBackdrop={false}
+        tabs={sheetTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        footer={<>
+          <Button variant="ghost" size="md" type="button" onClick={requestClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            size="md"
+            type="button"
+            onClick={() => { void submit(); }}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </>}
+      />
+      <Modal
+        isOpen={confirmCancelOpen}
+        onClose={() => setConfirmCancelOpen(false)}
+        preset="confirm"
+        title="Discard changes?"
+        description="You have unsaved changes. Closing now will lose any edits to this template."
+        confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
+        confirmVariant="destructive"
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }

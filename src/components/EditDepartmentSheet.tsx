@@ -241,6 +241,7 @@ export function EditDepartmentSheet({ isOpen, onClose, initialData, onSave, role
       title={isEdit ? 'Edit Department' : 'Add Department'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       tabs={sheetTabs}
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}

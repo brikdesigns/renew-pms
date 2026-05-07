@@ -107,7 +107,7 @@ export function EditOrganizationSheet({ isOpen, onClose, initialData, onSave }: 
   };
 
   return (
-    <Sheet isOpen={isOpen} onClose={onClose} title="Edit Organization" width="600px" side="right"
+    <Sheet isOpen={isOpen} onClose={onClose} title="Edit Organization" width="600px" side="right" closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="edit-org-form" disabled={saving}>
