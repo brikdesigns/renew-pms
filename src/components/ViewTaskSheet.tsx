@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { Sheet, SheetSection, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import { Sheet, SheetSection, Button, Badge, Checklist, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
@@ -291,7 +291,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
           {items.map(item => (
-            <ChecklistItem
+            <Checklist
               key={item.id}
               label={item.label}
               checked={item.is_completed}
