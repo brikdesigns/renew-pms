@@ -161,6 +161,40 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 QUERY Storybook MCP for BDS component props before writing JSX (endpoint + fallback in `@brik-bds/CLAUDE.md`). FILTER to `surface-product` + `surface-shared` — NEVER use `surface-web` components (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`); they're marketing surfaces and misfit a clinical PMS UI.
 
+### Canon retrieval — `brik-rag` for design reasoning
+
+The Storybook MCP above answers *"what props does `PageHeader` take?"* The `brik-rag` MCP answers *"which token / component / pattern fits this clinical UI decision?"* — semantic retrieval over the canon corpus per [ADR-006](../../brik/brik-llm/software/docs/adr/ADR-006-design-vocabulary-corpus.md). Use both: `bds-find` to confirm a component exists, `brik-rag.query` to reason about which one fits.
+
+**Pass `workflow_type: "renew-pms-build"`** on every `mcp__brik-rag__query` call. Tags Helicone traces and the retrieval log so the app's canon usage feeds [brik-llm#374](https://github.com/brikdesigns/brik-llm/issues/374) baseline measurement.
+
+**Query before writing — filter to `surface-product` + `surface-shared` decisions only:**
+
+| About to write… | `source_type` filter |
+| --- | --- |
+| CSS referencing tokens or theming patterns | `['canon-tokens', 'canon-theming']` |
+| Product UI composed from BDS components | `['canon-components']` |
+| Interactive clinical surface (form, modal, keyboard nav, focus) | `['canon-a11y', 'canon-components']` |
+| Cross-cutting decision spanning multiple layers | `['canon']` (family-level) |
+
+**Healthcare a11y.** renew-pms is HIPAA-adjacent and fully in-scope for WCAG 2.1 AA. The `canon-a11y` corpus includes the BDS healthcare-ada compliance doc. Query it before any interactive surface decision — not only when accessibility "feels relevant."
+
+**Reasoning model.** renew-pms is customer-facing and pre-launch. The distinction between models is not complexity — it is reversibility and blast radius.
+
+- **Default: Sonnet 4.6** (`claude-sonnet-4-6`) for BDS component composition, token-referencing CSS, feature implementation following established service patterns, migration execution once the schema is settled, bug fixes with a clear root cause, test authoring, copy within the product UI. BDS-grounded Sonnet handles all of this reliably *when canon is in context.* Without retrieval grounding, Sonnet quality drops — the discipline is **ground first, then reason**.
+
+- **Use Opus** when the decision is hard to reverse or carries data-exposure risk:
+  - Supabase schema design and new/modified RLS policies — a wrong policy silently breaks tenant isolation
+  - Module boundary decisions ([ADR-002](../../brik/brik-llm/software/docs/adr/ADR-002-module-boundaries.md)) — 13 entitlement-gated modules; adding or splitting has long tails
+  - First-time wiring of any new Claude feature in this app — `workflow_type` naming, narrow-call pattern, `max_tokens` sizing per [`docs/service-synthesis-pattern.md`](docs/service-synthesis-pattern.md)
+  - Auth / session / permission surfaces — `isAdmin()`, Supabase Auth, practice isolation invariants
+  - PHI flows — any feature that might touch patient data requires the PHI redaction preprocessor decision first (see LLM stack section above)
+
+**The rule of thumb:** Opus to *design* anything schema-, security-, or module-shaped; Sonnet to *implement* it.
+
+**Capture lessons via `mcp__brik-rag__remember_lesson`** when the build surfaces non-obvious patterns ("this RLS policy shape breaks when X," "we scoped this module boundary here because Y"). Product-app lessons are higher-signal than marketing-site lessons — capture them.
+
+Opt-in per call. The auto-injection hook from [ADR-005](../../brik/brik-llm/software/docs/adr/ADR-005-three-tier-memory-model.md) Decision 4 is not deployed yet — you have to ask.
+
 ## Naming conventions
 
 ### "Sidebar" / "header" (renew language) ≠ `<PageHeader>` (BDS component)
