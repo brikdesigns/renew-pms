@@ -105,6 +105,20 @@ export async function PUT(
       };
 
   const admin = createAdminClient();
+
+  // Read the prior display_mode so we can detect a flip after the update.
+  // Tasks spawned under the old mode have the wrong shape for the new mode
+  // (nested has one parent + task_checklist_items; expanded has one task per
+  // item, no task_checklist_items). Without cleanup, the loadTasks render
+  // filter hides the old shape and the generator's idempotency check refuses
+  // to re-spawn — net result: nothing on the board.
+  const { data: existing } = await admin
+    .from('task_templates')
+    .select('display_mode')
+    .eq('id', id)
+    .eq('practice_id', practiceId)
+    .maybeSingle();
+
   const { data, error } = await admin
     .from('task_templates')
     .update({
@@ -131,22 +145,46 @@ export async function PUT(
   if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
 
+  // Display-mode flip — today's existing task(s) don't match the new shape,
+  // so drop them. The generator call at the end of this handler will then
+  // spawn fresh tasks in the new mode. Loses any in-progress completion on
+  // today's old task, which is the right tradeoff: leaving a wrong-shape
+  // task on the board (hidden by the loadTasks filter, with the generator's
+  // idempotency check refusing to re-spawn) is a worse outcome.
+  const modeFlipped =
+    body.display_mode !== undefined &&
+    existing != null &&
+    existing.display_mode !== data.display_mode;
+
+  if (modeFlipped) {
+    const today = new Date().toISOString().slice(0, 10);
+    await admin
+      .from('tasks')
+      .delete()
+      .eq('template_id', id)
+      .eq('due_date', today)
+      .not('status', 'in', '(completed,skipped)');
+  }
+
   // Mirror the new assignment onto today's existing un-completed task
   // instances. The daily generator is idempotent on (template_id, today),
   // so once today's task exists a re-spawn won't pick up the new assignee.
-  // Only runs if this PATCH actually touched an assignment field.
+  // Only runs if this PATCH actually touched an assignment field. Skipped
+  // when mode flipped — we just deleted those tasks and the spawn below
+  // will pick up the new assignment from the template directly.
   const assignmentTouched =
     body.assignment_mode !== undefined ||
     body.assigned_member_id !== undefined ||
     body.assigned_role_id !== undefined ||
     body.department_id !== undefined;
-  if (assignmentTouched) {
+  if (assignmentTouched && !modeFlipped) {
     await propagateAssignmentToTodaysTasks(admin, practiceId, id, data);
   }
 
   // Spawn today's instance if this update flipped the template into a state
-  // that should be running (e.g. draft → active, or assignment FK filled in).
-  // Idempotent at the SQL layer.
+  // that should be running (e.g. draft → active, or assignment FK filled in,
+  // or display_mode flipped + tasks just dropped above). Idempotent at the
+  // SQL layer.
   await spawnTodayForTemplate(admin, practiceId, data);
 
   return NextResponse.json(data);

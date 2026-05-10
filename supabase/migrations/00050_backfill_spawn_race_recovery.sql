@@ -48,3 +48,33 @@ where status not in ('completed', 'skipped')
 -- recreate the ghost.
 delete from public.checklist_items
 where label is null or trim(label) = '';
+
+
+-- ── Step 4: Drop expanded-mode tasks that still carry task_checklist_items ──
+-- Pattern: a template was spawned under nested mode (one parent task with
+-- copied items), then flipped to expanded after the fact. The old nested-
+-- shape task is now hidden by the loadTasks render filter (display_mode =
+-- 'expanded' AND tci > 0), and the generator's idempotency check refuses
+-- to re-spawn → nothing visible on the board.
+--
+-- Recovery: delete the mismatched task + its tci children. The next
+-- generator pass (or the in-app save flow under the #312 fix) spawns the
+-- correct expanded shape (one task per checklist_item, no tci rows).
+--
+-- Note: legitimate expanded children have tci = 0 by definition (they ARE
+-- the items), so the `exists tci` clause correctly excludes them.
+with mismatched as (
+  select t.id as task_id
+  from public.tasks t
+  join public.task_templates tt on tt.id = t.template_id
+  where tt.display_mode = 'expanded'
+    and t.status not in ('completed', 'skipped')
+    and exists (select 1 from public.task_checklist_items tci where tci.task_id = t.id)
+),
+del_items as (
+  delete from public.task_checklist_items
+  where task_id in (select task_id from mismatched)
+  returning task_id
+)
+delete from public.tasks
+where id in (select task_id from mismatched);
