@@ -381,23 +381,15 @@ export function EditTemplateSheet({
       return;
     }
 
-    // Block items violations early — keeps the data clean at the source so
-    // generator output (one task per item, expanded mode) can't ship a
-    // confusing "parent" task whose label echoes the template name. See #299.
+    // Auto-prune empty rows on save — they hold no information and pre-existing
+    // empty rows from legacy data shouldn't gate save (#299 follow-up). The
+    // duplicate-name check still blocks because that's a structural decision
+    // only the user can make (rename or remove).
     const templateNameNorm = form.name.trim().toLowerCase();
-    const empties = items.filter((i) => !i.label.trim());
-    const duplicates = items.filter(
-      (i) => i.label.trim().length > 0 && i.label.trim().toLowerCase() === templateNameNorm,
+    const cleanedItems = items.filter((i) => i.label.trim().length > 0);
+    const duplicates = cleanedItems.filter(
+      (i) => i.label.trim().toLowerCase() === templateNameNorm,
     );
-    if (empties.length > 0) {
-      setActiveTab('tasks');
-      showToast({
-        title: 'Items must have a label',
-        description: `${empties.length} item${empties.length === 1 ? ' is' : 's are'} blank. Add a label or remove the empty row${empties.length === 1 ? '' : 's'}.`,
-        variant: 'error',
-      });
-      return;
-    }
     if (duplicates.length > 0) {
       setActiveTab('tasks');
       showToast({
@@ -408,9 +400,13 @@ export function EditTemplateSheet({
       return;
     }
 
+    if (cleanedItems.length !== items.length) {
+      setItems(cleanedItems);
+    }
+
     setSaving(true);
     try {
-      await onSave(form, items);
+      await onSave(form, cleanedItems);
     } finally {
       setSaving(false);
     }
