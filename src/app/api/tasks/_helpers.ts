@@ -226,12 +226,20 @@ export async function loadTasks(
     countMap.set(item.task_id, entry);
   }
 
-  return flatTasks.map((t) => {
-    const counts = countMap.get(t.id);
-    return {
-      ...t,
-      checklist_total: counts?.total ?? 0,
-      checklist_completed: counts?.completed ?? 0,
-    };
-  });
+  // Hide spurious expanded-mode parent tasks (#299). A task with an expanded
+  // parent template should be one item-as-task, never a parent with copied
+  // task_checklist_items. The two known sources are POST /api/tasks
+  // ignoring display_mode (now fixed in the same change) and stale rows from
+  // a nested → expanded template flip. Direct fetch by id (GET /api/tasks/:id)
+  // is unaffected, so deep-links still resolve.
+  return flatTasks
+    .map((t) => {
+      const counts = countMap.get(t.id);
+      return {
+        ...t,
+        checklist_total: counts?.total ?? 0,
+        checklist_completed: counts?.completed ?? 0,
+      };
+    })
+    .filter((t) => !(t.display_mode === 'expanded' && t.checklist_total > 0));
 }
