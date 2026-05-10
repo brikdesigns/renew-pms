@@ -183,16 +183,34 @@ const itemRowStyle: React.CSSProperties = {
   alignItems: 'center',
 };
 
+/**
+ * Stacks under the text input (cols 2..-2). Inputs run vertically; the
+ * button group rides at the bottom-right. Read-mode summary uses a slim
+ * variant of the same column footprint.
+ */
 const itemContextRowStyle: React.CSSProperties = {
-  gridColumn: '1 / -1',
+  gridColumn: '2 / -2',
   display: 'flex',
-  gap: gap.md,
+  flexDirection: 'column',
+  gap: gap.sm,
   padding: `${space.xs} 0 ${space.sm}`,
 };
 
 const contextSelectWrap: React.CSSProperties = {
-  flex: 1,
+  width: '100%',
   minWidth: 0,
+};
+
+const itemSummaryRowStyle: React.CSSProperties = {
+  gridColumn: '2 / -2',
+  paddingTop: space.xs,
+};
+
+const itemEditButtonGroup: React.CSSProperties = {
+  display: 'flex',
+  gap: gap.sm,
+  justifyContent: 'flex-end',
+  paddingTop: space.xs,
 };
 
 const itemActionsStyle: React.CSSProperties = {
@@ -323,13 +341,40 @@ export function EditTemplateSheet({
     }));
   };
 
-  const toggleItemExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  // Snapshot the item's inventory FKs when entering edit mode so Cancel can
+  // restore. Saved on enter, consumed on save/cancel. Without this, Cancel
+  // would either lose existing data (clearing previously-saved selections) or
+  // leave half-typed edits committed (since onChange writes directly to items).
+  type InventorySnap = { room_id: string; equipment_id: string; supply_category_id: string };
+  const [editSnapshots, setEditSnapshots] = useState<Map<string, InventorySnap>>(new Map());
+
+  const enterItemEdit = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setEditSnapshots((prev) => {
+      const next = new Map(prev);
+      next.set(id, {
+        room_id: item.room_id,
+        equipment_id: item.equipment_id,
+        supply_category_id: item.supply_category_id,
+      });
       return next;
     });
+    setExpandedItems((prev) => { const next = new Set(prev); next.add(id); return next; });
+  };
+
+  const saveItemEdit = (id: string) => {
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const cancelItemEdit = (id: string) => {
+    const snap = editSnapshots.get(id);
+    if (snap) {
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...snap } : i)));
+    }
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   const newChecklistItem = (): ChecklistItem => ({
@@ -353,6 +398,12 @@ export function EditTemplateSheet({
     setExpandedItems((prev) => {
       if (!prev.has(id)) return prev;
       const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setEditSnapshots((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Map(prev);
       next.delete(id);
       return next;
     });
@@ -692,33 +743,18 @@ export function EditTemplateSheet({
                     size="sm"
                     icon={<Icon icon={icon.rooms} />}
                     label="Link to inventory"
-                    onClick={() => toggleItemExpand(row.id)}
+                    onClick={() => enterItemEdit(row.id)}
                   />
                 )}
                 {!isExpanded && itemHasContext && (
-                  <>
-                    <span style={itemSummaryStyle} aria-label="Inventory link">
-                      {itemInventorySummary(row)}
-                    </span>
-                    <IconButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      icon={<Icon icon={icon.edit} />}
-                      label="Edit inventory link"
-                      onClick={() => toggleItemExpand(row.id)}
-                    />
-                  </>
-                )}
-                {isExpanded && (
-                  <Button
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="tiny"
-                    onClick={() => toggleItemExpand(row.id)}
-                  >
-                    Save
-                  </Button>
+                    variant="secondary"
+                    size="sm"
+                    icon={<Icon icon={icon.edit} />}
+                    label="Edit inventory link"
+                    onClick={() => enterItemEdit(row.id)}
+                  />
                 )}
               </div>
               <IconButton
@@ -729,6 +765,13 @@ export function EditTemplateSheet({
                 label={removeLabel}
                 onClick={() => removeItem(row.id)}
               />
+              {!isExpanded && itemHasContext && (
+                <div style={itemSummaryRowStyle}>
+                  <span style={itemSummaryStyle} aria-label="Inventory link">
+                    {itemInventorySummary(row)}
+                  </span>
+                </div>
+              )}
               {isExpanded && (
                 <div style={itemContextRowStyle}>
                   <div style={contextSelectWrap}>
@@ -760,6 +803,24 @@ export function EditTemplateSheet({
                       onChange={(e) => updateItemContext(row.id, 'supply_category_id', e.target.value)}
                       fullWidth
                     />
+                  </div>
+                  <div style={itemEditButtonGroup}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => cancelItemEdit(row.id)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => saveItemEdit(row.id)}
+                    >
+                      Save
+                    </Button>
                   </div>
                 </div>
               )}
