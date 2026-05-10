@@ -444,9 +444,14 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       byMember.set(task.assigned_to, existing);
     }
 
-    return Array.from(byMember.entries()).map(([, memberTasks]) => {
+    return Array.from(byMember.entries()).map(([memberId, memberTasks]) => {
       const first = memberTasks[0];
       const person = {
+        // Carry the practice_member id forward — two members can share a
+        // display name (saw on staging: two auth users both named "Nick
+        // Stanerson"). Name-based grouping/filtering collapses or duplicates
+        // those columns incorrectly. ID is the authoritative key.
+        id: memberId,
         name: `${first.member_first_name} ${first.member_last_name}`.trim(),
         subtitle: first.member_role,
         department: first.member_department,
@@ -502,12 +507,11 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     .filter((col) => col.tasks.length > 0);
 
   // ── Filtered "My Tasks" board (current user only) ─────────────────────────
-
+  // Match by member id, never by name. Two auth users can share a display
+  // name (e.g. "Nick Stanerson"); name-based matching would surface both
+  // columns in My Tasks and produce visible duplicates.
   const filteredMyBoard = filteredAssignedBoard.filter(
-    (col) => assignedTasks.some(
-      (t) => t.assigned_to === currentMemberId
-        && `${t.member_first_name} ${t.member_last_name}`.trim() === col.person.name
-    )
+    (col) => col.person.id === currentMemberId
   );
 
   // ── Filtered "Open Tasks" board ────────────────────────────────────────────
@@ -766,7 +770,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         /* All Tasks / My Tasks — person-based columns */
         <Board style={{ flex: 1, minHeight: 0 }}>
           {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => (
-            <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
+            <BoardColumn key={col.person.id} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
               <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
                 <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
                 <div>

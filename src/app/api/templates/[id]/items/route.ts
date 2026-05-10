@@ -75,24 +75,37 @@ export async function PUT(
 
   if (deleteError) return apiError(deleteError);
 
-  if (body.length === 0) return NextResponse.json([]);
+  let data: Array<{ id: string; label: string; sort_order: number; room_id: string | null; equipment_id: string | null; supply_category_id: string | null }> | null = [];
+  if (body.length > 0) {
+    const rows = body.map((item, idx) => ({
+      template_id: id,
+      practice_id: practiceId,
+      label: item.label,
+      sort_order: idx,
+      room_id: item.room_id || null,
+      equipment_id: item.equipment_id || null,
+      supply_category_id: item.supply_category_id || null,
+    }));
 
-  const rows = body.map((item, idx) => ({
-    template_id: id,
-    practice_id: practiceId,
-    label: item.label,
-    sort_order: idx,
-    room_id: item.room_id || null,
-    equipment_id: item.equipment_id || null,
-    supply_category_id: item.supply_category_id || null,
-  }));
+    const { data: inserted, error } = await admin
+      .from('checklist_items')
+      .insert(rows)
+      .select('id, label, sort_order, room_id, equipment_id, supply_category_id');
 
-  const { data, error } = await admin
-    .from('checklist_items')
-    .insert(rows)
-    .select('id, label, sort_order, room_id, equipment_id, supply_category_id');
+    if (error) return apiError(error);
+    data = inserted;
+  }
 
-  if (error) return apiError(error);
+  // Spawn today's task instance(s) AFTER items are written. Moved here from
+  // POST /api/templates (which fired before items existed → race that left
+  // today's task with 0 task_checklist_items). The generator is idempotent
+  // on (template_id, today) and gated SQL-side on assignment-mode + FK
+  // presence, so it's safe to call regardless of body.length or template
+  // shape — no-op if nothing needs spawning.
+  const { error: spawnError } = await admin.rpc('generate_daily_tasks', { p_practice_id: practiceId });
+  if (spawnError) {
+    console.error('[templates/items] generate_daily_tasks failed:', spawnError);
+  }
 
   return NextResponse.json(data ?? []);
 }

@@ -183,16 +183,34 @@ const itemRowStyle: React.CSSProperties = {
   alignItems: 'center',
 };
 
+/**
+ * Stacks under the text input (cols 2..-2). Inputs run vertically; the
+ * button group rides at the bottom-right. Read-mode summary uses a slim
+ * variant of the same column footprint.
+ */
 const itemContextRowStyle: React.CSSProperties = {
-  gridColumn: '1 / -1',
+  gridColumn: '2 / -2',
   display: 'flex',
-  gap: gap.md,
+  flexDirection: 'column',
+  gap: gap.sm,
   padding: `${space.xs} 0 ${space.sm}`,
 };
 
 const contextSelectWrap: React.CSSProperties = {
-  flex: 1,
+  width: '100%',
   minWidth: 0,
+};
+
+const itemSummaryRowStyle: React.CSSProperties = {
+  gridColumn: '2 / -2',
+  paddingTop: space.xs,
+};
+
+const itemEditButtonGroup: React.CSSProperties = {
+  display: 'flex',
+  gap: gap.sm,
+  justifyContent: 'flex-end',
+  paddingTop: space.xs,
 };
 
 const itemActionsStyle: React.CSSProperties = {
@@ -212,6 +230,15 @@ const itemEmptyStyle: React.CSSProperties = {
   color: color.text.muted,
   fontSize: font.size.body.sm,
   margin: 0,
+};
+
+const itemSummaryStyle: React.CSSProperties = {
+  color: color.text.secondary,
+  fontSize: font.size.body.sm,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '320px',
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -287,11 +314,12 @@ export function EditTemplateSheet({
       setForm(initialData ?? EMPTY_FORM);
       setItems(initialItems ?? []);
       setActiveTab('details');
-      // Auto-expand items that already have context set
-      const withContext = new Set(
-        (initialItems ?? []).filter(hasContext).map((i) => i.id)
-      );
-      setExpandedItems(withContext);
+      // Items always reopen in read mode — even those with an inventory link.
+      // Edit mode is opt-in via the pencil button. Reverses the prior
+      // auto-expand-when-context behavior which dumped users into edit forms
+      // they hadn't asked for and surfaced a confusing cluster of action
+      // buttons (pencil + trash-link + trash-item) on saved rows.
+      setExpandedItems(new Set());
     }
   }, [isOpen, initialData, initialItems]);
 
@@ -313,13 +341,40 @@ export function EditTemplateSheet({
     }));
   };
 
-  const toggleItemExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  // Snapshot the item's inventory FKs when entering edit mode so Cancel can
+  // restore. Saved on enter, consumed on save/cancel. Without this, Cancel
+  // would either lose existing data (clearing previously-saved selections) or
+  // leave half-typed edits committed (since onChange writes directly to items).
+  type InventorySnap = { room_id: string; equipment_id: string; supply_category_id: string };
+  const [editSnapshots, setEditSnapshots] = useState<Map<string, InventorySnap>>(new Map());
+
+  const enterItemEdit = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setEditSnapshots((prev) => {
+      const next = new Map(prev);
+      next.set(id, {
+        room_id: item.room_id,
+        equipment_id: item.equipment_id,
+        supply_category_id: item.supply_category_id,
+      });
       return next;
     });
+    setExpandedItems((prev) => { const next = new Set(prev); next.add(id); return next; });
+  };
+
+  const saveItemEdit = (id: string) => {
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const cancelItemEdit = (id: string) => {
+    const snap = editSnapshots.get(id);
+    if (snap) {
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...snap } : i)));
+    }
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   const newChecklistItem = (): ChecklistItem => ({
@@ -346,6 +401,12 @@ export function EditTemplateSheet({
       next.delete(id);
       return next;
     });
+    setEditSnapshots((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
@@ -356,11 +417,6 @@ export function EditTemplateSheet({
       if (field === 'room_id') next.equipment_id = '';
       return next;
     }));
-  };
-
-  const clearItemContext = (id: string) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, room_id: '', equipment_id: '', supply_category_id: '' } : i));
-    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   /**
@@ -441,6 +497,29 @@ export function EditTemplateSheet({
     { label: 'Select supply category', value: '' },
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
+
+  /**
+   * Read-mode display for an item's inventory link. Returns a "·"-joined
+   * summary of the resolved names (room · equipment · supply category). Ids
+   * with no matching reference row fall back silently; the edit pencil is
+   * always the recovery path.
+   */
+  function itemInventorySummary(item: ChecklistItem): string {
+    const parts: string[] = [];
+    if (item.room_id) {
+      const r = rooms.find((x) => x.id === item.room_id);
+      if (r) parts.push(r.name);
+    }
+    if (item.equipment_id) {
+      const e = equipment.find((x) => x.id === item.equipment_id);
+      if (e) parts.push(e.name);
+    }
+    if (item.supply_category_id) {
+      const s = supplyCategories.find((x) => x.id === item.supply_category_id);
+      if (s) parts.push(s.name);
+    }
+    return parts.join(' · ');
+  }
 
   const categoryOptions = [
     { label: 'Select category', value: '' },
@@ -664,38 +743,18 @@ export function EditTemplateSheet({
                     size="sm"
                     icon={<Icon icon={icon.rooms} />}
                     label="Link to inventory"
-                    onClick={() => toggleItemExpand(row.id)}
+                    onClick={() => enterItemEdit(row.id)}
                   />
                 )}
                 {!isExpanded && itemHasContext && (
-                  <>
-                    <IconButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      icon={<Icon icon={icon.edit} />}
-                      label="Edit inventory link"
-                      onClick={() => toggleItemExpand(row.id)}
-                    />
-                    <IconButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      icon={<Icon icon={icon.trash} />}
-                      label="Remove inventory link"
-                      onClick={() => clearItemContext(row.id)}
-                    />
-                  </>
-                )}
-                {isExpanded && (
-                  <Button
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="tiny"
-                    onClick={() => toggleItemExpand(row.id)}
-                  >
-                    Done
-                  </Button>
+                    variant="secondary"
+                    size="sm"
+                    icon={<Icon icon={icon.edit} />}
+                    label="Edit inventory link"
+                    onClick={() => enterItemEdit(row.id)}
+                  />
                 )}
               </div>
               <IconButton
@@ -706,6 +765,13 @@ export function EditTemplateSheet({
                 label={removeLabel}
                 onClick={() => removeItem(row.id)}
               />
+              {!isExpanded && itemHasContext && (
+                <div style={itemSummaryRowStyle}>
+                  <span style={itemSummaryStyle} aria-label="Inventory link">
+                    {itemInventorySummary(row)}
+                  </span>
+                </div>
+              )}
               {isExpanded && (
                 <div style={itemContextRowStyle}>
                   <div style={contextSelectWrap}>
@@ -737,6 +803,24 @@ export function EditTemplateSheet({
                       onChange={(e) => updateItemContext(row.id, 'supply_category_id', e.target.value)}
                       fullWidth
                     />
+                  </div>
+                  <div style={itemEditButtonGroup}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => cancelItemEdit(row.id)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => saveItemEdit(row.id)}
+                    >
+                      Save
+                    </Button>
                   </div>
                 </div>
               )}
