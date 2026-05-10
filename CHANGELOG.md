@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.5](https://github.com/brikdesigns/renew-pms/compare/v0.1.4...v0.1.5) (2026-05-10)
+
+
+### Features
+
+* **auth:** change password from Settings → Security + SSO-only branch ([#302](https://github.com/brikdesigns/renew-pms/issues/302)) ([68e7a0a](https://github.com/brikdesigns/renew-pms/commit/68e7a0aa4934b837c5a0971b2efa3c97a04f411a))
+* **auth:** surface linked sign-in methods on user profile + admin view ([#304](https://github.com/brikdesigns/renew-pms/issues/304)) ([19f2944](https://github.com/brikdesigns/renew-pms/commit/19f29440643b8cb4a896d9eaa508ee311743e207))
+* **tasks:** show parent template on expanded children + validate items ([#305](https://github.com/brikdesigns/renew-pms/issues/305)) ([872cc86](https://github.com/brikdesigns/renew-pms/commit/872cc86c065c4b668305cb73c9e23c0cb5c95f7b))
+
+
+### Bug Fixes
+
+* **tasks:** expanded-mode legacy cleanup — hide phantoms + auto-prune empty items ([#309](https://github.com/brikdesigns/renew-pms/issues/309)) ([335be15](https://github.com/brikdesigns/renew-pms/commit/335be15f2dc2be9b9a1b6e87499d741aa7e22efa))
+
+
+### Documentation
+
+* **bds:** repoint TOKEN-REFERENCE.md refs to canonical primitives URL ([#308](https://github.com/brikdesigns/renew-pms/issues/308)) ([ec92d59](https://github.com/brikdesigns/renew-pms/commit/ec92d59097c976277c8eb3ff707105c8555216fd))
+* **claude-md:** Phase 3.5 trim — 409 → 244 lines ([#310](https://github.com/brikdesigns/renew-pms/issues/310)) ([a6c3317](https://github.com/brikdesigns/renew-pms/commit/a6c3317ddc63844d20723aac5977b2897588bd41))
+
 ## [0.1.4](https://github.com/brikdesigns/renew-pms/compare/v0.1.3...v0.1.4) (2026-05-07)
 
 
