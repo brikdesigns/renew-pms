@@ -2,7 +2,8 @@
  * BDS Token Reference for Portal Development
  *
  * Maps Figma style names → CSS custom property strings.
- * Source of truth: brik-bds/tokens/TOKEN-REFERENCE.md + Style Dictionary output.
+ * Source of truth: https://design.brikdesigns.com/docs/primitives (interactive,
+ * pulls live from dist/tokens.css) + Style Dictionary output in brik-bds.
  *
  * WHY THIS EXISTS:
  * Figma shows "body/md · 16/150" but code needs "var(--body-md)".
@@ -13,7 +14,7 @@
  *   style={{ fontSize: font.size.body.md, color: color.text.primary }}
  *
  * DO NOT hardcode px values or hex colors. If a token is missing, add it here
- * and reference the BDS TOKEN-REFERENCE.md for the correct variable name.
+ * and check https://design.brikdesigns.com/docs/primitives for the correct variable name.
  */
 
 // ─── Typography ──────────────────────────────────────────────────────
