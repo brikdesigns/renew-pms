@@ -214,6 +214,15 @@ const itemEmptyStyle: React.CSSProperties = {
   margin: 0,
 };
 
+const itemSummaryStyle: React.CSSProperties = {
+  color: color.text.secondary,
+  fontSize: font.size.body.sm,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '320px',
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function hasContext(item: ChecklistItem) {
@@ -287,11 +296,12 @@ export function EditTemplateSheet({
       setForm(initialData ?? EMPTY_FORM);
       setItems(initialItems ?? []);
       setActiveTab('details');
-      // Auto-expand items that already have context set
-      const withContext = new Set(
-        (initialItems ?? []).filter(hasContext).map((i) => i.id)
-      );
-      setExpandedItems(withContext);
+      // Items always reopen in read mode — even those with an inventory link.
+      // Edit mode is opt-in via the pencil button. Reverses the prior
+      // auto-expand-when-context behavior which dumped users into edit forms
+      // they hadn't asked for and surfaced a confusing cluster of action
+      // buttons (pencil + trash-link + trash-item) on saved rows.
+      setExpandedItems(new Set());
     }
   }, [isOpen, initialData, initialItems]);
 
@@ -356,11 +366,6 @@ export function EditTemplateSheet({
       if (field === 'room_id') next.equipment_id = '';
       return next;
     }));
-  };
-
-  const clearItemContext = (id: string) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, room_id: '', equipment_id: '', supply_category_id: '' } : i));
-    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   /**
@@ -441,6 +446,29 @@ export function EditTemplateSheet({
     { label: 'Select supply category', value: '' },
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
+
+  /**
+   * Read-mode display for an item's inventory link. Returns a "·"-joined
+   * summary of the resolved names (room · equipment · supply category). Ids
+   * with no matching reference row fall back silently; the edit pencil is
+   * always the recovery path.
+   */
+  function itemInventorySummary(item: ChecklistItem): string {
+    const parts: string[] = [];
+    if (item.room_id) {
+      const r = rooms.find((x) => x.id === item.room_id);
+      if (r) parts.push(r.name);
+    }
+    if (item.equipment_id) {
+      const e = equipment.find((x) => x.id === item.equipment_id);
+      if (e) parts.push(e.name);
+    }
+    if (item.supply_category_id) {
+      const s = supplyCategories.find((x) => x.id === item.supply_category_id);
+      if (s) parts.push(s.name);
+    }
+    return parts.join(' · ');
+  }
 
   const categoryOptions = [
     { label: 'Select category', value: '' },
@@ -669,6 +697,9 @@ export function EditTemplateSheet({
                 )}
                 {!isExpanded && itemHasContext && (
                   <>
+                    <span style={itemSummaryStyle} aria-label="Inventory link">
+                      {itemInventorySummary(row)}
+                    </span>
                     <IconButton
                       type="button"
                       variant="secondary"
@@ -676,14 +707,6 @@ export function EditTemplateSheet({
                       icon={<Icon icon={icon.edit} />}
                       label="Edit inventory link"
                       onClick={() => toggleItemExpand(row.id)}
-                    />
-                    <IconButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      icon={<Icon icon={icon.trash} />}
-                      label="Remove inventory link"
-                      onClick={() => clearItemContext(row.id)}
                     />
                   </>
                 )}
@@ -694,7 +717,7 @@ export function EditTemplateSheet({
                     size="tiny"
                     onClick={() => toggleItemExpand(row.id)}
                   >
-                    Done
+                    Save
                   </Button>
                 )}
               </div>

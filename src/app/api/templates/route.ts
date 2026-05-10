@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { normalizeAssignmentFKs, spawnTodayForTemplate } from './_helpers';
+import { normalizeAssignmentFKs } from './_helpers';
 
 /**
  * GET /api/templates
@@ -112,10 +112,12 @@ export async function POST(request: Request) {
 
   if (error) return apiError(error);
 
-  // Auto-spawn today's task instance if the new template is active+recurring
-  // and its mode FK is set. Idempotent at the SQL layer, so callers don't need
-  // to dedupe. We don't await-on-failure: the template row is already saved.
-  await spawnTodayForTemplate(admin, practiceId, data);
+  // Note: today's-task spawn is deliberately NOT called here. It moved to
+  // PUT /api/templates/[id]/items (executed by the UI immediately after POST)
+  // so that the SQL generator can read checklist_items and populate
+  // task_checklist_items in the same call. Spawning at POST-time produced a
+  // race where today's task was created with 0 items before items were
+  // written. See the related fix in /items/route.ts.
 
   return NextResponse.json({ ...data, checklist_items: [] }, { status: 201 });
 }
