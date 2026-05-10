@@ -6,33 +6,9 @@ Dental practice management and training platform (vertical SaaS). Multi-tenant, 
 
 ---
 
-## Compliance Profile — Healthcare ADA
-
-Renew PMS is a healthcare-adjacent SaaS — every tenant is a dental practice (HIPAA covered entity). Read the canonical Brik Healthcare Accessibility & Compliance Standards before:
-
-- Touching any tenant-visible surface (practice dashboard, training UI, patient intake flows)
-- Changing color/contrast tokens or atmosphere choices
-- Adding or modifying animation / motion (vestibular sensitivity matters in clinical workflows)
-- Building features that touch PHI flows (patient records, treatment plans, secure messaging)
-
-**Canonical doc:** [`@brikdesigns/bds/content-system/compliance/healthcare-ada.md`](https://design.brikdesigns.com/docs/content-system/compliance/Healthcare-ADA) — ships with BDS via `npm update @brikdesigns/bds`.
-
-**Companion docs:**
-- [`brik-llm/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md`](https://github.com/brikdesigns/brik-llm/blob/main/websites/shared/CLIENT-ACCESSIBILITY-STANDARDS.md) — universal Brik a11y baseline + WCAG 2.1 AA CI-gate pattern.
-- [`@brikdesigns/bds/content-system/compliance/accessibility-overlays.md`](https://design.brikdesigns.com/docs/content-system/compliance/accessibility-overlays) — no-overlay policy.
-
-**Project-specific overrides:** axe-core/Playwright CI gate not yet wired (tracked under [brik-llm#130](https://github.com/brikdesigns/brik-llm/issues/130) phase 4.4). Adopting the portal pattern is the canonical path.
-
----
-
 ## Worktree (renew-pms specifics)
 
-- **Base branch:** `staging` (pre-launch — flips to `main` post-launch)
-- **Worktree path:** `../renew-pms-worktrees/{slug}`
-- **Spawn:** `./scripts/new-task.sh {slug}` from the primary
-- **Hook:** `.claude/hooks/worktree-check.sh` warns on session start + first edit; also detects cross-worktree drift
-
-Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAUDE.md (`~/Documents/GitHub/CLAUDE.md`) § Agent scope discipline. The shared rule is the source of truth — this section only carries the renew-specific path + base-branch.
+Base branch `staging` (pre-launch — flips to `main` post-launch). Worktree path `../renew-pms-worktrees/{slug}`. Spawn via `./scripts/new-task.sh {slug}` from the primary. Cross-repo § Agent scope discipline carries the rule shape; `.claude/hooks/worktree-check.sh` enforces.
 
 ---
 
@@ -60,23 +36,11 @@ Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAU
 
 ## LLM stack (renew-pms specifics)
 
-Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `@brikdesigns/claude-client` requirement live in cross-repo § "How to add Claude to any Brik app."
+No Claude calls today; routing + `workflow_type` + `@brikdesigns/claude-client` live in cross-repo § "How to add Claude to any Brik app." NEVER ship PHI-in-prompt flows before the PHI/PII redaction preprocessor lands ([ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md), currently deferred).
 
-**Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
+## Security — renew-pms specifics
 
-## Security — read the canonical 5 before any credential work
-
-> **Canonical doc set — five files, no more.** Read these before doing anything credential-related (rotating, fetching, env-setting, writing config). Do NOT create a sixth security md file in this repo.
->
-> 1. **Human entry point:** [Notion — Security Best Practices](https://www.notion.so/Security-Best-Practices-35797d34ed2880b49446e2d93497a487)
-> 2. **Per-repo lookup:** [`brik-llm/operations/security/repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md) — every Brik repo's credentials → 1P entry
-> 3. **Per-secret destinations:** [`brik-llm/operations/security/auth-surfaces.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/auth-surfaces.md)
-> 4. **Rotation doctrine:** [`brik-llm/operations/security/when-to-rotate.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/when-to-rotate.md) — **HARD RULE: agents never initiate rotation; humans do.** Agents propose only on real-exposure triggers (chat paste, public repo, third-party leak) and propagate after the human-driven provider-side action.
-> 5. **Manual procedure per provider:** [`brik-llm/operations/macos/openclaw/runbooks/token-rotation.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/macos/openclaw/runbooks/token-rotation.md)
->
-> Source-of-truth for every credential value: **1Password Development vault.** Never paste secrets into chat or commits. Reference 1P items by ID, not title. Update existing 1P entries, never create "FOO NEW" duplicates.
->
-> **Renew-specific:** Supabase prod + staging credentials, Resend, Sentry, two `CRON_SECRET` values (prod + staging), `PACKAGES_READ_TOKEN`, and `RELEASE_PLEASE_TOKEN` — full inventory under `## renew-pms` in [`repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md#renew-pms). 2026-05-05 incident note: `SUPABASE_ACCESS_TOKEN` format-mismatch CI failures came from cross-session rotation activity; if you see a similar `Invalid access token format` from `supabase` CLI, check for org-level secret override or `gh secret set` value-encoding before rotating again.
+Canonical security doc set + rotation doctrine live in cross-repo CLAUDE.md § Secrets. Renew-specific credential inventory (Supabase prod + staging, Resend, Sentry, two `CRON_SECRET` values, `PACKAGES_READ_TOKEN`, `RELEASE_PLEASE_TOKEN`) under `## renew-pms` in [`repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md#renew-pms). → rag:secrets
 
 ## Business Context
 
@@ -87,27 +51,16 @@ Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `
 
 ## Compliance Profile
 
-Renew PMS is a **dental practice management system and staff training platform** — a healthcare-regulated product by default. Every feature that handles patient data, practice workflows, or public-facing interfaces must be built with compliance in mind from the start.
+Renew PMS is a dental PMS + staff training platform. Healthcare-regulated by default; **fully in-scope for all four regimes at all times** — PHI handling, WCAG 2.1 AA accessibility, and language access are default-on for every feature.
 
-### Applicable regimes (all YES for this repo)
+| Regime | Reason |
+| --- | --- |
+| **HIPAA** | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
+| **ACA §1557** | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
+| **Rehab Act §504** | Covered when the practice or platform receives federal funding |
+| **ADA Title III** | Public-facing web app used by patients (appointment booking, patient portal surfaces) |
 
-| Regime | Applies | Reason |
-| --- | --- | --- |
-| **HIPAA** | Yes | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
-| **ACA §1557** | Yes | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
-| **Rehab Act §504** | Yes | Covered when the practice or platform receives federal funding |
-| **ADA Title III** | Yes | Public-facing web app used by patients (appointment booking, patient portal surfaces) |
-
-### Canonical reference
-
-Specific WCAG targets, implementation requirements, and standards details live in the BDS healthcare ADA doc:
-[`../brik/brik-bds/content-system/compliance/healthcare-ada.md`](../brik/brik-bds/content-system/compliance/healthcare-ada.md)
-
-This is the single source of truth maintained alongside BDS. When requirements are unclear, read that file — do not derive requirements from memory.
-
-### How to apply
-
-Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI handling, accessibility (WCAG 2.1 AA minimum), and language access as **default-on** for every feature — not optional add-ons. New features do not ship without verifying they don't introduce PHI exposure, accessibility regressions, or language access gaps.
+WCAG targets + impl details: [BDS healthcare-ada.md](https://design.brikdesigns.com/docs/content-system/compliance/Healthcare-ADA) (single source). Vestibular sensitivity matters in clinical workflows — guard motion choices. axe-core/Playwright CI gate pending — adopt the portal pattern when wiring ([brik-llm#130](https://github.com/brikdesigns/brik-llm/issues/130) phase 4.4).
 
 ---
 
@@ -115,14 +68,11 @@ Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI han
 
 ### Role model (two layers — keep distinct)
 
-- **System role** (`profiles.system_role`) — permission tier modifier
-  - `brik_admin` → Brik staff; full cross-practice access
-  - `admin` → practice owner/manager; settings, all departments, all work items
-  - `manager` → department lead; triage, approve, team metrics within their department. No settings.
-  - `staff` → individual contributor; scoped to own work and department
-- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice. Each role has a `default_system_role` that suggests the permission tier at invite time.
-- **Permission check helper:** Use `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks
-- **Source of truth.** `profiles.system_role` is the **only** source of truth for permission tier. `auth.users.raw_user_meta_data.system_role` (and the client-side mirror `user_metadata.system_role`) are **not consulted by any runtime code** — the `handle_new_user` trigger defaults every new profile to `'staff'` and callers must upsert `public.profiles` separately if a different role is needed (per migration 00049 / [#203](https://github.com/brikdesigns/renew-pms/issues/203)). Do not write `system_role` into `user_metadata` from any seed, script, or `admin.createUser()` call — the regression check in `tests/auth/no-system-role-metadata.test.ts` will fail it.
+**System role** (`profiles.system_role`, permission tier): `brik_admin` (Brik staff, cross-practice) > `admin` (practice owner; settings + all work) > `manager` (dept lead; triage, approve, team metrics; no settings) > `staff` (own work + dept).
+
+**Practice role** (`practice_members.practice_role_id`): user-renameable job function with a `default_system_role` that suggests the permission tier at invite time.
+
+USE `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks. `profiles.system_role` is the only runtime-consulted source; NEVER write `system_role` into `user_metadata` (seeds, scripts, `admin.createUser()`) — `tests/auth/no-system-role-metadata.test.ts` enforces. New profiles default to `'staff'` (migration 00049 / [#203](https://github.com/brikdesigns/renew-pms/issues/203)); upsert `public.profiles` for any other role.
 
 ### Reference tables (user-renameable — never hardcode values in app logic)
 
@@ -154,19 +104,9 @@ Practices isolated via `practice_members` join table + RLS on every table. `prac
 - Credentials: 1Password — `Renew PMS — Supabase Dev` (staging) / `Renew PMS — Production DB` (prod, contains `db-password`, `project-ref`, `url`, `anon-key`, `service-role-key`).
 - RLS: 17/17 tables enabled, 38 policies — applied to both projects. See `~/.claude/skills/supabase-workflow.md` for patterns.
 
-### Migration mismatch — practice-specific seeds skipped on prod
+### Migration history — prod seed skips
 
-Seven historical migrations contain Renew Dental practice-specific data (test personas with `test+*@brikdesigns.com` plus-addresses + the hardcoded practice ID `d9f05b47-…`). They were marked applied on prod via `supabase migration repair --status applied <ver>` to skip execution. Affected migrations:
-
-- `00012_seed_practice_members.sql` — staff with test+ emails
-- `00013_seed_tasks.sql` — depends on 00012's members
-- `00016_seed_schedule_events.sql` — depends on 00012's members
-- `00020_seed_opening_office_template.sql` — practice-id-bound
-- `00021_seed_closing_office_template.sql` — practice-id-bound
-- `00024_seed_vendors.sql` — practice-id-bound
-- `00028_seed_vendor_contacts.sql` — depends on 00024
-
-Long-term fix tracked as a follow-up issue: refactor practice-specific seed content out of `supabase/migrations/` and into `supabase/seed.sql` so it only runs on `supabase db reset` for staging, never on prod schema migrations.
+Seven historical migrations (`00012`, `00013`, `00016`, `00020`, `00021`, `00024`, `00028`) contain Renew Dental practice-specific seed data; marked applied on prod via `supabase migration repair --status applied` to skip execution. Long-term fix: refactor practice-specific content out of `supabase/migrations/` into `supabase/seed.sql`. → rag:supabase-safety
 
 ## Integrations
 
@@ -174,61 +114,9 @@ Long-term fix tracked as a follow-up issue: refactor practice-specific seed cont
 - **Trainual** — staff training source of truth; API supports people management + assignment status only (cannot read/edit content). Key in `practices.integrations.trainual.api_key`.
 - **Google Drive** — practice files, SOPs. Folder ID in `practices.integrations.gdrive.folder_id`.
 
-## Error Handling: Fail Loud, Never Fake
+## Error Handling
 
-Prefer a visible failure over a silent fallback. Never silently swallow errors to keep things "working."
-
-**Priority order:**
-
-1. Works correctly with real data
-2. Falls back visibly — clearly signals degraded mode (banner, toast, log)
-3. Fails with a clear error message
-4. ~~Silently degrades to look "fine"~~ — **never do this**
-
-### Banned patterns (new code)
-
-```ts
-// ❌ Empty catch — errors vanish
-try { ... } catch (e) {}
-try { ... } catch { /* ignore */ }
-
-// ❌ Swallowed promise — fire-and-forget failure
-somePromise.catch(() => {})
-somePromise.catch(() => null)
-
-// ❌ Silent null return — caller has no idea why
-if (!data) return null;
-
-// ❌ Catch that fakes success — caller thinks it worked
-try { ... } catch (e) { return defaultValue; }
-```
-
-### Required patterns (new code)
-
-```ts
-// ✅ Catch that surfaces the error
-try { ... } catch (e) {
-  console.error('[context] what failed:', e);
-  throw e; // or return an error type the caller handles
-}
-
-// ✅ Fallback that discloses degraded state
-if (!data) {
-  console.warn('[ComponentName] data unavailable, showing fallback');
-  return <ErrorState message="Could not load X" />;
-}
-
-// ✅ Null check that explains itself
-if (!user) throw new Error('Expected authenticated user — missing session');
-```
-
-### Type safety rules (new code)
-
-- **Minimize `as` assertions.** Use type guards, Zod parsing, or narrow with `if` checks. `as` is acceptable for Supabase query results where the type is known but the SDK types are loose.
-- **No non-null assertions (`!`)** unless the value was just null-checked in the preceding line.
-- **Optional chaining (`?.`)** is fine for 1–2 levels. Three or more levels signals a data shape problem — destructure and validate at the boundary instead.
-
-> **Existing code:** These rules apply to new and modified code. Do not refactor existing files solely to fix these patterns — address them when you're already editing the file for another reason.
+PREFER a visible failure over a silent fallback. READ [`docs/process/error-handling.md`](docs/process/error-handling.md) for banned patterns, required patterns, and type safety rules.
 
 ## General Principles
 
@@ -269,40 +157,28 @@ Font family token **must match the element's semantic role**. BDS defaults all t
 
 `src/styles/theme-renew.css` overrides BDS semantic tokens with Renew Dental's palette. Values come from Figma file `kwNyWG6H3ifjZmytZnNJXd`. **Never edit this file without pulling the latest Figma export.** Never guess token values.
 
-### Storybook MCP — query before writing UI
+### Storybook MCP — renew surface filter
 
-Always query the Storybook MCP for BDS component props before writing JSX. Endpoint, tool list, and unreachable-fallback are documented in the BDS CLAUDE.md (which is `@-imported` above) § Storybook MCP addon. Per-build Chromatic URLs are forbidden — use the `main--69b8918...chromatic.com/mcp` stable endpoint.
-
-**Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
+QUERY Storybook MCP for BDS component props before writing JSX (endpoint + fallback in `@brik-bds/CLAUDE.md`). FILTER to `surface-product` + `surface-shared` — NEVER use `surface-web` components (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`); they're marketing surfaces and misfit a clinical PMS UI.
 
 ## Naming conventions
 
 ### "Sidebar" / "header" (renew language) ≠ `<PageHeader>` (BDS component)
 
-The global app shell chrome and the per-route content header are **two different concepts**. Don't conflate.
+Global app shell chrome and per-route content header are **two different concepts** — don't conflate.
 
 | Concept | Renew code | BDS component | What it carries |
 | --- | --- | --- | --- |
-| **Global app shell chrome** | [`AppSidebar.tsx`](src/components/AppSidebar.tsx) | none — BDS `<NavBar>` is `surface-web`, banned for product apps | Logomark + nav icons (top); help / theme toggle / notifications / avatar menu (bottom). Avatar menu carries practice name + profile + sign-out. |
-| **Per-route content header** | (was renew-local — deleted in [#127](https://github.com/brikdesigns/renew-pms/pull/127)) | `<PageHeader>` from `@brikdesigns/bds` | Page title + subtitle + breadcrumbs + page-level actions + tabs |
+| **Global app shell chrome** | [`AppSidebar.tsx`](src/components/AppSidebar.tsx) | none — `<NavBar>` is `surface-web`, banned for product apps | Logomark + nav (top); help / theme toggle / notifications / avatar menu (bottom). Avatar carries practice + profile + sign-out. |
+| **Per-route content header** | — (was renew-local, deleted in [#127](https://github.com/brikdesigns/renew-pms/pull/127)) | `<PageHeader>` from `@brikdesigns/bds` | Page title + subtitle + breadcrumbs + actions + tabs |
 
-**Historical note.** Pre-2026-05-02, the global chrome lived in a top bar called `TopUtilityBar.tsx`, and the user often called it "the page header" in conversation. PR [#162](https://github.com/brikdesigns/renew-pms/pull/162) migrated all of that chrome (avatar, notifications, theme toggle, section context, Add button) into `AppSidebar.tsx` per the Path B decision (closed [#101](https://github.com/brikdesigns/renew-pms/issues/101) / 2026-05-01); `TopUtilityBar.tsx` was deleted. References to "TopUtilityBar" in older audit docs are historical.
-
-**How to apply.** When the user says "header" or "page header" in renew, default-assume they mean BDS `<PageHeader>` (the per-route content header in the body) — that's the only "header"-shaped element in the post-#162 layout. When they're talking about avatars, notifications, the theme toggle, or global navigation, that's the **sidebar** (`AppSidebar.tsx`). When in doubt, name the component explicitly before proceeding. **Don't propose a new BDS top-bar variant for renew** — the Path B decision rules that out.
+When the user says "header" / "page header" in renew, default-assume `<PageHeader>` (the per-route content header). Avatars / notifications / theme toggle / global nav = **sidebar** (`AppSidebar.tsx`). Don't propose a new BDS top-bar variant — Path B decision ([#101](https://github.com/brikdesigns/renew-pms/issues/101)) rules that out. → rag:bds-content
 
 ## Component Rules
 
-### BDS first
+CHECK BDS first via Storybook MCP — read props and examples before writing JSX. NEVER build raw `<button>` / `<a>` for interactive UI (bypasses BDS interaction states); use `Button` / `IconButton` from `@brikdesigns/bds`. NEVER export `CSSProperties` for interactive elements — `_shared.ts` is fine for layout/spacing only. NEVER convert `Button` → `IconButton` and silently drop the variant (`ghost` ≠ `primary`).
 
-- Check BDS before building custom. Query via Storybook MCP (see "Storybook MCP" section above) — read component props and examples before writing JSX.
-- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@brikdesigns/bds`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
-- **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
-- Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
-
-### Server vs client components
-
-- Default to Server Components. Only add `'use client'` when you need interactivity, event handlers, `useState`, or `useEffect`.
-- Data fetching happens on the server. Pass data down as props — don't fetch in client components unless triggered by user interaction.
+DEFAULT to Server Components — `'use client'` only when interactivity / `useState` / `useEffect` is needed. Data fetching on server; pass props down.
 
 ## File & Folder Conventions
 
@@ -313,97 +189,56 @@ The global app shell chrome and the per-route content header are **two different
 
 ## Branch Workflow
 
-> **As of 2026-04-18:** renew-pms is in pre-launch mode — not live yet. `staging` is the **primary** branch; all feature + dependency work lands there first. `main` is reserved for low-risk infra/docs that can safely race ahead. **At go-live, flip this section** (change "staging" → "main" below, update the `BASE_BRANCH` default in [`scripts/new-task.sh`](scripts/new-task.sh), and update the `target-branch` in [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml)).
+USE `./scripts/new-task.sh {scope}-{name}` — enforces `task/{scope}-{name}` from `staging`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`. Override base via `BASE_BRANCH=main` for rare infra PRs.
 
-**All work happens on `task/{scope}-{name}` branches created from `staging`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
-
-```bash
-# Start a new task (always use this — never manual git checkout -b)
-./scripts/new-task.sh {scope}-{name}
-
-# Examples:
-./scripts/new-task.sh renew-task-templates
-./scripts/new-task.sh auth-session-refresh
-./scripts/new-task.sh vendor-portal-v1
-```
-
-**Rules:**
-
-1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
-2. **Branch from `staging` (pre-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=main ./scripts/new-task.sh ...` for the rare infra PR that needs to land on `main` directly.
-3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
-4. **Never touch `main` or `staging` directly.** Only Nick merges.
-5. **Delete branches after merge.** GitHub auto-deletes on merge by default; closed-without-merge branches (like superseded version bumps) get deleted manually.
-
-**Merge flow (pre-launch):** `task/` branch → PR to `staging` → squash merge → periodic `staging → main` promotion when the infra warrants it. **Post-launch flow** (future): `task/` → PR to `main` → squash merge → `main → staging` → production.
+Pre-launch flow: `task/` → PR to `staging` → squash → periodic `staging → main` promotion. Post-launch (future): flip default in `scripts/new-task.sh` + `.github/workflows/release-please.yml`. Cross-repo § Agent scope discipline carries the broader rules.
 
 ## Session Discipline
 
-Lifecycle rules (start / during / end) + guardrails table live in [`docs/process/session-discipline.md`](docs/process/session-discipline.md). Cross-repo agent scope discipline lives in `~/Documents/GitHub/CLAUDE.md` § Agent scope discipline. Both are mandatory.
+READ [`docs/process/session-discipline.md`](docs/process/session-discipline.md) for lifecycle rules + guardrails. Mandatory.
 
 ## Commands
 
 ```bash
-npm run dev              # Local dev server (localhost:3000, or next available port)
-npm run build            # Production build — always run before pushing
-npm run lint             # ESLint
-npm run typecheck        # TypeScript check
-npm run test             # Vitest
+npm run dev | build | lint | typecheck | test       # standard Next.js
+npm run db:push | db:diff | db:status | db:gen-types  # Supabase migrations
+npm run db:seed-test-users                            # seed test accounts
+npm run test:hooks                                    # smoke-test .claude/hooks/*
 
-npm run db:push          # Push migrations to dev Supabase
-npm run db:diff          # Generate migration diff (--use-migra)
-npm run db:status        # List migration status
-npm run db:gen-types     # Regenerate src/types/database.types.ts from staging schema (run after migrations)
-npm run db:seed-test-users  # Seed test user accounts
-npm run test:hooks       # Smoke-test .claude/hooks/* (bash-leak-guard, secret-scanner)
-
-./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
-./scripts/agent-preflight.sh # Pre-task environment validation
-./scripts/token-audit.sh     # Full token + component compliance scan
-./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
-./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
-./scripts/session-guard.sh   # PreToolUse hook — dirty tree warning (runs automatically)
-./scripts/install-hooks.sh   # Install git hooks after clone (pre-push, etc.)
+./scripts/health-check.sh       # env health (Supabase, env vars, Netlify)
+./scripts/agent-preflight.sh    # pre-task environment validation
+./scripts/token-audit.sh        # full token + component compliance scan
+./scripts/db-health.sh          # DB hygiene: orphans, constraints, RLS (--prod, --fix)
+./scripts/dev-restart.sh        # kill + restart dev server (--no-cache clears .next)
 ```
 
-**After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.
+After BDS/token changes: `rm -rf .next && npm run dev`.
 
 ## Enforcement
 
-### PreToolUse hooks (Claude Code session-time)
-
-Wired in [`.claude/settings.json`](.claude/settings.json). Run before the tool call lands — block dangerous operations BEFORE they hit disk, the shell, or the transcript.
+### PreToolUse hooks ([`.claude/settings.json`](.claude/settings.json))
 
 | Hook | Matcher | Blocks |
 | --- | --- | --- |
-| [`worktree-check.sh`](.claude/hooks/worktree-check.sh) | `SessionStart`, `Edit\|Write\|NotebookEdit` | Cross-worktree drift; primary worktree on a `task/*` branch |
-| [`secret-scanner.sh`](.claude/hooks/secret-scanner.sh) | `Edit\|Write\|NotebookEdit` | Writing recognizable secret shapes into source (Supabase JWT, `re_`, `sk-ant-`, GitHub PAT, AWS, private keys, DB URLs with embedded passwords, etc.) |
-| [`bash-leak-guard.sh`](.claude/hooks/bash-leak-guard.sh) | `Bash` | Commands that exfiltrate secrets to the transcript: `netlify env:list --plain/--json`, `cat ~/.secrets/*`, `cat .env*` (excl. `.example`/`.sample`), `bash/sh/zsh -x`, `set -x`, bare `env`/`printenv`, `op item get … --reveal` not captured into a variable or file. **This guards the 2026-05-02 incident class** — see [#168](https://github.com/brikdesigns/renew-pms/issues/168). Prevention beats rotation cadence. |
+| [`worktree-check.sh`](.claude/hooks/worktree-check.sh) | `SessionStart`, `Edit\|Write\|NotebookEdit` | Cross-worktree drift; primary on a `task/*` branch |
+| [`secret-scanner.sh`](.claude/hooks/secret-scanner.sh) | `Edit\|Write\|NotebookEdit` | Recognizable secret shapes (Supabase JWT, `re_`, `sk-ant-`, GitHub PAT, AWS, private keys, DB URLs with embedded passwords) |
+| [`bash-leak-guard.sh`](.claude/hooks/bash-leak-guard.sh) | `Bash` | Commands that exfiltrate secrets to transcript (guards the 2026-05-02 incident class — [#168](https://github.com/brikdesigns/renew-pms/issues/168)). → rag:secrets |
 
-Smoke-test the hooks: `npm run test:hooks` (runs [`scripts/test-claude-hooks.sh`](scripts/test-claude-hooks.sh) — 36 cases covering both block and allow paths).
+Smoke-test: `npm run test:hooks` (36 cases via [`scripts/test-claude-hooks.sh`](scripts/test-claude-hooks.sh)).
 
 ### Pre-commit hooks (automatic)
 
-- Hardcoded hex colors — blocked
-- Raw `var(--...)` strings in style props — blocked
-- Hardcoded font sizes in px — blocked
-- Direct BDS component path imports (not via barrel) — blocked
-- Hardcoded rgba/rgb values — blocked
+Block: hardcoded hex / rgba / rgb colors, raw `var(--...)` strings in style props, hardcoded font sizes in px, direct BDS component path imports (not via barrel).
 
 ### Manual audit (run before every PR)
 
 ```bash
-./scripts/token-audit.sh   # Covers: buttons, colors, var(), fontFamily, borderRadius, gap, padding, Badge
-npm run lint               # ESLint
-npm run typecheck          # TypeScript
-npm run build              # Full build — catches what lint misses
+./scripts/token-audit.sh   # 14 violation categories — buttons, colors, var(), fontFamily, borderRadius, gap, padding, Badge, headingStyle drift
+npm run lint && npm run typecheck && npm run build
 ```
 
-The audit catches 14 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius/gap/padding values, and `headingStyle` variable name drift. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
+`token-audit.sh` catches things pre-commit hooks miss — run before every PR.
 
 ## Rules
 
-- Follow global CLAUDE.md (parent directory)
-- Always build locally before pushing
-- Stage specific files, never `git add -A`
-- Never push without user confirmation
+ALWAYS run `npm run build` locally before pushing.
