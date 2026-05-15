@@ -50,7 +50,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
   const isFiltered = selected !== options[0];
   return (
     <div style={chipWrapperStyle}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen((p) => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} showDropdown onChipClick={() => setOpen((p) => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={menuStyle} />
     </div>
   );
