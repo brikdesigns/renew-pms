@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, NotificationPopover } from '@brikdesigns/bds';
+import { Button, NotificationPopover } from '@brikdesigns/bds';
 import { useSheetStack } from '@brikdesigns/bds';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { color, border } from '@/lib/tokens';
@@ -129,7 +129,7 @@ export function NotificationBell({ dropdownPosition }: NotificationBellProps = {
         }
         .dot-pulse { animation: dot-pulse 0.8s ease-in-out 3; }
       `}</style>
-      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" onClick={() => setOpen(prev => !prev)} />
+      <Button variant="secondary" size="sm" icon={<Icon icon={icon.bell} />} label="Notifications" onClick={() => setOpen(prev => !prev)} />
       {unreadCount > 0 && <span className={pulse ? 'dot-pulse' : ''} style={unreadDotStyle} />}
 
       {open && (

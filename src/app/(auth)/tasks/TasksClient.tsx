@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Dot, AnimatedIcon, Tooltip, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -707,7 +707,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
-          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
+          <Button variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
             fontFamily: font.family.label,
             fontSize: font.size.label.md,
@@ -717,7 +717,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           }}>
             {formatDate(selectedDate)}
           </span>
-          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
+          <Button variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
         </div>
         <TaskFilterBar
           departments={departments}

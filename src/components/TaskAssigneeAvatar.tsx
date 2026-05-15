@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { IconButton, MenuItem, Tooltip } from '@brikdesigns/bds';
+import { Button, MenuItem, Tooltip } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -114,7 +114,7 @@ export function TaskAssigneeAvatar({ taskId, assigneeName, assigneeDepartmentCol
   return (
     <>
       <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
-        <IconButton
+        <Button
           ref={avatarRef}
           variant="ghost"
           size="sm"

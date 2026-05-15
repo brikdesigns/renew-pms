@@ -7,7 +7,7 @@ import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Chip, Button, IconButton, FilterBar, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Chip, Button, FilterBar, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableSkeleton } from '@/components/TableSkeleton';
@@ -306,7 +306,7 @@ function AssigneeAvatar({
   return (
     <>
       <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
-        <IconButton
+        <Button
           ref={avatarRef}
           variant="ghost"
           size="sm"

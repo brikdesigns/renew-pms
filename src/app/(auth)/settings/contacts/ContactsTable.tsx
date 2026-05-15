@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useEffect, useMemo, type CSS
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Button, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
@@ -202,9 +202,9 @@ function CompaniesView({
               </TableCell>
               <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
                 </div>
               </TableCell>
             </TableRow>
@@ -296,9 +296,9 @@ function ContactsView({
               </TableCell>
               <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
                 </div>
               </TableCell>
             </TableRow>

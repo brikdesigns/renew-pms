@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Tooltip } from '@brikdesigns/bds';
+import { Button, Tooltip } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import { font, color, motion, state, gap, space, border } from '@/lib/tokens';
 import { useTheme } from '@/hooks/useTheme';
@@ -176,7 +176,7 @@ export function VendorSidebar({ activeSection, onNavigate, vendorContactName }: 
       <div style={bottomGroupStyle}>
         {/* Theme toggle */}
         <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <IconButton
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
