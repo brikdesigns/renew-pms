@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'r
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Badge, Button, IconButton, Sheet, Tag, Select, TextInput, Field } from '@brikdesigns/bds';
+import { Badge, Button, Sheet, Tag, Select, TextInput, Field } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { TableSkeleton } from '@/components/TableSkeleton';
@@ -204,9 +204,9 @@ export const TeamsTable = forwardRef<TeamsTableHandle, TeamsTableProps>(function
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${t.name}`} onClick={() => handleView(t)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${t.name}`} onClick={() => handleEdit(t)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${t.name}`} onClick={() => setDeleteTarget({ id: t.id, name: t.name })} />
                     </div>
                   </TableCell>
                 </TableRow>

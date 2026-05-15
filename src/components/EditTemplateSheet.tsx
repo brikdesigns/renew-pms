@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, IconButton, Modal, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
+import { Sheet, Button, Modal, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -737,7 +737,7 @@ export function EditTemplateSheet({
               />
               <div style={itemActionsStyle}>
                 {!isExpanded && !itemHasContext && (
-                  <IconButton
+                  <Button
                     type="button"
                     variant="secondary"
                     size="sm"
@@ -747,7 +747,7 @@ export function EditTemplateSheet({
                   />
                 )}
                 {!isExpanded && itemHasContext && (
-                  <IconButton
+                  <Button
                     type="button"
                     variant="secondary"
                     size="sm"
@@ -757,7 +757,7 @@ export function EditTemplateSheet({
                   />
                 )}
               </div>
-              <IconButton
+              <Button
                 type="button"
                 variant="secondary"
                 size="sm"

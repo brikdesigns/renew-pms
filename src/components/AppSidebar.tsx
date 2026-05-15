@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Menu, Tooltip } from '@brikdesigns/bds';
+import { Button, Menu, Tooltip } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -286,7 +286,7 @@ export function AppSidebar({
       {/* Bottom actions — utilities first (help, theme), then identity (notifications, avatar). */}
       <div style={bottomGroupStyle}>
         <Tooltip content="Help & User Guide" placement="right" delay={600}>
-          <IconButton
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon icon={icon.help} />}
@@ -295,7 +295,7 @@ export function AppSidebar({
           />
         </Tooltip>
         <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <IconButton
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
@@ -307,7 +307,7 @@ export function AppSidebar({
           <NotificationBell dropdownPosition={notificationsPopoverPosition} />
         </Tooltip>
         <div style={accountWrapStyle}>
-          <IconButton
+          <Button
             variant="ghost"
             size="md"
             label="User menu"
