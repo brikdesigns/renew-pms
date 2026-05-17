@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { Sheet, SheetSection, Button, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import { Sheet, SheetSection, Button, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import { Tag } from '@brikdesigns/bds';
@@ -50,6 +50,7 @@ interface ViewUserSheetProps {
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
 import { gap, departmentColor } from '@/lib/tokens';
+import { text } from '@/lib/styles';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -211,7 +212,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
 
       <SheetSection heading="Training Progress">
         <ProgressBar value={progress} label="Training modules completed" />
-        <SheetHelperText>{completedModules} of {totalModules} modules completed ({progress}%)</SheetHelperText>
+        <p style={{ ...text.bodyXs, margin: 0 }}>{completedModules} of {totalModules} modules completed ({progress}%)</p>
       </SheetSection>
 
       <SheetSection heading="Assigned Modules">

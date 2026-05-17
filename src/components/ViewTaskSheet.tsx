@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { Sheet, SheetSection, Button, Badge, Checklist, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import { Sheet, SheetSection, Button, Badge, Checklist, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
 import { gap, departmentColor } from '@/lib/tokens';
+import { text } from '@/lib/styles';
 import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -280,12 +281,12 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       {items.length > 0 && (
         <>
           <ProgressBar value={progressPct} label="Checklist progress" />
-          <SheetHelperText>{completedCount} of {items.length} completed</SheetHelperText>
+          <p style={{ ...text.bodyXs, margin: 0 }}>{completedCount} of {items.length} completed</p>
         </>
       )}
 
       {loadingItems ? (
-        <SheetHelperText>Loading checklist…</SheetHelperText>
+        <p style={{ ...text.bodyXs, margin: 0 }}>Loading checklist…</p>
       ) : items.length === 0 ? (
         <EmptyState title="No checklist items" description="This task has no checklist items." />
       ) : (
