@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.6](https://github.com/brikdesigns/renew-pms/compare/v0.1.5...v0.1.6) (2026-05-20)
+
+
+### Features
+
+* **auth:** scaffold Data Access Layer ([#321](https://github.com/brikdesigns/renew-pms/issues/321) PR-A) ([#322](https://github.com/brikdesigns/renew-pms/issues/322)) ([a51a90f](https://github.com/brikdesigns/renew-pms/commit/a51a90f14fb7c171eb817b6b81bca98951acb890))
+* **renew:** BDS 0.69.0 — remove SheetHelperText (deprecated ADR-004) ([#319](https://github.com/brikdesigns/renew-pms/issues/319)) ([ebe8c2d](https://github.com/brikdesigns/renew-pms/commit/ebe8c2d5e066c096787d7620adc1e0811edde6e2))
+
+
+### Bug Fixes
+
+* **tasks:** template spawn race + inventory item UX rework ([#312](https://github.com/brikdesigns/renew-pms/issues/312)) ([4b1e74e](https://github.com/brikdesigns/renew-pms/commit/4b1e74e1c64646079b0eff3241b376c0de61227e))
+
+
+### Refactors
+
+* **button:** migrate 19 IconButton sites to Button (refs [#661](https://github.com/brikdesigns/renew-pms/issues/661) B) ([#318](https://github.com/brikdesigns/renew-pms/issues/318)) ([626b7b4](https://github.com/brikdesigns/renew-pms/commit/626b7b452353d2977a537e0469db839dc1b52fc2))
+
+
+### Documentation
+
+* **claude-md:** Phase D renew-pms rewrite (244 → 50 lines) ([#314](https://github.com/brikdesigns/renew-pms/issues/314)) ([c6b28d2](https://github.com/brikdesigns/renew-pms/commit/c6b28d225e82d7784b4aa3f15974409dcb1c98c9))
+
 ## [0.1.5](https://github.com/brikdesigns/renew-pms/compare/v0.1.4...v0.1.5) (2026-05-10)
 
 
