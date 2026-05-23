@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/brikdesigns/renew-pms/compare/v0.1.6...v0.1.7) (2026-05-23)
+
+
+### Documentation
+
+* rag canon grounding ([#311](https://github.com/brikdesigns/renew-pms/issues/311)) ([2e4c92d](https://github.com/brikdesigns/renew-pms/commit/2e4c92dec3095f666949ca788b8eb7af92be3ab3))
+
 ## [0.1.6](https://github.com/brikdesigns/renew-pms/compare/v0.1.5...v0.1.6) (2026-05-20)
 
 
