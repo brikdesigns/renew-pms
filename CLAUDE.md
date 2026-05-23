@@ -42,6 +42,7 @@ Renew PMS — dental practice management + staff training (vertical SaaS). Multi
 - **Schema, RLS, role model (system vs practice), enums, reference tables, multi-tenancy, provisioning** → `brik-rag query "renew schema ..." --slug renew-pms`
 - **Integrations** (Sentry init, Trainual API scope, Google Drive folder config) → `brik-rag query "renew integrations ..." --slug renew-pms`
 - **Tailwind vs tokens, font family rules, AppSidebar vs `<PageHeader>`, naming, file/folder conventions, component rules** → `brik-rag query "renew ..." --slug renew-pms`
+- **brik-rag MCP calls** — pass `workflow_type: "renew-pms-build"` on every `mcp__brik-rag__query` call (tags Helicone traces + canon usage log)
 - **Error handling** → [`docs/process/error-handling.md`](docs/process/error-handling.md)
 - **Session discipline** → [`docs/process/session-discipline.md`](docs/process/session-discipline.md)
 - **Release / launch runbooks** → [`docs/process/release-runbook.md`](docs/process/release-runbook.md), [`docs/process/beta-launch-runbook.md`](docs/process/beta-launch-runbook.md)
