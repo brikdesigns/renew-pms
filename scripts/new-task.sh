@@ -120,8 +120,8 @@ git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" "origin/${B
 cd "${WORKTREE_BASE}/${TASK_NAME}"
 
 # ── Install dependencies ──
-echo -e "${YELLOW}▸ Installing dependencies (npm ci --prefer-offline)...${NC}"
-npm ci --prefer-offline 2>&1 | tail -1
+echo -e "${YELLOW}▸ Installing dependencies (op run -- npm ci --prefer-offline)...${NC}"
+op run --env-file=.env.op -- npm ci --prefer-offline 2>&1 | tail -1
 
 # ── Copy .env.local from primary ──
 # .env.local is git-ignored and not tracked by `git worktree add`, so a fresh
