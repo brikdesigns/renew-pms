@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Dot, AnimatedIcon, Tooltip, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -20,6 +20,7 @@ import { useToast } from '@/components/ToastProvider';
 import { TaskAssigneeAvatar } from '@/components/TaskAssigneeAvatar';
 import { FrequencyTag } from '@/components/FrequencyTag';
 import { PriorityBadge } from '@/components/PriorityBadge';
+import { formatDueDate } from '@/lib/date';
 
 // ─── Task shape for the board ────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ interface MockTask {
   id: string;
   title: string;
   due: string;
+  dueDate: string | null;
   dept: string;
   freq: string;
   priority: 'critical' | 'error' | 'warning' | 'info';
@@ -158,6 +160,23 @@ function shiftDate(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+// ─── Due date tag ─────────────────────────────────────────────────────────────
+
+function DueDateTag({ dueDate, status }: { dueDate: string | null; status: string }) {
+  if (!dueDate) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const isOverdue = status !== 'completed' && status !== 'skipped' && dueDate < today;
+  const label = formatDueDate(dueDate);
+  if (isOverdue) {
+    return <Badge size="sm" status="warning" appearance="subtle">{label}</Badge>;
+  }
+  return (
+    <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>
+      {label}
+    </Tag>
+  );
 }
 
 // ─── Checklist progress tag ──────────────────────────────────────────────────
@@ -416,6 +435,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       id: t.id,
       title: t.title,
       due: formatDue(t.due_date, isOverdue),
+      dueDate: t.due_date,
       dept: t.member_department,
       freq: t.frequency ?? 'Daily',
       priority: mapPriority(t.priority),
@@ -564,12 +584,16 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         onClick={() => setViewingTask(buildTaskViewData(task, assignee, assigneeRole))}
         style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
         tags={pool ? (
-          <FrequencyTag value={task.freq} />
+          <>
+            <FrequencyTag value={task.freq} />
+            <DueDateTag dueDate={task.dueDate} status={task.status} />
+          </>
         ) : (
           <>
             {task.dept && <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
             <FrequencyTag value={task.freq} />
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
+            <DueDateTag dueDate={task.dueDate} status={task.status} />
           </>
         )}
         trailingTag={pool ? (
@@ -635,7 +659,10 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
           transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
         }}
-        tags={<FrequencyTag value={task.freq} />}
+        tags={<>
+          <FrequencyTag value={task.freq} />
+          <DueDateTag dueDate={task.dueDate} status={task.status} />
+        </>}
         trailingTag={
           checked[task.id] ? (
             <AnimatedIcon
