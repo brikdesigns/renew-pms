@@ -78,6 +78,27 @@ function prevMonthFirstIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
+// Returns the last day of the previous calendar month — used to test that the
+// stale-skip condition catches non-1st due_dates (month-end overflow edge case).
+// Day 0 of the current month resolves to the last day of the previous month.
+function prevMonthLastDayIso(): string {
+  const d = new Date();
+  const last = new Date(d.getFullYear(), d.getMonth(), 0);
+  return last.toISOString().slice(0, 10);
+}
+
+// Returns the Wednesday of the prior ISO week — a non-Monday stale date used to
+// test that the stale-skip condition catches off-Monday due_dates (week-boundary
+// anchor edge case). Always strictly before this week's Monday.
+function prevWeekWednesdayIso(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const daysToMonday = day === 0 ? -6 : 1 - day;
+  // Monday of prev week + 2 days = Wednesday of prev week.
+  d.setDate(d.getDate() + daysToMonday - 7 + 2);
+  return d.toISOString().slice(0, 10);
+}
+
 describe('Recurring task generation (Tier 1.1)', () => {
   let practiceId: string;
   const createdTemplateIds: string[] = [];
@@ -335,6 +356,46 @@ describe('Weekly task generation (Tier 1.1)', () => {
     todays.forEach((t) => createdTaskIds.push(t.id));
   });
 
+  test('stale weekly task with a non-Monday due_date is skipped and this Monday spawns (week-boundary anchor)', async () => {
+    const templateId = await createWeeklyPoolTemplate('non-monday-stale');
+    // Wednesday of the prior ISO week — always strictly before this week's Monday.
+    const staleDate = prevWeekWednesdayIso();
+
+    const { data: stale, error: staleErr } = await supabase
+      .from('tasks')
+      .insert({
+        practice_id: practiceId,
+        title: '[QA Tier 1.1 weekly] stale mid-week task',
+        template_id: templateId,
+        status: 'not_started',
+        priority: 'medium',
+        frequency: 'weekly',
+        due_date: staleDate,
+        assigned_to: null,
+      })
+      .select('id, status')
+      .single();
+    expect(staleErr?.message).toBeUndefined();
+    if (!stale) throw new Error('expected stale task seed to succeed');
+    createdTaskIds.push(stale.id);
+
+    await supabase.rpc('generate_weekly_tasks', { p_practice_id: practiceId });
+
+    const { data: refreshed, error: refreshErr } = await supabase
+      .from('tasks')
+      .select('status')
+      .eq('id', stale.id)
+      .single();
+    expect(refreshErr?.message).toBeUndefined();
+    expect(refreshed?.status).toBe('skipped');
+
+    // A new task must be anchored to Monday, not to the stale mid-week date.
+    const thisWeekTasks = await weeklyTasksForTemplateOn(templateId, thisWeekMondayIso());
+    expect(thisWeekTasks).toHaveLength(1);
+    expect(thisWeekTasks[0].due_date).toBe(thisWeekMondayIso());
+    thisWeekTasks.forEach((t) => createdTaskIds.push(t.id));
+  });
+
   test.skip('weekly generator handles DST spring-forward and fall-back boundaries — ADR-003 deferred', () => {
     // ADR-003: DST handling is deferred for pre-launch. The fixed 05:00 UTC
     // cron (0 5 * * 1) is acceptable across US time zones at this stage.
@@ -464,6 +525,47 @@ describe('Monthly task generation (Tier 1.1)', () => {
 
     const todays = await monthlyTasksForTemplateOn(templateId, thisMonthFirstIso());
     todays.forEach((t) => createdTaskIds.push(t.id));
+  });
+
+  test('stale monthly task with end-of-month due_date (not the 1st) is skipped and this month spawns (month-end overflow)', async () => {
+    const templateId = await createMonthlyPoolTemplate('end-of-month-stale');
+    // Last day of prev month (e.g. Apr 30 when in May) — tests the stale-skip
+    // condition across month-length differences including Feb 28/29.
+    const staleDate = prevMonthLastDayIso();
+
+    const { data: stale, error: staleErr } = await supabase
+      .from('tasks')
+      .insert({
+        practice_id: practiceId,
+        title: '[QA Tier 1.1 monthly] stale end-of-month task',
+        template_id: templateId,
+        status: 'not_started',
+        priority: 'medium',
+        frequency: 'monthly',
+        due_date: staleDate,
+        assigned_to: null,
+      })
+      .select('id, status')
+      .single();
+    expect(staleErr?.message).toBeUndefined();
+    if (!stale) throw new Error('expected stale task seed to succeed');
+    createdTaskIds.push(stale.id);
+
+    await supabase.rpc('generate_monthly_tasks', { p_practice_id: practiceId });
+
+    const { data: refreshed, error: refreshErr } = await supabase
+      .from('tasks')
+      .select('status')
+      .eq('id', stale.id)
+      .single();
+    expect(refreshErr?.message).toBeUndefined();
+    expect(refreshed?.status).toBe('skipped');
+
+    // A new task must be anchored to the 1st, not to the stale end-of-month date.
+    const thisMonthTasks = await monthlyTasksForTemplateOn(templateId, thisMonthFirstIso());
+    expect(thisMonthTasks).toHaveLength(1);
+    expect(thisMonthTasks[0].due_date).toBe(thisMonthFirstIso());
+    thisMonthTasks.forEach((t) => createdTaskIds.push(t.id));
   });
 
   test.skip('monthly generator handles DST spring-forward and fall-back boundaries — ADR-003 deferred', () => {
