@@ -51,7 +51,7 @@ const EMPTY_FORM_BASE: TemplateFormData = {
   name: '', type: 'checklist', task_category_id: '', frequency: 'daily',
   assigned_member_id: '', assigned_role_id: '', department_id: '', assignment_mode: 'pool', display_mode: 'nested',
   priority: 'medium', status: 'active',
-  description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '',
+  description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '', task_reset_cadence: null,
 };
 
 const EMPTY_FORM_BY_TYPE: Record<string, TemplateFormData> = {
@@ -366,6 +366,7 @@ export const TemplatesTable = forwardRef<TemplatesTableHandle, TemplatesTablePro
         compliance_type_id: editingTemplate.compliance_type_id ?? '',
         assignment_mode: editingTemplate.assignment_mode ?? 'pool',
         display_mode: editingTemplate.display_mode ?? 'nested',
+        task_reset_cadence: editingTemplate.task_reset_cadence ?? null,
       }
     : { ...EMPTY_FORM_BY_TYPE[newTemplateType] };
 

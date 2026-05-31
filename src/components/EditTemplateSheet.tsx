@@ -41,6 +41,7 @@ export interface TemplateFormData {
   estimated_duration: string;
   room_id: string;
   compliance_type_id: string;
+  task_reset_cadence: string | null;
 }
 
 export interface ChecklistItem {
@@ -136,6 +137,13 @@ const STATUS_OPTIONS = [
   { label: 'Archived', value: 'archived' },
 ];
 
+const RESET_CADENCE_OPTIONS = [
+  { label: 'Inherit from frequency', value: '' },
+  { label: 'Daily',   value: 'daily' },
+  { label: 'Weekly',  value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+];
+
 // ─── Default form state ───────────────────────────────────────────────────────
 
 const EMPTY_FORM: TemplateFormData = {
@@ -155,6 +163,7 @@ const EMPTY_FORM: TemplateFormData = {
   estimated_duration: '',
   room_id: '',
   compliance_type_id: '',
+  task_reset_cadence: null,
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -633,6 +642,21 @@ export function EditTemplateSheet({
               />
             </div>
           </div>
+
+          {fields.frequency && form.frequency !== 'daily' && form.frequency !== 'per_shift' && form.frequency !== '' && (
+            <div style={formRowStyle}>
+              <div style={formRowHalf}>
+                <Select
+                  label="Reset Cadence"
+                  size="sm"
+                  options={RESET_CADENCE_OPTIONS}
+                  value={form.task_reset_cadence ?? ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, task_reset_cadence: e.target.value || null }))}
+                  fullWidth
+                />
+              </div>
+            </div>
+          )}
 
           <div style={formRowStyle}>
             <div style={formRowHalf}>
