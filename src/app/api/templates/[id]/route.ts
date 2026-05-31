@@ -32,7 +32,7 @@ export async function GET(
       requires_approval, estimated_duration, is_default,
       task_category_id, compliance_type_id, room_id,
       assigned_member_id, assigned_role_id, department_id,
-      assignment_mode, display_mode,
+      assignment_mode, display_mode, task_reset_cadence,
       created_at, updated_at,
       checklist_items (
         id, label, sort_order,
@@ -83,6 +83,7 @@ export async function PUT(
     status?: string;
     assignment_mode?: string;
     display_mode?: string;
+    task_reset_cadence?: string | null;
   };
 
   // When the caller is touching assignment_mode in this request, normalize
@@ -135,11 +136,12 @@ export async function PUT(
       ...(body.requires_approval !== undefined && { requires_approval: body.requires_approval }),
       ...(body.status !== undefined && { status: body.status }),
       ...(body.display_mode !== undefined && { display_mode: body.display_mode }),
+      ...(body.task_reset_cadence !== undefined && { task_reset_cadence: body.task_reset_cadence }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
     .eq('practice_id', practiceId)
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, task_reset_cadence, updated_at')
     .single();
 
   if (error) return apiError(error);
