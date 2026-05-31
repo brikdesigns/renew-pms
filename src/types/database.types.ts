@@ -1220,6 +1220,7 @@ export type Database = {
           room_id: string | null
           status: string
           task_category_id: string | null
+          task_reset_cadence: string | null
           type: string
           updated_at: string
         }
@@ -1244,6 +1245,7 @@ export type Database = {
           room_id?: string | null
           status?: string
           task_category_id?: string | null
+          task_reset_cadence?: string | null
           type: string
           updated_at?: string
         }
@@ -1268,6 +1270,7 @@ export type Database = {
           room_id?: string | null
           status?: string
           task_category_id?: string | null
+          task_reset_cadence?: string | null
           type?: string
           updated_at?: string
         }
@@ -1964,10 +1967,15 @@ export type Database = {
         Args: { p_practice_id: string }
         Returns: undefined
       }
+      generate_weekly_tasks: {
+        Args: { p_practice_id: string }
+        Returns: undefined
+      }
       get_my_system_role: { Args: never; Returns: string }
       is_admin_role: { Args: never; Returns: boolean }
       is_brik_admin: { Args: never; Returns: boolean }
       run_daily_tasks: { Args: never; Returns: undefined }
+      run_weekly_tasks: { Args: never; Returns: undefined }
       seed_practice_defaults: {
         Args: { p_office_id: string; p_practice_id: string }
         Returns: undefined
