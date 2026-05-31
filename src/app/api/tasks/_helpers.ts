@@ -145,6 +145,9 @@ export async function loadTasks(
     .select(TASK_SELECT)
     .eq('practice_id', practiceId);
 
+  // All generator-owned frequencies. `custom` is excluded — no generator supports it.
+  const RECURRING_FREQS = 'daily,per_shift,weekly,bi_weekly,monthly,quarterly,semi_annually,annually';
+
   // Visibility OR — rows that "should be on the board today": due today,
   // currently overdue, or recurring-stale. When includeResolved is on we also
   // accept completed/skipped variants of those shapes (resolved-overdue,
@@ -153,21 +156,21 @@ export async function loadTasks(
   const orClauses: string[] = [
     `due_date.eq.${dateValue}`,
     `status.eq.overdue`,
-    `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`,
+    `and(frequency.in.(${RECURRING_FREQS}),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`,
   ];
   if (options.pool) {
     orClauses.push(
-      `and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`,
+      `and(frequency.in.(${RECURRING_FREQS}),due_date.is.null,status.neq.completed,status.neq.skipped)`,
     );
   }
   if (includeResolved) {
     orClauses.push(`and(due_date.lt.${dateValue},status.in.(completed,skipped))`);
     orClauses.push(
-      `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.in.(completed,skipped))`,
+      `and(frequency.in.(${RECURRING_FREQS}),due_date.lte.${dateValue},status.in.(completed,skipped))`,
     );
     if (options.pool) {
       orClauses.push(
-        `and(frequency.in.(daily,per_shift),due_date.is.null,status.in.(completed,skipped))`,
+        `and(frequency.in.(${RECURRING_FREQS}),due_date.is.null,status.in.(completed,skipped))`,
       );
     }
   }
