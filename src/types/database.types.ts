@@ -1967,6 +1967,10 @@ export type Database = {
         Args: { p_practice_id: string }
         Returns: undefined
       }
+      generate_monthly_tasks: {
+        Args: { p_practice_id: string }
+        Returns: undefined
+      }
       generate_weekly_tasks: {
         Args: { p_practice_id: string }
         Returns: undefined
@@ -1975,6 +1979,7 @@ export type Database = {
       is_admin_role: { Args: never; Returns: boolean }
       is_brik_admin: { Args: never; Returns: boolean }
       run_daily_tasks: { Args: never; Returns: undefined }
+      run_monthly_tasks: { Args: never; Returns: undefined }
       run_weekly_tasks: { Args: never; Returns: undefined }
       seed_practice_defaults: {
         Args: { p_office_id: string; p_practice_id: string }
