@@ -101,7 +101,12 @@ export async function POST(request: Request) {
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
     console.error('[feedback] Notion API error:', res.status, JSON.stringify(errBody));
-    return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
+    // Surface the upstream Notion status + message so the widget shows an
+    // actionable error instead of a generic string (see brik-llm#791).
+    return NextResponse.json(
+      { error: 'Failed to submit feedback', notion_status: res.status, details: errBody },
+      { status: 502 },
+    );
   }
 
   const page = await res.json();
