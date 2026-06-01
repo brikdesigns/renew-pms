@@ -6,23 +6,31 @@ import type { AuthUser } from '@/lib/auth';
 const NOTION_API = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 const BACKLOG_DATABASE_ID = '32097d34-ed28-8051-8225-eb6800c2e05a';
-const PRODUCT_NAME = 'Renew PMS';
+const PRODUCT_NAME = 'Vantage';
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-/** Map widget feedback types to Backlog Scope values */
-const SCOPE_MAP: Record<string, string> = {
-  bug: 'Critical',
-  ui: 'Normal',
+/** Map widget feedback types to Backlog Severity values (triage adjusts after intake) */
+const SEVERITY_MAP: Record<string, string> = {
+  bug: 'High',
+  ui: 'Low',
   suggestion: 'Low',
   question: 'Low',
 };
 
-/** Map widget types to Notion Feedback Type select values */
-const FEEDBACK_TYPE_MAP: Record<string, string> = {
+/** Map widget types to Backlog Type select values */
+const TYPE_MAP: Record<string, string> = {
   bug: 'Bug',
-  ui: 'UI Issue',
+  ui: 'Enhancement',
   suggestion: 'Suggestion',
   question: 'Question',
+};
+
+/** Map system roles to Backlog Role multi_select options */
+const ROLE_MAP: Record<string, string> = {
+  brik_admin: 'Brik Admin',
+  admin: 'Admin',
+  manager: 'Manager',
+  staff: 'Staff',
 };
 
 /** Emoji prefix per type for the title */
@@ -65,6 +73,7 @@ export async function POST(request: Request) {
   const type = feedback_type ?? 'bug';
   const emoji = EMOJI_MAP[type] ?? '📝';
   const title = `${emoji} ${description.trim().slice(0, 80)}${description.length > 80 ? '...' : ''}`;
+  const roleOption = ROLE_MAP[role];
 
   const res = await fetch(`${NOTION_API}/pages`, {
     method: 'POST',
@@ -79,11 +88,11 @@ export async function POST(request: Request) {
         Name: { title: [{ text: { content: title } }] },
         Description: { rich_text: [{ text: { content: description.trim() } }] },
         Submitter: { rich_text: [{ text: { content: `${submitter} (${email})` } }] },
-        'Feedback Type': { select: { name: FEEDBACK_TYPE_MAP[type] ?? 'Bug' } },
-        Role: { select: { name: role } },
+        Type: { select: { name: TYPE_MAP[type] ?? 'Bug' } },
+        ...(roleOption ? { Role: { multi_select: [{ name: roleOption }] } } : {}),
         Product: { select: { name: PRODUCT_NAME } },
-        Status: { status: { name: 'Not Started' } },
-        Scope: { select: { name: SCOPE_MAP[type] ?? 'Normal' } },
+        Triage: { select: { name: 'Not Triaged' } },
+        Severity: { select: { name: SEVERITY_MAP[type] ?? 'Medium' } },
         URL: { url: `${BASE_URL}${page_url}` },
       },
     }),
