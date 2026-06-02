@@ -120,6 +120,33 @@ git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" "origin/${B
 cd "${WORKTREE_BASE}/${TASK_NAME}"
 
 # ── Install dependencies ──
+# `op run` authenticates via OP_SERVICE_ACCOUNT_TOKEN, which is scoped to the
+# `claude-agent` shell alias only. A non-interactive / headless invocation
+# (e.g. on brik-mini) inherits no account and op run fails with "No accounts
+# configured for use with 1Password CLI". Fall back to the sanctioned
+# service-account env file before invoking op run.
+# See brik-llm/operations/security/op-run-migration.md (Resolved question #3).
+if [ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  for sa_env in "$HOME/.secrets/op-service-account.env" "$HOME/.secrets/onepassword.env"; do
+    if [ -f "$sa_env" ]; then
+      echo -e "${YELLOW}▸ OP_SERVICE_ACCOUNT_TOKEN not in env — sourcing ${sa_env}${NC}"
+      set -a
+      # shellcheck disable=SC1090  # machine-dependent path, resolved at runtime
+      . "$sa_env"
+      set +a
+      break
+    fi
+  done
+fi
+if [ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  echo -e "${RED}Error: OP_SERVICE_ACCOUNT_TOKEN unavailable and no service-account env file found.${NC}"
+  echo ""
+  echo "  Run new-task.sh from the claude-agent shell alias, or create the"
+  echo "  service-account env file (~/.secrets/op-service-account.env on the Mini)."
+  echo "  See brik-llm/operations/security/op-run-migration.md (Resolved question #3)."
+  exit 1
+fi
+
 echo -e "${YELLOW}▸ Installing dependencies (op run -- npm ci --prefer-offline)...${NC}"
 op run --env-file=.env.op -- npm ci --prefer-offline 2>&1 | tail -1
 
