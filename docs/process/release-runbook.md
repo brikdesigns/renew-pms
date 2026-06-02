@@ -11,6 +11,29 @@ How a release is cut, promoted to production, and back-merged. Companion to [`be
 
 Releases are cut on **staging** (release-please opens a PR; merging it tags + publishes). Promotion is a **separate event**: a PR from staging → main, merged when you're ready to deploy. Don't conflate "cut a release" with "deploy to prod" — they are independent decisions.
 
+## Versioning — how the number is decided
+
+We're pre-1.0. The version communicates **what kind of release it is**, not a marketing stage. The convention:
+
+| Commit type (Conventional Commits) | Bump | Example |
+|---|---|---|
+| `feat:` | **MINOR** | `0.2.0` → `0.3.0` |
+| `fix:` / `perf:` / `refactor:` | **PATCH** | `0.2.0` → `0.2.1` |
+| breaking (`feat!:` / `BREAKING CHANGE:`) | **MINOR** (capped under 1.0) | `0.2.1` → `0.3.0` |
+| `chore:` / `ci:` / `test:` / `build:` / `docs:` / `style:` | none (hidden) | no release |
+
+release-please computes this automatically from the conventional-commit log since the last tag. You don't hand-pick the number — you write honest commit messages and the number follows.
+
+**The flags that encode it** (`release-please-config.json`):
+
+- `bump-minor-pre-major: true` — breaking changes bump MINOR instead of MAJOR (we can't go to 1.0 yet).
+- `bump-patch-for-minor-pre-major: false` — `feat` bumps MINOR (not PATCH), so a feature release is visibly distinct from a bugfix release.
+- `prerelease: false` — versions stay clean (`0.x.y`), no `-beta` suffix.
+
+**"Beta" is a product stage, not a version.** The `0.x` range already signals pre-1.0/not-yet-stable. We surface "Beta" as a UI label (e.g. the user menu shows `Beta · v0.2.0`), never baked into the semver string. **`1.0.0` is the milestone** — it means we've exited beta and gone GA at public launch (the same event that flips the base branch `staging` → `main`).
+
+**Don't** retroactively renumber. The convention applies to the *next* computed bump; past tags stay as cut. (History note: `v0.1.1`–`v0.1.7` predate this convention and bumped PATCH for everything; `v0.2.0` is the first release cut under it. See #157, #234, #235.)
+
 ## Cadence
 
 | Action | Cadence | Notes |
