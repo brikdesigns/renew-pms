@@ -130,6 +130,20 @@ const menuHeaderLabelStyle: CSSProperties = {
   lineHeight: font.lineHeight.tight,
 };
 
+// Version footer rendered below the menu items. Informational only (not a
+// menu item) — "Beta" is the product-stage label, the number is the clean
+// semver build (NEXT_PUBLIC_APP_VERSION, wired from package.json in
+// next.config.mjs). stopPropagation mirrors the header above so a click
+// doesn't trip Menu's outside-click close. See renew-pms#248.
+const menuVersionFooterStyle: CSSProperties = {
+  padding: `${space.sm} ${space.md}`,
+  borderTop: `1px solid ${color.border.muted}`,
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
+  color: color.text.secondary,
+  lineHeight: font.lineHeight.tight,
+};
+
 const accountWrapStyle: CSSProperties = {
   position: 'relative',
 };
@@ -222,6 +236,8 @@ export function AppSidebar({
     { id: 'profile', label: 'My Profile', onClick: () => { setMenuOpen(false); router.push('/settings/account'); } },
     { id: 'signout', label: 'Sign Out', onClick: handleLogout },
   ];
+
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION;
 
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (item.platformAdminOnly && !isPlatformAdmin) return false;
@@ -337,6 +353,14 @@ export function AppSidebar({
                 onClose={() => setMenuOpen(false)}
                 style={menuInsideWrapperStyle}
               />
+              {appVersion && (
+                <div
+                  style={menuVersionFooterStyle}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  Beta · v{appVersion}
+                </div>
+              )}
             </div>
           )}
         </div>
