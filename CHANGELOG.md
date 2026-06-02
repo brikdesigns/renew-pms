@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0](https://github.com/brikdesigns/renew-pms/compare/v0.1.7...v0.2.0) (2026-06-02)
+
+
+### Features
+
+* **tasks:** ADR + schema + visibility for recurring generators ([#347](https://github.com/brikdesigns/renew-pms/issues/347)) ([064961f](https://github.com/brikdesigns/renew-pms/commit/064961f342de7ed82e834d7a6343c0804f52d346))
+* **tasks:** due-date chips on task cards ([#344](https://github.com/brikdesigns/renew-pms/issues/344)) ([#353](https://github.com/brikdesigns/renew-pms/issues/353)) ([6d68f12](https://github.com/brikdesigns/renew-pms/commit/6d68f1228924a26ba679e02149168e327eb19d62))
+* **tasks:** monthly task generator + cron ([#341](https://github.com/brikdesigns/renew-pms/issues/341)) ([#350](https://github.com/brikdesigns/renew-pms/issues/350)) ([bbb9f90](https://github.com/brikdesigns/renew-pms/commit/bbb9f90a7f740f77a3970a6f39e1fa9209d7b8bb))
+* **tasks:** settings UI + API for per-template reset cadence ([#343](https://github.com/brikdesigns/renew-pms/issues/343)) ([#352](https://github.com/brikdesigns/renew-pms/issues/352)) ([1df98ba](https://github.com/brikdesigns/renew-pms/commit/1df98bacc56c5d4f8640e40533c5814eac6143ae))
+* **tasks:** weekly task generator + cron ([#340](https://github.com/brikdesigns/renew-pms/issues/340)) ([#349](https://github.com/brikdesigns/renew-pms/issues/349)) ([762cb43](https://github.com/brikdesigns/renew-pms/commit/762cb438e2b893b9c132239654ab4e28ddb6bdcc))
+
+
+### Bug Fixes
+
+* **feedback:** remap Notion payload to current Backlog schema ([#355](https://github.com/brikdesigns/renew-pms/issues/355)) ([aa295db](https://github.com/brikdesigns/renew-pms/commit/aa295db1a83d9916fb11df46447eded7b43c78cc))
+* **feedback:** surface Notion error status in feedback response ([#356](https://github.com/brikdesigns/renew-pms/issues/356)) ([07f3936](https://github.com/brikdesigns/renew-pms/commit/07f39367b8790e91d583ccb684326093a2fd5121)), closes [#791](https://github.com/brikdesigns/renew-pms/issues/791)
+
 ## [0.1.7](https://github.com/brikdesigns/renew-pms/compare/v0.1.6...v0.1.7) (2026-05-23)
 
 
