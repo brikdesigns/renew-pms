@@ -124,6 +124,7 @@ scanner_case "Slack token"              "SLACK_TOKEN=xoxb-1234567890-abcdefghijk
 echo ""
 echo "=== secret-scanner.sh: SHOULD ALLOW ==="
 scanner_case "re_ in comment"           "// Resend keys start with re_" allow
+scanner_case "re_ in snake_case ident"  "alter table retire_system_role_metadata;" allow
 scanner_case ".env path skipped"        "ANTHROPIC_API_KEY=sk-ant-api03-real" allow "/tmp/foo.env"
 scanner_case "regular code"             "import { NextResponse } from 'next/server'" allow
 scanner_case "short JWT-shaped"         "eyJ.eyJ.short" allow

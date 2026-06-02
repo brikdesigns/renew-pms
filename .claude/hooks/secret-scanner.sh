@@ -42,8 +42,12 @@ fi
 # Supabase access token
 echo "$CONTENT" | grep -qE 'sbp_[A-Za-z0-9]{30,}' && FINDINGS="${FINDINGS}\n  - Supabase access token (sbp_)"
 
-# Resend API key
-echo "$CONTENT" | grep -qE 're_[A-Za-z0-9_]{20,}' && FINDINGS="${FINDINGS}\n  - Resend API key (re_)"
+# Resend API key. Pattern kept in sync with bash-output-scanner.sh: the
+# base62 body must be unbroken (re_<20+>) or a single id_secret split
+# (re_<8+>_<20+>). The earlier 're_[A-Za-z0-9_]{20,}' admitted underscores
+# into the body, so snake_case identifiers matched — e.g. a migration named
+# 'retire_' + 'system_role_metadata' (the trailing "re_system..." run).
+echo "$CONTENT" | grep -qE 're_([A-Za-z0-9]{20,}|[A-Za-z0-9]{8,}_[A-Za-z0-9]{20,})' && FINDINGS="${FINDINGS}\n  - Resend API key (re_)"
 
 # Notion integration token
 echo "$CONTENT" | grep -qE 'ntn_[A-Za-z0-9]{30,}' && FINDINGS="${FINDINGS}\n  - Notion integration token (ntn_)"
