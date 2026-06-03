@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/brikdesigns/renew-pms/compare/v0.3.0...v0.3.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* **ci:** repair task-generation-monitor YAML (invalid → parses) ([#382](https://github.com/brikdesigns/renew-pms/issues/382)) ([237d270](https://github.com/brikdesigns/renew-pms/commit/237d2701e56a8e03002edc57ccdf1ff8cacaa0f6))
+* **tasks:** durable in-DB task scheduler + watchdog; feat(infra): agent ops access ([#377](https://github.com/brikdesigns/renew-pms/issues/377)) ([a1352ee](https://github.com/brikdesigns/renew-pms/commit/a1352eeaf9d130b35b2792651bbeb86a2fce5833))
+
+
+### Documentation
+
+* **guide:** add v0.3.0 to user-facing Release Notes ([#372](https://github.com/brikdesigns/renew-pms/issues/372)) ([e2c6ec0](https://github.com/brikdesigns/renew-pms/commit/e2c6ec0c884631a316e8ab33edf5969f56789d59))
+* **release:** add post-MVP prod cutover runbook ([#367](https://github.com/brikdesigns/renew-pms/issues/367)) ([#370](https://github.com/brikdesigns/renew-pms/issues/370)) ([219d6ca](https://github.com/brikdesigns/renew-pms/commit/219d6caa6cd475ddbbab1bf1d60d9258ac6ae804))
+
 ## [0.3.0](https://github.com/brikdesigns/renew-pms/compare/v0.2.0...v0.3.0) (2026-06-03)
 
 
