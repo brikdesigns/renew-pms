@@ -2,13 +2,11 @@ name: Task Generation Monitor
 
 # Independent watchdog for daily task generation. The 2026-05 outage ran SILENT
 # for two weeks because nothing alarmed when generation stopped. This job runs an
-# hour after the pg_cron generators (00054, 05:00 UTC) and FAILS — which notifies —
-# if any active practice that has recurring templates has no tasks for today.
-#
-# It is deliberately external to the app, Netlify, and the DB scheduler, so it
-# catches every failure mode (pg_cron broken, run_* function error, extension
-# disabled, etc.), not just one. Customer-facing signal: "is there work on the
-# board this morning."
+# hour after the pg_cron generators (migration 00054, 05:00 UTC) and FAILS — which
+# notifies — if any active practice that has recurring templates has no tasks for
+# today. It is deliberately external to the app, Netlify, and the DB scheduler, so
+# it catches every failure mode (pg_cron broken, run_* error, extension disabled),
+# not just one. Customer-facing signal: "is there work on the board this morning."
 
 on:
   schedule:
@@ -34,41 +32,32 @@ jobs:
             exit 1
           fi
 
-          query() { # $1=ref  $2=sql  -> prints scalar in .[0].n
+          api() { # $1=ref  $2=sql  — jq builds the JSON body so quoting is safe
             curl -s -X POST "https://api.supabase.com/v1/projects/$1/database/query" \
               -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "{\"query\": \"$2\"}"
+              --data "$(jq -nc --arg q "$2" '{query: $q}')"
           }
 
           # Active practices that SHOULD have tasks today (have an active daily/
           # per-shift template) but have none. >0 means generation failed.
           STARVED_SQL="select count(*) as n from practices p where p.status='active' and exists (select 1 from task_templates tt where tt.practice_id=p.id and tt.status='active' and tt.frequency in ('daily','per_shift')) and not exists (select 1 from tasks t where t.practice_id=p.id and t.due_date=current_date)"
-
-          # Context: outcome of the most recent renew-daily-tasks pg_cron run.
-          CRON_SQL="select status, return_message, start_time from cron.job_run_details d join cron.job j on j.jobid=d.jobid where j.jobname='renew-daily-tasks' order by start_time desc limit 1"
+          CRON_SQL="select status, start_time from cron.job_run_details d join cron.job j on j.jobid=d.jobid where j.jobname='renew-daily-tasks' order by start_time desc limit 1"
 
           FAIL=0
           for ENVNAME in PROD STAGING; do
             if [ "$ENVNAME" = "PROD" ]; then REF="$PROD_REF"; else REF="$STAGING_REF"; fi
-            RESP=$(query "$REF" "$STARVED_SQL")
-            STARVED=$(echo "$RESP" | python3 -c "import sys,json
-try:
-    d=json.load(sys.stdin); print(d[0]['n'] if isinstance(d,list) and d else 'ERR')
-except Exception: print('ERR')")
-            CRON=$(query "$REF" "$CRON_SQL" | python3 -c "import sys,json
-try:
-    d=json.load(sys.stdin); print(d[0]['status']+' @ '+str(d[0]['start_time']) if isinstance(d,list) and d else 'no-run-recorded')
-except Exception: print('n/a')")
+
+            STARVED=$(api "$REF" "$STARVED_SQL" | jq -r 'if type=="array" and length>0 then (.[0].n|tostring) else "ERR" end')
+            CRON=$(api "$REF" "$CRON_SQL" | jq -r 'if type=="array" and length>0 then "\(.[0].status) @ \(.[0].start_time)" else "no-run-recorded" end')
             echo "[$ENVNAME] starved practices=$STARVED ; last daily cron=$CRON"
 
             if [ "$STARVED" = "ERR" ]; then
-              echo "::error::[$ENVNAME] could not query task generation status."
+              echo "::error::[$ENVNAME] could not query task generation status (bad Management API response)."
               FAIL=1
             elif [ "$STARVED" != "0" ]; then
-              # Prod is a hard failure (customers blocked); staging is a warning.
               if [ "$ENVNAME" = "PROD" ]; then
-                echo "::error::[PROD] $STARVED active practice(s) have NO tasks today despite active recurring templates. Daily generation has failed — check pg_cron (cron.job_run_details) and run_daily_tasks(). Runbook: docs/process/task-generation.md"
+                echo "::error::[PROD] $STARVED active practice(s) have NO tasks today despite active recurring templates. Daily generation has failed — check cron.job_run_details and run_daily_tasks(). Runbook: docs/process/task-generation.md"
                 FAIL=1
               else
                 echo "::warning::[STAGING] $STARVED practice(s) have no tasks today (expected if staging has no active recurring templates)."
@@ -76,4 +65,8 @@ except Exception: print('n/a')")
             fi
           done
 
-          [ "$FAIL" -eq 0 ] && echo "✅ Task generation healthy." || exit 1
+          if [ "$FAIL" -eq 0 ]; then
+            echo "✅ Task generation healthy."
+          else
+            exit 1
+          fi
