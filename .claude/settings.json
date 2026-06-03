@@ -1,4 +1,16 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/netlify-ops.sh:*)",
+      "Bash(bash scripts/netlify-ops.sh:*)",
+      "Bash(./scripts/db-health.sh:*)",
+      "Bash(netlify logs:*)",
+      "Bash(netlify functions:list:*)",
+      "Bash(netlify status:*)",
+      "mcp__supabase__*"
+    ],
+    "comment": "Read-only agent ops access (Netlify + Supabase). Mutating Netlify CLI (deploy, env:set, functions:invoke), the netlify MCP write tools, and ALL prod Supabase writes are deliberately omitted so they still prompt — see docs/process/agent-ops-access.md."
+  },
   "hooks": {
     "SessionStart": [
       {
