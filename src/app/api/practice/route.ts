@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePracticeAdmin } from '@/lib/auth';
@@ -66,7 +67,7 @@ export async function PATCH(request: Request) {
     .select('id, name, slug, website_url, npi_number, tax_id, status, address_line1, address_line2, city, state, zip, phone, email, logo_url')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(practice);
 }

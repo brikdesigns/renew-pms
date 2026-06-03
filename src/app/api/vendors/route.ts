@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -25,7 +26,7 @@ export async function GET() {
     .eq('practice_id', practiceId)
     .order('name');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   const vendors = (data ?? []).map(v => ({
     ...v,
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     .select('id, name, type, phone, email, website_url, address, notes, is_active, created_at')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json({ ...data, contact_count: 0 }, { status: 201 });
 }

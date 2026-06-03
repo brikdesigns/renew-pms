@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePracticeAdmin, requireAuth } from '@/lib/auth';
@@ -29,7 +30,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) return apiError(error, { status: 404 });
 
   const vendor = Array.isArray(data.vendors) ? data.vendors[0] : data.vendors;
   return NextResponse.json({
@@ -84,7 +85,7 @@ export async function PATCH(
     .select('id, name, role, phone, email, is_primary, vendor_id, vendors(name, type)')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   const vendor = Array.isArray(data.vendors) ? data.vendors[0] : data.vendors;
   return NextResponse.json({
@@ -124,7 +125,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('practice_id', practiceId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json({ success: true });
 }

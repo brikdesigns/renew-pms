@@ -233,6 +233,7 @@ export function AddTaskSheet({ isOpen, onClose, onSaved, defaultType, members, d
       title="Add Task from Template"
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="add-task-form" disabled={saving || !canSave}>

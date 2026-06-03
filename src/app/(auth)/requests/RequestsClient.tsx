@@ -7,7 +7,7 @@ import { Board, BoardColumn, BoardCard, Skeleton } from '@brikdesigns/bds';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, Chip, Button, IconButton, FilterBar, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Chip, Button, FilterBar, PageHeader, TabBar, Tooltip, useSheetStack } from '@brikdesigns/bds';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TableSkeleton } from '@/components/TableSkeleton';
@@ -79,7 +79,7 @@ function ChipFilter({ options, selected, onChange }: {
   const isFiltered = selected !== options[0];
   return (
     <div style={{ position: 'relative' }}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen(p => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} showDropdown onChipClick={() => setOpen(p => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 180, zIndex: 100 }} />
     </div>
   );
@@ -306,7 +306,7 @@ function AssigneeAvatar({
   return (
     <>
       <Tooltip content={assigneeName ?? 'Assign to'} placement="top">
-        <IconButton
+        <Button
           ref={avatarRef}
           variant="ghost"
           size="sm"

@@ -29,6 +29,7 @@ export interface TaskTemplate {
   status: string;
   assignment_mode: string;
   display_mode: string;
+  task_reset_cadence: string | null;
   is_default: boolean;
   checklist_items: ChecklistItem[];
   created_at: string;

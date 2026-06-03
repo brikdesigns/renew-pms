@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { Board, BoardColumn, BoardCard } from '@brikdesigns/bds';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Tag, Dot, AnimatedIcon, Tooltip, IconButton, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Badge, Dot, AnimatedIcon, Tooltip, PageHeader, TabBar, useSheetStack } from '@brikdesigns/bds';
 import checkCompleteAnimation from '@/animations/check-complete.json';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -20,6 +20,7 @@ import { useToast } from '@/components/ToastProvider';
 import { TaskAssigneeAvatar } from '@/components/TaskAssigneeAvatar';
 import { FrequencyTag } from '@/components/FrequencyTag';
 import { PriorityBadge } from '@/components/PriorityBadge';
+import { formatDueDate } from '@/lib/date';
 
 // ─── Task shape for the board ────────────────────────────────────────────────
 
@@ -27,11 +28,16 @@ interface MockTask {
   id: string;
   title: string;
   due: string;
+  dueDate: string | null;
   dept: string;
   freq: string;
   priority: 'critical' | 'error' | 'warning' | 'info';
   type: 'checklist' | 'procedure' | 'compliance' | 'skill_training' | 'onboarding' | 'request';
   template: string;
+  /** Parent template name (e.g. "Clean Restrooms") — for expanded-mode "Part of" labelling. Null when the task has no parent template. */
+  parentTemplateName: string | null;
+  /** Parent template display mode (`expanded` / `nested`) — drives whether the detail surface shows "Part of …". */
+  displayMode: string | null;
   overdue: boolean;
   status: string;
   assignmentType: 'individual' | 'role' | 'department' | 'pool';
@@ -154,6 +160,23 @@ function shiftDate(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+// ─── Due date tag ─────────────────────────────────────────────────────────────
+
+function DueDateTag({ dueDate, status }: { dueDate: string | null; status: string }) {
+  if (!dueDate) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const isOverdue = status !== 'completed' && status !== 'skipped' && dueDate < today;
+  const label = formatDueDate(dueDate);
+  if (isOverdue) {
+    return <Badge size="sm" status="warning" appearance="subtle">{label}</Badge>;
+  }
+  return (
+    <Tag size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.secondary, flexShrink: 0 }}>
+      {label}
+    </Tag>
+  );
 }
 
 // ─── Checklist progress tag ──────────────────────────────────────────────────
@@ -412,11 +435,14 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       id: t.id,
       title: t.title,
       due: formatDue(t.due_date, isOverdue),
+      dueDate: t.due_date,
       dept: t.member_department,
       freq: t.frequency ?? 'Daily',
       priority: mapPriority(t.priority),
       type: mapType(t.type_name),
       template: t.type_name ?? 'Task',
+      parentTemplateName: t.parent_template_name ?? null,
+      displayMode: t.display_mode ?? null,
       overdue: isOverdue,
       status: t.status,
       assignmentType,
@@ -438,9 +464,14 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       byMember.set(task.assigned_to, existing);
     }
 
-    return Array.from(byMember.entries()).map(([, memberTasks]) => {
+    return Array.from(byMember.entries()).map(([memberId, memberTasks]) => {
       const first = memberTasks[0];
       const person = {
+        // Carry the practice_member id forward — two members can share a
+        // display name (saw on staging: two auth users both named "Nick
+        // Stanerson"). Name-based grouping/filtering collapses or duplicates
+        // those columns incorrectly. ID is the authoritative key.
+        id: memberId,
         name: `${first.member_first_name} ${first.member_last_name}`.trim(),
         subtitle: first.member_role,
         department: first.member_department,
@@ -496,12 +527,11 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
     .filter((col) => col.tasks.length > 0);
 
   // ── Filtered "My Tasks" board (current user only) ─────────────────────────
-
+  // Match by member id, never by name. Two auth users can share a display
+  // name (e.g. "Nick Stanerson"); name-based matching would surface both
+  // columns in My Tasks and produce visible duplicates.
   const filteredMyBoard = filteredAssignedBoard.filter(
-    (col) => assignedTasks.some(
-      (t) => t.assigned_to === currentMemberId
-        && `${t.member_first_name} ${t.member_last_name}`.trim() === col.person.name
-    )
+    (col) => col.person.id === currentMemberId
   );
 
   // ── Filtered "Open Tasks" board ────────────────────────────────────────────
@@ -518,6 +548,8 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
       id: task.id,
       title: task.title,
       templateName: task.template,
+      parentTemplateName: task.parentTemplateName,
+      displayMode: task.displayMode,
       taskType: task.type,
       due: task.due,
       dept: task.dept,
@@ -552,12 +584,16 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         onClick={() => setViewingTask(buildTaskViewData(task, assignee, assigneeRole))}
         style={{ backgroundColor: color.surface.overlay, boxShadow: shadow.sm, cursor: 'pointer' }}
         tags={pool ? (
-          <FrequencyTag value={task.freq} />
+          <>
+            <FrequencyTag value={task.freq} />
+            <DueDateTag dueDate={task.dueDate} status={task.status} />
+          </>
         ) : (
           <>
             {task.dept && <Tag size="sm" style={{ backgroundColor: taskDeptColors.light, color: taskDeptColors.text, flexShrink: 0 }}>{task.dept}</Tag>}
             <FrequencyTag value={task.freq} />
             <ChecklistProgress completed={task.checklistCompleted} total={task.checklistTotal} />
+            <DueDateTag dueDate={task.dueDate} status={task.status} />
           </>
         )}
         trailingTag={pool ? (
@@ -623,7 +659,10 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           ...(isBeingDragged ? { opacity: 0.3, transform: 'scale(0.97)' } : {}),
           transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
         }}
-        tags={<FrequencyTag value={task.freq} />}
+        tags={<>
+          <FrequencyTag value={task.freq} />
+          <DueDateTag dueDate={task.dueDate} status={task.status} />
+        </>}
         trailingTag={
           checked[task.id] ? (
             <AnimatedIcon
@@ -695,7 +734,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: gap.sm, flexShrink: 0 }}>
-          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
+          <Button variant="ghost" size="sm" icon={<Icon icon={icon.chevronLeft} />} label="Previous day" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))} />
           <span style={{
             fontFamily: font.family.label,
             fontSize: font.size.label.md,
@@ -705,7 +744,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
           }}>
             {formatDate(selectedDate)}
           </span>
-          <IconButton variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
+          <Button variant="ghost" size="sm" icon={<Icon icon={icon.chevronRight} />} label="Next day" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))} />
         </div>
         <TaskFilterBar
           departments={departments}
@@ -758,7 +797,7 @@ export default function TasksClient({ canAddTask, currentMemberId, initialData }
         /* All Tasks / My Tasks — person-based columns */
         <Board style={{ flex: 1, minHeight: 0 }}>
           {(taskView === 'mine' ? filteredMyBoard : filteredAssignedBoard).map((col) => (
-            <BoardColumn key={col.person.name} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
+            <BoardColumn key={col.person.id} style={{ backgroundColor: color.surface.primary } as React.CSSProperties}>
               <div style={{ display: 'flex', alignItems: 'center', gap: gap.md, padding: `${space.md} 0` }}>
                 <UserAvatar name={col.person.name} departmentColorKey={col.person.departmentColor} size="lg" />
                 <div>

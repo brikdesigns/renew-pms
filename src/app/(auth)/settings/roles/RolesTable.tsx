@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'r
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { IconButton, useSheetStack } from '@brikdesigns/bds';
+import { Button, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -149,9 +149,9 @@ export const RolesTable = forwardRef<RolesTableHandle, RolesTableProps>(function
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${r.name}`} onClick={() => setDeleteTarget({ id: r.id, name: r.name })} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${r.name}`} onClick={() => handleView(r)} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${r.name}`} onClick={() => handleEdit(r)} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${r.name}`} onClick={() => setDeleteTarget({ id: r.id, name: r.name })} />
                   </div>
                 </TableCell>
               </TableRow>

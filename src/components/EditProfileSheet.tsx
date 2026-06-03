@@ -153,7 +153,7 @@ export function EditProfileSheet({ isOpen, onClose, initialData, memberId, isAdm
 
   return (
     <Sheet
-      isOpen={isOpen} onClose={onClose} title="Edit Profile" width="600px" side="right"
+      isOpen={isOpen} onClose={onClose} title="Edit Profile" width="600px" side="right" closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="edit-profile-form" disabled={saving}>

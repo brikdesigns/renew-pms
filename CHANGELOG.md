@@ -1,5 +1,139 @@
 # Changelog
 
+## [0.3.0](https://github.com/brikdesigns/renew-pms/compare/v0.2.0...v0.3.0) (2026-06-03)
+
+
+### Features
+
+* **renew:** show app version + Beta label in user menu ([#359](https://github.com/brikdesigns/renew-pms/issues/359)) ([8d3d2ab](https://github.com/brikdesigns/renew-pms/commit/8d3d2abc2284ff87b4a62112654c47fd9d562df1)), closes [#248](https://github.com/brikdesigns/renew-pms/issues/248)
+
+
+### Bug Fixes
+
+* **infra:** make new-task.sh op run install resilient headless ([#365](https://github.com/brikdesigns/renew-pms/issues/365)) ([#366](https://github.com/brikdesigns/renew-pms/issues/366)) ([7de1382](https://github.com/brikdesigns/renew-pms/commit/7de1382430ea6de2d7546166ca5d305aa69f9229))
+* **infra:** narrow secret-scanner Resend regex to stop snake_case false positives ([#368](https://github.com/brikdesigns/renew-pms/issues/368)) ([ab0b7d9](https://github.com/brikdesigns/renew-pms/commit/ab0b7d906e85531aa943ccc69f0514ee3a91aa85))
+
+
+### Documentation
+
+* **guide:** add user-facing Release Notes page with v0.2.0 ([#361](https://github.com/brikdesigns/renew-pms/issues/361)) ([e53de46](https://github.com/brikdesigns/renew-pms/commit/e53de4682f3a4f60a4f089ddc683e5ebabbf2de5)), closes [#328](https://github.com/brikdesigns/renew-pms/issues/328)
+* **release:** document semver mapping + beta-as-label convention ([#360](https://github.com/brikdesigns/renew-pms/issues/360)) ([cf6cb60](https://github.com/brikdesigns/renew-pms/commit/cf6cb603f0eeffa3826e987c1b7fe1f478eea293)), closes [#235](https://github.com/brikdesigns/renew-pms/issues/235)
+
+## [0.2.0](https://github.com/brikdesigns/renew-pms/compare/v0.1.7...v0.2.0) (2026-06-02)
+
+
+### Features
+
+* **tasks:** ADR + schema + visibility for recurring generators ([#347](https://github.com/brikdesigns/renew-pms/issues/347)) ([064961f](https://github.com/brikdesigns/renew-pms/commit/064961f342de7ed82e834d7a6343c0804f52d346))
+* **tasks:** due-date chips on task cards ([#344](https://github.com/brikdesigns/renew-pms/issues/344)) ([#353](https://github.com/brikdesigns/renew-pms/issues/353)) ([6d68f12](https://github.com/brikdesigns/renew-pms/commit/6d68f1228924a26ba679e02149168e327eb19d62))
+* **tasks:** monthly task generator + cron ([#341](https://github.com/brikdesigns/renew-pms/issues/341)) ([#350](https://github.com/brikdesigns/renew-pms/issues/350)) ([bbb9f90](https://github.com/brikdesigns/renew-pms/commit/bbb9f90a7f740f77a3970a6f39e1fa9209d7b8bb))
+* **tasks:** settings UI + API for per-template reset cadence ([#343](https://github.com/brikdesigns/renew-pms/issues/343)) ([#352](https://github.com/brikdesigns/renew-pms/issues/352)) ([1df98ba](https://github.com/brikdesigns/renew-pms/commit/1df98bacc56c5d4f8640e40533c5814eac6143ae))
+* **tasks:** weekly task generator + cron ([#340](https://github.com/brikdesigns/renew-pms/issues/340)) ([#349](https://github.com/brikdesigns/renew-pms/issues/349)) ([762cb43](https://github.com/brikdesigns/renew-pms/commit/762cb438e2b893b9c132239654ab4e28ddb6bdcc))
+
+
+### Bug Fixes
+
+* **feedback:** remap Notion payload to current Backlog schema ([#355](https://github.com/brikdesigns/renew-pms/issues/355)) ([aa295db](https://github.com/brikdesigns/renew-pms/commit/aa295db1a83d9916fb11df46447eded7b43c78cc))
+* **feedback:** surface Notion error status in feedback response ([#356](https://github.com/brikdesigns/renew-pms/issues/356)) ([07f3936](https://github.com/brikdesigns/renew-pms/commit/07f39367b8790e91d583ccb684326093a2fd5121)), closes [#791](https://github.com/brikdesigns/renew-pms/issues/791)
+
+## [0.1.7](https://github.com/brikdesigns/renew-pms/compare/v0.1.6...v0.1.7) (2026-05-23)
+
+
+### Documentation
+
+* rag canon grounding ([#311](https://github.com/brikdesigns/renew-pms/issues/311)) ([2e4c92d](https://github.com/brikdesigns/renew-pms/commit/2e4c92dec3095f666949ca788b8eb7af92be3ab3))
+
+## [0.1.6](https://github.com/brikdesigns/renew-pms/compare/v0.1.5...v0.1.6) (2026-05-20)
+
+
+### Features
+
+* **auth:** scaffold Data Access Layer ([#321](https://github.com/brikdesigns/renew-pms/issues/321) PR-A) ([#322](https://github.com/brikdesigns/renew-pms/issues/322)) ([a51a90f](https://github.com/brikdesigns/renew-pms/commit/a51a90f14fb7c171eb817b6b81bca98951acb890))
+* **renew:** BDS 0.69.0 — remove SheetHelperText (deprecated ADR-004) ([#319](https://github.com/brikdesigns/renew-pms/issues/319)) ([ebe8c2d](https://github.com/brikdesigns/renew-pms/commit/ebe8c2d5e066c096787d7620adc1e0811edde6e2))
+
+
+### Bug Fixes
+
+* **tasks:** template spawn race + inventory item UX rework ([#312](https://github.com/brikdesigns/renew-pms/issues/312)) ([4b1e74e](https://github.com/brikdesigns/renew-pms/commit/4b1e74e1c64646079b0eff3241b376c0de61227e))
+
+
+### Refactors
+
+* **button:** migrate 19 IconButton sites to Button (refs [#661](https://github.com/brikdesigns/renew-pms/issues/661) B) ([#318](https://github.com/brikdesigns/renew-pms/issues/318)) ([626b7b4](https://github.com/brikdesigns/renew-pms/commit/626b7b452353d2977a537e0469db839dc1b52fc2))
+
+
+### Documentation
+
+* **claude-md:** Phase D renew-pms rewrite (244 → 50 lines) ([#314](https://github.com/brikdesigns/renew-pms/issues/314)) ([c6b28d2](https://github.com/brikdesigns/renew-pms/commit/c6b28d225e82d7784b4aa3f15974409dcb1c98c9))
+
+## [0.1.5](https://github.com/brikdesigns/renew-pms/compare/v0.1.4...v0.1.5) (2026-05-10)
+
+
+### Features
+
+* **auth:** change password from Settings → Security + SSO-only branch ([#302](https://github.com/brikdesigns/renew-pms/issues/302)) ([68e7a0a](https://github.com/brikdesigns/renew-pms/commit/68e7a0aa4934b837c5a0971b2efa3c97a04f411a))
+* **auth:** surface linked sign-in methods on user profile + admin view ([#304](https://github.com/brikdesigns/renew-pms/issues/304)) ([19f2944](https://github.com/brikdesigns/renew-pms/commit/19f29440643b8cb4a896d9eaa508ee311743e207))
+* **tasks:** show parent template on expanded children + validate items ([#305](https://github.com/brikdesigns/renew-pms/issues/305)) ([872cc86](https://github.com/brikdesigns/renew-pms/commit/872cc86c065c4b668305cb73c9e23c0cb5c95f7b))
+
+
+### Bug Fixes
+
+* **tasks:** expanded-mode legacy cleanup — hide phantoms + auto-prune empty items ([#309](https://github.com/brikdesigns/renew-pms/issues/309)) ([335be15](https://github.com/brikdesigns/renew-pms/commit/335be15f2dc2be9b9a1b6e87499d741aa7e22efa))
+
+
+### Documentation
+
+* **bds:** repoint TOKEN-REFERENCE.md refs to canonical primitives URL ([#308](https://github.com/brikdesigns/renew-pms/issues/308)) ([ec92d59](https://github.com/brikdesigns/renew-pms/commit/ec92d59097c976277c8eb3ff707105c8555216fd))
+* **claude-md:** Phase 3.5 trim — 409 → 244 lines ([#310](https://github.com/brikdesigns/renew-pms/issues/310)) ([a6c3317](https://github.com/brikdesigns/renew-pms/commit/a6c3317ddc63844d20723aac5977b2897588bd41))
+
+## [0.1.4](https://github.com/brikdesigns/renew-pms/compare/v0.1.3...v0.1.4) (2026-05-07)
+
+
+### Features
+
+* **auth:** retire raw_user_meta_data.system_role pattern ([#300](https://github.com/brikdesigns/renew-pms/issues/300)) ([b758989](https://github.com/brikdesigns/renew-pms/commit/b758989cfb51aa51451cfc3e8a360c3ab6b41d81))
+
+## [0.1.3](https://github.com/brikdesigns/renew-pms/compare/v0.1.2...v0.1.3) (2026-05-07)
+
+
+### Features
+
+* **ux:** templates sheet UX + global edit-sheet outside-click guard ([#298](https://github.com/brikdesigns/renew-pms/issues/298)) ([9b5705d](https://github.com/brikdesigns/renew-pms/commit/9b5705d19b501fbdf34dafa568bdaec675c947ed))
+
+
+### Documentation
+
+* **process:** add release-runbook for staging→main→staging cycle ([#296](https://github.com/brikdesigns/renew-pms/issues/296)) ([4898ef9](https://github.com/brikdesigns/renew-pms/commit/4898ef931845ef4625229f0fd42ec21216fae223))
+
+## [0.1.2](https://github.com/brikdesigns/renew-pms/compare/v0.1.1...v0.1.2) (2026-05-06)
+
+
+### Features
+
+* **feedback:** retire NOTION_TOKEN — route /api/feedback to Sentry ([#262](https://github.com/brikdesigns/renew-pms/issues/262)) ([7bca9c5](https://github.com/brikdesigns/renew-pms/commit/7bca9c56ba5d20924cb099c82f1545e7b1c51d51))
+* **infra:** add PreToolUse hooks blocking secret leak vectors ([#258](https://github.com/brikdesigns/renew-pms/issues/258)) ([#259](https://github.com/brikdesigns/renew-pms/issues/259)) ([ab65f3a](https://github.com/brikdesigns/renew-pms/commit/ab65f3a550c35dca6182524dec3e46b7a3616528))
+* **security:** add gitleaks pre-commit + CI workflow ([#275](https://github.com/brikdesigns/renew-pms/issues/275)) ([9f1004a](https://github.com/brikdesigns/renew-pms/commit/9f1004acd83b2dc200d7e76125a8275c3a884684))
+* **settings:** tighten profile read-mode rhythm + drop double-spacing ([#268](https://github.com/brikdesigns/renew-pms/issues/268)) ([6b2b58a](https://github.com/brikdesigns/renew-pms/commit/6b2b58a34612f1562d45b183a50a2643f3b99377))
+
+
+### Bug Fixes
+
+* **ci:** use GITHUB_TOKEN for GHCR auth (no more PACKAGES_READ_TOKEN) ([#274](https://github.com/brikdesigns/renew-pms/issues/274)) ([78b72a0](https://github.com/brikdesigns/renew-pms/commit/78b72a05583cd9ff92a4a730cdec89927b7c1272))
+* **feedback:** flush Sentry events before serverless function returns ([#264](https://github.com/brikdesigns/renew-pms/issues/264)) ([bfe571b](https://github.com/brikdesigns/renew-pms/commit/bfe571b0234f9e345321df89f4ef9692c9d97408))
+* **feedback:** restore Notion as feedback destination on staging ([#269](https://github.com/brikdesigns/renew-pms/issues/269)) ([11aa13d](https://github.com/brikdesigns/renew-pms/commit/11aa13d20c0194d1e4b360996c48115a6bd2c03b))
+* **infra:** widen bash-leak-guard against secret stores ([#271](https://github.com/brikdesigns/renew-pms/issues/271)) ([42b5f76](https://github.com/brikdesigns/renew-pms/commit/42b5f76473efae534b0d63fec619891ac0a52540))
+* **rls:** tighten practice_members + vendor_messages policy scope ([#292](https://github.com/brikdesigns/renew-pms/issues/292)) ([c8934f8](https://github.com/brikdesigns/renew-pms/commit/c8934f886e314aead97765adc70cba10f90739ed))
+* **security:** pre-launch QA batch — five small fixes ([#291](https://github.com/brikdesigns/renew-pms/issues/291)) ([a4b07b6](https://github.com/brikdesigns/renew-pms/commit/a4b07b6f3e6c1df2cca672d80128299d03bc485e))
+* **security:** replace in-memory rate limiter with Upstash Redis ([#286](https://github.com/brikdesigns/renew-pms/issues/286)) ([ec0e8b2](https://github.com/brikdesigns/renew-pms/commit/ec0e8b20f36db274d0e6a297e27f13768c8c52da))
+* **security:** sanitize Supabase error.message in API responses ([#256](https://github.com/brikdesigns/renew-pms/issues/256)) ([2a226d3](https://github.com/brikdesigns/renew-pms/commit/2a226d3abd8aa2e63055cf53366011b450a708a4)), closes [#207](https://github.com/brikdesigns/renew-pms/issues/207)
+* **ui:** nav tooltip linger + page-anatomy spacing batch ([#294](https://github.com/brikdesigns/renew-pms/issues/294)) ([859243f](https://github.com/brikdesigns/renew-pms/commit/859243fbe38e620172345e5e697b990e95bcb847))
+
+
+### Documentation
+
+* **claude:** add Compliance Profile section pointing at BDS canonical ([#289](https://github.com/brikdesigns/renew-pms/issues/289)) ([71049e5](https://github.com/brikdesigns/renew-pms/commit/71049e514b1b2d0795a49d57136bf862e85135a8))
+* **claude:** link the canonical 5 security docs ([#287](https://github.com/brikdesigns/renew-pms/issues/287)) ([6f21646](https://github.com/brikdesigns/renew-pms/commit/6f2164616286959a72451f08893f629508df1254))
+
 ## [0.1.1](https://github.com/brikdesigns/renew-pms/compare/v0.1.0...v0.1.1) (2026-05-04)
 
 

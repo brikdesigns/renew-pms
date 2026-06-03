@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { Sheet, SheetSection, Button, Badge, ChecklistItem, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import { Sheet, SheetSection, Button, Badge, Checklist, Tag, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { useToast } from '@/components/ToastProvider';
 import { gap, departmentColor } from '@/lib/tokens';
+import { text } from '@/lib/styles';
 import { FrequencyTag } from '@/components/FrequencyTag';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -13,7 +14,19 @@ import { FrequencyTag } from '@/components/FrequencyTag';
 export interface TaskViewData {
   id: string;
   title: string;
+  /** Task type label — "Checklist", "Procedure", "Compliance", etc. (legacy field name; this is task type, not parent template). */
   templateName: string;
+  /**
+   * Parent template name (e.g. "Clean Restrooms") for tasks spawned from a
+   * task_template. Null for ad-hoc tasks. Drives the "Part of {…}"
+   * description label in expanded-mode children (#299).
+   */
+  parentTemplateName: string | null;
+  /**
+   * Parent template's display_mode (`expanded` / `nested`). Null when no
+   * parent template. Only `expanded` triggers the "Part of …" description.
+   */
+  displayMode: string | null;
   taskType: string;
   due: string;
   dept: string;
@@ -42,6 +55,20 @@ interface ChecklistItem {
   sort_order: number;
   is_completed: boolean;
   completed_at: string | null;
+}
+
+/**
+ * Description line shown under the task title in the sheet header.
+ * Expanded-mode children (one task per checklist item) get "Part of …" so
+ * staff understand which template they're working under — closes the
+ * "wait, isn't this task set done?" confusion from #299. Everything else
+ * keeps the previous behavior (task type label like "Checklist").
+ */
+function sheetDescription(task: TaskViewData): string {
+  if (task.displayMode === 'expanded' && task.parentTemplateName) {
+    return `Part of ${task.parentTemplateName}`;
+  }
+  return task.templateName;
 }
 
 interface ViewTaskSheetProps {
@@ -254,18 +281,18 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       {items.length > 0 && (
         <>
           <ProgressBar value={progressPct} label="Checklist progress" />
-          <SheetHelperText>{completedCount} of {items.length} completed</SheetHelperText>
+          <p style={{ ...text.bodyXs, margin: 0 }}>{completedCount} of {items.length} completed</p>
         </>
       )}
 
       {loadingItems ? (
-        <SheetHelperText>Loading checklist…</SheetHelperText>
+        <p style={{ ...text.bodyXs, margin: 0 }}>Loading checklist…</p>
       ) : items.length === 0 ? (
         <EmptyState title="No checklist items" description="This task has no checklist items." />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: gap.xs }}>
           {items.map(item => (
-            <ChecklistItem
+            <Checklist
               key={item.id}
               label={item.label}
               checked={item.is_completed}
@@ -318,7 +345,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
     }
     configureSheet({
       title: task.title,
-      description: task.templateName,
+      description: sheetDescription(task),
       tabs: buildTabs(task),
       activeTab,
       onTabChange: setActiveTab,
@@ -345,7 +372,7 @@ export function ViewTaskSheet({ isOpen = true, onClose, task: taskProp, id, onTa
       isOpen={isOpen}
       onClose={onClose}
       title={task.title}
-      description={task.templateName}
+      description={sheetDescription(task)}
       width="600px"
       side="right"
       tabs={buildTabs(task)}

@@ -1,0 +1,35 @@
+# Gitleaks config for renew-pms.
+# Extends the Brik canonical rule set (sync-managed) with this repo's allowlist.
+#
+# Canonical rules live in .brik-gitleaks-rules.toml — that file is synced from
+# brik-llm/scripts/shared/security/templates/.brik-gitleaks-rules.toml via
+# brik-llm/scripts/shared/security/sync.sh. Do not edit .brik-gitleaks-rules.toml
+# in this repo — edits will be clobbered on next sync.
+#
+# This file (.gitleaks.toml) is hand-managed by renew-pms. Add repo-specific
+# allowlist paths or rule overrides here.
+#
+# See https://github.com/gitleaks/gitleaks#configuration for syntax.
+
+[extend]
+# Only `path` is declared here. The canonical file (.brik-gitleaks-rules.toml)
+# itself declares `useDefault = true`, and gitleaks v8.30.1 chains that through
+# `[extend].path`, so the bundled default ruleset is inherited automatically.
+# Setting both `useDefault` and `path` at the same level is a gitleaks load
+# error.
+path = ".brik-gitleaks-rules.toml"
+
+# ── Allowlist ───────────────────────────────────────────────────────────────
+# Files known to contain placeholder/test values or secret-shape regexes for
+# detection (not real secrets).
+
+[allowlist]
+description = "Brik allowlist — test fixtures + design-token metadata"
+paths = [
+  '''.*\.claude/hooks/.*\.sh''',
+  '''scripts/test-claude-hooks\.sh''',
+  '''.*test-secret-scanner.*''',
+  '''.*test-bash-leak.*''',
+  '''.*/design-tokens/metadata\.json''',
+  '''.*/mockups/.+\.(html|json)''',
+]

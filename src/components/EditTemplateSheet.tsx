@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
-import { Sheet, Button, AddableFieldRowList, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { Sheet, Button, Modal, TextInput, TextArea, Select, Switch } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
+import { Icon } from '@iconify/react';
+import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
 import { color, font, gap, space } from '@/lib/tokens';
 import {
@@ -39,6 +41,7 @@ export interface TemplateFormData {
   estimated_duration: string;
   room_id: string;
   compliance_type_id: string;
+  task_reset_cadence: string | null;
 }
 
 export interface ChecklistItem {
@@ -134,6 +137,13 @@ const STATUS_OPTIONS = [
   { label: 'Archived', value: 'archived' },
 ];
 
+const RESET_CADENCE_OPTIONS = [
+  { label: 'Inherit from frequency', value: '' },
+  { label: 'Daily',   value: 'daily' },
+  { label: 'Weekly',  value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+];
+
 // ─── Default form state ───────────────────────────────────────────────────────
 
 const EMPTY_FORM: TemplateFormData = {
@@ -153,6 +163,7 @@ const EMPTY_FORM: TemplateFormData = {
   estimated_duration: '',
   room_id: '',
   compliance_type_id: '',
+  task_reset_cadence: null,
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -168,16 +179,47 @@ const formRowHalf: React.CSSProperties = {
   minWidth: 0,
 };
 
-const itemContextRowStyle: React.CSSProperties = {
-  gridColumn: '1 / -1',
+const itemListStyle: React.CSSProperties = {
   display: 'flex',
-  gap: gap.md,
+  flexDirection: 'column',
+  gap: gap.sm,
+};
+
+const itemRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto auto',
+  gap: gap.sm,
+  alignItems: 'center',
+};
+
+/**
+ * Stacks under the text input (cols 2..-2). Inputs run vertically; the
+ * button group rides at the bottom-right. Read-mode summary uses a slim
+ * variant of the same column footprint.
+ */
+const itemContextRowStyle: React.CSSProperties = {
+  gridColumn: '2 / -2',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: gap.sm,
   padding: `${space.xs} 0 ${space.sm}`,
 };
 
 const contextSelectWrap: React.CSSProperties = {
-  flex: 1,
+  width: '100%',
   minWidth: 0,
+};
+
+const itemSummaryRowStyle: React.CSSProperties = {
+  gridColumn: '2 / -2',
+  paddingTop: space.xs,
+};
+
+const itemEditButtonGroup: React.CSSProperties = {
+  display: 'flex',
+  gap: gap.sm,
+  justifyContent: 'flex-end',
+  paddingTop: space.xs,
 };
 
 const itemActionsStyle: React.CSSProperties = {
@@ -191,6 +233,21 @@ const itemIndexStyle: React.CSSProperties = {
   fontSize: font.size.body.sm,
   alignSelf: 'center',
   minWidth: '24px',
+};
+
+const itemEmptyStyle: React.CSSProperties = {
+  color: color.text.muted,
+  fontSize: font.size.body.sm,
+  margin: 0,
+};
+
+const itemSummaryStyle: React.CSSProperties = {
+  color: color.text.secondary,
+  fontSize: font.size.body.sm,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '320px',
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -228,22 +285,50 @@ export function EditTemplateSheet({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const isEdit = initialData !== null;
   const typeLabel = TYPE_LABELS[form.type] ?? form.type;
   const fields = TYPE_FIELDS[form.type] ?? TYPE_FIELDS.checklist;
   const sheetTitle = isEdit ? `Edit ${typeLabel}` : `Add ${typeLabel}`;
 
+  const isDirty = useMemo(
+    () => {
+      const baselineForm = initialData ?? EMPTY_FORM;
+      const baselineItems = initialItems ?? [];
+      return (
+        JSON.stringify(form) !== JSON.stringify(baselineForm) ||
+        JSON.stringify(items) !== JSON.stringify(baselineItems)
+      );
+    },
+    [form, items, initialData, initialItems]
+  );
+
+  const requestClose = () => {
+    if (saving) return;
+    if (isDirty) {
+      setConfirmCancelOpen(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const confirmDiscard = () => {
+    setConfirmCancelOpen(false);
+    onClose();
+  };
+
   useEffect(() => {
     if (isOpen) {
       setForm(initialData ?? EMPTY_FORM);
       setItems(initialItems ?? []);
       setActiveTab('details');
-      // Auto-expand items that already have context set
-      const withContext = new Set(
-        (initialItems ?? []).filter(hasContext).map((i) => i.id)
-      );
-      setExpandedItems(withContext);
+      // Items always reopen in read mode — even those with an inventory link.
+      // Edit mode is opt-in via the pencil button. Reverses the prior
+      // auto-expand-when-context behavior which dumped users into edit forms
+      // they hadn't asked for and surfaced a confusing cluster of action
+      // buttons (pencil + trash-link + trash-item) on saved rows.
+      setExpandedItems(new Set());
     }
   }, [isOpen, initialData, initialItems]);
 
@@ -265,32 +350,40 @@ export function EditTemplateSheet({
     }));
   };
 
-  const toggleItemExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  // Snapshot the item's inventory FKs when entering edit mode so Cancel can
+  // restore. Saved on enter, consumed on save/cancel. Without this, Cancel
+  // would either lose existing data (clearing previously-saved selections) or
+  // leave half-typed edits committed (since onChange writes directly to items).
+  type InventorySnap = { room_id: string; equipment_id: string; supply_category_id: string };
+  const [editSnapshots, setEditSnapshots] = useState<Map<string, InventorySnap>>(new Map());
+
+  const enterItemEdit = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setEditSnapshots((prev) => {
+      const next = new Map(prev);
+      next.set(id, {
+        room_id: item.room_id,
+        equipment_id: item.equipment_id,
+        supply_category_id: item.supply_category_id,
+      });
       return next;
     });
+    setExpandedItems((prev) => { const next = new Set(prev); next.add(id); return next; });
   };
 
-  /**
-   * `AddableFieldRowList` owns add/remove. When it removes a row, prune any
-   * expanded-id Set entry that no longer matches a live item — the Set is
-   * keyed by id, but BDS removes by index.
-   */
-  const handleItemsChange = (next: ChecklistItem[]) => {
-    setItems(next);
-    setExpandedItems((prev) => {
-      const validIds = new Set(next.map((i) => i.id));
-      let drift = false;
-      const cleaned = new Set<string>();
-      prev.forEach((id) => {
-        if (validIds.has(id)) cleaned.add(id);
-        else drift = true;
-      });
-      return drift ? cleaned : prev;
-    });
+  const saveItemEdit = (id: string) => {
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const cancelItemEdit = (id: string) => {
+    const snap = editSnapshots.get(id);
+    if (snap) {
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...snap } : i)));
+    }
+    setEditSnapshots((prev) => { const next = new Map(prev); next.delete(id); return next; });
+    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   const newChecklistItem = (): ChecklistItem => ({
@@ -301,6 +394,30 @@ export function EditTemplateSheet({
     supply_category_id: '',
   });
 
+  const addItem = () => {
+    setItems((prev) => [...prev, newChecklistItem()]);
+  };
+
+  const updateItemLabel = (id: string, label: string) => {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, label } : i)));
+  };
+
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setExpandedItems((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setEditSnapshots((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
   const updateItemContext = (id: string, field: 'room_id' | 'equipment_id' | 'supply_category_id', value: string) => {
     setItems((prev) => prev.map((i) => {
       if (i.id !== id) return i;
@@ -309,11 +426,6 @@ export function EditTemplateSheet({
       if (field === 'room_id') next.equipment_id = '';
       return next;
     }));
-  };
-
-  const clearItemContext = (id: string) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, room_id: '', equipment_id: '', supply_category_id: '' } : i));
-    setExpandedItems((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   /**
@@ -333,17 +445,36 @@ export function EditTemplateSheet({
       setActiveTab('details');
       return;
     }
+
+    // Auto-prune empty rows on save — they hold no information and pre-existing
+    // empty rows from legacy data shouldn't gate save (#299 follow-up). The
+    // duplicate-name check still blocks because that's a structural decision
+    // only the user can make (rename or remove).
+    const templateNameNorm = form.name.trim().toLowerCase();
+    const cleanedItems = items.filter((i) => i.label.trim().length > 0);
+    const duplicates = cleanedItems.filter(
+      (i) => i.label.trim().toLowerCase() === templateNameNorm,
+    );
+    if (duplicates.length > 0) {
+      setActiveTab('tasks');
+      showToast({
+        title: 'Item label matches template name',
+        description: `An item is named "${duplicates[0].label.trim()}" — same as the template. In expanded mode, that spawns a redundant task that reads as a phantom parent. Rename or remove it.`,
+        variant: 'error',
+      });
+      return;
+    }
+
+    if (cleanedItems.length !== items.length) {
+      setItems(cleanedItems);
+    }
+
     setSaving(true);
     try {
-      await onSave(form, items);
+      await onSave(form, cleanedItems);
     } finally {
       setSaving(false);
     }
-    showToast({
-      title: isEdit ? 'Template updated' : 'Template created',
-      description: isEdit ? `${form.name} has been updated.` : `${form.name} has been created.`,
-      variant: 'success',
-    });
     onClose();
   };
 
@@ -375,6 +506,29 @@ export function EditTemplateSheet({
     { label: 'Select supply category', value: '' },
     ...supplyCategories.map((s) => ({ label: s.name, value: s.id })),
   ];
+
+  /**
+   * Read-mode display for an item's inventory link. Returns a "·"-joined
+   * summary of the resolved names (room · equipment · supply category). Ids
+   * with no matching reference row fall back silently; the edit pencil is
+   * always the recovery path.
+   */
+  function itemInventorySummary(item: ChecklistItem): string {
+    const parts: string[] = [];
+    if (item.room_id) {
+      const r = rooms.find((x) => x.id === item.room_id);
+      if (r) parts.push(r.name);
+    }
+    if (item.equipment_id) {
+      const e = equipment.find((x) => x.id === item.equipment_id);
+      if (e) parts.push(e.name);
+    }
+    if (item.supply_category_id) {
+      const s = supplyCategories.find((x) => x.id === item.supply_category_id);
+      if (s) parts.push(s.name);
+    }
+    return parts.join(' · ');
+  }
 
   const categoryOptions = [
     { label: 'Select category', value: '' },
@@ -489,6 +643,21 @@ export function EditTemplateSheet({
             </div>
           </div>
 
+          {fields.frequency && form.frequency !== 'daily' && form.frequency !== 'per_shift' && form.frequency !== '' && (
+            <div style={formRowStyle}>
+              <div style={formRowHalf}>
+                <Select
+                  label="Reset Cadence"
+                  size="sm"
+                  options={RESET_CADENCE_OPTIONS}
+                  value={form.task_reset_cadence ?? ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, task_reset_cadence: e.target.value || null }))}
+                  fullWidth
+                />
+              </div>
+            </div>
+          )}
+
           <div style={formRowStyle}>
             <div style={formRowHalf}>
               <TextInput
@@ -566,26 +735,25 @@ export function EditTemplateSheet({
         </p>
       </div>
 
-      <AddableFieldRowList<ChecklistItem>
-        values={items}
-        onChange={handleItemsChange}
-        newRow={newChecklistItem}
-        columns="auto 1fr auto"
-        addLabel={form.type === 'procedure' ? 'Add Step' : `Add ${typeLabel} Item`}
-        removeLabel={form.type === 'procedure' ? 'Remove step' : 'Remove item'}
-        emptyLabel={`No ${form.type === 'procedure' ? 'steps' : 'items'} added yet. Click "Add" to start.`}
-        size="sm"
-      >
-        {({ row, index, update }) => {
+      <div style={itemListStyle}>
+        {items.length === 0 && (
+          <p style={itemEmptyStyle}>
+            {`No ${form.type === 'procedure' ? 'steps' : 'items'} added yet. Click "Add" to start.`}
+          </p>
+        )}
+        {items.map((row, index) => {
           const isExpanded = expandedItems.has(row.id);
           const itemHasContext = hasContext(row);
+          const removeLabel = form.type === 'procedure'
+            ? `Remove step ${index + 1}`
+            : `Remove item ${index + 1}`;
           return (
-            <>
+            <div key={row.id} style={itemRowStyle}>
               <span style={itemIndexStyle}>{index + 1}.</span>
               <TextInput
                 size="sm"
                 value={row.label}
-                onChange={(e) => update({ label: e.target.value })}
+                onChange={(e) => updateItemLabel(row.id, e.target.value)}
                 placeholder={form.type === 'procedure'
                   ? 'e.g. Verify autoclave temperature'
                   : 'e.g. Check and refill hand sanitizer stations'}
@@ -595,44 +763,39 @@ export function EditTemplateSheet({
                 {!isExpanded && !itemHasContext && (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="tiny"
-                    onClick={() => toggleItemExpand(row.id)}
-                  >
-                    + Link to inventory
-                  </Button>
+                    variant="secondary"
+                    size="sm"
+                    icon={<Icon icon={icon.rooms} />}
+                    label="Link to inventory"
+                    onClick={() => enterItemEdit(row.id)}
+                  />
                 )}
                 {!isExpanded && itemHasContext && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="tiny"
-                      onClick={() => toggleItemExpand(row.id)}
-                    >
-                      Edit link
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="danger-ghost"
-                      size="tiny"
-                      onClick={() => clearItemContext(row.id)}
-                    >
-                      Remove link
-                    </Button>
-                  </>
-                )}
-                {isExpanded && (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="tiny"
-                    onClick={() => toggleItemExpand(row.id)}
-                  >
-                    Done
-                  </Button>
+                    variant="secondary"
+                    size="sm"
+                    icon={<Icon icon={icon.edit} />}
+                    label="Edit inventory link"
+                    onClick={() => enterItemEdit(row.id)}
+                  />
                 )}
               </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<Icon icon={icon.trash} />}
+                label={removeLabel}
+                onClick={() => removeItem(row.id)}
+              />
+              {!isExpanded && itemHasContext && (
+                <div style={itemSummaryRowStyle}>
+                  <span style={itemSummaryStyle} aria-label="Inventory link">
+                    {itemInventorySummary(row)}
+                  </span>
+                </div>
+              )}
               {isExpanded && (
                 <div style={itemContextRowStyle}>
                   <div style={contextSelectWrap}>
@@ -665,12 +828,35 @@ export function EditTemplateSheet({
                       fullWidth
                     />
                   </div>
+                  <div style={itemEditButtonGroup}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => cancelItemEdit(row.id)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => saveItemEdit(row.id)}
+                    >
+                      Save
+                    </Button>
+                  </div>
                 </div>
               )}
-            </>
+            </div>
           );
-        }}
-      </AddableFieldRowList>
+        })}
+        <div>
+          <Button type="button" variant="secondary" size="sm" onClick={addItem}>
+            {form.type === 'procedure' ? 'Add Step' : `Add ${typeLabel} Item`}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 
@@ -680,27 +866,41 @@ export function EditTemplateSheet({
   ];
 
   return (
-    <Sheet
-      isOpen={isOpen}
-      onClose={onClose}
-      title={sheetTitle}
-      width="600px"
-      side="right"
-      tabs={sheetTabs}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      footer={<>
-        <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
-        <Button
-          variant="primary"
-          size="md"
-          type="button"
-          onClick={() => { void submit(); }}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </>}
-    />
+    <>
+      <Sheet
+        isOpen={isOpen}
+        onClose={requestClose}
+        title={sheetTitle}
+        width="600px"
+        side="right"
+        closeOnBackdrop={false}
+        tabs={sheetTabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        footer={<>
+          <Button variant="ghost" size="md" type="button" onClick={requestClose}>Cancel</Button>
+          <Button
+            variant="primary"
+            size="md"
+            type="button"
+            onClick={() => { void submit(); }}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </>}
+      />
+      <Modal
+        isOpen={confirmCancelOpen}
+        onClose={() => setConfirmCancelOpen(false)}
+        preset="confirm"
+        title="Discard changes?"
+        description="You have unsaved changes. Closing now will lose any edits to this template."
+        confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
+        confirmVariant="destructive"
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }

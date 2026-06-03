@@ -12,6 +12,12 @@ export interface TaskRow {
   due_date: string | null;
   type_name: string | null;
   task_type_id: string | null;
+  /** Parent template id (when the task was generator-spawned). Null for ad-hoc tasks. */
+  template_id: string | null;
+  /** Parent template name — surfaced to UI as "Part of …" for expanded children (#299). */
+  parent_template_name: string | null;
+  /** Parent template display_mode (`expanded` / `nested`). Null when no parent template. */
+  display_mode: string | null;
   room_name: string | null;
   room_id: string | null;
   equipment_name: string | null;

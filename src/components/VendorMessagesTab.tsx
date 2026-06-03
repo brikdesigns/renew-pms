@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type CSSProperties, type FormEvent } from 'react';
-import { Button, TextArea, Badge, IconButton } from '@brikdesigns/bds';
+import { Button, TextArea, Badge } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
@@ -156,7 +156,7 @@ export function VendorMessagesTab({ requestId, vendorName }: VendorMessagesTabPr
           )}
         </div>
         {tokenStatus === 'active' && tokenValue && (
-          <IconButton
+          <Button
             variant="ghost"
             size="sm"
             icon={<Icon icon={icon.copy} />}

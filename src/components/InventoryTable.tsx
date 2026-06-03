@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, type CSSProperties } from 'r
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { IconButton, FilterBar, FilterButton, useSheetStack } from '@brikdesigns/bds';
+import { Button, FilterBar, FilterButton, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { FilterButtonOption } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
@@ -22,9 +22,11 @@ import { useEquipment, type EquipmentItem } from '@/hooks/useEquipment';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
+// BDS <FilterBar> already owns the FilterBar → table rhythm (margin-bottom:
+// padding-lg). A flex `gap` here doubles up that spacing — drop it.
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 
@@ -287,9 +289,9 @@ export const InventoryTable = forwardRef<InventoryTableHandle, InventoryTablePro
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${item.name}`} onClick={() => handleView(item)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${item.name}`} onClick={() => handleEdit(item)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${item.name}`} onClick={() => setDeleteTarget({ id: item.id, name: item.name })} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${item.name}`} onClick={() => handleView(item)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${item.name}`} onClick={() => handleEdit(item)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${item.name}`} onClick={() => setDeleteTarget({ id: item.id, name: item.name })} />
                     </div>
                   </TableCell>
                 </TableRow>

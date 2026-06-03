@@ -140,6 +140,7 @@ export function EditInventorySheet({ isOpen, onClose, initialData, onSave }: Edi
       title={isEdit ? 'Edit Inventory Item' : 'Add Inventory Item'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="edit-inventory-form" disabled={saving}>

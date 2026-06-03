@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # new-task.sh — Create an isolated git worktree for a single task.
 #
-# Branches from origin/$BASE_BRANCH (default: main — post-launch as of
-# 2026-05-04 beta launch).
+# Branches from origin/$BASE_BRANCH (default: staging — we're pre-launch).
 # Enforces task/{scope}-{name} naming. Installs dependencies in the worktree.
+#
+# At go-live, change the BASE_BRANCH default below to "main" and update
+# the Branch Workflow section in CLAUDE.md to match.
 #
 # Usage:
 #   ./scripts/new-task.sh {scope}-{name}
-#   BASE_BRANCH=staging ./scripts/new-task.sh infra-some-thing   # one-off override
+#   BASE_BRANCH=main ./scripts/new-task.sh infra-some-thing   # one-off override
 #
 # Creates:
 #   ../renew-pms-worktrees/{scope}-{name}/   on branch  task/{scope}-{name}
@@ -18,8 +20,8 @@
 
 set -euo pipefail
 
-# ── Base branch (post-launch as of 2026-05-04: default main) ──
-BASE_BRANCH="${BASE_BRANCH:-main}"
+# ── Base branch (pre-launch default: staging; flip to main at go-live) ──
+BASE_BRANCH="${BASE_BRANCH:-staging}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -118,8 +120,35 @@ git worktree add "${WORKTREE_BASE}/${TASK_NAME}" -b "${BRANCH_NAME}" "origin/${B
 cd "${WORKTREE_BASE}/${TASK_NAME}"
 
 # ── Install dependencies ──
-echo -e "${YELLOW}▸ Installing dependencies (npm ci --prefer-offline)...${NC}"
-npm ci --prefer-offline 2>&1 | tail -1
+# `op run` authenticates via OP_SERVICE_ACCOUNT_TOKEN, which is scoped to the
+# `claude-agent` shell alias only. A non-interactive / headless invocation
+# (e.g. on brik-mini) inherits no account and op run fails with "No accounts
+# configured for use with 1Password CLI". Fall back to the sanctioned
+# service-account env file before invoking op run.
+# See brik-llm/operations/security/op-run-migration.md (Resolved question #3).
+if [ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  for sa_env in "$HOME/.secrets/op-service-account.env" "$HOME/.secrets/onepassword.env"; do
+    if [ -f "$sa_env" ]; then
+      echo -e "${YELLOW}▸ OP_SERVICE_ACCOUNT_TOKEN not in env — sourcing ${sa_env}${NC}"
+      set -a
+      # shellcheck disable=SC1090  # machine-dependent path, resolved at runtime
+      . "$sa_env"
+      set +a
+      break
+    fi
+  done
+fi
+if [ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+  echo -e "${RED}Error: OP_SERVICE_ACCOUNT_TOKEN unavailable and no service-account env file found.${NC}"
+  echo ""
+  echo "  Run new-task.sh from the claude-agent shell alias, or create the"
+  echo "  service-account env file (~/.secrets/op-service-account.env on the Mini)."
+  echo "  See brik-llm/operations/security/op-run-migration.md (Resolved question #3)."
+  exit 1
+fi
+
+echo -e "${YELLOW}▸ Installing dependencies (op run -- npm ci --prefer-offline)...${NC}"
+op run --env-file=.env.op -- npm ci --prefer-offline 2>&1 | tail -1
 
 # ── Copy .env.local from primary ──
 # .env.local is git-ignored and not tracked by `git worktree add`, so a fresh

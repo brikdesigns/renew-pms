@@ -14,11 +14,13 @@ Dental practice management and training platform. Staff-only back office tool fo
 ## Getting Started
 
 ```bash
-npm install
+op run --env-file=.env.op -- npm install
 npm run dev          # http://localhost:3000
 ```
 
 Requires `.env.local` with Supabase credentials. See 1Password for keys.
+`@brikdesigns/*` packages require `PACKAGES_READ_TOKEN` — injected via `op run` above.
+CI environments (Netlify, GitHub Actions) set the token directly and do not use `op run`.
 
 ## Commands
 

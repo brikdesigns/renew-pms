@@ -12,29 +12,45 @@ const GENERIC_RESPONSE = {
   message: 'If an account exists for this email, a reset link is on its way.',
 };
 
+// Minimum response time floor (ms). Hides the ~20-30x latency difference between
+// the no-account path (DB lookup only) and the account-exists path (DB + generateLink
+// + Resend). Without this, a timing oracle distinguishes "no account" from
+// "link sent" and lets an attacker enumerate registered emails.
+const MIN_RESPONSE_MS = 350;
+
 /**
  * POST /api/auth/forgot-password
  *
  * Generates a Supabase recovery link for the given email and sends it via
  * Resend using the branded passwordResetEmail template. Always returns a
  * generic 200 response — never reveals whether an account exists, to prevent
- * email enumeration.
+ * email enumeration. Response time is floored to MIN_RESPONSE_MS so timing
+ * analysis can't distinguish account-exists from no-account.
  *
  * Rate-limited by IP. Real work only happens if the email matches a profile.
  */
 export async function POST(request: Request) {
-  const limited = rateLimitOrNull(request, 'forgot-password', FORGOT_PASSWORD_LIMIT);
+  const start = Date.now();
+  const limited = await rateLimitOrNull(request, 'forgot-password', FORGOT_PASSWORD_LIMIT);
   if (limited) return limited;
+
+  const respond = async () => {
+    const elapsed = Date.now() - start;
+    if (elapsed < MIN_RESPONSE_MS) {
+      await new Promise((r) => setTimeout(r, MIN_RESPONSE_MS - elapsed));
+    }
+    return NextResponse.json(GENERIC_RESPONSE);
+  };
 
   let body: { email?: string };
   try {
     body = (await request.json()) as { email?: string };
   } catch {
-    return NextResponse.json(GENERIC_RESPONSE);
+    return respond();
   }
 
   const email = body.email?.trim().toLowerCase();
-  if (!email) return NextResponse.json(GENERIC_RESPONSE);
+  if (!email) return respond();
 
   // Look up profile — if missing, return generic success without doing work
   const admin = createAdminClient();
@@ -46,7 +62,7 @@ export async function POST(request: Request) {
 
   if (!profile) {
     // Intentionally return success without sending — prevents enumeration
-    return NextResponse.json(GENERIC_RESPONSE);
+    return respond();
   }
 
   const redirectTo = `${SITE_URL}/api/auth/callback?redirect=${encodeURIComponent('/reset-password?flow=recovery')}`;
@@ -61,7 +77,7 @@ export async function POST(request: Request) {
     console.error('[forgot-password] generateLink failed:', linkError?.message);
     // Still return generic success — don't leak whether account exists or
     // internal failures. Operator sees the failure in logs.
-    return NextResponse.json(GENERIC_RESPONSE);
+    return respond();
   }
 
   try {
@@ -82,5 +98,5 @@ export async function POST(request: Request) {
     // Generic response either way — operator sees failure in logs
   }
 
-  return NextResponse.json(GENERIC_RESPONSE);
+  return respond();
 }

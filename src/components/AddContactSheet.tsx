@@ -158,6 +158,7 @@ export function AddContactSheet({ isOpen, onClose, onSaved, initialData }: AddCo
       title={isEditing ? `Edit ${initialData.name}` : 'Add Contact'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="add-contact-form" disabled={saving || !canSave}>

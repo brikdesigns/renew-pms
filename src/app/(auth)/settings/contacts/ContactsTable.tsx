@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useEffect, useMemo, type CSS
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Tag, IconButton, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
+import { Tag, Button, Chip, Menu, useSheetStack } from '@brikdesigns/bds';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
@@ -78,11 +78,14 @@ const TYPE_TAG_COLORS: Record<string, { bg: string; color: string }> = {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
+// PageHeader → filter rhythm comes from settings/layout.tsx bodyStyle's
+// `gap: space.lg`. A paddingTop here doubled it up; only the filter → table
+// rhythm (paddingBottom + bottom border as divider) lives on this row now.
 const filterRowStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-  paddingBlock: space.md, borderBottom: `1px solid ${color.border.muted}`,
+  paddingBottom: space.md, borderBottom: `1px solid ${color.border.muted}`,
 };
-const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto', paddingInline: space.xl };
+const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const filterBarStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md, flexWrap: 'wrap' };
 const chipWrapperStyle: CSSProperties = { position: 'relative' };
@@ -118,7 +121,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
   const isFiltered = selected !== options[0];
   return (
     <div style={chipWrapperStyle}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen((p) => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} showDropdown onChipClick={() => setOpen((p) => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={menuStyle} />
     </div>
   );
@@ -199,9 +202,9 @@ function CompaniesView({
               </TableCell>
               <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${v.name}`} onClick={() => onView(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${v.name}`} onClick={() => onEdit(v)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${v.name}`} onClick={() => onDelete(v)} />
                 </div>
               </TableCell>
             </TableRow>
@@ -293,9 +296,9 @@ function ContactsView({
               </TableCell>
               <TableCell style={bodyCellStyle}>
                 <div style={actionBtnGroup}>
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
-                  <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${c.name}`} onClick={() => onView(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${c.name}`} onClick={() => onEdit(c)} />
+                  <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${c.name}`} onClick={() => onDelete(c)} />
                 </div>
               </TableCell>
             </TableRow>
