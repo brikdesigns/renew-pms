@@ -15,8 +15,9 @@
 #   - Branch must have commits ahead of base branch.
 #   - gh CLI must be authenticated.
 #
-# Pre-launch: BASE_BRANCH=staging (saves Netlify build credits on main).
-# Post-launch: Change BASE_BRANCH default to "main" when production goes live.
+# Post-launch two-environment model: task PRs target staging (integration),
+# then staging → main (production) per docs/process/release-runbook.md.
+# Use --base main only for hotfixes that bypass the release cycle.
 
 set -euo pipefail
 
@@ -26,7 +27,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # ── Base branch config ──
-# Change this to "main" when renew-pms goes live.
+# staging = integration branch (default). Promote staging → main separately.
 BASE_BRANCH="staging"
 
 # ── Parse flags ──
