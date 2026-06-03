@@ -11,6 +11,20 @@
     "brik-rag": {
       "command": "../../brik/brik-llm/operations/mcp/brik-rag/.venv/bin/python",
       "args": ["../../brik/brik-llm/operations/mcp/brik-rag/server.py"]
+    },
+    "netlify": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "set -a; source \"$HOME/.secrets/netlify.env\"; set +a; export NETLIFY_AUTH_TOKEN; exec npx -y @netlify/mcp"
+      ]
+    },
+    "supabase": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "set -a; source \"$HOME/.secrets/supabase.env\"; set +a; export SUPABASE_ACCESS_TOKEN; exec npx -y @supabase/mcp-server-supabase@latest --read-only --project-ref=zneuygoeorhkuhktmuld"
+      ]
     }
   }
 }
