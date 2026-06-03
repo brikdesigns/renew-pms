@@ -7,6 +7,10 @@
     "pagecast": {
       "command": "npx",
       "args": ["-y", "@mcpware/pagecast"]
+    },
+    "brik-rag": {
+      "command": "../../brik/brik-llm/operations/mcp/brik-rag/.venv/bin/python",
+      "args": ["../../brik/brik-llm/operations/mcp/brik-rag/server.py"]
     }
   }
 }

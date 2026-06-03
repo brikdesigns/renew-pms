@@ -21,7 +21,7 @@ interface UserAvatarProps {
 }
 
 // Renew avatar pixel sizes — BDS sm/lg map to renew md/lg directly, but
-// renew sm (28) and 'button' (44, sm-IconButton-aligned) need overrides.
+// renew sm (28) and 'button' (44, sm-icon-button-aligned) need overrides.
 const SIZE_PIXELS: Record<AvatarSize, { dimension: string; fontSize: string }> = {
   sm:     { dimension: '28px', fontSize: font.size.body.xs },
   md:     { dimension: '40px', fontSize: font.size.body.sm },
@@ -36,7 +36,7 @@ const SIZE_PIXELS: Record<AvatarSize, { dimension: string; fontSize: string }> =
  * - Department color theming (background + text from `departments.color`)
  * - No-department safe-contrast fallback per #170
  *   (`background.muted` + `text.primary` — ~18:1 light / ~20:1 dark)
- * - `button` size variant (44px) for sm-IconButton-aligned table rows
+ * - `button` size variant (44px) for sm-icon-button-aligned table rows
  * - `rounded` shape (10px radius) alongside default circle
  *
  * Tradeoff: BDS Avatar uses a raw `<img>` (no Next Image optimization).

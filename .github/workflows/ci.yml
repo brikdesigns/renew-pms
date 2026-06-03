@@ -46,8 +46,8 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_STAGING_REF: ${{ secrets.SUPABASE_STAGING_REF }}
-      # Auto-issued per-run GITHUB_TOKEN for @brikdesigns/* GHCR auth — replaces
-      # the PACKAGES_READ_TOKEN secret (not promoted to main; renew-pms#274).
+      # Auto-issued per-run, no manual rotation. Replaces PACKAGES_READ_TOKEN
+      # PAT after BDS package access was granted to renew-pms (2026-05-04).
       PACKAGES_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v6

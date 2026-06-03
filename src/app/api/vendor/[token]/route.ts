@@ -13,7 +13,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const limited = rateLimitOrNull(request, 'vendor-view', VENDOR_TOKEN_LIMIT);
+  const limited = await rateLimitOrNull(request, 'vendor-view', VENDOR_TOKEN_LIMIT);
   if (limited) return limited;
 
   const { token } = await params;
@@ -60,7 +60,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const limited = rateLimitOrNull(request, 'vendor-reply', VENDOR_TOKEN_LIMIT);
+  const limited = await rateLimitOrNull(request, 'vendor-reply', VENDOR_TOKEN_LIMIT);
   if (limited) return limited;
 
   const { token } = await params;

@@ -1,0 +1,46 @@
+name: release-please
+
+# Automated versioning + changelog for renew-pms.
+#
+# How it works:
+#   1. Watches conventional-commit messages on the trunk branch (currently `staging`
+#      pre-launch — flip to `main` after launch, see CLAUDE.md § Branch Workflow).
+#   2. Opens a "release PR" that bumps `package.json`, `.release-please-manifest.json`,
+#      and writes/updates `CHANGELOG.md` based on the commit log since the last release.
+#   3. When the release PR is merged, release-please creates the matching git tag +
+#      GitHub Release with the changelog as the release notes.
+#
+# Manual control: edit `release-please-config.json` to change the prerelease label
+# (currently `beta`), tag prefix, or hidden commit types. The manifest tracks the
+# last released version per package.
+#
+# Token: prefers RELEASE_PLEASE_TOKEN (fine-grained PAT) when set; falls back to
+# the default GITHUB_TOKEN. Why both: PRs opened by GITHUB_TOKEN don't trigger
+# downstream workflow runs (GitHub-side security against recursive loops), so
+# release PRs sit unmerged with no `test` status check. A PAT-opened PR fires
+# workflows like a normal user PR. See #251.
+# When the RELEASE_PLEASE_TOKEN secret is created, the next release-please run
+# auto-upgrades to PAT-based auth — no workflow change needed.
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          target-branch: staging
+          # Falls back to GITHUB_TOKEN if RELEASE_PLEASE_TOKEN secret isn't set,
+          # so this workflow is always functional. PAT-opened PRs trigger CI.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}

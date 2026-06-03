@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAdmin } from '@/lib/auth';
@@ -27,9 +28,10 @@ export async function GET(
   const { data, error } = await admin
     .from('tasks')
     .select(`
-      id, title, status, priority, frequency, due_date,
+      id, title, status, priority, frequency, due_date, template_id,
       assigned_to, assigned_department, assigned_role_id,
       task_types(name),
+      task_templates(name, display_mode),
       departments!tasks_assigned_department_fkey(name, color),
       rooms(name),
       equipment(name),
@@ -45,7 +47,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // Authorize visibility — return 404 (not 403) so we don't leak existence.
@@ -62,6 +64,8 @@ export async function GET(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const taskType = first(data.task_types as any) as { name: string } | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parentTemplate = first(data.task_templates as any) as { name: string; display_mode: string } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dept = first(data.departments as any) as { name: string; color: string } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,6 +106,8 @@ export async function GET(
     id: data.id,
     title: data.title,
     templateName: taskType?.name ?? 'Task',
+    parentTemplateName: parentTemplate?.name ?? null,
+    displayMode: parentTemplate?.display_mode ?? null,
     taskType: (taskType?.name ?? 'checklist').toLowerCase().replace(/\s+/g, '_'),
     due: data.due_date ? 'Due today' : 'Due today',
     dept: dept?.name ?? '',
@@ -188,7 +194,7 @@ export async function PATCH(
     .eq('id', id)
     .eq('practice_id', practiceId)
     .maybeSingle();
-  if (existingErr) return NextResponse.json({ error: existingErr.message }, { status: 500 });
+  if (existingErr) return apiError(existingErr);
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   const scope = await resolveTaskScope(admin, authUser, practiceId);
@@ -208,7 +214,7 @@ export async function PATCH(
     .select('id')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   return NextResponse.json({ id: data.id });

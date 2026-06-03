@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -58,6 +59,17 @@ export async function POST(request: Request) {
   if (!body.user_id) return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
 
   const admin = createAdminClient();
+
+  // Verify user_id refers to an existing auth.users row before inserting.
+  // Without this check a malicious admin could pollute practice_members
+  // with rows pointing at arbitrary UUIDs. The unique constraint catches
+  // duplicates within a practice but not non-existent user IDs.
+  const { data: targetUser, error: lookupError } = await admin.auth.admin.getUserById(body.user_id);
+  if (lookupError || !targetUser?.user) {
+    if (lookupError) console.error('[POST /api/members] auth lookup failed:', lookupError.message);
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
   const { data, error } = await admin
     .from('practice_members')
     .insert({
@@ -78,7 +90,7 @@ export async function POST(request: Request) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'User is already a member of this practice' }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error);
   }
 
   return NextResponse.json(flattenMember(data), { status: 201 });

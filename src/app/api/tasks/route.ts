@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth } from '@/lib/auth';
@@ -67,6 +68,69 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+
+  // When created from a template, branch on display_mode:
+  //   - 'expanded' → fan out to one task per checklist_item (mirrors the
+  //     daily generator). Returns the first child for the legacy single-row
+  //     response shape; AddTaskSheet only uses it to trigger refetch.
+  //   - 'nested' (or no template) → single task; if a template is set, copy
+  //     its checklist_items into task_checklist_items.
+  // This is the second half of the #299 fix — hide-on-render in loadTasks
+  // catches stale data; this stops new spurious expanded parents at the source.
+  if (body.template_id) {
+    const { data: template } = await admin
+      .from('task_templates')
+      .select('display_mode')
+      .eq('id', body.template_id)
+      .single();
+
+    if (template?.display_mode === 'expanded') {
+      const { data: templateItems } = await admin
+        .from('checklist_items')
+        .select('label, sort_order, room_id, equipment_id, supply_category_id')
+        .eq('template_id', body.template_id)
+        .order('sort_order');
+
+      if (!templateItems || templateItems.length === 0) {
+        return NextResponse.json(
+          { error: 'Expanded-mode template has no checklist items to spawn' },
+          { status: 400 },
+        );
+      }
+
+      const rows = templateItems.map((item) => ({
+        practice_id: practiceId,
+        title: item.label,
+        description: body.title?.trim() || null,
+        template_id: body.template_id,
+        task_type_id: body.task_type_id || null,
+        room_id: item.room_id ?? body.room_id ?? null,
+        equipment_id: item.equipment_id ?? null,
+        supply_category_id: item.supply_category_id ?? null,
+        assigned_to: body.assigned_to || null,
+        assigned_department: body.assigned_department || null,
+        assigned_role_id: body.assigned_role_id || null,
+        status: body.status || 'not_started',
+        priority: body.priority || 'medium',
+        frequency: body.frequency || null,
+        due_date: body.due_date || null,
+        created_by: authUser.profile.id,
+      }));
+
+      const { data: inserted, error: insertErr } = await admin
+        .from('tasks')
+        .insert(rows)
+        .select(TASK_SELECT);
+      if (insertErr) return apiError(insertErr);
+
+      const first = inserted?.[0];
+      if (!first) {
+        return NextResponse.json({ error: 'Insert returned no rows' }, { status: 500 });
+      }
+      return NextResponse.json(flattenTask(first), { status: 201 });
+    }
+  }
+
   const { data, error } = await admin
     .from('tasks')
     .insert({
@@ -90,9 +154,8 @@ export async function POST(request: Request) {
     .select(TASK_SELECT)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
-  // If created from a template, copy its checklist items into task_checklist_items
   if (body.template_id && data) {
     const { data: templateItems } = await admin
       .from('checklist_items')

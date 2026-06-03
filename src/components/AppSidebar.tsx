@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Menu, Tooltip } from '@brikdesigns/bds';
+import { Button, Menu, Tooltip } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Logomark } from '@/components/Logomark';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -130,6 +130,20 @@ const menuHeaderLabelStyle: CSSProperties = {
   lineHeight: font.lineHeight.tight,
 };
 
+// Version footer rendered below the menu items. Informational only (not a
+// menu item) — "Beta" is the product-stage label, the number is the clean
+// semver build (NEXT_PUBLIC_APP_VERSION, wired from package.json in
+// next.config.mjs). stopPropagation mirrors the header above so a click
+// doesn't trip Menu's outside-click close. See renew-pms#248.
+const menuVersionFooterStyle: CSSProperties = {
+  padding: `${space.sm} ${space.md}`,
+  borderTop: `1px solid ${color.border.muted}`,
+  fontFamily: font.family.label,
+  fontSize: font.size.body.xs,
+  color: color.text.secondary,
+  lineHeight: font.lineHeight.tight,
+};
+
 const accountWrapStyle: CSSProperties = {
   position: 'relative',
 };
@@ -223,6 +237,8 @@ export function AppSidebar({
     { id: 'signout', label: 'Sign Out', onClick: handleLogout },
   ];
 
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (item.platformAdminOnly && !isPlatformAdmin) return false;
     if (item.adminOnly && !isAdmin) return false;
@@ -261,6 +277,13 @@ export function AppSidebar({
                   aria-label={item.label}
                   onMouseEnter={() => setHoveredItem(item.href)}
                   onMouseLeave={() => setHoveredItem(null)}
+                  // BDS Tooltip shows on focus + hover. A click sets focus on the
+                  // Link, and that focus persists across SPA navigation — so the
+                  // tooltip pops up on the new page until something blurs the
+                  // link (typically the user clicking somewhere in the body).
+                  // Blur immediately after click to dismiss the tooltip; keyboard
+                  // users still get it via Tab focus.
+                  onClick={(e) => e.currentTarget.blur()}
                 >
                   <Icon
                     icon={item.icon}
@@ -279,7 +302,7 @@ export function AppSidebar({
       {/* Bottom actions — utilities first (help, theme), then identity (notifications, avatar). */}
       <div style={bottomGroupStyle}>
         <Tooltip content="Help & User Guide" placement="right" delay={600}>
-          <IconButton
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon icon={icon.help} />}
@@ -288,7 +311,7 @@ export function AppSidebar({
           />
         </Tooltip>
         <Tooltip content={isDark ? 'Light mode' : 'Dark mode'} placement="right" delay={600}>
-          <IconButton
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon icon={isDark ? icon.sun : icon.moon} />}
@@ -300,7 +323,7 @@ export function AppSidebar({
           <NotificationBell dropdownPosition={notificationsPopoverPosition} />
         </Tooltip>
         <div style={accountWrapStyle}>
-          <IconButton
+          <Button
             variant="ghost"
             size="md"
             label="User menu"
@@ -330,6 +353,14 @@ export function AppSidebar({
                 onClose={() => setMenuOpen(false)}
                 style={menuInsideWrapperStyle}
               />
+              {appVersion && (
+                <div
+                  style={menuVersionFooterStyle}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  Beta · v{appVersion}
+                </div>
+              )}
             </div>
           )}
         </div>

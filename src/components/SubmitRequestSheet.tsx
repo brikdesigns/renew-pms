@@ -242,6 +242,7 @@ export function SubmitRequestSheet({ isOpen, onClose, onSaved, defaultCategory, 
       title={isEdit ? 'Edit Request' : 'Submit Request'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="submit-request-form" disabled={saving || !canSubmit}>

@@ -43,7 +43,8 @@ create extension if not exists pgcrypto with schema extensions;
 
 -- ── Step 1: Insert auth users ─────────────────────────────────────────────────
 -- The on_auth_user_created trigger auto-creates public.profiles from
--- raw_user_meta_data (first_name, last_name, system_role).
+-- raw_user_meta_data (first_name, last_name). Trigger defaults
+-- profiles.system_role to staff; callers upsert if different role needed.
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -62,7 +63,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Dani","last_name":"Gray","system_role":"practice_admin"}'::jsonb,
+   '{"first_name":"Dani","last_name":"Gray"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -73,7 +74,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Chris","last_name":"Gray","system_role":"practice_admin"}'::jsonb,
+   '{"first_name":"Chris","last_name":"Gray"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -84,7 +85,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Sylvia","last_name":"Salazar","system_role":"practice_admin"}'::jsonb,
+   '{"first_name":"Sylvia","last_name":"Salazar"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -95,7 +96,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Autumn","last_name":"Weimer","system_role":"staff"}'::jsonb,
+   '{"first_name":"Autumn","last_name":"Weimer"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -106,7 +107,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Rachel","last_name":"Stein","system_role":"staff"}'::jsonb,
+   '{"first_name":"Rachel","last_name":"Stein"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -117,7 +118,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Phillip","last_name":"Ray","system_role":"staff"}'::jsonb,
+   '{"first_name":"Phillip","last_name":"Ray"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -128,7 +129,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Tessa","last_name":"Hernandez","system_role":"staff"}'::jsonb,
+   '{"first_name":"Tessa","last_name":"Hernandez"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -139,7 +140,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Konner","last_name":"Rudolph","system_role":"staff"}'::jsonb,
+   '{"first_name":"Konner","last_name":"Rudolph"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -150,7 +151,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Samantha","last_name":"Rodriguez","system_role":"staff"}'::jsonb,
+   '{"first_name":"Samantha","last_name":"Rodriguez"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -161,7 +162,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Avilina","last_name":"Igitol","system_role":"staff"}'::jsonb,
+   '{"first_name":"Avilina","last_name":"Igitol"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -172,7 +173,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Elizabeth","last_name":"Carrillo","system_role":"staff"}'::jsonb,
+   '{"first_name":"Elizabeth","last_name":"Carrillo"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -183,7 +184,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Destiny","last_name":"Mora","system_role":"staff"}'::jsonb,
+   '{"first_name":"Destiny","last_name":"Mora"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -194,7 +195,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Olivia","last_name":"Biggs","system_role":"staff"}'::jsonb,
+   '{"first_name":"Olivia","last_name":"Biggs"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -205,7 +206,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Jo","last_name":"Cleasby","system_role":"staff"}'::jsonb,
+   '{"first_name":"Jo","last_name":"Cleasby"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -216,7 +217,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Nadiya","last_name":"Achuff","system_role":"staff"}'::jsonb,
+   '{"first_name":"Nadiya","last_name":"Achuff"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -227,7 +228,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Josalyn","last_name":"Bibee","system_role":"staff"}'::jsonb,
+   '{"first_name":"Josalyn","last_name":"Bibee"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -238,7 +239,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Jordan","last_name":"Johnston","system_role":"staff"}'::jsonb,
+   '{"first_name":"Jordan","last_name":"Johnston"}'::jsonb,
    now(), now(),
    '', '', '', '', '', ''),
 
@@ -249,7 +250,7 @@ values
    extensions.crypt('TestPass123!', extensions.gen_salt('bf')),
    now(),
    '{"provider":"email","providers":["email"]}'::jsonb,
-   '{"first_name":"Kelly","last_name":"Schumacher","system_role":"staff"}'::jsonb,
+   '{"first_name":"Kelly","last_name":"Schumacher"}'::jsonb,
    now(), now(),
    '', '', '', '', '', '');
 
@@ -277,6 +278,18 @@ select
 from auth.users u
 where u.email like 'test+%@brikdesigns.com'
   and not exists (select 1 from auth.identities i where i.user_id = u.id);
+
+
+-- ── Step 1c: Promote the three practice_admins from default 'staff' ───────────
+-- Trigger no longer reads system_role from raw_user_meta_data — caller must
+-- upsert profiles for any non-default role. See migration 00049 + #203.
+update public.profiles
+set system_role = 'practice_admin'
+where email in (
+  'test+dani.gray@brikdesigns.com',
+  'test+chris.gray@brikdesigns.com',
+  'test+sylvia.salazar@brikdesigns.com'
+);
 
 
 -- ── Step 2: Create practice_members linking profiles → practice ───────────────

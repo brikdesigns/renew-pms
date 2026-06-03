@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useState, useMemo, type CSSProperties 
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@brikdesigns/bds';
-import { Badge, Tag, IconButton, Chip, Menu, FilterBar, useSheetStack } from '@brikdesigns/bds';
+import { Badge, Tag, Button, Chip, Menu, FilterBar, useSheetStack } from '@brikdesigns/bds';
 import type { MenuItemData } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
@@ -12,7 +12,7 @@ import { EditUserSheet, type UserFormData } from '@/components/EditUserSheet';
 import { TableSkeleton } from '@/components/TableSkeleton';
 import { ViewUserSheet, type UserViewData } from '@/components/ViewUserSheet';
 import { UserAvatar } from '@/components/UserAvatar';
-import { color, font, space, gap } from '@/lib/tokens';
+import { color, font, gap } from '@/lib/tokens';
 import { useMembers, type Member } from '@/hooks/useMembers';
 import { useToast } from '@/components/ToastProvider';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -26,7 +26,9 @@ const TYPE_VALUE_MAP: Record<string, string> = { 'New Hire': 'new', 'Maturing': 
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1, gap: space.lg };
+// BDS <FilterBar> already owns the FilterBar → table rhythm (margin-bottom:
+// padding-lg). A flex `gap` here doubles up that spacing — drop it.
+const wrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', flex: 1 };
 const tableWrap: CSSProperties = { flex: 1, overflowX: 'auto' };
 const actionBtnGroup: CSSProperties = { display: 'flex', gap: gap.md, justifyContent: 'flex-end' };
 const nameWrap: CSSProperties = { display: 'flex', alignItems: 'center', gap: gap.md };
@@ -48,7 +50,7 @@ function ChipFilter({ options, selected, onChange }: { options: readonly string[
   const isFiltered = selected !== options[0];
   return (
     <div style={chipWrapperStyle}>
-      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} appearance={isFiltered ? 'solid' : 'outline'} showDropdown onChipClick={() => setOpen((p) => !p)} />
+      <Chip label={selected} variant={isFiltered ? 'primary' : 'secondary'} showDropdown onChipClick={() => setOpen((p) => !p)} />
       <Menu items={items} isOpen={open} onClose={() => setOpen(false)} activeId={selected} style={menuStyle} />
     </div>
   );
@@ -357,11 +359,11 @@ export const UsersTable = forwardRef<UsersTableHandle, UsersTableProps>(function
                   <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
                       {m.has_signed_in === false && (
-                        <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.paperPlane} />} label={`Resend invite to ${m.first_name}`} onClick={() => handleResendInvite(m)} />
+                        <Button variant="secondary" size="sm" icon={<Icon icon={icon.paperPlane} />} label={`Resend invite to ${m.first_name}`} onClick={() => handleResendInvite(m)} />
                       )}
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${m.first_name}`} onClick={() => handleView(m)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${m.first_name}`} onClick={() => handleEdit(m)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${m.first_name}`} onClick={() => setDeleteTarget({ id: m.id, name: `${m.first_name} ${m.last_name}` })} />
                     </div>
                   </TableCell>
                 </TableRow>

@@ -11,7 +11,7 @@ import {
 } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { Badge, Button, IconButton, useSheetStack } from '@brikdesigns/bds';
+import { Badge, Button, useSheetStack } from '@brikdesigns/bds';
 import { EditRoomSheet, type RoomFormData } from '@/components/EditRoomSheet';
 import { useRooms, type Room } from '@/hooks/useRooms';
 import { color, font, space, gap, border } from '@/lib/tokens';
@@ -56,11 +56,14 @@ const tabContentStyle: CSSProperties = {
   flex: 1,
 };
 
+// PageHeader → sub-header rhythm comes from settings/layout.tsx bodyStyle's
+// `gap: space.lg`. A paddingTop here doubled it up; only the sub-header →
+// table rhythm (paddingBottom + bottom border as divider) lives on this row.
 const subHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  paddingBlock: space.md,
+  paddingBottom: space.md,
   borderBottom: `1px solid ${color.border.primary}`,
 };
 
@@ -259,9 +262,9 @@ export function OfficeRoomsTab() {
                 </TableCell>
                 <TableCell style={bodyCellStyle}>
                   <div style={actionBtnGroup}>
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
-                    <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${room.name}`} onClick={() => handleViewClick(room)} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${room.name}`} onClick={() => handleEditClick(room)} />
+                    <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${room.name}`} onClick={() => setDeleteTarget({ id: room.id, name: room.name })} />
                   </div>
                 </TableCell>
               </TableRow>

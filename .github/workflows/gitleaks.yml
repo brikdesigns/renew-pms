@@ -1,0 +1,51 @@
+name: Secret scan
+
+# Brik canonical gitleaks CI — DO NOT EDIT IN PLACE.
+#
+# Source of truth:
+#   brik-llm/scripts/shared/security/templates/gitleaks.yml
+# Synced via:
+#   brik-llm/scripts/shared/security/sync.sh
+#
+# Why: defense-in-depth for the secret-leak prevention layer shipped 2026-05-04
+# (renew-pms#258 hooks + brik-llm#193 follow-up).
+#
+# Scope: scans the PR's diff against the base branch, not full history.
+# Historic leaks need rotation (separate work — see brik-llm#193 Phase 4
+# punch list); blocking unrelated PRs on them is the wrong gate. New leaks
+# introduced by a PR are caught.
+#
+# Implementation note: uses the gitleaks CLI binary directly. gitleaks-action@v2
+# requires a paid GITLEAKS_LICENSE for any GitHub organization (recent breaking
+# change); the CLI itself is MIT-licensed.
+
+on:
+  pull_request:
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          set -e
+          VERSION=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan PR diff
+        run: |
+          set -e
+          config_arg=""
+          [ -f .gitleaks.toml ] && config_arg="--config .gitleaks.toml"
+          gitleaks detect --redact --no-banner --verbose --exit-code 1 $config_arg \
+            --log-opts="--no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}"

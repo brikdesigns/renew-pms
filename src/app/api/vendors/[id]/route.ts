@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -30,7 +31,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   return NextResponse.json({
@@ -83,7 +84,7 @@ export async function PATCH(
     .select('id, name, type, phone, email, website_url, address, notes, is_active, created_at')
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
 
   return NextResponse.json(data);
@@ -113,7 +114,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('practice_id', practiceId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json({ success: true });
 }

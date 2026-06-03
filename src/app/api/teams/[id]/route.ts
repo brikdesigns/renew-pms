@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
@@ -29,7 +30,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +83,7 @@ export async function PATCH(
     .select('id, name, department_id, is_active, sort_order, departments(name, color)')
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,6 +124,6 @@ export async function DELETE(
     .eq('id', id)
     .eq('practice_id', practiceId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   return NextResponse.json({ success: true });
 }

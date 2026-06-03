@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin, isAdmin } from '@/lib/auth';
@@ -35,7 +36,7 @@ export async function GET(
     .eq('practice_id', practiceId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   return NextResponse.json(flattenMember(data));
@@ -139,7 +140,7 @@ export async function PATCH(
       .eq('id', id)
       .eq('practice_id', practiceId);
 
-    if (memberErr) return NextResponse.json({ error: memberErr.message }, { status: 500 });
+    if (memberErr) return apiError(memberErr);
   }
 
   // Update profiles if needed
@@ -149,7 +150,7 @@ export async function PATCH(
       .update(profileUpdates)
       .eq('id', memberCheck.user_id);
 
-    if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 });
+    if (profileErr) return apiError(profileErr);
   }
 
   // Return updated member with full joins
@@ -163,7 +164,7 @@ export async function PATCH(
     .eq('id', id)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(flattenMember(data));
 }
@@ -193,6 +194,6 @@ export async function DELETE(
     .eq('id', id)
     .eq('practice_id', practiceId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
   return new NextResponse(null, { status: 204 });
 }

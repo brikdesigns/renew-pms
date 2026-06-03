@@ -201,6 +201,7 @@ export function EditRoleSheet({ isOpen, onClose, initialData, onSave, members: a
       title={isEdit ? 'Edit Role' : 'Add Role'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       tabs={sheetTabs}
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}

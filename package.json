@@ -1,6 +1,6 @@
 {
   "name": "renew-pms",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3200",
@@ -27,13 +27,14 @@
     "health:auth": "./scripts/auth-health.sh",
     "health:db": "./scripts/db-health.sh",
     "audit:tokens": "./scripts/token-audit.sh",
+    "test:hooks": "./scripts/test-claude-hooks.sh",
     "postinstall": "fumadocs-mdx",
     "prepare": "husky",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@brikdesigns/bds": "^0.57.5",
+    "@brikdesigns/bds": "0.72.0",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
@@ -48,6 +49,8 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.99.2",
     "@types/mdx": "^2.0.13",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "fumadocs-core": "^16.7.0",
     "fumadocs-mdx": "^14.2.11",
     "fumadocs-ui": "^16.7.0",
@@ -56,6 +59,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "resend": "^6.9.4",
+    "server-only": "^0.0.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

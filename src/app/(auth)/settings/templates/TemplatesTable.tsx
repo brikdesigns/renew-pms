@@ -11,7 +11,7 @@ import {
 } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
-import { IconButton, Tag, useSheetStack } from '@brikdesigns/bds';
+import { Button, Tag, useSheetStack } from '@brikdesigns/bds';
 import { EditTemplateSheet, type TemplateFormData, type ChecklistItem } from '@/components/EditTemplateSheet';
 import { ViewTemplateSheet } from '@/components/ViewTemplateSheet';
 import { color, font, space, gap } from '@/lib/tokens';
@@ -51,7 +51,7 @@ const EMPTY_FORM_BASE: TemplateFormData = {
   name: '', type: 'checklist', task_category_id: '', frequency: 'daily',
   assigned_member_id: '', assigned_role_id: '', department_id: '', assignment_mode: 'pool', display_mode: 'nested',
   priority: 'medium', status: 'active',
-  description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '',
+  description: '', requires_approval: false, estimated_duration: '', room_id: '', compliance_type_id: '', task_reset_cadence: null,
 };
 
 const EMPTY_FORM_BY_TYPE: Record<string, TemplateFormData> = {
@@ -74,7 +74,6 @@ const tabContentStyle: CSSProperties = {
 const tableWrapperStyle: CSSProperties = {
   flex: 1,
   overflowX: 'auto',
-  paddingInline: space.xl,
 };
 
 // typeChipStyle removed — TypeChip now uses BDS Tag
@@ -367,6 +366,7 @@ export const TemplatesTable = forwardRef<TemplatesTableHandle, TemplatesTablePro
         compliance_type_id: editingTemplate.compliance_type_id ?? '',
         assignment_mode: editingTemplate.assignment_mode ?? 'pool',
         display_mode: editingTemplate.display_mode ?? 'nested',
+        task_reset_cadence: editingTemplate.task_reset_cadence ?? null,
       }
     : { ...EMPTY_FORM_BY_TYPE[newTemplateType] };
 
@@ -462,9 +462,9 @@ export const TemplatesTable = forwardRef<TemplatesTableHandle, TemplatesTablePro
                   </TableCell>
                   <TableCell style={bodyCellStyle}>
                     <div style={actionBtnGroup}>
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
-                      <IconButton variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${template.name}`} onClick={() => setDeleteTarget({ id: template.id, name: template.name })} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.eye} />} label={`View ${template.name}`} onClick={() => handleViewClick(template)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.edit} />} label={`Edit ${template.name}`} onClick={() => handleEditClick(template)} />
+                      <Button variant="secondary" size="sm" icon={<Icon icon={icon.trash} />} label={`Delete ${template.name}`} onClick={() => setDeleteTarget({ id: template.id, name: template.name })} />
                     </div>
                   </TableCell>
                 </TableRow>

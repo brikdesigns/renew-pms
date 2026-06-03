@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, type FormEvent, type CSSProperties } from
 import {
   Sheet, Button, TextInput, Select,
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-  SheetSection, EmptyState, SheetFieldLabel,
+  SheetSection, EmptyState, Field,
 } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { useToast } from '@/components/ToastProvider';
@@ -83,8 +83,6 @@ const EMPTY_FORM: UserFormData = {
 
 const formRowStyle: CSSProperties = { display: 'flex', gap: gap.lg, width: '100%' };
 const formRowHalf: CSSProperties = { flex: 1, minWidth: 0 };
-
-const dayPickerGroupStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: gap.sm };
 
 // TODO(bds-migration): body-cell bg is a local patch. Promote to BDS Table.css
 // (.bds-table-cell { background-color: var(--background-primary) }) once the
@@ -211,13 +209,12 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
             <Select label="Shift" size="sm" options={SHIFT_OPTIONS} value={form.shift} onChange={updateSelect('shift')} fullWidth />
           </div>
         </div>
-        <div style={dayPickerGroupStyle}>
-          <SheetFieldLabel>Days in Office</SheetFieldLabel>
+        <Field label="Days in Office">
           <DaysOfWeekPicker
             value={form.office_days}
             onChange={(days) => setForm((prev) => ({ ...prev, office_days: days }))}
           />
-        </div>
+        </Field>
       </SheetSection>
 
       <SheetSection heading="Status">
@@ -306,6 +303,7 @@ export function EditUserSheet({ isOpen, onClose, initialData, onSave }: EditUser
       title={isEdit ? 'Edit User' : 'Invite User'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       tabs={sheetTabs}
       activeTab={isEdit ? activeTab : undefined}
       onTabChange={isEdit ? setActiveTab : undefined}

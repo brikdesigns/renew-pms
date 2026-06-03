@@ -1,362 +1,51 @@
-# Renew PMS — Claude Code Instructions
+# renew-pms
 
-Dental practice management and training platform (vertical SaaS). Multi-tenant, practice-scoped data isolation.
-
-**Full Documentation:** [Notion — Database Need to Knows](https://www.notion.so/Database-Need-to-Knows-32e97d34ed2880738291dc49554f0f97)
-
----
-
-## Worktree (renew-pms specifics)
-
-- **Base branch:** `main` (post-launch as of 2026-05-04 beta)
-- **Worktree path:** `../renew-pms-worktrees/{slug}`
-- **Spawn:** `./scripts/new-task.sh {slug}` from the primary
-- **Hook:** `.claude/hooks/worktree-check.sh` warns on session start + first edit; also detects cross-worktree drift
-
-Full rule shape, rationale, and the pre-action checklist live in cross-repo CLAUDE.md (`~/Documents/GitHub/CLAUDE.md`) § Agent scope discipline. The shared rule is the source of truth — this section only carries the renew-specific path + base-branch.
-
----
+Renew PMS — dental practice management + staff training (vertical SaaS). Multi-tenant, practice-scoped, healthcare-regulated. Pre-launch (beta date TBD).
 
 @../../brik/brik-bds/CLAUDE.md
 
----
-
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| Framework | Next.js 16 (App Router, TypeScript) |
-| React | React 19 |
-| Auth | Supabase Auth (`@supabase/ssr`) — session refresh via `src/proxy.ts` |
-| Database | Supabase PostgreSQL (RLS) |
-| UI | BDS npm package (`@brikdesigns/bds`) + Tailwind CSS 4 + Radix UI |
-| Styling | Tailwind CSS 4 (CSS-first config — no `tailwind.config.ts`; uses `@theme {}` in `globals.css`) |
-| Email | Resend |
-| Icons | FontAwesome 7 |
-| Error tracking | Sentry |
-| Testing | Vitest |
-| Validation | Zod v4 |
-| Docs | Fumadocs (fumadocs-ui, fumadocs-mdx, fumadocs-core) — `/docs` and `/guide` routes |
-| Hosting | Netlify |
-
-## LLM stack (renew-pms specifics)
-
-Renew-pms has no Claude calls today. Routing rules + `workflow_type` tagging + `@brikdesigns/claude-client` requirement live in cross-repo § "How to add Claude to any Brik app."
-
-**Renew-specific HIPAA constraint:** any future Claude call that touches PHI (treatment notes, clinical history, patient identifiers) requires the sanctioned PHI/PII redaction preprocessor per [ADR-003](../../brik/brik-llm/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md). The preprocessor is currently deferred — activated when a concrete ingestion surface defines what gets redacted. **Do not ship PHI-in-prompt flows before that lands.**
-
-## Business Context
-
-- Single dental practice client initially; validated before going to market
-- Client pays via brik-client-portal — no in-app billing (Stripe deferred)
-- Staff-only back office tool — no patient-facing features in V1
-- Brik provisions practices; practice admins invite staff (no self-serve signup)
-
-## Compliance Profile
-
-Renew PMS is a **dental practice management system and staff training platform** — a healthcare-regulated product by default. Every feature that handles patient data, practice workflows, or public-facing interfaces must be built with compliance in mind from the start.
-
-### Applicable regimes (all YES for this repo)
-
-| Regime | Applies | Reason |
-| --- | --- | --- |
-| **HIPAA** | Yes | Dental PMS handles PHI — patient records, treatment plans, scheduling, clinical notes |
-| **ACA §1557** | Yes | Dental practices that accept Medicare/Medicaid are covered entities under the ACA |
-| **Rehab Act §504** | Yes | Covered when the practice or platform receives federal funding |
-| **ADA Title III** | Yes | Public-facing web app used by patients (appointment booking, patient portal surfaces) |
-
-### Canonical reference
-
-Specific WCAG targets, implementation requirements, and standards details live in the BDS healthcare ADA doc:
-[`../brik/brik-bds/content-system/compliance/healthcare-ada.md`](../brik/brik-bds/content-system/compliance/healthcare-ada.md)
-
-This is the single source of truth maintained alongside BDS. When requirements are unclear, read that file — do not derive requirements from memory.
-
-### How to apply
-
-Renew PMS is **fully in-scope for all four regimes at all times.** Treat PHI handling, accessibility (WCAG 2.1 AA minimum), and language access as **default-on** for every feature — not optional add-ons. New features do not ship without verifying they don't introduce PHI exposure, accessibility regressions, or language access gaps.
-
----
-
-## Architecture
-
-### Role model (two layers — keep distinct)
-
-- **System role** (`profiles.system_role`) — permission tier modifier
-  - `brik_admin` → Brik staff; full cross-practice access
-  - `admin` → practice owner/manager; settings, all departments, all work items
-  - `manager` → department lead; triage, approve, team metrics within their department. No settings.
-  - `staff` → individual contributor; scoped to own work and department
-- **Practice role** (`practice_members.practice_role_id`) — job function (what you ARE); user-renameable per practice. Each role has a `default_system_role` that suggests the permission tier at invite time.
-- **Permission check helper:** Use `isAdmin()` from `@/lib/auth` — never inline `system_role === 'admin'` checks
-
-### Reference tables (user-renameable — never hardcode values in app logic)
-
-`departments`, `practice_role_types`, `task_types`, `task_categories`, `compliance_types`, `equipment_categories`, `supply_categories`
-
-### Enum fields (app logic depends on these)
-
-- `profiles.system_role` — `brik_admin | admin | manager | staff`
-- `practice_members.employee_type` — `new | maturing | proficient`
-- `tasks.status` — `not_started | in_progress | awaiting_approval | completed | blocked | skipped | overdue`
-- `tasks.priority` — `low | medium | high | critical`
-
-### Multi-tenancy
-
-Practices isolated via `practice_members` join table + RLS on every table. `practices.integrations` jsonb — per-practice API config (server-side only).
-
-### Provisioning
-
-`seed_practice_defaults(practice_id, office_id)` — seeds all reference tables with dental defaults on new practice creation.
-
-## Supabase
-
-| Environment | Project Ref | Purpose |
-| --- | --- | --- |
-| Staging / Dev | `zneuygoeorhkuhktmuld` (`renew-pms-staging`) | Local dev + staging branch deploys (`.env.local`) — has test personas + plus-addressed emails |
-| Production | `bbuimkdpmuggrszwenmg` (`renew-pms-production`) | Real customer data — provisioned 2026-05-02, clean schema, no users |
-
-- CLI default-linked to staging via `scripts/project.env`. To run commands against prod: `supabase link --project-ref bbuimkdpmuggrszwenmg`, then **always re-link to staging** (`supabase link --project-ref zneuygoeorhkuhktmuld`) before continuing day-to-day work.
-- Credentials: 1Password — `Renew PMS — Supabase Dev` (staging) / `Renew PMS — Production DB` (prod, contains `db-password`, `project-ref`, `url`, `anon-key`, `service-role-key`).
-- RLS: 17/17 tables enabled, 38 policies — applied to both projects. See `~/.claude/skills/supabase-workflow.md` for patterns.
-
-### Migration mismatch — practice-specific seeds skipped on prod
-
-Seven historical migrations contain Renew Dental practice-specific data (test personas with `test+*@brikdesigns.com` plus-addresses + the hardcoded practice ID `d9f05b47-…`). They were marked applied on prod via `supabase migration repair --status applied <ver>` to skip execution. Affected migrations:
-
-- `00012_seed_practice_members.sql` — staff with test+ emails
-- `00013_seed_tasks.sql` — depends on 00012's members
-- `00016_seed_schedule_events.sql` — depends on 00012's members
-- `00020_seed_opening_office_template.sql` — practice-id-bound
-- `00021_seed_closing_office_template.sql` — practice-id-bound
-- `00024_seed_vendors.sql` — practice-id-bound
-- `00028_seed_vendor_contacts.sql` — depends on 00024
-
-Long-term fix tracked as a follow-up issue: refactor practice-specific seed content out of `supabase/migrations/` and into `supabase/seed.sql` so it only runs on `supabase db reset` for staging, never on prod schema migrations.
-
-## Integrations
-
-- **Sentry** — error tracking (client + server + edge), error boundaries (`global-error.tsx`, `error.tsx`), and in-app User Feedback via `FeedbackButton` in the utility bar. Init in `instrumentation-client.ts` (client) and `instrumentation.ts` (server). Free tier.
-- **Trainual** — staff training source of truth; API supports people management + assignment status only (cannot read/edit content). Key in `practices.integrations.trainual.api_key`.
-- **Google Drive** — practice files, SOPs. Folder ID in `practices.integrations.gdrive.folder_id`.
-
-## Error Handling: Fail Loud, Never Fake
-
-Prefer a visible failure over a silent fallback. Never silently swallow errors to keep things "working."
-
-**Priority order:**
-
-1. Works correctly with real data
-2. Falls back visibly — clearly signals degraded mode (banner, toast, log)
-3. Fails with a clear error message
-4. ~~Silently degrades to look "fine"~~ — **never do this**
-
-### Banned patterns (new code)
-
-```ts
-// ❌ Empty catch — errors vanish
-try { ... } catch (e) {}
-try { ... } catch { /* ignore */ }
-
-// ❌ Swallowed promise — fire-and-forget failure
-somePromise.catch(() => {})
-somePromise.catch(() => null)
-
-// ❌ Silent null return — caller has no idea why
-if (!data) return null;
-
-// ❌ Catch that fakes success — caller thinks it worked
-try { ... } catch (e) { return defaultValue; }
-```
-
-### Required patterns (new code)
-
-```ts
-// ✅ Catch that surfaces the error
-try { ... } catch (e) {
-  console.error('[context] what failed:', e);
-  throw e; // or return an error type the caller handles
-}
-
-// ✅ Fallback that discloses degraded state
-if (!data) {
-  console.warn('[ComponentName] data unavailable, showing fallback');
-  return <ErrorState message="Could not load X" />;
-}
-
-// ✅ Null check that explains itself
-if (!user) throw new Error('Expected authenticated user — missing session');
-```
-
-### Type safety rules (new code)
-
-- **Minimize `as` assertions.** Use type guards, Zod parsing, or narrow with `if` checks. `as` is acceptable for Supabase query results where the type is known but the SDK types are loose.
-- **No non-null assertions (`!`)** unless the value was just null-checked in the preceding line.
-- **Optional chaining (`?.`)** is fine for 1–2 levels. Three or more levels signals a data shape problem — destructure and validate at the boundary instead.
-
-> **Existing code:** These rules apply to new and modified code. Do not refactor existing files solely to fix these patterns — address them when you're already editing the file for another reason.
-
-## General Principles
-
-- **Match what exists first.** Before writing new patterns, read two or three nearby files. Copy their structure.
-- **BDS first, always.** Before writing a custom UI element, check whether a BDS component covers the need. Build on the system — never build on an island.
-- **No speculative abstractions.** Three similar lines of code is better than a premature helper. Only abstract when the pattern is stable and used in three or more places.
-- **Design drives code.** Never build UI from assumptions when a Figma spec or Paper prototype exists. Read the spec first.
-
-## Token & Style Rules
-
-```ts
-import { font, color, space, gap, border, shadow } from '@/lib/tokens';
-import { text, heading, detail } from '@/lib/styles';
-```
-
-Path alias: `@/*` → `./src/*`. BDS components: `import { ... } from '@brikdesigns/bds'`
-
-**Never use raw `var(--...)` strings in CSSProperties.** Always import from `@/lib/tokens` — this is enforced by the pre-commit hook and `./scripts/token-audit.sh`. If a token is missing from the typed exports, add it to `src/lib/tokens.ts` first.
-
-**Department colors:** Read `department.color` from the DB row and call `departmentColor(colorKey)` from `@/lib/tokens`.
-
-### Font family rules
-
-Font family token **must match the element's semantic role**. BDS defaults all three families to Poppins — misuse is invisible until a client theme assigns distinct typefaces.
-
-- `font.family.heading` — `h1`–`h5`, card names, section titles. Min size: `font.size.heading.tiny` (18px)
-- `font.family.label` — Labels, badges, tags, buttons, captions
-- `font.family.subtitle` — Subtitle-sized text alongside headings, secondary metadata. Pair with `font.size.subtitle.*`
-- `font.family.body` — Body copy, descriptions, paragraphs
-
-### Tailwind vs tokens
-
-- **Tailwind** — layout and structural utilities: `flex`, `grid`, `gap`, `overflow`, `position`, `display`, `z-index`
-- **BDS tokens** — all visual language: color, typography, spacing scale, border radius, shadow. These must be themed. Tailwind defaults are not themeable.
-- Config is CSS-first — no `tailwind.config.ts`. Extend the theme in `src/app/globals.css` via `@theme {}`. PostCSS uses `@tailwindcss/postcss`.
-
-### Client theming
-
-`src/styles/theme-renew.css` overrides BDS semantic tokens with Renew Dental's palette. Values come from Figma file `kwNyWG6H3ifjZmytZnNJXd`. **Never edit this file without pulling the latest Figma export.** Never guess token values.
-
-### Storybook MCP — query before writing UI
-
-Always query the Storybook MCP for BDS component props before writing JSX. Endpoint, tool list, and unreachable-fallback are documented in the BDS CLAUDE.md (which is `@-imported` above) § Storybook MCP addon. Per-build Chromatic URLs are forbidden — use the `main--69b8918...chromatic.com/mcp` stable endpoint.
-
-**Renew-specific surface filter.** Every BDS story carries `surface-product`, `surface-shared`, or `surface-web`. renew-pms is a product app — filter to `surface-product` + `surface-shared`. **Never use `surface-web` components** (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`) — they're marketing surfaces and will misfit a clinical PMS UI.
-
-## Naming conventions
-
-### "Sidebar" / "header" (renew language) ≠ `<PageHeader>` (BDS component)
-
-The global app shell chrome and the per-route content header are **two different concepts**. Don't conflate.
-
-| Concept | Renew code | BDS component | What it carries |
-| --- | --- | --- | --- |
-| **Global app shell chrome** | [`AppSidebar.tsx`](src/components/AppSidebar.tsx) | none — BDS `<NavBar>` is `surface-web`, banned for product apps | Logomark + nav icons (top); help / theme toggle / notifications / avatar menu (bottom). Avatar menu carries practice name + profile + sign-out. |
-| **Per-route content header** | (was renew-local — deleted in [#127](https://github.com/brikdesigns/renew-pms/pull/127)) | `<PageHeader>` from `@brikdesigns/bds` | Page title + subtitle + breadcrumbs + page-level actions + tabs |
-
-**Historical note.** Pre-2026-05-02, the global chrome lived in a top bar called `TopUtilityBar.tsx`, and the user often called it "the page header" in conversation. PR [#162](https://github.com/brikdesigns/renew-pms/pull/162) migrated all of that chrome (avatar, notifications, theme toggle, section context, Add button) into `AppSidebar.tsx` per the Path B decision (closed [#101](https://github.com/brikdesigns/renew-pms/issues/101) / 2026-05-01); `TopUtilityBar.tsx` was deleted. References to "TopUtilityBar" in older audit docs are historical.
-
-**How to apply.** When the user says "header" or "page header" in renew, default-assume they mean BDS `<PageHeader>` (the per-route content header in the body) — that's the only "header"-shaped element in the post-#162 layout. When they're talking about avatars, notifications, the theme toggle, or global navigation, that's the **sidebar** (`AppSidebar.tsx`). When in doubt, name the component explicitly before proceeding. **Don't propose a new BDS top-bar variant for renew** — the Path B decision rules that out.
-
-## Component Rules
-
-### BDS first
-
-- Check BDS before building custom. Query via Storybook MCP (see "Storybook MCP" section above) — read component props and examples before writing JSX.
-- **Never build raw `<button>` or `<a>` elements for interactive UI.** Use `Button` / `IconButton` from `@brikdesigns/bds`. Raw elements bypass all BDS interaction states (hover, pressed, focus, disabled) — they will always look broken.
-- **Never export `CSSProperties` objects for interactive elements** (buttons, links, clickable divs). Shared layout/spacing styles in `_shared.ts` are fine; shared button styles are not — they bypass the component system and lose all interaction states.
-- Never convert `Button` → `IconButton` and silently drop the variant. `ghost` = low emphasis, `primary` = high emphasis. Converting the element does not change the action's importance.
-
-### Server vs client components
-
-- Default to Server Components. Only add `'use client'` when you need interactivity, event handlers, `useState`, or `useEffect`.
-- Data fetching happens on the server. Pass data down as props — don't fetch in client components unless triggered by user interaction.
-
-## File & Folder Conventions
-
-- Components used by a single route live inside that route folder. Components used by two or more routes go in `src/components/`.
-- Shared style definitions for a route group go in `_shared.ts` in the route folder. Do not duplicate style objects across sibling files. **Never put interactive element styles in `_shared.ts`** — use BDS components at call sites.
-- React components: PascalCase file and function names. Utilities and hooks: camelCase, hooks prefixed with `use`.
-- No version suffixes (`v2`, `_new`, `_final`). Name by purpose, not iteration.
-
-## Branch Workflow
-
-> **As of 2026-05-04 (beta launch):** renew-pms is post-launch. `main` is the **primary** branch; all feature + dependency work targets `main` first and Netlify deploys `main` to https://renew.brikdesigns.com. `staging` exists as a pre-prod mirror that gets back-merged from `main` after each shipped batch.
-
-**All work happens on `task/{scope}-{name}` branches created from `main`.** Never branch from an in-flight feature branch. Never reuse a branch for unrelated work.
-
-```bash
-# Start a new task (always use this — never manual git checkout -b)
-./scripts/new-task.sh {scope}-{name}
-
-# Examples:
-./scripts/new-task.sh renew-task-templates
-./scripts/new-task.sh auth-session-refresh
-./scripts/new-task.sh vendor-portal-v1
-```
-
-**Rules:**
-
-1. **One branch = one task.** If scope drifts, commit current work, then start a new branch for the new scope.
-2. **Branch from `main` (post-launch default).** The `new-task.sh` script enforces this via its `BASE_BRANCH` default. Override with `BASE_BRANCH=staging ./scripts/new-task.sh ...` only when you need to land on `staging` directly (rare).
-3. **Branch naming:** `task/{scope}-{name}`. Valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`.
-4. **Never touch `main` or `staging` directly.** Only Nick merges.
-5. **Delete branches after merge.** GitHub auto-deletes on merge by default; closed-without-merge branches (like superseded version bumps) get deleted manually.
-
-**Merge flow (post-launch):** `task/` branch → PR to `main` → squash merge → Netlify deploys → periodic `main → staging` back-merge to keep staging mirror current. The `staging` branch is **not** the trunk — it's a downstream mirror used for pre-prod previews and integration testing when needed.
-
-## Session Discipline
-
-Lifecycle rules (start / during / end) + guardrails table live in [`docs/process/session-discipline.md`](docs/process/session-discipline.md). Cross-repo agent scope discipline lives in `~/Documents/GitHub/CLAUDE.md` § Agent scope discipline. Both are mandatory.
-
-## Commands
-
-```bash
-npm run dev              # Local dev server (localhost:3000, or next available port)
-npm run build            # Production build — always run before pushing
-npm run lint             # ESLint
-npm run typecheck        # TypeScript check
-npm run test             # Vitest
-
-npm run db:push          # Push migrations to dev Supabase
-npm run db:diff          # Generate migration diff (--use-migra)
-npm run db:status        # List migration status
-npm run db:gen-types     # Regenerate src/types/database.types.ts from staging schema (run after migrations)
-npm run db:seed-test-users  # Seed test user accounts
-
-./scripts/health-check.sh    # Verify env health (Supabase, env vars, Netlify)
-./scripts/agent-preflight.sh # Pre-task environment validation
-./scripts/token-audit.sh     # Full token + component compliance scan
-./scripts/db-health.sh       # DB hygiene: orphans, constraints, RLS (--prod, --fix)
-./scripts/dev-restart.sh     # Kill and restart dev server (--no-cache clears .next)
-./scripts/session-guard.sh   # PreToolUse hook — dirty tree warning (runs automatically)
-./scripts/install-hooks.sh   # Install git hooks after clone (pre-push, etc.)
-```
-
-**After BDS/token changes:** clear the Next.js cache before restarting — `rm -rf .next && npm run dev`.
-
-## Enforcement
-
-### Pre-commit hooks (automatic)
-
-- Hardcoded hex colors — blocked
-- Raw `var(--...)` strings in style props — blocked
-- Hardcoded font sizes in px — blocked
-- Direct BDS component path imports (not via barrel) — blocked
-- Hardcoded rgba/rgb values — blocked
-
-### Manual audit (run before every PR)
-
-```bash
-./scripts/token-audit.sh   # Covers: buttons, colors, var(), fontFamily, borderRadius, gap, padding, Badge
-npm run lint               # ESLint
-npm run typecheck          # TypeScript
-npm run build              # Full build — catches what lint misses
-```
-
-The audit catches 14 violation categories including native `<button>` elements, raw `<a>` tags, hardcoded borderRadius/gap/padding values, and `headingStyle` variable name drift. It will report things the pre-commit hook does not — run it explicitly before raising a PR.
-
-## Rules
-
-- Follow global CLAUDE.md (parent directory)
-- Always build locally before pushing
-- Stage specific files, never `git add -A`
-- Never push without user confirmation
+## Pre-launch base branch
+
+- **Integration branch is `staging`, not `main`.** All `task/*` branches + PRs MUST target `staging`. `main` is frozen until beta.
+- **At launch:** flip `BASE_BRANCH` default in `scripts/new-task.sh` + `scripts/pr-task.sh` + `.github/workflows/release-please.yml` from `staging` → `main`, update this section.
+
+## Stack
+
+- Next.js 16 (App Router, TypeScript, React 19) + Tailwind 4 (CSS-first via `@theme {}` in `globals.css`) + BDS via `@brikdesigns/bds` npm + Radix
+- Supabase: auth (`@supabase/ssr`, session refresh in `src/proxy.ts`) + Postgres + RLS — **staging project `zneuygoeorhkuhktmuld`**, **prod project `bbuimkdpmuggrszwenmg`**
+- Email: Resend. Errors: Sentry. Docs: Fumadocs (`/docs`, `/guide`). Hosting: Netlify.
+- Model: ALWAYS Opus for renew sessions (overrides global Sonnet default).
+
+## Compliance — healthcare-regulated by default
+
+- **All four regimes always in scope: HIPAA, ACA §1557, Rehab Act §504, ADA Title III.** WCAG 2.1 AA target. Vestibular sensitivity matters in clinical workflows — guard motion choices.
+- Canon: [`@brikdesigns/bds/content-system/compliance/healthcare-ada`](https://design.brikdesigns.com/docs/content-system/compliance/Healthcare-ADA) — single source of truth, never duplicate inline.
+- **No LLM calls today.** NEVER ship PHI-in-prompt flows before the PHI/PII redaction preprocessor lands ([ADR-003](https://github.com/brikdesigns/brik-llm/blob/main/software/docs/adr/ADR-003-mini-llm-infrastructure-scope.md), currently deferred).
+
+## renew-pms specifics
+
+- **Canon for CSS** — INVOKE `canon-css` / `validate-token-names` skill before writing any token declaration. Pre-commit `scripts/token-audit.sh` hard-fails on hex / rgba / raw `var()` / hardcoded font sizes / direct BDS path imports — no exemption path.
+- **Tokens in TS/TSX** — IMPORT from `@/lib/tokens` (`font`, `color`, `space`, `gap`, `border`, `shadow`) and `@/lib/styles` (`text`, `heading`, `detail`). NEVER write raw `var()` strings. Department colors: `departmentColor(department.color)`.
+- **Surface filter** — product app: USE `surface-product` + `surface-shared` BDS components. NEVER use `surface-web` (`Footer`, `NavBar`, `PricingCard`, `CardTestimonial`, `ServiceBadge`).
+- **BDS first** — QUERY Storybook MCP for component props before writing JSX. NEVER build raw `<button>` / `<a>` for interactive UI; use `Button` / `IconButton` from `@brikdesigns/bds`.
+- **Role model** — USE `isAdmin()` from `@/lib/auth`; never inline `system_role === 'admin'`; NEVER write `system_role` into `user_metadata` (`tests/auth/no-system-role-metadata.test.ts` enforces).
+- **Supabase CLI** — default-linked to staging via `scripts/project.env`. To run against prod: `supabase link --project-ref bbuimkdpmuggrszwenmg`, then **always re-link to staging** before continuing day-to-day work.
+- **Migrations** — `npm run db:push` applies immediately. Seven historical migrations (`00012/13/16/20/21/24/28`) marked `applied` on prod via `supabase migration repair --status applied` to skip practice-specific seed data. Long-term fix: move practice-specific seeds into `supabase/seed.sql`.
+- **Dev server** — ALWAYS use `./scripts/dev-restart.sh`; restart after every code change. After BDS / token changes: `--no-cache`.
+- **Claude calls** — when added, USE `@brikdesigns/claude-client` with `CallMetadata({ workflowType })` (ADR-001). NEVER raw `@anthropic-ai/sdk`.
+- **PreToolUse hooks** — `worktree-check.sh`, `secret-scanner.sh`, `bash-leak-guard.sh` (guards the 2026-05-02 secret-exfiltration class — [#168](https://github.com/brikdesigns/renew-pms/issues/168)). Smoke-test: `npm run test:hooks`.
+- **Branch workflow** — USE `./scripts/new-task.sh {scope}-{name}` (valid scopes: `renew`, `auth`, `tasks`, `training`, `vendor`, `bds`, `docs`, `infra`).
+- **Pre-PR** — ALWAYS `./scripts/token-audit.sh && npm run lint && npm run typecheck && npm run build` before pushing.
+
+## Where deeper context lives
+
+- **Schema, RLS, role model (system vs practice), enums, reference tables, multi-tenancy, provisioning** → `brik-rag query "renew schema ..." --slug renew-pms`
+- **Integrations** (Sentry init, Trainual API scope, Google Drive folder config) → `brik-rag query "renew integrations ..." --slug renew-pms`
+- **Tailwind vs tokens, font family rules, AppSidebar vs `<PageHeader>`, naming, file/folder conventions, component rules** → `brik-rag query "renew ..." --slug renew-pms`
+- **brik-rag MCP calls** — pass `workflow_type: "renew-pms-build"` on every `mcp__brik-rag__query` call (tags Helicone traces + canon usage log)
+- **Error handling** → [`docs/process/error-handling.md`](docs/process/error-handling.md)
+- **Session discipline** → [`docs/process/session-discipline.md`](docs/process/session-discipline.md)
+- **Release / launch runbooks** → [`docs/process/release-runbook.md`](docs/process/release-runbook.md), [`docs/process/beta-launch-runbook.md`](docs/process/beta-launch-runbook.md)
+- **Client theming source** — Figma file `kwNyWG6H3ifjZmytZnNJXd` → `src/styles/theme-renew.css` (never edit without pulling latest Figma export)
+- **Security credential surface** → `## renew-pms` section of [`brik-llm/operations/security/repo-token-map.md`](https://github.com/brikdesigns/brik-llm/blob/main/operations/security/repo-token-map.md#renew-pms)
+- **ADRs** → [`brik-llm/software/docs/adr/`](https://github.com/brikdesigns/brik-llm/tree/main/software/docs/adr) (esp. ADR-001 Claude calls, ADR-003 mini-LLM scope incl. PHI redaction)

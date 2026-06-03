@@ -12,6 +12,7 @@ type MemberJoin = {
   practice_role_types: RoleJoin | RoleJoin[] | null;
 };
 type TaskTypeJoin = { name: string };
+type TaskTemplateJoin = { name: string; display_mode: string };
 type RoomJoin = { name: string };
 type EquipmentJoin = { name: string };
 type SupplyCategoryJoin = { name: string };
@@ -24,6 +25,7 @@ export interface RawTask {
   priority: string;
   frequency: string | null;
   due_date: string | null;
+  template_id: string | null;
   assigned_to: string;
   assigned_role_id: string | null;
   assigned_department: string | null;
@@ -32,6 +34,7 @@ export interface RawTask {
   equipment_id: string | null;
   supply_category_id: string | null;
   task_types: TaskTypeJoin | TaskTypeJoin[] | null;
+  task_templates: TaskTemplateJoin | TaskTemplateJoin[] | null;
   rooms: RoomJoin | RoomJoin[] | null;
   equipment: EquipmentJoin | EquipmentJoin[] | null;
   supply_categories: SupplyCategoryJoin | SupplyCategoryJoin[] | null;
@@ -50,6 +53,7 @@ export function flattenTask(t: RawTask) {
   const roleDept = role ? first(role.departments) : null;
   const taskDept = first(t.departments);
   const taskType = first(t.task_types);
+  const parentTemplate = first(t.task_templates);
   const room = first(t.rooms);
   const equipment = first(t.equipment);
   const supplyCategory = first(t.supply_categories);
@@ -67,6 +71,9 @@ export function flattenTask(t: RawTask) {
     due_date: t.due_date,
     type_name: taskType?.name ?? null,
     task_type_id: t.task_type_id,
+    template_id: t.template_id,
+    parent_template_name: parentTemplate?.name ?? null,
+    display_mode: parentTemplate?.display_mode ?? null,
     room_name: room?.name ?? null,
     room_id: t.room_id,
     equipment_name: equipment?.name ?? null,
@@ -85,10 +92,11 @@ export function flattenTask(t: RawTask) {
 }
 
 export const TASK_SELECT = `
-  id, title, description, status, priority, frequency, due_date,
+  id, title, description, status, priority, frequency, due_date, template_id,
   assigned_to, assigned_role_id, assigned_department,
   task_type_id, room_id, equipment_id, supply_category_id,
   task_types(name),
+  task_templates(name, display_mode),
   rooms(name),
   equipment(name),
   supply_categories(name),
@@ -137,6 +145,9 @@ export async function loadTasks(
     .select(TASK_SELECT)
     .eq('practice_id', practiceId);
 
+  // All generator-owned frequencies. `custom` is excluded — no generator supports it.
+  const RECURRING_FREQS = 'daily,per_shift,weekly,bi_weekly,monthly,quarterly,semi_annually,annually';
+
   // Visibility OR — rows that "should be on the board today": due today,
   // currently overdue, or recurring-stale. When includeResolved is on we also
   // accept completed/skipped variants of those shapes (resolved-overdue,
@@ -145,21 +156,21 @@ export async function loadTasks(
   const orClauses: string[] = [
     `due_date.eq.${dateValue}`,
     `status.eq.overdue`,
-    `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`,
+    `and(frequency.in.(${RECURRING_FREQS}),due_date.lte.${dateValue},status.neq.completed,status.neq.skipped)`,
   ];
   if (options.pool) {
     orClauses.push(
-      `and(frequency.in.(daily,per_shift),due_date.is.null,status.neq.completed,status.neq.skipped)`,
+      `and(frequency.in.(${RECURRING_FREQS}),due_date.is.null,status.neq.completed,status.neq.skipped)`,
     );
   }
   if (includeResolved) {
     orClauses.push(`and(due_date.lt.${dateValue},status.in.(completed,skipped))`);
     orClauses.push(
-      `and(frequency.in.(daily,per_shift),due_date.lte.${dateValue},status.in.(completed,skipped))`,
+      `and(frequency.in.(${RECURRING_FREQS}),due_date.lte.${dateValue},status.in.(completed,skipped))`,
     );
     if (options.pool) {
       orClauses.push(
-        `and(frequency.in.(daily,per_shift),due_date.is.null,status.in.(completed,skipped))`,
+        `and(frequency.in.(${RECURRING_FREQS}),due_date.is.null,status.in.(completed,skipped))`,
       );
     }
   }
@@ -218,12 +229,20 @@ export async function loadTasks(
     countMap.set(item.task_id, entry);
   }
 
-  return flatTasks.map((t) => {
-    const counts = countMap.get(t.id);
-    return {
-      ...t,
-      checklist_total: counts?.total ?? 0,
-      checklist_completed: counts?.completed ?? 0,
-    };
-  });
+  // Hide spurious expanded-mode parent tasks (#299). A task with an expanded
+  // parent template should be one item-as-task, never a parent with copied
+  // task_checklist_items. The two known sources are POST /api/tasks
+  // ignoring display_mode (now fixed in the same change) and stale rows from
+  // a nested → expanded template flip. Direct fetch by id (GET /api/tasks/:id)
+  // is unaffected, so deep-links still resolve.
+  return flatTasks
+    .map((t) => {
+      const counts = countMap.get(t.id);
+      return {
+        ...t,
+        checklist_total: counts?.total ?? 0,
+        checklist_completed: counts?.completed ?? 0,
+      };
+    })
+    .filter((t) => !(t.display_mode === 'expanded' && t.checklist_total > 0));
 }

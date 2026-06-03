@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { Sheet, SheetSection, Button, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar, SheetHelperText } from '@brikdesigns/bds';
+import { Sheet, SheetSection, Button, Skeleton, useConfigureSheet, Field, FieldGrid, EmptyState, ProgressBar } from '@brikdesigns/bds';
 import type { SheetTab } from '@brikdesigns/bds';
 import { Badge } from '@brikdesigns/bds';
 import { Tag } from '@brikdesigns/bds';
 import { ProfileCard, profileCardGrid } from '@/components/ProfileCard';
 import { SheetSkeleton } from '@/components/SheetSkeleton';
 import { DaysOfWeekPicker } from '@/components/DaysOfWeekPicker';
+import { SignInMethodsList, type LinkedIdentity } from '@/components/SignInMethodsSection';
 import { EMPLOYEE_TYPE_TAG, SHIFT_LABELS, SYSTEM_ROLE_LABELS } from '@/lib/member-labels';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ interface ViewUserSheetProps {
 // ─── Tokens ──────────────────────────────────────────────────────────────────
 
 import { gap, departmentColor } from '@/lib/tokens';
+import { text } from '@/lib/styles';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -71,6 +73,27 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
   }, [resolvedId, userProp]);
 
   const user = userProp ?? fetched;
+
+  // Sign-in identities — lazy-fetched on first open. Kept separate from the
+  // member fetch so a render of the Details tab doesn't pay the auth admin
+  // round-trip every time.
+  const [identitiesLoading, setIdentitiesLoading] = useState(false);
+  const [identitiesData, setIdentitiesData] = useState<{
+    primary_email: string;
+    identities: LinkedIdentity[];
+    mismatched_identities: LinkedIdentity[];
+  } | null>(null);
+  useEffect(() => {
+    if (!resolvedId) return;
+    setIdentitiesLoading(true);
+    fetch(`/api/members/${resolvedId}/identities`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && !data.error) setIdentitiesData(data);
+      })
+      .catch((err) => console.error('[ViewUserSheet] identities fetch failed:', err))
+      .finally(() => setIdentitiesLoading(false));
+  }, [resolvedId]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
@@ -189,7 +212,7 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
 
       <SheetSection heading="Training Progress">
         <ProgressBar value={progress} label="Training modules completed" />
-        <SheetHelperText>{completedModules} of {totalModules} modules completed ({progress}%)</SheetHelperText>
+        <p style={{ ...text.bodyXs, margin: 0 }}>{completedModules} of {totalModules} modules completed ({progress}%)</p>
       </SheetSection>
 
       <SheetSection heading="Assigned Modules">
@@ -201,11 +224,31 @@ export function ViewUserSheet({ isOpen = true, onClose, user: userProp, id, onEd
     </>
   ) : null;
 
+  const signInContent = (
+    <SheetSection heading="Sign-in methods">
+      {identitiesLoading ? (
+        <Skeleton variant="text" width="100%" height={48} />
+      ) : identitiesData ? (
+        <SignInMethodsList
+          identities={identitiesData.identities}
+          mismatchedIdentities={identitiesData.mismatched_identities}
+          primaryEmail={identitiesData.primary_email}
+        />
+      ) : (
+        <EmptyState
+          title="Could not load sign-in methods"
+          description="The identities lookup failed. Reload the sheet or check the server log."
+        />
+      )}
+    </SheetSection>
+  );
+
   const sheetTabs: SheetTab[] = [
     { id: 'details', label: 'Details', content: detailsContent },
     { id: 'roles', label: 'Roles', content: rolesContent },
     { id: 'departments', label: 'Departments', content: departmentsContent },
     { id: 'training', label: 'Training', content: trainingContent },
+    { id: 'signin', label: 'Sign-in', content: signInContent },
   ];
 
   const footer = (

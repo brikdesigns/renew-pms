@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { Sheet, Button, TextInput, TextArea, Select, Tag, IconButton } from '@brikdesigns/bds';
+import { Sheet, Button, TextInput, TextArea, Select, Tag } from '@brikdesigns/bds';
 import { Icon } from '@iconify/react';
 import { icon } from '@/lib/icons';
 import { useToast } from '@/components/ToastProvider';
@@ -135,6 +135,7 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
       title={isEdit ? `Edit ${initialData.name}` : 'Add Vendor'}
       width="600px"
       side="right"
+      closeOnBackdrop={false}
       footer={<>
         <Button variant="ghost" size="md" type="button" onClick={onClose}>Cancel</Button>
         <Button variant="primary" size="md" type="submit" form="vendor-form" disabled={saving || !canSave}>
@@ -193,7 +194,7 @@ export function EditVendorSheet({ isOpen, onClose, initialData, onSave }: EditVe
                   return (
                     <Tag key={eqId} size="sm" style={{ backgroundColor: color.surface.secondary, color: color.text.primary, display: 'inline-flex', alignItems: 'center', gap: gap.xs }}>
                       {item?.name ?? eqId}
-                      <IconButton
+                      <Button
                         variant="danger-ghost"
                         size="tiny"
                         icon={<Icon icon={icon.close} />}

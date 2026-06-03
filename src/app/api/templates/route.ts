@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { apiError } from '@/lib/api-errors';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requirePracticeAdmin } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 import { getPracticeId } from '@/lib/practice';
-import { normalizeAssignmentFKs, spawnTodayForTemplate } from './_helpers';
+import { normalizeAssignmentFKs } from './_helpers';
 
 /**
  * GET /api/templates
@@ -28,7 +29,7 @@ export async function GET() {
       requires_approval, estimated_duration, is_default,
       task_category_id, compliance_type_id, room_id,
       assigned_member_id, assigned_role_id, department_id,
-      assignment_mode, display_mode,
+      assignment_mode, display_mode, task_reset_cadence,
       created_at, updated_at,
       checklist_items (
         id, label, sort_order,
@@ -38,7 +39,7 @@ export async function GET() {
     .eq('practice_id', practiceId)
     .order('created_at');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
   return NextResponse.json(data ?? []);
 }
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
     status?: string;
     assignment_mode?: string;
     display_mode?: string;
+    task_reset_cadence?: string | null;
   };
 
   if (!body.name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -104,17 +106,20 @@ export async function POST(request: Request) {
       status: body.status ?? 'draft',
       assignment_mode: assignmentMode,
       display_mode: body.display_mode ?? 'nested',
+      task_reset_cadence: body.task_reset_cadence ?? null,
       created_by: authUser.profile.id,
     })
-    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, created_at, updated_at')
+    .select('id, name, description, type, frequency, priority, status, requires_approval, estimated_duration, is_default, task_category_id, compliance_type_id, room_id, assigned_member_id, assigned_role_id, department_id, assignment_mode, display_mode, task_reset_cadence, created_at, updated_at')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error);
 
-  // Auto-spawn today's task instance if the new template is active+recurring
-  // and its mode FK is set. Idempotent at the SQL layer, so callers don't need
-  // to dedupe. We don't await-on-failure: the template row is already saved.
-  await spawnTodayForTemplate(admin, practiceId, data);
+  // Note: today's-task spawn is deliberately NOT called here. It moved to
+  // PUT /api/templates/[id]/items (executed by the UI immediately after POST)
+  // so that the SQL generator can read checklist_items and populate
+  // task_checklist_items in the same call. Spawning at POST-time produced a
+  // race where today's task was created with 0 items before items were
+  // written. See the related fix in /items/route.ts.
 
   return NextResponse.json({ ...data, checklist_items: [] }, { status: 201 });
 }
