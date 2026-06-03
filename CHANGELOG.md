@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/brikdesigns/renew-pms/compare/v0.2.0...v0.3.0) (2026-06-03)
+
+
+### Features
+
+* **renew:** show app version + Beta label in user menu ([#359](https://github.com/brikdesigns/renew-pms/issues/359)) ([8d3d2ab](https://github.com/brikdesigns/renew-pms/commit/8d3d2abc2284ff87b4a62112654c47fd9d562df1)), closes [#248](https://github.com/brikdesigns/renew-pms/issues/248)
+
+
+### Bug Fixes
+
+* **infra:** make new-task.sh op run install resilient headless ([#365](https://github.com/brikdesigns/renew-pms/issues/365)) ([#366](https://github.com/brikdesigns/renew-pms/issues/366)) ([7de1382](https://github.com/brikdesigns/renew-pms/commit/7de1382430ea6de2d7546166ca5d305aa69f9229))
+* **infra:** narrow secret-scanner Resend regex to stop snake_case false positives ([#368](https://github.com/brikdesigns/renew-pms/issues/368)) ([ab0b7d9](https://github.com/brikdesigns/renew-pms/commit/ab0b7d906e85531aa943ccc69f0514ee3a91aa85))
+
+
+### Documentation
+
+* **guide:** add user-facing Release Notes page with v0.2.0 ([#361](https://github.com/brikdesigns/renew-pms/issues/361)) ([e53de46](https://github.com/brikdesigns/renew-pms/commit/e53de4682f3a4f60a4f089ddc683e5ebabbf2de5)), closes [#328](https://github.com/brikdesigns/renew-pms/issues/328)
+* **release:** document semver mapping + beta-as-label convention ([#360](https://github.com/brikdesigns/renew-pms/issues/360)) ([cf6cb60](https://github.com/brikdesigns/renew-pms/commit/cf6cb603f0eeffa3826e987c1b7fe1f478eea293)), closes [#235](https://github.com/brikdesigns/renew-pms/issues/235)
+
 ## [0.2.0](https://github.com/brikdesigns/renew-pms/compare/v0.1.7...v0.2.0) (2026-06-02)
 
 
