@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # new-task.sh — Create an isolated git worktree for a single task.
 #
-# Branches from origin/$BASE_BRANCH (default: staging — we're pre-launch).
+# Branches from origin/$BASE_BRANCH (default: staging — the integration
+# branch in our post-launch two-environment model; main = production).
 # Enforces task/{scope}-{name} naming. Installs dependencies in the worktree.
 #
-# At go-live, change the BASE_BRANCH default below to "main" and update
-# the Branch Workflow section in CLAUDE.md to match.
+# Day-to-day work branches from staging and promotes staging → main per
+# docs/process/release-runbook.md. See CLAUDE.md § Branch model.
 #
 # Usage:
 #   ./scripts/new-task.sh {scope}-{name}
@@ -20,7 +21,7 @@
 
 set -euo pipefail
 
-# ── Base branch (pre-launch default: staging; flip to main at go-live) ──
+# ── Base branch (integration branch = staging; main = production) ──
 BASE_BRANCH="${BASE_BRANCH:-staging}"
 
 RED='\033[0;31m'
