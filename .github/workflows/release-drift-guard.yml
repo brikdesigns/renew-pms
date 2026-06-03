@@ -1,0 +1,51 @@
+name: Release Drift Guard
+
+# Guards the #367 failure mode: work (and cut release tags) piling up on
+# staging without ever being promoted to main (production). Fails — which
+# notifies — when production has fallen behind. Runbook: docs/process/release-runbook.md.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1-5' # 14:00 UTC weekdays (~9am CT)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history + tags needed for ancestry checks
+
+      - name: Check staging → main promotion drift
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main staging --tags
+
+          BEHIND=$(git rev-list --count origin/main..origin/staging)
+          LATEST_TAG=$(git tag --sort=-v:refname | head -1)
+          echo "main is $BEHIND commit(s) behind staging."
+          echo "latest tag: ${LATEST_TAG:-<none>}"
+
+          PROBLEMS=0
+
+          # 1) A release was cut but never shipped: latest tag not reachable from main.
+          if [ -n "${LATEST_TAG:-}" ] && ! git merge-base --is-ancestor "$LATEST_TAG" origin/main; then
+            echo "::error::Latest release tag $LATEST_TAG is NOT in production (main). A release was cut on staging but never promoted — promote staging → main per docs/process/release-runbook.md."
+            PROBLEMS=1
+          fi
+
+          # 2) Safety net: staging has drifted far ahead of main.
+          THRESHOLD=30
+          if [ "$BEHIND" -gt "$THRESHOLD" ]; then
+            echo "::error::main is $BEHIND commits behind staging (> $THRESHOLD). Unreleased work is piling up — this is the #367 drift pattern. Promote staging → main."
+            PROBLEMS=1
+          fi
+
+          if [ "$PROBLEMS" -ne 0 ]; then
+            exit 1
+          fi
+          echo "✅ No release drift — staging and main are in sync."

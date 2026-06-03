@@ -1,13 +1,15 @@
 # renew-pms
 
-Renew PMS — dental practice management + staff training (vertical SaaS). Multi-tenant, practice-scoped, healthcare-regulated. Pre-launch (beta date TBD).
+Renew PMS — dental practice management + staff training (vertical SaaS). Multi-tenant, practice-scoped, healthcare-regulated. Post-launch — beta live since 2026-05-04.
 
 @../../brik/brik-bds/CLAUDE.md
 
-## Pre-launch base branch
+## Branch model — post-launch (two environments)
 
-- **Integration branch is `staging`, not `main`.** All `task/*` branches + PRs MUST target `staging`. `main` is frozen until beta.
-- **At launch:** flip `BASE_BRANCH` default in `scripts/new-task.sh` + `scripts/pr-task.sh` + `.github/workflows/release-please.yml` from `staging` → `main`, update this section.
+- **`main` = production.** Deploys to `renew.brikdesigns.com` via the Netlify `main` hook. `staging` = integration / dress-rehearsal.
+- **`task/*` branches + PRs target `staging`.** You develop on `staging`, then promote `staging → main` per [`docs/process/release-runbook.md`](docs/process/release-runbook.md). As of the 2026-06-02 catch-up cutover ([#367](https://github.com/brikdesigns/renew-pms/issues/367)), `staging` is an ancestor of `main`, so promotions are clean fast-forwards.
+- **release-please runs on `staging`** and cuts `vX.Y.Z` tags there; the `--no-ff` promotion makes each tag reachable from `main`. (The repo is squash-only by default — the promote PR must merge as a real merge commit, or the staging/main ancestry breaks again. This was the #367 drift root cause.)
+- **Never let `staging` pile up unreleased.** Promote in small batches (release-runbook cadence). The [`release-drift-guard`](.github/workflows/release-drift-guard.yml) workflow alerts when `main` falls behind `staging`.
 
 ## Stack
 
