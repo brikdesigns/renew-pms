@@ -3,8 +3,11 @@ name: release-please
 # Automated versioning + changelog for renew-pms.
 #
 # How it works:
-#   1. Watches conventional-commit messages on the trunk branch (currently `staging`
-#      pre-launch — flip to `main` after launch, see CLAUDE.md § Branch Workflow).
+#   1. Watches conventional-commit messages on `staging`, the integration branch
+#      in the post-launch two-environment model (staging = integration, main =
+#      production). Releases are cut here and promoted `staging → main` per the
+#      release runbook — this workflow stays on `staging` by design; it does NOT
+#      flip to `main`. See CLAUDE.md § Branch Workflow and #367.
 #   2. Opens a "release PR" that bumps `package.json`, `.release-please-manifest.json`,
 #      and writes/updates `CHANGELOG.md` based on the commit log since the last release.
 #   3. When the release PR is merged, release-please creates the matching git tag +
