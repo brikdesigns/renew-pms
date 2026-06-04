@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/brikdesigns/renew-pms/compare/v0.3.1...v0.3.2) (2026-06-04)
+
+
+### Documentation
+
+* **release:** correct release-please trunk comment ([#367](https://github.com/brikdesigns/renew-pms/issues/367)) ([#388](https://github.com/brikdesigns/renew-pms/issues/388)) ([187e56f](https://github.com/brikdesigns/renew-pms/commit/187e56f2b8f9807c4be0aad5262986a5efe17422))
+
 ## [0.3.1](https://github.com/brikdesigns/renew-pms/compare/v0.3.0...v0.3.1) (2026-06-03)
 
 
