@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/brikdesigns/renew-pms/compare/v0.3.2...v0.3.3) (2026-06-09)
+
+
+### Bug Fixes
+
+* **feedback:** write post-OPE-29 stable Backlog properties ([#392](https://github.com/brikdesigns/renew-pms/issues/392)) ([bb96659](https://github.com/brikdesigns/renew-pms/commit/bb96659c4ac611a43c3850d3c21312a2515117f0))
+
 ## [0.3.2](https://github.com/brikdesigns/renew-pms/compare/v0.3.1...v0.3.2) (2026-06-04)
 
 
