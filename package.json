@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src/ --max-warnings 0",
+    "check:functions-server-only": "node scripts/check-functions-no-server-only.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
