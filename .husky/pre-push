@@ -92,6 +92,15 @@ if [ -n "$MERGE_BASE" ]; then
 fi
 echo "No migration conflicts."
 
+# ── Netlify functions server-only guard ──
+# Fails if any netlify/functions entry transitively imports a `server-only`-
+# guarded module — it throws at module load in the Netlify Functions runtime
+# (plain Node, no `react-server` export condition) and silently freezes the
+# worker. The DAL may keep `server-only`; functions just must not reach it.
+# Ported from brik-client-portal #1037/#1038 (brik-client-portal#1041).
+echo "Checking netlify functions for server-only reachability..."
+node scripts/check-functions-no-server-only.mjs
+
 echo "Running tests before push..."
 npx vitest run --reporter=verbose
 echo "Tests passed."
