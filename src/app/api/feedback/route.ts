@@ -1,21 +1,12 @@
 import { NextResponse } from 'next/server';
+import { buildBacklogPageBody, NOTION_VERSION } from '@brikdesigns/feedback-contract';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 
 const NOTION_API = 'https://api.notion.com/v1';
-const NOTION_VERSION = '2022-06-28';
-const BACKLOG_DATABASE_ID = '32097d34-ed28-8051-8225-eb6800c2e05a';
 const PRODUCT_NAME = 'Vantage';
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-
-/** Map widget types to Backlog Type select values */
-const TYPE_MAP: Record<string, string> = {
-  bug: 'Bug',
-  ui: 'Enhancement',
-  suggestion: 'Suggestion',
-  question: 'Question',
-};
 
 /** Map system roles to Backlog Role multi_select options */
 const ROLE_MAP: Record<string, string> = {
@@ -23,14 +14,6 @@ const ROLE_MAP: Record<string, string> = {
   admin: 'Admin',
   manager: 'Manager',
   staff: 'Staff',
-};
-
-/** Emoji prefix per type for the title */
-const EMOJI_MAP: Record<string, string> = {
-  bug: '🐛',
-  ui: '🎨',
-  suggestion: '💡',
-  question: '❓',
 };
 
 /**
@@ -63,8 +46,6 @@ export async function POST(request: Request) {
   const email = authUser.profile.email ?? 'unknown';
   const role = authUser.profile.system_role ?? 'staff';
   const type = feedback_type ?? 'bug';
-  const emoji = EMOJI_MAP[type] ?? '📝';
-  const title = `${emoji} ${description.trim().slice(0, 80)}${description.length > 80 ? '...' : ''}`;
   const roleOption = ROLE_MAP[role];
 
   const res = await fetch(`${NOTION_API}/pages`, {
@@ -74,22 +55,16 @@ export async function POST(request: Request) {
       'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      parent: { database_id: BACKLOG_DATABASE_ID },
-      properties: {
-        Name: { title: [{ text: { content: title } }] },
-        Description: { rich_text: [{ text: { content: description.trim() } }] },
-        Submitter: { rich_text: [{ text: { content: `${submitter} (${email})` } }] },
-        // Post-OPE-29 Backlog schema: Type/Severity are now relations (not
-        // writable by name), Triage was renamed to "Triage Status". Intake
-        // writes the surviving select properties; triage assigns the relations.
-        'Type [legacy]': { select: { name: TYPE_MAP[type] ?? 'Bug' } },
-        ...(roleOption ? { Role: { multi_select: [{ name: roleOption }] } } : {}),
-        Product: { select: { name: PRODUCT_NAME } },
-        'Triage Status': { select: { name: 'Not Triaged' } },
-        URL: { url: `${BASE_URL}${page_url}` },
-      },
-    }),
+    body: JSON.stringify(
+      buildBacklogPageBody({
+        type,
+        description,
+        submitter: `${submitter} (${email})`,
+        product: PRODUCT_NAME,
+        url: `${BASE_URL}${page_url}`,
+        roleOptions: roleOption ? [roleOption] : undefined,
+      }),
+    ),
   });
 
   if (!res.ok) {
