@@ -62,15 +62,21 @@
   // Token prefixes considered valid BDS tokens. Anything not starting with
   // one of these is treated as an unknown custom var (still surfaced, but
   // flagged so agents can decide whether to canonicalize it).
+  // Keep in sync with the families defined in @brikdesigns/bds dist/tokens.css.
   const VALID_TOKEN_PREFIXES = [
     '--color-', '--text-', '--background-', '--surface-', '--border-',
     '--padding-', '--space-', '--spacing-', '--gap-', '--margin-',
-    '--font-family-', '--typography-', '--font-size-', '--font-weight-',
-    '--body-', '--heading-', '--display-', '--label-',
+    '--font-family-', '--font-casing-', '--typography-', '--font-size-', '--font-weight-',
+    '--body-', '--heading-', '--display-', '--label-', '--subtitle-',
     '--font-line-height-', '--letter-spacing-',
     '--border-radius-', '--radius-',
-    '--shadow-', '--elevation-',
-    '--transition-', '--motion-', '--duration-', '--easing-',
+    '--shadow-', '--box-shadow-', '--elevation-',
+    // Motion: --duration-/--ease-/--delay-/--iteration- are semantic tokens;
+    // --easing- is the Style-Dictionary primitive export. See tokens.css.
+    '--transition-', '--motion-', '--duration-', '--easing-', '--ease-',
+    '--delay-', '--iteration-', '--stagger-',
+    '--icon-', '--size-', '--content-width-', '--aspect-', '--blur-radius-',
+    '--layout-', '--page-', '--state-', '--tooltip-', '--bds-',
     '--breakpoint-', '--z-', '--interaction-',
   ];
 
@@ -407,7 +413,7 @@
     }
 
     .bi-actions {
-      display: flex; gap: ${T.space200};
+      display: flex; gap: ${T.space200}; flex-wrap: wrap;
       padding: ${T.space300} ${T.space400};
     }
     .bi-action-btn {
@@ -651,6 +657,179 @@
       node = node.parentElement;
     }
     return null;
+  }
+
+  // ── Element-context detection (ADR-007) ─────────────────────────────────
+  //
+  // The inspector is the single element-selection + context detector; feedback
+  // surfaces consume what it emits rather than maintaining parallel pickers.
+  // Resolves { page, section, component, element_tag } for a selected element.
+  // Ported from the former DevFeedbackWidget/detectContext.ts (brik-bds#880);
+  // component reuses findBdsRoot above so there is one component detector.
+  //
+  // Two environments are covered in one pass:
+  //   - Astro client mockups use the BDS `section--{type}` class convention.
+  //   - Product apps resolve section from semantic landmarks (`<section>`,
+  //     `<main>`, `[role=region]`, `[data-section]`) + aria-label / nearest
+  //     heading / id fallback.
+  // Every field is best-effort and may be absent — consumers treat the result
+  // as optional context, never required.
+
+  function detectPage() {
+    // The URL pathname is the canonical page identity and is preferred — product
+    // apps (portal, renew-pms) share one templated <title> across every route, so
+    // document.title is non-discriminating there (every page reported the same
+    // name; brik-llm#979). The slug ("admin", "settings/services") is what a
+    // triager needs. document.title is kept only as a fallback for the root path,
+    // where the slug is empty.
+    if (typeof location !== 'undefined' && location.pathname) {
+      const slug = location.pathname.replace(/^\/+|\/+$/g, '');
+      if (slug) return slug;
+    }
+    const title = document.title?.trim();
+    if (title) return title;
+    return undefined;
+  }
+
+  function firstText(...candidates) {
+    for (const c of candidates) {
+      const t = c?.trim();
+      if (t) return t;
+    }
+    return undefined;
+  }
+
+  // The page's primary heading — the first <h1> (preferring one inside <main>).
+  // Used to stop the section detector from reporting the page title as a
+  // "section" (brik-bds#886).
+  function isPageHeading(heading) {
+    const pageH1 = document.querySelector('main h1') || document.querySelector('h1');
+    return !!pageH1 && heading === pageH1;
+  }
+
+  function sectionLabel(section) {
+    // Mockup convention first: "section section--hero" → "hero".
+    const typeMatch = section.className.match(/section--([a-z0-9-]+)/i);
+    if (typeMatch) return typeMatch[1];
+
+    // Explicit, author-provided labels, most-explicit first. These deliberately
+    // name a region, so they're trusted even on <main>.
+    const ariaLabel = section.getAttribute('aria-label');
+    const dataSection = section.getAttribute('data-section');
+    const labelledBy = section.getAttribute('aria-labelledby');
+    const labelledByText = labelledBy ? document.getElementById(labelledBy)?.textContent : undefined;
+    const explicit = firstText(ariaLabel, dataSection, labelledByText);
+    if (explicit) return explicit;
+
+    // <main> is the page-level landmark, not a section. Product-app pages
+    // typically have a single <main> whose first heading is the page H1 and
+    // whose id is a skip-link target ("main-content"); deriving a section name
+    // from either is misleading (brik-bds#886). Without an explicit label
+    // above, <main> names no section — let the caller omit it.
+    if (section.tagName === 'MAIN') return undefined;
+
+    // Non-landmark regions: nearest heading, then id. Never the page H1 — a
+    // <section> whose only heading is the document title is effectively
+    // page-level and would mislead a triager.
+    const heading = section.querySelector('h1, h2, h3, h4');
+    if (heading && !isPageHeading(heading)) {
+      const text = heading.textContent?.trim();
+      if (text) return text;
+    }
+    return firstText(section.id || undefined);
+  }
+
+  // Structured section metadata for the Astro mockup environment. Mockups
+  // annotate sections with `section--{type}` / `layout--{name}` classes and a
+  // preceding `<!-- Source: home.md Section-XX -->` comment; the pin-drop
+  // feedback widget records these in Supabase design_feedback.section_context.
+  // Surfacing them here (all undefined in product apps, which have none of these
+  // conventions) lets the pin-drop widget consume this one detector instead of a
+  // parallel detectSectionContext() copy — brik-client-portal#1132 / ADR-007.
+  function detectSectionMeta(el) {
+    const meta = {};
+
+    const section = el.closest('section[class*="section--"], [class*="section--"]');
+    if (section) {
+      const typeMatch = section.className.match(/section--([a-z0-9-]+)/i);
+      if (typeMatch) meta.section_type = typeMatch[1];
+
+      const ariaLabel = section.getAttribute('aria-label');
+      if (ariaLabel) meta.section_label = ariaLabel;
+
+      if (section.id) meta.section_id = section.id;
+
+      // Walk back over text nodes to the nearest preceding comment / element.
+      let prev = section.previousSibling;
+      while (prev) {
+        if (prev.nodeType === 8) {
+          const m = prev.textContent.trim().match(/Source:\s*(.+)/);
+          if (m) { meta.content_source = m[1].trim(); break; }
+        }
+        if (prev.nodeType === 1) break;
+        prev = prev.previousSibling;
+      }
+
+      // 1-based position among all `section--` blocks in document order.
+      const all = document.querySelectorAll('section[class*="section--"]');
+      const idx = Array.from(all).indexOf(section);
+      if (idx >= 0) meta.section_number = idx + 1;
+    }
+
+    const layout = el.closest('[class*="layout--"]');
+    if (layout) {
+      const m = layout.className.match(/layout--([a-z0-9-]+)/i);
+      if (m) meta.layout = m[1];
+    }
+
+    return meta;
+  }
+
+  function detectReportContext(el) {
+    const ctx = {};
+
+    const page = detectPage();
+    if (page) ctx.page = page;
+
+    const section =
+      el.closest('[class*="section--"]') ||
+      el.closest('section, article, main, [role="region"], [data-section]');
+    if (section) {
+      const label = sectionLabel(section);
+      if (label) ctx.section = label;
+    }
+
+    // Component detection the inspector already owns (block class, e.g. "bds-button").
+    const bds = findBdsRoot(el);
+    if (bds) ctx.component = bds.component;
+
+    const meaningful = el.closest(
+      'a, button, h1, h2, h3, h4, img, video, input, textarea, select, p, li, span',
+    );
+    if (meaningful) ctx.element_tag = meaningful.tagName.toLowerCase();
+
+    // Mockup-environment structured fields (superset; undefined elsewhere).
+    Object.assign(ctx, detectSectionMeta(el));
+
+    return ctx;
+  }
+
+  // Emit the selected element's context so a host page (e.g. the product app's
+  // feedback form) can pre-fill a submission. Returns the detail for callers
+  // that want to act locally too.
+  function emitReport(el) {
+    const detail = detectReportContext(el);
+    window.dispatchEvent(new CustomEvent('brik:inspect:report', { detail }));
+    return detail;
+  }
+
+  // Expose the shared detector for surfaces that resolve element context without
+  // entering inspect mode or listening for brik:inspect:report — the mockup
+  // pin-drop feedback widget calls this synchronously on click. ADR-007 makes
+  // this the single detector; consumers must not reimplement it (#1132).
+  if (typeof window !== 'undefined') {
+    window.BrikInspect = window.BrikInspect || {};
+    window.BrikInspect.detectContext = detectReportContext;
   }
 
   // ── Stylesheet rule index ───────────────────────────────────────────────
@@ -968,6 +1147,7 @@
         ${audits.map(renderAuditRow).join('')}
       </div>
       <div class="bi-actions">
+        <button class="bi-action-btn" type="button" data-action="report-feedback" title="Report feedback on this element">Feedback</button>
         <button class="bi-action-btn" type="button" data-action="copy-selector">Copy selector</button>
         <button class="bi-action-btn" type="button" data-action="copy-report">Copy report</button>
         <button class="bi-action-btn" type="button" data-action="scan-page">Scan page</button>
@@ -990,6 +1170,17 @@
     });
     panelEl.querySelector('[data-action="scan-page"]').addEventListener('click', () => {
       scanAndCopyReport();
+    });
+    // Emit element context for any feedback surface listening for
+    // `brik:inspect:report` (e.g. the product app's DevFeedbackWidget), then
+    // hand off: exit inspect mode so the inspector stops intercepting page
+    // clicks (its capture-phase onClick preventDefaults every non-chrome click)
+    // and the user can interact with the feedback form that just opened. If no
+    // host is wired (standalone mockup pages), the event is simply unobserved.
+    const reportBtn = panelEl.querySelector('[data-action="report-feedback"]');
+    reportBtn.addEventListener('click', () => {
+      emitReport(el);
+      if (active) toggleActive();
     });
     panelEl.style.display = 'block';
   }
