@@ -105,3 +105,29 @@ trap 'rm -rf .next-prepush' EXIT
 NEXT_BUILD_OUTPUT_DIR=".next-prepush" npm run build
 
 echo "Build passed (dev server cache untouched)."
+
+# ── Docs currency check (warn-only) ──
+# Flags user docs (content/docs/**, content/guide/**) that still say "Not yet" /
+# "Planned" / etc. for capability whose referenced code changed since the doc's
+# last commit. The script lives in the brik-llm repo (not vendored here); it is
+# resolved from BRIK_LLM_DIR, a default checkout location, or PATH, and skipped
+# with a notice if brik-llm isn't present (so CI and fresh machines don't break).
+#
+# Deliberately WARN-ONLY, not a gate: the grep heuristic cannot distinguish a
+# stale "shipped but doc says not-yet" claim from a legitimately-unbuilt one, so
+# it surfaces candidates for review without blocking the push. See brik-llm#616.
+DOCS_CHECK=""
+for cand in \
+  "${BRIK_LLM_DIR:-}/scripts/docs-currency-check.sh" \
+  "$HOME/Documents/GitHub/brik/brik-llm/scripts/docs-currency-check.sh"; do
+  if [ -n "$cand" ] && [ -x "$cand" ]; then DOCS_CHECK="$cand"; break; fi
+done
+if [ -z "$DOCS_CHECK" ] && command -v docs-currency-check.sh >/dev/null 2>&1; then
+  DOCS_CHECK="docs-currency-check.sh"
+fi
+if [ -n "$DOCS_CHECK" ]; then
+  echo "Checking docs currency (warn-only)..."
+  "$DOCS_CHECK" . || echo "  WARNING: docs-currency-check flagged stale docs above (warn-only — not blocking the push). Review and update, or confirm genuinely unbuilt."
+else
+  echo "Skipping docs-currency-check (brik-llm not found; set BRIK_LLM_DIR to enable)."
+fi
