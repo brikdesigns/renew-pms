@@ -170,25 +170,29 @@ body {
     --page-header-padding-bottom: var(--padding-md);
   }
 
-  /* Table: white header, muted borders, no rounded corners */
+  /* Table: white header, thin muted borders, flat (no rounded corners).
+     BDS v0.116.0 (#407) made the header border opt-in and now rounds +
+     outer-borders + clips tables by default; renew opts back out to keep
+     its flat, edge-to-edge clinical tables. Row dividers already default to
+     --border-muted in BDS, so no border-color override is needed. */
+  .bds-table {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
   .bds-table-head {
     background-color: var(--background-primary);
+    /* Header rule always on, at row-border weight — BDS 0.116.0 ships the
+       header border off by default and at md weight when on. */
+    border-bottom: var(--border-width-sm) solid var(--border-muted);
   }
 
-  .bds-table {
-    border-radius: 0;
-  }
-
-  .bds-table-head,
-  .bds-table-row,
-  .bds-table-cell,
-  .bds-table-head-cell {
-    border-color: var(--border-muted);
-  }
-
-  /* Table header border: match row border weight (sm instead of md) */
-  .bds-table-head {
-    border-bottom-width: var(--border-width-sm);
+  /* BDS 0.116.0 drops the last row's divider for rounded tables; renew's
+     flat tables keep a uniform divider on every row. */
+  .bds-table-body .bds-table-row:last-child > .bds-table-cell,
+  .bds-table-body .bds-table-row:last-child > .bds-table-actions-cell {
+    border-bottom: var(--border-width-sm) solid var(--border-muted);
   }
 
   /* Switch label: match form input label size (sm) + label font */
