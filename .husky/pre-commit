@@ -129,6 +129,21 @@ if [ -n "$STAGED_SRC" ]; then
   fi
 fi
 
+# ── Canonical BDS token naming ────────────────────────────────────────────────
+# Validates --text-/--surface-/--background-/--border-/--color-* names in src/
+# against BDS dist/tokens.css ∪ renew's src/styles/theme-renew.css domain layer
+# (shared @brikdesigns/bds/canonical-check engine). A name in neither is drift.
+# Bypassable only via --no-verify; the ci.yml gate is the backstop.
+if git diff --cached --name-only --diff-filter=ACM | grep -qE '\.(tsx?|css)$'; then
+  if ! ./scripts/canonical-check.sh; then
+    echo ""
+    echo "   Non-canonical BDS token name(s) above — in neither the BDS allowlist"
+    echo "   nor src/styles/theme-renew.css. Fix the name or declare the domain token."
+    echo "   To bypass (not recommended): git commit --no-verify"
+    exit 1
+  fi
+fi
+
 # ── Client theme completeness ────────────────────────────────────────────────
 # When a theme CSS file is staged, verify all required font-family tokens are
 # explicitly defined. Missing tokens fall through to BDS Poppins defaults —

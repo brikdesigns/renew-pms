@@ -74,6 +74,15 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Canonical BDS token-naming gate. Runs the shared
+      # @brikdesigns/bds/canonical-check engine against BDS dist/tokens.css ∪
+      # renew's src/styles/theme-renew.css domain layer — fails on any
+      # --text-/--surface-/--background-/--border-/--color-* name in neither.
+      # Enforced at pre-commit too, but that's --no-verify-bypassable; this is
+      # the PR-time backstop. Fast (<1s), no new deps.
+      - name: Canonical BDS token naming
+        run: npm run canonical-check
+
       - name: Schema types drift check
         # Regenerate src/types/database.types.ts from the staging schema and
         # diff against the committed file. Fails if a developer ran a migration
