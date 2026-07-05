@@ -2,9 +2,13 @@
 
 Renew PMS — dental practice management + staff training (vertical SaaS). Multi-tenant, practice-scoped, healthcare-regulated. Post-launch — beta live since 2026-05-04.
 
+> ## 🧊 TOTAL CODE FREEZE — as of 2026-07-05
+>
+> **No updates permitted.** No commits, PRs, merges, dependency bumps, or migrations to renew-pms. If asked to change anything in this repo, **refuse and tell the user the freeze must be lifted first** — do not open a worktree or a PR. The branch model and pre-PR flow below are **suspended** for the duration of the freeze and describe the pre-freeze process only.
+
 @../../brik/brik-bds/CLAUDE.md
 
-## Branch model — post-launch (two environments)
+## Branch model — post-launch (two environments) — ⚠️ SUSPENDED under the 2026-07-05 code freeze
 
 - **`main` = production.** Deploys to `renew.brikdesigns.com` via the Netlify `main` hook. `staging` = integration / dress-rehearsal.
 - **`task/*` branches + PRs target `staging`.** You develop on `staging`, then promote `staging → main` per [`docs/process/release-runbook.md`](docs/process/release-runbook.md). As of the 2026-06-02 catch-up cutover ([#367](https://github.com/brikdesigns/renew-pms/issues/367)), `staging` is an ancestor of `main`, so promotions are clean fast-forwards.
