@@ -35,7 +35,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@brikdesigns/bds": "^0.117.0",
+    "@brikdesigns/bds": "^0.119.1",
     "@brikdesigns/feedback-contract": "^0.2.0",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
