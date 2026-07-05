@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/brikdesigns/renew-pms/compare/v0.3.3...v0.3.4) (2026-07-05)
+
+
+### Documentation
+
+* declare total code freeze at top of CLAUDE.md ([#430](https://github.com/brikdesigns/renew-pms/issues/430)) ([3f80186](https://github.com/brikdesigns/renew-pms/commit/3f80186f161043793301b5f088edf11d32fe6ddf))
+
 ## [0.3.3](https://github.com/brikdesigns/renew-pms/compare/v0.3.2...v0.3.3) (2026-06-09)
 
 
